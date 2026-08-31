@@ -2,22 +2,21 @@
 
 Une phase n’est close que si UI, états, validation, tests et liaisons backend (ou mock isolé) sont réellement en place.
 
-## Phase 0 — Audit (en cours)
+## Phase 0 — Audit
 
 - [x] Analyse des maquettes
 - [x] `TIPTOP_PRODUCT_AUDIT.md`
 - [x] `TIPTOP_PRODUCT_DECISIONS.md`
 - [x] `TIPTOP_SCREEN_MATRIX.md`
 - [x] `TIPTOP_USER_FLOWS.md`
-- [ ] Validation de l’analyse par le fondateur (si besoin de trancher les décisions ouvertes)
-- [ ] Passage à l’implémentation (Phase 1)
 
 ## Phase 1 — Foundation
 
-- [ ] Monorepo, design tokens, thèmes light/dark
-- [ ] Routing web + mobile
-- [ ] Base de données + API
-- [ ] Authentification téléphone + OTP (mock)
+- [x] Monorepo, design tokens, thèmes light/dark
+- [x] Routing web responsive (mobile-first + nav desktop)
+- [x] Base de données + API
+- [x] Authentification téléphone + OTP (mock)
+- [ ] Expo natif (reporté : web = client mobile-first)
 
 ## Phase 2 — Social core
 
