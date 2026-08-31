@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { maskPhone, parsePhone } from "../src/phone";
 import { canResendOtp, evaluateOtp } from "../src/otp";
-import { availableBalance, displayLikeRatio, planHeartTransfer, planTransfer } from "../src/likes";
+import { availableBalance, displayLikeRatio, pickUnitForLike, planHeartTransfer, planTransfer } from "../src/likes";
 
 describe("parsePhone", () => {
   it("accepte un numéro camerounais national", () => {
@@ -118,6 +118,28 @@ describe("likes", () => {
     const plan = planHeartTransfer({ userId: "c", eventId: "e1" }, "c", "e2");
     expect(plan.fromEventId).toBe("e1");
     expect(plan.toEventId).toBe("e2");
+  });
+
+  it("préfère une unité libre avant de transférer", () => {
+    const plan = pickUnitForLike(
+      [
+        { id: "busy", ownerId: "c", source: "free", activeAllocationUserId: "alice" },
+        { id: "free", ownerId: "c", source: "purchased", activeAllocationUserId: null },
+      ],
+      "sarah",
+      "c",
+    );
+    expect(plan.unitId).toBe("free");
+    expect(plan.fromBeneficiaryId).toBeNull();
+  });
+
+  it("transfère si plus d'unité libre", () => {
+    const plan = pickUnitForLike(
+      [{ id: "only", ownerId: "c", source: "free", activeAllocationUserId: "alice" }],
+      "sarah",
+      "c",
+    );
+    expect(plan.fromBeneficiaryId).toBe("alice");
   });
 
   it("affiche /seconde au-delà du seuil influenceur", () => {

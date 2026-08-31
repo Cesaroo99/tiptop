@@ -52,9 +52,31 @@ async function main() {
     },
   });
 
+  const mbelle = await prisma.user.upsert({
+    where: { phoneE164: "+237690000002" },
+    update: {},
+    create: {
+      phoneE164: "+237690000002",
+      username: "mbelle.junior",
+      firstName: "Mbelle",
+      lastName: "Junior",
+      profileCompleted: true,
+      profile: {
+        create: {
+          profession: "Organisateur",
+          city: "Yaoundé",
+          zone: "Odza",
+          availability: "AVAILABLE",
+        },
+      },
+      likeUnits: { create: [{ source: LikeUnitSource.FREE }] },
+    },
+  });
+
   const existing = await prisma.post.count({ where: { authorId: cesar.id } });
+  let cesarPostId: string | undefined;
   if (existing === 0) {
-    await prisma.post.create({
+    const p1 = await prisma.post.create({
       data: {
         authorId: cesar.id,
         body: "Un tour au Black&White : on se retrouve ce soir, on sort vraiment. 🥳💎",
@@ -63,12 +85,62 @@ async function main() {
         imageUrl: "/seed/black-white.svg",
       },
     });
+    cesarPostId = p1.id;
     await prisma.post.create({
       data: {
         authorId: erica.id,
         body: "Mood du jour à Yaoundé — qui est dispo pour une vraie sortie ?",
         city: "Yaoundé",
         zone: "Bastos",
+      },
+    });
+  } else {
+    const first = await prisma.post.findFirst({ where: { authorId: cesar.id } });
+    cesarPostId = first?.id;
+  }
+
+  if (cesarPostId) {
+    const commentCount = await prisma.comment.count({ where: { postId: cesarPostId } });
+    if (commentCount === 0) {
+      await prisma.comment.create({
+        data: {
+          postId: cesarPostId,
+          authorId: erica.id,
+          body: "J’y serai — on se retrouve à l’entrée.",
+        },
+      });
+    }
+  }
+
+  await prisma.follow.upsert({
+    where: { followerId_followeeId: { followerId: cesar.id, followeeId: erica.id } },
+    update: {},
+    create: { followerId: cesar.id, followeeId: erica.id },
+  });
+  await prisma.follow.upsert({
+    where: { followerId_followeeId: { followerId: mbelle.id, followeeId: cesar.id } },
+    update: {},
+    create: { followerId: mbelle.id, followeeId: cesar.id },
+  });
+
+  const notifCount = await prisma.notification.count({ where: { userId: cesar.id } });
+  if (notifCount === 0) {
+    await prisma.notification.create({
+      data: {
+        userId: cesar.id,
+        actorId: erica.id,
+        type: "COMMENT",
+        entityType: "post",
+        entityId: cesarPostId,
+      },
+    });
+    await prisma.notification.create({
+      data: {
+        userId: cesar.id,
+        actorId: mbelle.id,
+        type: "FOLLOW",
+        entityType: "user",
+        entityId: cesar.id,
       },
     });
   }

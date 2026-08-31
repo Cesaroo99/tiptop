@@ -70,10 +70,14 @@ model User {
   sessions       Session[]
   devices        Device[]
   otpChallenges  OtpChallenge[]
-  posts          Post[]
-  likeUnits      LikeUnit[]
-  likeReceived   LikeAllocation[] @relation("LikeReceived")
-  comments       Comment[]
+  posts              Post[]
+  likeUnits          LikeUnit[]
+  likeReceived       LikeAllocation[] @relation("LikeReceived")
+  comments           Comment[]
+  following          Follow[]         @relation("Following")
+  followers          Follow[]         @relation("Followers")
+  notifications      Notification[]   @relation("NotifRecipient")
+  notificationsActed Notification[]   @relation("NotifActor")
 }
 
 model Profile {
@@ -167,6 +171,39 @@ model LikeUnit {
   allocations          LikeAllocation[]
 
   @@index([ownerId])
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  FOLLOW
+}
+
+model Follow {
+  id         String   @id @default(cuid())
+  followerId String
+  followeeId String
+  follower   User     @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  followee   User     @relation("Followers", fields: [followeeId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([followerId, followeeId])
+  @@index([followeeId])
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  userId     String
+  user       User             @relation("NotifRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actorId    String?
+  actor      User?            @relation("NotifActor", fields: [actorId], references: [id], onDelete: SetNull)
+  type       NotificationType
+  entityType String?
+  entityId   String?
+  readAt     DateTime?
+  createdAt  DateTime         @default(now())
+
+  @@index([userId, createdAt])
 }
 
 model LikeAllocation {

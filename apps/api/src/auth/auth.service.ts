@@ -1,8 +1,9 @@
 import {
   BadRequestException,
+  HttpException,
+  HttpStatus,
   Inject,
   Injectable,
-  TooManyRequestsException,
   UnauthorizedException,
 } from "@nestjs/common";
 import { Availability, LocationPrecision, UserStatus } from "@prisma/client";
@@ -94,7 +95,7 @@ export class AuthService {
       orderBy: { createdAt: "desc" },
     });
     if (latest && !canResendOtp({ lastSentAt: latest.createdAt, cooldownSeconds: 30 })) {
-      throw new TooManyRequestsException({ code: "OTP_COOLDOWN" });
+      throw new HttpException({ code: "OTP_COOLDOWN" }, HttpStatus.TOO_MANY_REQUESTS);
     }
 
     const code =

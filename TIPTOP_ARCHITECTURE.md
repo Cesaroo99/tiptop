@@ -21,6 +21,16 @@ Le client web appelle `/api/*` (rewrite Next → Nest) **et** envoie `Authorizat
 | Règles testables | `packages/domain` | I/O |
 | Persistance | Prisma `apps/api/prisma` | |
 
+## Social (Phase 2)
+
+- `POST /api/posts` — publication texte + lieu + image `/seed/*`
+- `GET|POST /api/posts/:id/comments`
+- `POST|DELETE /api/users/:id/follow`
+- `POST|DELETE /api/users/:id/like` — unités transférables, `confirmTransfer` si besoin
+- `GET /api/search?q=&type=`
+- `GET /api/notifications` + lecture
+- `GET /api/profiles/:username`
+
 ## Auth
 
 1. `POST /api/auth/otp/request` — crée un challenge, SMS mock (log + code `1234` hors prod).

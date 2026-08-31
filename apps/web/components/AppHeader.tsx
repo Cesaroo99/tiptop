@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
 import { Logo } from "./Logo";
 
 export function AppHeader({
@@ -8,12 +10,18 @@ export function AppHeader({
 }: {
   location?: string | null;
 }) {
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    api<{ unreadCount: number }>("/notifications")
+      .then((d) => setUnread(d.unreadCount))
+      .catch(() => setUnread(0));
+  }, []);
   return (
     <header className="space-y-3 px-4 pt-2">
       <div className="flex items-center justify-between">
         <Logo size={36} />
         <div className="flex items-center gap-2">
-          <HeaderIcon href="/notifications" label="Notifications" badge="5">
+          <HeaderIcon href="/notifications" label="Notifications" badge={unread > 0 ? String(unread) : undefined}>
             <Bell />
           </HeaderIcon>
           <HeaderIcon href="/messages" label="Messages">
@@ -25,14 +33,14 @@ export function AppHeader({
         </div>
       </div>
       <div className="flex gap-2">
-        <button
-          type="button"
+        <Link
+          href="/search"
           className="flex flex-1 items-center gap-2 rounded-2xl bg-[var(--border)]/60 px-3 py-3 text-left text-sm text-muted"
         >
           <Pin />
           <span className="flex-1 truncate">{location || "Choisir une zone"}</span>
           <span>▾</span>
-        </button>
+        </Link>
         <Link
           href="/search"
           aria-label="Recherche"

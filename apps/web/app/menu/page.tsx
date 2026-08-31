@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { CardButton, ScreenHeader } from "@/components/ui";
+import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 
@@ -10,6 +12,14 @@ export default function MenuPage() {
   const { messages } = useI18n();
   const { user } = useSession();
   const router = useRouter();
+  const [stats, setStats] = useState({ perHour: 0, perDay: 0, perMonth: 0 });
+  useEffect(() => {
+    if (!user) return;
+    api<{ perHour: number; perDay: number; perMonth: number }>(`/likes/stats/${user.id}`)
+      .then(setStats)
+      .catch(() => undefined);
+  }, [user]);
+
   if (!user) {
     router.replace("/login");
     return null;
@@ -27,7 +37,7 @@ export default function MenuPage() {
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-4 py-4">
       <ScreenHeader title={messages.menu.title} onBack={() => router.back()} />
-      <Link href="/account" className="mt-2 flex items-center gap-3 rounded-card bg-surface p-4 shadow-card">
+      <Link href={user ? `/u/${user.username}` : "/account"} className="mt-2 flex items-center gap-3 rounded-card bg-surface p-4 shadow-card">
         <div className="h-14 w-14 rounded-full bg-accent/20" />
         <div className="flex-1">
           <p className="font-semibold text-accent">
@@ -41,15 +51,15 @@ export default function MenuPage() {
         <p className="mb-3 text-sm text-accent">{messages.menu.likes}</p>
         <div className="grid grid-cols-3 text-center">
           <div>
-            <p className="text-xl font-semibold text-accent">0</p>
+            <p className="text-xl font-semibold text-accent">{stats.perHour}</p>
             <p className="text-xs text-muted">{messages.menu.perHour}</p>
           </div>
           <div>
-            <p className="text-xl font-semibold text-accent">0</p>
+            <p className="text-xl font-semibold text-accent">{stats.perDay}</p>
             <p className="text-xs text-muted">{messages.menu.perDay}</p>
           </div>
           <div>
-            <p className="text-xl font-semibold text-accent">0</p>
+            <p className="text-xl font-semibold text-accent">{stats.perMonth}</p>
             <p className="text-xs text-muted">{messages.menu.perMonth}</p>
           </div>
         </div>

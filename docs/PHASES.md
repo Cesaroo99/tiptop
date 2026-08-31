@@ -20,8 +20,8 @@ Une phase n’est close que si UI, états, validation, tests et liaisons backend
 
 ## Phase 2 — Social core
 
-- [ ] Profils, feed, publications, commentaires
-- [ ] Abonnements, likes, recherche, notifications in-app
+- [x] Profils, feed, publications, commentaires
+- [x] Abonnements, likes transférables, recherche, notifications in-app
 
 ## Phase 3 — Real world core
 

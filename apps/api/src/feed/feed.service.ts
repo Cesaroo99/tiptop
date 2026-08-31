@@ -1,12 +1,16 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
+import { PostsService } from "../posts/posts.service";
 
 @Injectable()
 export class FeedService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(PostsService) private readonly posts: PostsService,
+  ) {}
 
-  async list() {
-    const posts = await this.prisma.post.findMany({
+  async list(viewerId: string) {
+    const rows = await this.prisma.post.findMany({
       orderBy: { createdAt: "desc" },
       take: 30,
       include: {
@@ -14,24 +18,6 @@ export class FeedService {
         _count: { select: { comments: true } },
       },
     });
-    return {
-      items: posts.map((p) => ({
-        id: p.id,
-        body: p.body,
-        imageUrl: p.imageUrl,
-        city: p.city,
-        zone: p.zone,
-        createdAt: p.createdAt.toISOString(),
-        commentsCount: p._count.comments,
-        author: {
-          id: p.author.id,
-          username: p.author.username,
-          firstName: p.author.firstName,
-          lastName: p.author.lastName,
-          certified: p.author.certified,
-          avatarUrl: p.author.profile?.avatarUrl ?? null,
-        },
-      })),
-    };
+    return { items: await this.posts.decorate(viewerId, rows) };
   }
 }

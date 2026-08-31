@@ -13,6 +13,7 @@ pnpm --filter @tiptop/api test
 | --- | --- | --- |
 | Téléphone / OTP / likes pures | unitaire | `packages/domain/src/index.test.ts` |
 | HMAC session | unitaire | `apps/api/src/crypto.test.ts` |
+| Transfert like + unicité | DB | `apps/api/src/likes/likes.transfer.test.ts` |
 | Auth OTP → me → logout | intégration manuelle / curl | voir ci-dessous |
 | Parcours UI login | E2E navigateur Phase 1 | à exécuter sur le web local |
 

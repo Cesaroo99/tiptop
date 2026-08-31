@@ -24,6 +24,9 @@ export type FeedItem = {
   zone: string | null;
   createdAt: string;
   commentsCount: number;
+  likedAuthor: boolean;
+  viewerFollows: boolean;
+  authorActiveLikes: number;
   author: {
     id: string;
     username: string;
@@ -32,6 +35,23 @@ export type FeedItem = {
     certified: boolean;
     avatarUrl: string | null;
   };
+};
+
+export type CommentItem = {
+  id: string;
+  body: string;
+  createdAt: string;
+  author: { id: string; firstName: string; lastName: string; username: string; certified: boolean };
+};
+
+export type NotifItem = {
+  id: string;
+  type: "LIKE" | "COMMENT" | "FOLLOW";
+  entityType: string | null;
+  entityId: string | null;
+  read: boolean;
+  createdAt: string;
+  actor: { id: string; firstName: string; lastName: string; username: string; certified: boolean } | null;
 };
 
 const TOKEN_KEY = "tiptop_token";

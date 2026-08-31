@@ -87,6 +87,43 @@ export type Messages = {
     english: string;
     offline: string;
   };
+  social: {
+    publish: string;
+    publication: string;
+    saySomething: string;
+    addImage: string;
+    addLocation: string;
+    comments: string;
+    addComment: string;
+    follow: string;
+    following: string;
+    unfollow: string;
+    likePerson: string;
+    unlike: string;
+    transferTitle: string;
+    transferBody: string;
+    likeSelf: string;
+    postsTab: string;
+    emptyComments: string;
+    emptySearch: string;
+    people: string;
+    publications: string;
+    events: string;
+    all: string;
+    applySearch: string;
+    markAllRead: string;
+    notifNew: string;
+    notifEarlier: string;
+    notifLike: string;
+    notifComment: string;
+    notifFollow: string;
+    emptyNotifs: string;
+    chatLater: string;
+    inviteLater: string;
+    eventsLater: string;
+    noImageHint: string;
+    posted: string;
+  };
 };
 
 export const fr: Messages = {
@@ -178,6 +215,43 @@ export const fr: Messages = {
     english: "English",
     offline: "Connexion perdue",
   },
+  social: {
+    publish: "Publier",
+    publication: "Publication",
+    saySomething: "Dites quelque chose...",
+    addImage: "Ajouter une image",
+    addLocation: "Ajouter une localisation",
+    comments: "Commentaires",
+    addComment: "Ajouter un commentaire",
+    follow: "Suivre",
+    following: "Abonné",
+    unfollow: "Ne plus suivre",
+    likePerson: "Like (personne)",
+    unlike: "Retirer le like",
+    transferTitle: "Transférer ton like ?",
+    transferBody: "Ton like quittera {name} pour cette personne. Un like ne peut être que chez une personne à la fois.",
+    likeSelf: "Tu ne peux pas te liker.",
+    postsTab: "Publications",
+    emptyComments: "Aucun commentaire. Sois le premier.",
+    emptySearch: "Aucun résultat dans ta recherche.",
+    people: "Personnes",
+    publications: "Publications",
+    events: "Événements",
+    all: "Tout",
+    applySearch: "Appliquer la recherche",
+    markAllRead: "Tout marquer comme lu",
+    notifNew: "Nouveau",
+    notifEarlier: "Plus tôt",
+    notifLike: "a aimé ton profil",
+    notifComment: "a commenté ta publication",
+    notifFollow: "t’a suivi",
+    emptyNotifs: "Pas encore de notifications.",
+    chatLater: "La messagerie arrive en phase communication. Ce bouton n’ouvre pas une fausse conversation.",
+    inviteLater: "Les invitations vers un événement arrivent avec le cœur « monde réel ».",
+    eventsLater: "Les événements ne sont pas encore indexés.",
+    noImageHint: "Visuel local de démo (stockage objet plus tard).",
+    posted: "Publication envoyée",
+  },
 };
 
 export const en: Messages = {
@@ -268,6 +342,43 @@ export const en: Messages = {
     french: "Français",
     english: "English",
     offline: "You are offline",
+  },
+  social: {
+    publish: "Publish",
+    publication: "Post",
+    saySomething: "Say something...",
+    addImage: "Add an image",
+    addLocation: "Add a location",
+    comments: "Comments",
+    addComment: "Add a comment",
+    follow: "Follow",
+    following: "Following",
+    unfollow: "Unfollow",
+    likePerson: "Like (person)",
+    unlike: "Remove like",
+    transferTitle: "Move your like?",
+    transferBody: "Your like will leave {name} for this person. A like can only sit with one person at a time.",
+    likeSelf: "You cannot like yourself.",
+    postsTab: "Posts",
+    emptyComments: "No comments yet. Be the first.",
+    emptySearch: "No results for this search.",
+    people: "People",
+    publications: "Posts",
+    events: "Events",
+    all: "All",
+    applySearch: "Apply search",
+    markAllRead: "Mark all as read",
+    notifNew: "New",
+    notifEarlier: "Earlier",
+    notifLike: "liked your profile",
+    notifComment: "commented on your post",
+    notifFollow: "followed you",
+    emptyNotifs: "No notifications yet.",
+    chatLater: "Messaging ships in the communication phase. This is not a fake chat.",
+    inviteLater: "Invites to an event ship with the real-world core.",
+    eventsLater: "Events are not indexed yet.",
+    noImageHint: "Local demo visual (object storage later).",
+    posted: "Post published",
   },
 };
 

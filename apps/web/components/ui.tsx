@@ -116,11 +116,15 @@ export function Modal({
   title,
   children,
   onClose,
+  onConfirm,
+  confirmLabel,
 }: {
   open: boolean;
   title: string;
   children: ReactNode;
   onClose: () => void;
+  onConfirm?: () => void;
+  confirmLabel?: string;
 }) {
   if (!open) return null;
   return (
@@ -128,9 +132,20 @@ export function Modal({
       <div className="w-full max-w-md rounded-card bg-surface p-6 shadow-card">
         <h2 className="text-lg font-semibold">{title}</h2>
         <div className="mt-3 text-sm text-muted">{children}</div>
-        <button type="button" className="mt-6 w-full rounded-pill bg-accent py-3 font-semibold text-white" onClick={onClose}>
-          OK
-        </button>
+        <div className="mt-6 flex gap-2">
+          {onConfirm ? (
+            <button type="button" className="flex-1 rounded-pill bg-[var(--border)] py-3" onClick={onClose}>
+              Annuler
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="flex-1 rounded-pill bg-accent py-3 font-semibold text-white"
+            onClick={onConfirm ?? onClose}
+          >
+            {confirmLabel ?? "OK"}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -41,6 +41,16 @@ export function availableBalance(units: LikeUnit[]): number {
   return units.filter((u) => u.activeAllocationUserId === null).length;
 }
 
+/** Choisit une unité libre, sinon la plus ancienne allouée (transfert). */
+export function pickUnitForLike(units: LikeUnit[], toUserId: string, ownerId: string): LikeTransfer {
+  if (units.length === 0) throw new Error("LIKE_NO_UNITS");
+  if (units.some((u) => u.activeAllocationUserId === toUserId)) {
+    throw new Error("LIKE_ALREADY_ON_TARGET");
+  }
+  const free = units.find((u) => u.activeAllocationUserId === null);
+  return planTransfer(free ?? units[0], toUserId, ownerId);
+}
+
 export type HeartAllocation = {
   userId: string;
   eventId: string;

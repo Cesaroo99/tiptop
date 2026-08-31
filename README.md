@@ -2,7 +2,7 @@
 
 Réseau social pour **reconnecter les gens au monde réel**.
 
-Phase actuelle : **fondations (Phase 1)** — design system, API, auth OTP mock, accueil branché sur de vraies données.
+Phase actuelle : **cœur social (Phase 2)** — publications, commentaires, likes transférables, follow, recherche, notifications.
 
 ## Démarrer
 

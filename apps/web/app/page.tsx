@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { PostCard } from "@/components/PostCard";
 import { EmptyState, ErrorBanner, Skeleton } from "@/components/ui";
 import { api, type FeedItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
+import Link from "next/link";
 
 export default function HomePage() {
   return (
@@ -40,17 +42,17 @@ function HomeFeed() {
   return (
     <div className="space-y-4 px-4 py-4">
       <div className="flex gap-3 overflow-x-auto pb-2">
-        <div className="flex w-16 shrink-0 flex-col items-center gap-1">
+        <Link href="/compose" className="flex w-16 shrink-0 flex-col items-center gap-1">
           <div className="grid h-16 w-16 place-items-center rounded-full border-2 border-dashed border-accent bg-accent text-2xl text-white">
             +
           </div>
           <span className="text-center text-[11px] text-muted">{messages.home.yourMood}</span>
-        </div>
+        </Link>
         {user ? (
-          <div className="flex w-16 shrink-0 flex-col items-center gap-1">
+          <Link href={`/u/${user.username}`} className="flex w-16 shrink-0 flex-col items-center gap-1">
             <div className="h-16 w-16 rounded-full bg-accent/20 ring-2 ring-accent" />
             <span className="truncate text-[11px] text-muted">{user.firstName}</span>
-          </div>
+          </Link>
         ) : null}
       </div>
 
@@ -65,26 +67,11 @@ function HomeFeed() {
         <EmptyState title={messages.home.emptyTitle} body={messages.home.emptyBody} />
       ) : null}
       {items?.map((post) => (
-        <article key={post.id} className="rounded-card bg-surface p-4 shadow-card">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-full bg-accent/20" />
-            <div className="flex-1">
-              <p className="font-semibold text-accent">
-                {post.author.firstName} {post.author.lastName}
-              </p>
-              <p className="text-xs text-muted">{new Date(post.createdAt).toLocaleString()}</p>
-            </div>
-          </div>
-          <p className="mt-3 text-sm leading-6 text-ink">{post.body}</p>
-          {post.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={post.imageUrl} alt="" className="mt-3 h-44 w-full rounded-2xl object-cover" />
-          ) : null}
-          <p className="mt-3 text-xs text-muted">
-            {post.commentsCount} {messages.nav.home === "Home" ? "commentaires" : "comments"}
-            {post.zone ? ` · ${post.city} - ${post.zone}` : ""}
-          </p>
-        </article>
+        <PostCard
+          key={post.id}
+          post={post}
+          onChanged={(next) => setItems((cur) => cur?.map((p) => (p.id === next.id ? next : p)) ?? null)}
+        />
       ))}
     </div>
   );
