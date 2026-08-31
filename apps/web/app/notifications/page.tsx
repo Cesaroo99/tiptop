@@ -28,11 +28,13 @@ export default function NotificationsPage() {
     if (n.type === "INVITE") return `${name} ${messages.social.notifInvite}`;
     if (n.type === "TICKET") return `${name} ${messages.social.notifTicket}`;
     if (n.type === "PAYMENT") return `${name} ${messages.social.notifPayment}`;
+    if (n.type === "MESSAGE") return `${name} ${messages.social.notifMessage}`;
     return `${name} ${messages.social.notifFollow}`;
   }
 
   function href(n: NotifItem) {
     if (n.type === "INVITE") return "/tickets";
+    if (n.type === "MESSAGE" && n.entityId) return `/messages/${n.entityId}`;
     if (n.type === "TICKET" && n.entityId) return `/tickets/${n.entityId}`;
     if (n.type === "TICKET" || n.type === "PAYMENT") return "/tickets";
     if (n.type === "COMMENT" && n.entityType === "mood" && n.entityId) return `/mood/${n.entityId}`;

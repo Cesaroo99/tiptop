@@ -34,7 +34,7 @@ Une phase n’est close que si UI, états, validation, tests et liaisons backend
 
 ## Phase 5 — Communication
 
-- [ ] Chat 1:1, groupes, temps réel, architecture push
+- [x] Chat 1:1, groupes événement, temps réel WS, push no-op
 
 ## Phase 6 — Monétisation
 

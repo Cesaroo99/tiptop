@@ -44,6 +44,14 @@ Le client web appelle `/api/*` (rewrite Next → Nest) **et** envoie `Authorizat
 
 Invitations payantes : hôte paie à l’envoi ; invité paie à l’acceptation.
 
+## Communication (Phase 5)
+
+- `GET|POST /api/conversations` — inbox, DM (`/direct`), groupe event (`/event`)
+- `GET|POST /api/conversations/:id/messages` — texte, image `/seed/*`, vocale mock
+- `POST /api/conversations/:id/read` + `POST /api/users/:id/block`
+- WebSocket `/realtime` (Socket.IO) : `message`, `typing`, `presence`
+- `POST /api/devices` + `GET|PATCH /api/push/preferences` — provider **no-op** (log, jamais d’envoi réel)
+
 ## Social (Phase 2)
 
 - `POST /api/posts` — publication texte + lieu + image `/seed/*`
@@ -75,5 +83,5 @@ Non scaffoldé en Phase 1 (pas de simulateur fiable ici). Le web est le client m
 | --- | --- |
 | SMS / OTP | `OTP_MOCK_CODE` |
 | Paiement | mock isolé Card / OM / MoMo — `fail: true` pour G15 |
-| Push | non branché |
+| Push | no-op : jeton stocké, log `[push:noop]`, aucun envoi |
 | Stockage | fichiers `public/` |

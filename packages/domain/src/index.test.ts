@@ -5,8 +5,9 @@ import { availableBalance, displayLikeRatio, pickUnitForLike, planHeartTransfer,
 import { availabilityUntil, isCurrentlyAvailable } from "../src/availability";
 import { displayLocation, roundDistanceKm } from "../src/location";
 import { canAcceptInvitation, evaluateInvite, moodExpiresAt } from "../src/events";
-import { applyWebhook, mockCharge, reservationAmountXaf } from "../src/payments";
 import { canConsumeTicket, canShowQr, isInEntryWindow, signTicketQr, verifyTicketQr } from "../src/tickets";
+import { applyWebhook, mockCharge, reservationAmountXaf } from "../src/payments";
+import { canSendMessage, canStartDirect, directKey, pairIsBlocked, shouldNotifyOffline } from "../src/chat";
 
 describe("parsePhone", () => {
   it("accepte un numéro camerounais national", () => {
@@ -284,5 +285,27 @@ describe("tickets & paiement", () => {
     expect(mockCharge({ provider: "MTN_MOMO", fail: true }).status).toBe("FAILED");
     expect(applyWebhook("SUCCEEDED", "FAILED")).toEqual({ applied: false, status: "SUCCEEDED" });
     expect(applyWebhook("PENDING", "SUCCEEDED")).toEqual({ applied: true, status: "SUCCEEDED" });
+  });
+});
+
+describe("chat", () => {
+  it("interdit un DM avec soi-même et ordonne la clé 1:1", () => {
+    expect(canStartDirect("cesar", "cesar")).toBe("CHAT_SELF");
+    expect(directKey("b", "a")).toBe("a:b");
+    expect(directKey("a", "b")).toBe("a:b");
+  });
+
+  it("bloque l’envoi si pas membre, bloqué, ou texte vide", () => {
+    expect(canSendMessage({ isMember: false, blocked: false, kind: "TEXT", body: "salut" })).toBe("NOT_MEMBER");
+    expect(canSendMessage({ isMember: true, blocked: true, kind: "TEXT", body: "salut" })).toBe("BLOCKED");
+    expect(canSendMessage({ isMember: true, blocked: false, kind: "TEXT", body: "  " })).toBe("EMPTY");
+    expect(canSendMessage({ isMember: true, blocked: false, kind: "AUDIO" })).toBe("OK");
+    expect(pairIsBlocked([{ blockerId: "a", blockedId: "b" }], "b", "a")).toBe(true);
+  });
+
+  it("n’envoie pas de push si le destinataire lit le fil", () => {
+    expect(shouldNotifyOffline({ viewingThread: true, pushEnabled: true })).toBe(false);
+    expect(shouldNotifyOffline({ viewingThread: false, pushEnabled: true })).toBe(true);
+    expect(shouldNotifyOffline({ viewingThread: false, pushEnabled: false })).toBe(false);
   });
 });

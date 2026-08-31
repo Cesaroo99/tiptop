@@ -126,6 +126,7 @@ export type Messages = {
     notifInvite: string;
     notifTicket: string;
     notifPayment: string;
+    notifMessage: string;
   };
   world: {
     available: string;
@@ -262,6 +263,36 @@ export type Messages = {
     entryClosed: string;
     notHost: string;
   };
+  chat: {
+    inbox: string;
+    empty: string;
+    emptyBody: string;
+    newTitle: string;
+    searchContact: string;
+    send: string;
+    placeholder: string;
+    image: string;
+    voice: string;
+    voiceMock: string;
+    typing: string;
+    typingMany: string;
+    online: string;
+    members: string;
+    channel: string;
+    eventGroup: string;
+    blocked: string;
+    block: string;
+    blockedPeer: string;
+    you: string;
+    pushTitle: string;
+    pushHint: string;
+    pushMessages: string;
+    pushSocial: string;
+    pushEvents: string;
+    messageCta: string;
+    livesIn: string;
+    groupFromEvent: string;
+  };
 };
 
 export const fr: Messages = {
@@ -384,7 +415,7 @@ export const fr: Messages = {
     notifComment: "a commenté ta publication",
     notifFollow: "t’a suivi",
     emptyNotifs: "Pas encore de notifications.",
-    chatLater: "La messagerie arrive en phase communication. Ce bouton n’ouvre pas une fausse conversation.",
+    chatLater: "Ouvre une vraie conversation — pas un faux chat.",
     inviteLater: "Les invitations vers un événement arrivent avec le cœur « monde réel ».",
     eventsLater: "Les événements ne sont pas encore indexés.",
     noImageHint: "Visuel local de démo (stockage objet plus tard).",
@@ -392,6 +423,7 @@ export const fr: Messages = {
     notifInvite: "t’a invité à une sortie",
     notifTicket: "ticket mis à jour",
     notifPayment: "paiement mis à jour",
+    notifMessage: "t’a écrit",
   },
   world: {
     available: "Disponible",
@@ -528,6 +560,36 @@ export const fr: Messages = {
     entryClosed: "Hors fenêtre d’entrée",
     notHost: "Seul l’organisateur peut valider.",
   },
+  chat: {
+    inbox: "Messages",
+    empty: "Pas encore de conversation",
+    emptyBody: "Écris à un contact, ou ouvre le groupe d’une sortie.",
+    newTitle: "Nouvelle conversation",
+    searchContact: "Chercher un contact",
+    send: "Envoyer",
+    placeholder: "Message",
+    image: "Image",
+    voice: "Vocale",
+    voiceMock: "Message vocal (mock)",
+    typing: "écrit…",
+    typingMany: "{count} écrivent…",
+    online: "En ligne",
+    members: "Membres",
+    channel: "# Général",
+    eventGroup: "Groupe de la sortie",
+    blocked: "Tu as bloqué cette personne.",
+    block: "Bloquer",
+    blockedPeer: "Conversation indisponible.",
+    you: "Toi",
+    pushTitle: "Notifications push",
+    pushHint: "Provider no-op : on enregistre le jeton, on n’envoie rien de réel.",
+    pushMessages: "Messages",
+    pushSocial: "Social",
+    pushEvents: "Sorties",
+    messageCta: "Message",
+    livesIn: "Vie à {place}",
+    groupFromEvent: "Ouvrir le groupe",
+  },
 };
 
 export const en: Messages = {
@@ -650,7 +712,7 @@ export const en: Messages = {
     notifComment: "commented on your post",
     notifFollow: "followed you",
     emptyNotifs: "No notifications yet.",
-    chatLater: "Messaging ships in the communication phase. This is not a fake chat.",
+    chatLater: "Opens a real conversation — not a fake chat.",
     inviteLater: "Invites to an event ship with the real-world core.",
     eventsLater: "Events are not indexed yet.",
     noImageHint: "Local demo visual (object storage later).",
@@ -658,6 +720,7 @@ export const en: Messages = {
     notifInvite: "invited you to a meetup",
     notifTicket: "ticket updated",
     notifPayment: "payment updated",
+    notifMessage: "sent you a message",
   },
   world: {
     available: "Available",
@@ -793,6 +856,36 @@ export const en: Messages = {
     labelHint: "Label (e.g. Visa •• 4242)",
     entryClosed: "Outside entry window",
     notHost: "Only the host can validate.",
+  },
+  chat: {
+    inbox: "Messages",
+    empty: "No conversations yet",
+    emptyBody: "Message a contact, or open a meetup group.",
+    newTitle: "New conversation",
+    searchContact: "Search a contact",
+    send: "Send",
+    placeholder: "Message",
+    image: "Image",
+    voice: "Voice",
+    voiceMock: "Voice message (mock)",
+    typing: "typing…",
+    typingMany: "{count} typing…",
+    online: "Online",
+    members: "Members",
+    channel: "# General",
+    eventGroup: "Meetup group",
+    blocked: "You blocked this person.",
+    block: "Block",
+    blockedPeer: "Conversation unavailable.",
+    you: "You",
+    pushTitle: "Push notifications",
+    pushHint: "No-op provider: we store the token, we never send a real push.",
+    pushMessages: "Messages",
+    pushSocial: "Social",
+    pushEvents: "Meetups",
+    messageCta: "Message",
+    livesIn: "Lives in {place}",
+    groupFromEvent: "Open group",
   },
 };
 

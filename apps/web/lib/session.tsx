@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Locale } from "@tiptop/i18n";
 import { api, clearToken, getStoredToken, type PublicUser } from "./api";
+import { disconnectRealtime } from "./realtime";
 
 type Theme = "light" | "dark";
 
@@ -49,6 +50,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     try {
       const me = await api<PublicUser>("/auth/me");
       setUser(me);
+      void api("/devices", { method: "POST", body: JSON.stringify({ platform: "web" }) }).catch(() => undefined);
       if (me.theme === "dark" || me.theme === "light") {
         setTheme(me.theme);
       }
@@ -68,6 +70,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       await api("/auth/logout", { method: "POST" });
     } finally {
       clearToken();
+      disconnectRealtime();
       setUser(null);
     }
   }, []);

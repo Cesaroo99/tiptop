@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
+import { IoAdapter } from "@nestjs/platform-socket.io";
 import cookieParser from "cookie-parser";
 import { ValidationPipe } from "@nestjs/common";
 import { AppModule } from "./app.module";
@@ -8,6 +9,7 @@ import { loadEnv } from "./env";
 async function bootstrap() {
   const env = loadEnv();
   const app = await NestFactory.create(AppModule);
+  app.useWebSocketAdapter(new IoAdapter(app));
   app.setGlobalPrefix("api");
   app.use(cookieParser());
   app.enableCors({

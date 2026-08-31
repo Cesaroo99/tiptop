@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { EventCard } from "@/components/EventCard";
@@ -20,6 +20,7 @@ export default function Page() {
 function EventDetail() {
   const { id } = useParams<{ id: string }>();
   const { messages } = useI18n();
+  const router = useRouter();
   const [event, setEvent] = useState<EventCardType | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,6 +71,21 @@ function EventDetail() {
         <Link href={`/events/${event.id}/manage`} className="block w-full rounded-pill bg-accent py-3 text-center text-sm font-semibold text-white">
           {messages.booking.manageEvent}
         </Link>
+      ) : null}
+      {event.canChatGroup ? (
+        <button
+          type="button"
+          className="w-full rounded-pill bg-[var(--border)] py-3 text-sm font-semibold"
+          onClick={async () => {
+            const conv = await api<{ id: string }>("/conversations/event", {
+              method: "POST",
+              body: JSON.stringify({ eventId: event.id }),
+            });
+            router.push(`/messages/${conv.id}`);
+          }}
+        >
+          {messages.chat.groupFromEvent}
+        </button>
       ) : null}
     </div>
   );

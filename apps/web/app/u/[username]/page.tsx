@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PostCard } from "@/components/PostCard";
@@ -43,6 +43,7 @@ function ProfileView() {
   const { username } = useParams<{ username: string }>();
   const { messages } = useI18n();
   const { user } = useSession();
+  const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [soon, setSoon] = useState<string | null>(null);
@@ -115,8 +116,7 @@ function ProfileView() {
         {profile.profession ? <p className="mt-1 text-sm text-muted">{profile.profession}</p> : null}
         {profile.city ? (
           <p className="text-sm text-muted">
-            Vie à {profile.city}
-            {profile.zone ? ` - ${profile.zone}` : ""}
+            {messages.chat.livesIn.replace("{place}", `${profile.city}${profile.zone ? ` - ${profile.zone}` : ""}`)}
           </p>
         ) : null}
         {profile.availability === "AVAILABLE" ? (
@@ -137,8 +137,22 @@ function ProfileView() {
             >
               ♥ {messages.social.likePerson}
             </button>
-            <button type="button" className="rounded-pill bg-[var(--border)] px-5 py-3" onClick={() => setSoon(messages.social.chatLater)}>
-              Message
+            <button
+              type="button"
+              className="rounded-pill bg-[var(--border)] px-5 py-3"
+              onClick={async () => {
+                try {
+                  const conv = await api<{ id: string }>("/conversations/direct", {
+                    method: "POST",
+                    body: JSON.stringify({ userId: profile.id }),
+                  });
+                  router.push(`/messages/${conv.id}`);
+                } catch {
+                  setSoon(messages.chat.blockedPeer);
+                }
+              }}
+            >
+              {messages.chat.messageCta}
             </button>
             <Link href={`/invite/${profile.id}`} className="rounded-pill bg-[var(--border)] px-5 py-3">
               + {messages.world.invite}

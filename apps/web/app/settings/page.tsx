@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CardButton, ScreenHeader } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -15,6 +15,14 @@ export default function SettingsPage() {
   const [confirm, setConfirm] = useState(false);
   const [securityOpen, setSecurityOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [pushOpen, setPushOpen] = useState(false);
+  const [prefs, setPrefs] = useState({ messages: true, social: true, events: true });
+
+  useEffect(() => {
+    api<{ messages: boolean; social: boolean; events: boolean }>("/push/preferences")
+      .then(setPrefs)
+      .catch(() => undefined);
+  }, []);
 
   async function toggleTheme() {
     const next = theme === "dark" ? "light" : "dark";
@@ -76,6 +84,31 @@ export default function SettingsPage() {
         </CardButton>
         {securityOpen ? (
           <p className="rounded-card bg-surface p-4 text-sm text-muted shadow-card">{messages.settings.securityNote}</p>
+        ) : null}
+        <CardButton onClick={() => setPushOpen((v) => !v)}>
+          <span>{messages.chat.pushTitle}</span>
+          <span>›</span>
+        </CardButton>
+        {pushOpen ? (
+          <div className="rounded-card bg-surface p-4 text-sm shadow-card">
+            <p className="mb-3 text-muted">{messages.chat.pushHint}</p>
+            {(["messages", "social", "events"] as const).map((k) => (
+              <label key={k} className="mb-2 flex items-center justify-between gap-3">
+                <span>
+                  {k === "messages" ? messages.chat.pushMessages : k === "social" ? messages.chat.pushSocial : messages.chat.pushEvents}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={prefs[k]}
+                  onChange={async (e) => {
+                    const next = { ...prefs, [k]: e.target.checked };
+                    setPrefs(next);
+                    await api("/push/preferences", { method: "PATCH", body: JSON.stringify({ [k]: e.target.checked }) });
+                  }}
+                />
+              </label>
+            ))}
+          </div>
         ) : null}
         <CardButton onClick={() => router.push("/terms")}>
           <span>{messages.settings.terms}</span>

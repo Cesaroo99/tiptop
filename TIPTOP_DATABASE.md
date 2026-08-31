@@ -32,6 +32,15 @@ pnpm db:reset      # destructif, local uniquement
 - `PaymentMethod` (Card / Orange Money / MTN MoMo — mock)
 - `NotificationType.TICKET`, `NotificationType.PAYMENT`
 
+## Tables Phase 5
+
+- `Conversation` (`DIRECT` unique `directKey`, `EVENT` unique `eventId`, `GROUP`)
+- `ConversationMember` (`lastReadAt`)
+- `Message` (`TEXT` / `IMAGE` / `AUDIO`)
+- `UserBlock`
+- `PushPreference` + `Device` (unique `userId+platform`, `pushToken` optionnel)
+- `NotificationType.MESSAGE`
+
 ## Tables / champs préparés
 
 - `Device` (push)

@@ -44,6 +44,7 @@ export type EventCard = {
   isHost: boolean;
   canBook?: boolean;
   viewerTicketId?: string | null;
+  canChatGroup?: boolean;
   host: {
     id: string;
     username: string;
@@ -168,12 +169,35 @@ export type CommentItem = {
 
 export type NotifItem = {
   id: string;
-  type: "LIKE" | "COMMENT" | "FOLLOW" | "INVITE" | "TICKET" | "PAYMENT";
+  type: "LIKE" | "COMMENT" | "FOLLOW" | "INVITE" | "TICKET" | "PAYMENT" | "MESSAGE";
   entityType: string | null;
   entityId: string | null;
   read: boolean;
   createdAt: string;
   actor: { id: string; firstName: string; lastName: string; username: string; certified: boolean } | null;
+};
+
+export type ConversationItem = {
+  id: string;
+  kind: "DIRECT" | "GROUP" | "EVENT";
+  title: string;
+  channel: string | null;
+  eventId: string | null;
+  unreadCount: number;
+  online: boolean;
+  peer: { id: string; username: string; firstName: string; lastName: string; certified: boolean } | null;
+  members: Array<{ id: string; username: string; firstName: string; lastName: string; certified: boolean }>;
+  lastMessage: { body: string; kind: string; createdAt: string; senderId: string } | null;
+  updatedAt: string;
+};
+
+export type ChatMessage = {
+  id: string;
+  kind: string;
+  body: string;
+  imageUrl: string | null;
+  createdAt: string;
+  sender: { id: string; username: string; firstName: string; lastName: string; certified: boolean };
 };
 
 const TOKEN_KEY = "tiptop_token";

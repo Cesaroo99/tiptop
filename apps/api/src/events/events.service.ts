@@ -278,6 +278,7 @@ export class EventsService {
       isHost,
       canBook: !isHost && (e.requiresReservation || e.priceXaf > 0) && !seated,
       viewerTicketId: ticket?.id ?? null,
+      canChatGroup: seated,
       host: {
         id: e.host.id,
         username: e.host.username,

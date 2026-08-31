@@ -7,17 +7,16 @@ pnpm --filter @tiptop/domain test
 pnpm --filter @tiptop/api test
 ```
 
-## Couverture actuelle (Phase 4)
+## Couverture actuelle (Phase 5)
 
 | Zone | Type | Fichier |
 | --- | --- | --- |
-| Téléphone / OTP / likes / dispo / invitations / tickets / paiement | unitaire | `packages/domain/src/index.test.ts` |
+| Téléphone / OTP / likes / dispo / invitations / tickets / paiement / chat | unitaire | `packages/domain/src/index.test.ts` |
 | HMAC session | unitaire | `apps/api/src/crypto.test.ts` |
 | Transfert like + unicité | DB | `apps/api/src/likes/likes.transfer.test.ts` |
 | Disponibilité + invitations | DB | `apps/api/src/invitations/invitations.realworld.test.ts` |
 | Double résa + double conso ticket | DB | `apps/api/src/booking/booking.realworld.test.ts` |
-| Auth OTP → me → logout | intégration manuelle / curl | voir ci-dessous |
-| Parcours UI login → réserver → payer → ticket | E2E navigateur Phase 4 | web local |
+| Unicité DM | DB | `apps/api/src/chat/chat.realworld.test.ts` |
 
 ## Intégration auth (curl)
 

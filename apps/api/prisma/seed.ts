@@ -1,5 +1,5 @@
 import { PrismaClient, LikeUnitSource } from "@prisma/client";
-import { invitationExpiresAt } from "@tiptop/domain";
+import { invitationExpiresAt, directKey } from "@tiptop/domain";
 
 const prisma = new PrismaClient();
 
@@ -346,6 +346,58 @@ async function main() {
       ],
     });
   }
+
+  await prisma.contact.upsert({
+    where: { ownerId_personId: { ownerId: cesar.id, personId: erica.id } },
+    update: {},
+    create: { ownerId: cesar.id, personId: erica.id },
+  });
+  await prisma.contact.upsert({
+    where: { ownerId_personId: { ownerId: erica.id, personId: cesar.id } },
+    update: {},
+    create: { ownerId: erica.id, personId: cesar.id },
+  });
+
+  const dmKey = directKey(cesar.id, erica.id);
+  let dm = await prisma.conversation.findUnique({ where: { directKey: dmKey } });
+  if (!dm) {
+    dm = await prisma.conversation.create({
+      data: {
+        kind: "DIRECT",
+        directKey: dmKey,
+        members: { create: [{ userId: cesar.id }, { userId: erica.id }] },
+        messages: {
+          create: [
+            { senderId: erica.id, kind: "TEXT", body: "On se retrouve à Bastos ?" },
+            { senderId: cesar.id, kind: "TEXT", body: "Oui — on sort vraiment, pas derrière l’écran." },
+          ],
+        },
+      },
+    });
+  }
+
+  if (black) {
+    const group = await prisma.conversation.findUnique({ where: { eventId: black.id } });
+    if (!group) {
+      await prisma.conversation.create({
+        data: {
+          kind: "EVENT",
+          eventId: black.id,
+          title: black.title,
+          members: { create: [{ userId: cesar.id }] },
+          messages: {
+            create: [{ senderId: cesar.id, kind: "TEXT", body: "Canal # Général — on se voit à Damas." }],
+          },
+        },
+      });
+    }
+  }
+
+  await prisma.pushPreference.upsert({
+    where: { userId: cesar.id },
+    update: {},
+    create: { userId: cesar.id },
+  });
 
   await prisma.appConfig.upsert({
     where: { key: "influencerThresholdLikesPerHour" },

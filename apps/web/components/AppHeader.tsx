@@ -15,11 +15,15 @@ export function AppHeader({
   const { messages } = useI18n();
   const { user, refresh } = useSession();
   const [unread, setUnread] = useState(0);
+  const [chatUnread, setChatUnread] = useState(0);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     api<{ unreadCount: number }>("/notifications")
       .then((d) => setUnread(d.unreadCount))
       .catch(() => setUnread(0));
+    api<{ unreadTotal: number }>("/conversations")
+      .then((d) => setChatUnread(d.unreadTotal ?? 0))
+      .catch(() => setChatUnread(0));
   }, []);
 
   const available =
@@ -50,7 +54,7 @@ export function AppHeader({
           <HeaderIcon href="/notifications" label="Notifications" badge={unread > 0 ? String(unread) : undefined}>
             <Bell />
           </HeaderIcon>
-          <HeaderIcon href="/messages" label="Messages">
+          <HeaderIcon href="/messages" label="Messages" badge={chatUnread > 0 ? String(chatUnread) : undefined}>
             <Chat />
           </HeaderIcon>
           <HeaderIcon href="/menu" label="Menu">
