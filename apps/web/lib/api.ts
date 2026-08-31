@@ -42,6 +42,8 @@ export type EventCard = {
   viewerInterested: boolean;
   viewerStatus: string | null;
   isHost: boolean;
+  canBook?: boolean;
+  viewerTicketId?: string | null;
   host: {
     id: string;
     username: string;
@@ -94,6 +96,36 @@ export type PersonCard = {
   distanceKm: number | null;
 };
 
+export type TicketItem = {
+  id: string;
+  status: string;
+  consumedAt: string | null;
+  qr: string | null;
+  qrActive: boolean;
+  holder: { firstName: string; lastName: string; username: string };
+  event: {
+    id: string;
+    title: string;
+    startsAt: string;
+    city: string;
+    zone: string | null;
+    venue: string | null;
+    imageUrl: string | null;
+    hostId: string;
+  };
+};
+
+export type ReservationItem = {
+  id: string;
+  eventId: string;
+  status: string;
+  seats: number;
+  amountXaf: number;
+  needsPayment: boolean;
+  tickets: Array<{ id: string; holderId: string; status: string }>;
+  event?: { title: string; startsAt: string; city: string };
+};
+
 export type InvitationItem = {
   id: string;
   payer: string;
@@ -102,6 +134,8 @@ export type InvitationItem = {
   event: { id: string; title: string; startsAt: string; city: string; zone: string | null; priceXaf: number };
   inviter: { id: string; username: string; firstName: string; lastName: string };
   invitee: { id: string; username: string; firstName: string; lastName: string };
+  needsPayment?: boolean;
+  reservation?: ReservationItem;
 };
 
 export type FeedItem = {
@@ -134,7 +168,7 @@ export type CommentItem = {
 
 export type NotifItem = {
   id: string;
-  type: "LIKE" | "COMMENT" | "FOLLOW" | "INVITE";
+  type: "LIKE" | "COMMENT" | "FOLLOW" | "INVITE" | "TICKET" | "PAYMENT";
   entityType: string | null;
   entityId: string | null;
   read: boolean;

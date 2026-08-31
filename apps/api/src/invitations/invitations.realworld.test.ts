@@ -27,7 +27,7 @@ describe("monde réel (DB)", () => {
     ).toBe(true);
   });
 
-  it("interdit une auto-invitation et le paiement hôte", async () => {
+  it("interdit une auto-invitation", async () => {
     const cesar = await prisma.user.findUnique({ where: { username: "cesar_memoli" } });
     const event = await prisma.event.findFirst({ where: { title: "Afterwork Bastos" } });
     expect(cesar && event).toBeTruthy();
@@ -61,6 +61,6 @@ describe("monde réel (DB)", () => {
         priceXaf: event.priceXaf,
         payer: "HOST",
       }),
-    ).toBe("PAYMENT_BY_HOST_PHASE");
+    ).toBe("OK");
   });
 });

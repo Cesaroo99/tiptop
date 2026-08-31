@@ -15,6 +15,7 @@ import { DiscoveryModule } from "./discovery/discovery.module";
 import { MoodsModule } from "./moods/moods.module";
 import { InvitationsModule } from "./invitations/invitations.module";
 import { ContactsModule } from "./contacts/contacts.module";
+import { BookingModule } from "./booking/booking.module";
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { ContactsModule } from "./contacts/contacts.module";
     MoodsModule,
     InvitationsModule,
     ContactsModule,
+    BookingModule,
   ],
   controllers: [HealthController],
 })

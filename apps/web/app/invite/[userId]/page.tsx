@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { EmptyState, Modal, PrimaryButton, ScreenHeader } from "@/components/ui";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, type InvitationItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 
 type Relevant = {
@@ -37,13 +37,9 @@ export default function InvitePage() {
 
   async function send() {
     if (!picked) return;
-    if (picked.priceXaf > 0 && payer === "HOST") {
-      setSoon(messages.world.payerHostLater);
-      return;
-    }
     setLoading(true);
     try {
-      await api("/invitations", {
+      const res = await api<InvitationItem>("/invitations", {
         method: "POST",
         body: JSON.stringify({
           inviteeId: userId,
@@ -51,10 +47,14 @@ export default function InvitePage() {
           payer: picked.priceXaf > 0 ? payer : "FREE",
         }),
       });
+      if (res.needsPayment && res.reservation) {
+        router.push(`/events/${picked.id}/pay?reservationId=${res.reservation.id}`);
+        return;
+      }
       setDone(true);
     } catch (e) {
       if (e instanceof ApiError && String(e.code).includes("PAYMENT")) {
-        setSoon(messages.world.payerHostLater);
+        setSoon(messages.booking.invitePayHost);
       } else {
         setSoon(messages.common.error);
       }
@@ -104,8 +104,11 @@ export default function InvitePage() {
               {p === "FREE" ? messages.world.payerFree : p === "HOST" ? messages.world.payerHost : messages.world.payerGuest}
             </button>
           ))}
+          {payer === "HOST" && picked.priceXaf > 0 ? (
+            <p className="text-sm text-muted">{messages.booking.invitePayHost}</p>
+          ) : null}
           <PrimaryButton loading={loading} onClick={() => void send()}>
-            {messages.world.invite}
+            {payer === "HOST" && picked.priceXaf > 0 ? messages.booking.pay : messages.world.invite}
           </PrimaryButton>
         </div>
       )}

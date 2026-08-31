@@ -247,6 +247,12 @@ export class EventsService {
     const mine = e.participants.find((p) => p.userId === viewerId);
     const taken = e.participants.filter((p) => p.status === "CONFIRMED" || p.status === "RESERVED" || p.status === "HOST")
       .length;
+    const ticket = await this.prisma.ticket.findFirst({
+      where: { eventId: e.id, holderId: viewerId },
+      orderBy: { createdAt: "desc" },
+    });
+    const isHost = e.hostId === viewerId;
+    const seated = ["CONFIRMED", "RESERVED", "HOST", "PRESENT"].includes(mine?.status ?? "");
     return {
       id: e.id,
       title: e.title,
@@ -269,7 +275,9 @@ export class EventsService {
       viewerHearted: Boolean(heart),
       viewerInterested: mine?.status === "INTERESTED",
       viewerStatus: mine?.status ?? null,
-      isHost: e.hostId === viewerId,
+      isHost,
+      canBook: !isHost && (e.requiresReservation || e.priceXaf > 0) && !seated,
+      viewerTicketId: ticket?.id ?? null,
       host: {
         id: e.host.id,
         username: e.host.username,

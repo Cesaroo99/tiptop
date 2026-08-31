@@ -5,6 +5,8 @@ import { availableBalance, displayLikeRatio, pickUnitForLike, planHeartTransfer,
 import { availabilityUntil, isCurrentlyAvailable } from "../src/availability";
 import { displayLocation, roundDistanceKm } from "../src/location";
 import { canAcceptInvitation, evaluateInvite, moodExpiresAt } from "../src/events";
+import { applyWebhook, mockCharge, reservationAmountXaf } from "../src/payments";
+import { canConsumeTicket, canShowQr, isInEntryWindow, signTicketQr, verifyTicketQr } from "../src/tickets";
 
 describe("parsePhone", () => {
   it("accepte un numéro camerounais national", () => {
@@ -218,8 +220,8 @@ describe("invitations & moods", () => {
     expect(evaluateInvite({ ...base, inviteeId: "cesar" })).toBe("INVITE_SELF");
   });
 
-  it("bloque le paiement par l’hôte (Phase 4)", () => {
-    expect(evaluateInvite({ ...base, priceXaf: 2500, payer: "HOST" })).toBe("PAYMENT_BY_HOST_PHASE");
+  it("autorise l’hôte payeur (checkout ensuite)", () => {
+    expect(evaluateInvite({ ...base, priceXaf: 2500, payer: "HOST" })).toBe("OK");
   });
 
   it("refuse un event complet", () => {
@@ -242,5 +244,45 @@ describe("invitations & moods", () => {
     expect(moodExpiresAt(new Date("2026-08-31T00:00:00Z"), 12).toISOString()).toBe(
       "2026-08-31T12:00:00.000Z",
     );
+  });
+});
+
+describe("tickets & paiement", () => {
+  it("signe et vérifie un QR HMAC", () => {
+    const token = signTicketQr("t1", 2_000_000_000, "abcdef0123456789ffff");
+    const ok = verifyTicketQr({ token, expectedSig: "abcdef0123456789ffff", nowSeconds: 1_700_000_000 });
+    expect(ok).toEqual({ ok: true, ticketId: "t1" });
+  });
+
+  it("refuse un HMAC invalide ou expiré", () => {
+    const token = signTicketQr("t1", 100, "abcdef0123456789");
+    expect(verifyTicketQr({ token, expectedSig: "deadbeefdeadbeef", nowSeconds: 50 }).ok).toBe(false);
+    expect(verifyTicketQr({ token, expectedSig: "abcdef0123456789", nowSeconds: 101 })).toEqual({
+      ok: false,
+      reason: "EXPIRED",
+    });
+  });
+
+  it("n’autorise la conso que si confirmed et jamais consommé", () => {
+    expect(canConsumeTicket("CONFIRMED", null)).toBe("OK");
+    expect(canConsumeTicket("CONFIRMED", new Date())).toBe("ALREADY_CONSUMED");
+    expect(canConsumeTicket("AWAITING_PAYMENT", null)).toBe("NOT_CONFIRMED");
+  });
+
+  it("n’affiche le QR que dans la fenêtre d’entrée", () => {
+    const startsAt = new Date("2026-08-31T18:00:00Z");
+    const endsAt = new Date("2026-08-31T22:00:00Z");
+    expect(isInEntryWindow({ startsAt, endsAt, now: new Date("2026-08-31T16:00:00Z") })).toBe(true);
+    expect(isInEntryWindow({ startsAt, endsAt, now: new Date("2026-08-31T15:00:00Z") })).toBe(false);
+    expect(canShowQr({ status: "CONFIRMED", startsAt, endsAt, now: new Date("2026-08-31T17:00:00Z") })).toBe(true);
+    expect(canShowQr({ status: "AWAITING_PAYMENT", startsAt, endsAt, now: new Date("2026-08-31T17:00:00Z") })).toBe(false);
+  });
+
+  it("calcule le montant et ignore un webhook dupliqué", () => {
+    expect(reservationAmountXaf(2500, 2)).toBe(5000);
+    expect(mockCharge({ provider: "CARD" }).status).toBe("SUCCEEDED");
+    expect(mockCharge({ provider: "MTN_MOMO", fail: true }).status).toBe("FAILED");
+    expect(applyWebhook("SUCCEEDED", "FAILED")).toEqual({ applied: false, status: "SUCCEEDED" });
+    expect(applyWebhook("PENDING", "SUCCEEDED")).toEqual({ applied: true, status: "SUCCEEDED" });
   });
 });

@@ -29,8 +29,20 @@ Le client web appelle `/api/*` (rewrite Next → Nest) **et** envoie `Authorizat
 - `POST|GET /api/events` — création + fil Tous / Mes
 - `POST /api/events/:id/interested` + coup de cœur transférable
 - `POST|GET /api/moods` — TTL max 24 h
-- `POST /api/invitations` + accept/refuse (gratuit réel ; payant = honnête Phase 4)
+- `POST /api/invitations` + accept/refuse (gratuit + payant mock)
 - `GET /api/favorites`, `GET /api/contacts`
+
+## Booking (Phase 4)
+
+- `POST|GET /api/reservations` — soi ± invités ; gratuit confirmé, payant `AWAITING_PAYMENT`
+- `POST /api/payments` — mock Card / Orange Money / MTN MoMo, header `Idempotency-Key`
+- `POST /api/payments/webhook` — public, ignore un statut déjà terminal
+- `GET|POST /api/payments/methods` — moyens mock (aucun vrai débit)
+- `GET /api/tickets` + `GET /api/tickets/:id` — QR `tt1.{id}.{exp}.{hmac16}` dans la fenêtre d’entrée
+- `POST /api/tickets/scan` + `POST /api/tickets/:id/consume` — `UPDATE … WHERE status = CONFIRMED AND consumed_at IS NULL`
+- `GET /api/events/:id/manage` — intéressés / réservés / validés (hôte)
+
+Invitations payantes : hôte paie à l’envoi ; invité paie à l’acceptation.
 
 ## Social (Phase 2)
 
@@ -62,6 +74,6 @@ Non scaffoldé en Phase 1 (pas de simulateur fiable ici). Le web est le client m
 | Port | Implémentation Phase 1 |
 | --- | --- |
 | SMS / OTP | `OTP_MOCK_CODE` |
-| Paiement | non branché (écrans « phase suivante ») |
+| Paiement | mock isolé Card / OM / MoMo — `fail: true` pour G15 |
 | Push | non branché |
 | Stockage | fichiers `public/` |

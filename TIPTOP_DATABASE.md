@@ -24,6 +24,14 @@ pnpm db:reset      # destructif, local uniquement
 - `Post.eventId` optionnel (carte sortie dans le feed)
 - `NotificationType.INVITE`
 
+## Tables Phase 4
+
+- `Reservation` (index unique partiel : une résa self active par `(eventId, bookerId)` si `invitationId IS NULL`)
+- `Ticket` (conso atomique `CONFIRMED` + `consumed_at IS NULL`)
+- `Payment` (`reservationId` unique, `idempotencyKey` unique)
+- `PaymentMethod` (Card / Orange Money / MTN MoMo — mock)
+- `NotificationType.TICKET`, `NotificationType.PAYMENT`
+
 ## Tables / champs préparés
 
 - `Device` (push)

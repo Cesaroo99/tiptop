@@ -202,9 +202,9 @@ async function main() {
     },
   });
 
-  const blackNight = new Date("2026-09-05T20:00:00+01:00");
-  const afterwork = new Date("2026-09-08T18:30:00+01:00");
-  const brunch = new Date("2026-09-06T11:00:00+01:00");
+  const afterworkAt = new Date(Date.now() + 90 * 60_000);
+  const brunchAt = new Date(Date.now() + 26 * 3600_000);
+  const blackAt = new Date(Date.now() + 4 * 3600_000);
 
   let black = await prisma.event.findFirst({ where: { hostId: cesar.id, title: "Soirée Black & White" } });
   if (!black) {
@@ -217,8 +217,8 @@ async function main() {
         city: "Yaoundé",
         zone: "Carrefour Damas",
         venue: "Black&White",
-        startsAt: blackNight,
-        endsAt: new Date(blackNight.getTime() + 4 * 3600_000),
+        startsAt: blackAt,
+        endsAt: new Date(blackAt.getTime() + 4 * 3600_000),
         priceXaf: 0,
         capacity: 40,
         minAge: 18,
@@ -244,11 +244,12 @@ async function main() {
       data: {
         hostId: erica.id,
         title: "Afterwork Bastos",
-        description: "Afterwork photo + rooftop. Entrée 2 500 FCFA — paiement en Phase 4.",
+        description: "Afterwork photo + rooftop. Entrée 2 500 FCFA — paiement mock.",
         city: "Yaoundé",
         zone: "Bastos",
         venue: "Rooftop Bastos",
-        startsAt: afterwork,
+        startsAt: afterworkAt,
+        endsAt: new Date(afterworkAt.getTime() + 4 * 3600_000),
         priceXaf: 2500,
         capacity: 25,
         minAge: 18,
@@ -268,7 +269,7 @@ async function main() {
         city: "Yaoundé",
         zone: "Odza",
         venue: "Jardin Odza",
-        startsAt: brunch,
+        startsAt: brunchAt,
         priceXaf: 0,
         capacity: 12,
         requiresReservation: true,
@@ -309,6 +310,40 @@ async function main() {
         entityType: "invitation",
         entityId: invitation.id,
       },
+    });
+  }
+
+  if (black) {
+    await prisma.event.update({
+      where: { id: black.id },
+      data: { startsAt: blackAt, endsAt: new Date(blackAt.getTime() + 4 * 3600_000) },
+    });
+  }
+  if (paid) {
+    await prisma.event.update({
+      where: { id: paid.id },
+      data: {
+        startsAt: afterworkAt,
+        endsAt: new Date(afterworkAt.getTime() + 4 * 3600_000),
+        description: "Afterwork photo + rooftop. Entrée 2 500 FCFA — paiement mock.",
+      },
+    });
+  }
+  if (picnic) {
+    await prisma.event.update({
+      where: { id: picnic.id },
+      data: { startsAt: brunchAt },
+    });
+  }
+
+  const methodCount = await prisma.paymentMethod.count({ where: { userId: cesar.id } });
+  if (methodCount === 0) {
+    await prisma.paymentMethod.createMany({
+      data: [
+        { userId: cesar.id, provider: "CARD", label: "Visa •• 4242" },
+        { userId: cesar.id, provider: "ORANGE_MONEY", label: "Orange Money •• 4785" },
+        { userId: cesar.id, provider: "MTN_MOMO", label: "MTN MoMo •• 4785" },
+      ],
     });
   }
 

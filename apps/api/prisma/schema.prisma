@@ -87,6 +87,9 @@ model User {
   moodComments       MoodComment[]
   contactsOwned      Contact[]            @relation("ContactOwner")
   contactsOf         Contact[]            @relation("ContactPerson")
+  reservations       Reservation[]
+  tickets            Ticket[]
+  paymentMethods     PaymentMethod[]
 }
 
 model Profile {
@@ -189,6 +192,8 @@ enum NotificationType {
   COMMENT
   FOLLOW
   INVITE
+  TICKET
+  PAYMENT
 }
 
 enum EventStatus {
@@ -225,6 +230,38 @@ enum MoodVisibility {
   ZONE
   FOLLOWERS
   EVENT
+}
+
+enum TicketStatus {
+  DRAFT
+  AWAITING_PAYMENT
+  CONFIRMED
+  CONSUMED
+  CANCELLED
+  REFUNDED
+  EXPIRED
+  INVALID
+}
+
+enum PaymentProvider {
+  CARD
+  ORANGE_MONEY
+  MTN_MOMO
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum ReservationStatus {
+  DRAFT
+  AWAITING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  PAST
 }
 
 model Follow {
@@ -292,6 +329,8 @@ model Event {
   hearts              EventHeart[]
   moods               Mood[]
   posts               Post[]
+  reservations        Reservation[]
+  tickets             Ticket[]
 
   @@index([startsAt, status])
   @@index([city])
@@ -322,6 +361,7 @@ model Invitation {
   expiresAt   DateTime
   createdAt   DateTime         @default(now())
   respondedAt DateTime?
+  reservation Reservation?
 
   @@index([inviteeId, status])
   @@index([inviterId])
@@ -375,4 +415,64 @@ model Contact {
   createdAt DateTime @default(now())
 
   @@unique([ownerId, personId])
+}
+
+model Reservation {
+  id            String            @id @default(cuid())
+  eventId       String
+  event         Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  bookerId      String
+  booker        User              @relation(fields: [bookerId], references: [id], onDelete: Cascade)
+  invitationId  String?           @unique
+  invitation    Invitation?       @relation(fields: [invitationId], references: [id], onDelete: SetNull)
+  status        ReservationStatus @default(DRAFT)
+  seats         Int               @default(1)
+  amountXaf     Int               @default(0)
+  currency      String            @default("XAF")
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  tickets       Ticket[]
+  payment       Payment?
+
+  @@index([bookerId, createdAt])
+  @@index([eventId, status])
+}
+
+model Ticket {
+  id             String       @id @default(cuid())
+  reservationId  String
+  reservation    Reservation  @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  eventId        String
+  event          Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  holderId       String
+  holder         User         @relation(fields: [holderId], references: [id], onDelete: Cascade)
+  status         TicketStatus @default(DRAFT)
+  consumedAt     DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([holderId, status])
+  @@index([eventId, status])
+}
+
+model Payment {
+  id              String          @id @default(cuid())
+  reservationId   String          @unique
+  reservation     Reservation     @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  provider        PaymentProvider
+  status          PaymentStatus   @default(PENDING)
+  amountXaf       Int
+  currency        String          @default("XAF")
+  idempotencyKey  String          @unique
+  providerRef     String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model PaymentMethod {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider  PaymentProvider
+  label     String
+  createdAt DateTime        @default(now())
 }

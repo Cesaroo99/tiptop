@@ -59,8 +59,7 @@ export type InviteEligibilityReason =
   | "EVENT_CANCELLED"
   | "EVENT_FULL"
   | "AGE_RESTRICTED"
-  | "ALREADY_IN"
-  | "PAYMENT_BY_HOST_PHASE";
+  | "ALREADY_IN";
 
 export function evaluateInvite(input: {
   inviterId: string;
@@ -82,7 +81,8 @@ export function evaluateInvite(input: {
   if (input.alreadyParticipating) return "ALREADY_IN";
   if (eventIsFull(input.capacity, input.taken)) return "EVENT_FULL";
   if (!meetsMinAge(input.inviteeBirthDate, input.minAge, input.now)) return "AGE_RESTRICTED";
-  if (input.priceXaf > 0 && input.payer === "HOST") return "PAYMENT_BY_HOST_PHASE";
+  void input.payer;
+  void input.priceXaf;
   return "OK";
 }
 

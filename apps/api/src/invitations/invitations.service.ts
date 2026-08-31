@@ -14,12 +14,14 @@ import {
 } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { BookingService } from "../booking/booking.service";
 
 @Injectable()
 export class InvitationsService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(NotificationsService) private readonly notifications: NotificationsService,
+    @Inject(BookingService) private readonly booking: BookingService,
   ) {}
 
   async relevantEvents(inviterId: string, inviteeId: string) {
@@ -71,7 +73,7 @@ export class InvitationsService {
             lastName: e.host.lastName,
             username: e.host.username,
           },
-          eligible: reason === "OK" || reason === "PAYMENT_BY_HOST_PHASE",
+          eligible: reason === "OK",
           reason,
         };
       })
@@ -131,7 +133,22 @@ export class InvitationsService {
       entityType: "invitation",
       entityId: invitation.id,
     });
-    return this.mapOne(invitation.id);
+    const mapped = await this.mapOne(invitation.id);
+    if (event.priceXaf > 0 && payer === "HOST") {
+      try {
+        const reservation = await this.booking.create(inviterId, {
+          eventId,
+          invitationId: invitation.id,
+          includeSelf: false,
+          holderIds: [inviteeId],
+        });
+        return { ...mapped, needsPayment: reservation.needsPayment, reservation };
+      } catch (e) {
+        await this.prisma.invitation.delete({ where: { id: invitation.id } });
+        throw e;
+      }
+    }
+    return mapped;
   }
 
   async list(userId: string, box: "received" | "sent") {
@@ -164,10 +181,24 @@ export class InvitationsService {
       throw new BadRequestException({ code: gate });
     }
     if (inv.event.priceXaf > 0 && inv.payer === "GUEST") {
-      throw new ConflictException({
-        code: "PAYMENT_REQUIRED",
-        message: "Le paiement mock arrive en Phase 4. L’invitation reste en attente.",
-      });
+      const reservation = await this.booking.fulfillInvitation(
+        actorId,
+        inv.id,
+        inv.inviteeId,
+        inv.eventId,
+        false,
+      );
+      const mapped = await this.mapOne(id);
+      return { ...mapped, needsPayment: reservation.needsPayment, reservation };
+    }
+    if (inv.event.priceXaf > 0 && inv.payer === "HOST") {
+      const existing = await this.prisma.reservation.findUnique({ where: { invitationId: inv.id } });
+      if (!existing || existing.status !== "CONFIRMED") {
+        throw new ConflictException({
+          code: "HOST_PAYMENT_PENDING",
+          message: "L’invitant n’a pas encore payé.",
+        });
+      }
     }
     const taken = inv.event.participants.filter((p) =>
       ["HOST", "CONFIRMED", "RESERVED"].includes(p.status),
@@ -204,6 +235,18 @@ export class InvitationsService {
       entityType: "invitation",
       entityId: id,
     });
+    if (inv.event.priceXaf <= 0) {
+      try {
+        await this.booking.create(actorId, {
+          eventId: inv.eventId,
+          invitationId: inv.id,
+          includeSelf: true,
+          holderIds: [inv.inviteeId],
+        });
+      } catch {
+        /* déjà un ticket */
+      }
+    }
     return this.mapOne(id);
   }
 

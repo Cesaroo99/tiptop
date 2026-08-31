@@ -4,3 +4,5 @@ export * from "./likes";
 export * from "./availability";
 export * from "./location";
 export * from "./events";
+export * from "./tickets";
+export * from "./payments";

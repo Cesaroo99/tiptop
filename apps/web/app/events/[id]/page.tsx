@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { EventCard } from "@/components/EventCard";
-import { ErrorBanner, Modal, Skeleton } from "@/components/ui";
+import { ErrorBanner, Skeleton } from "@/components/ui";
 import { api, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 
@@ -22,7 +22,6 @@ function EventDetail() {
   const { messages } = useI18n();
   const [event, setEvent] = useState<EventCardType | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [soon, setSoon] = useState<string | null>(null);
 
   async function load() {
     try {
@@ -67,18 +66,11 @@ function EventDetail() {
         </div>
       </section>
       {event.description ? <p className="text-sm leading-6 text-ink">{event.description}</p> : null}
-      {event.priceXaf > 0 ? (
-        <button
-          type="button"
-          className="w-full rounded-pill bg-[var(--border)] py-3 text-sm"
-          onClick={() => setSoon(messages.world.bookLater)}
-        >
-          {messages.world.tabReservations}
-        </button>
+      {event.isHost ? (
+        <Link href={`/events/${event.id}/manage`} className="block w-full rounded-pill bg-accent py-3 text-center text-sm font-semibold text-white">
+          {messages.booking.manageEvent}
+        </Link>
       ) : null}
-      <Modal open={Boolean(soon)} title={messages.world.sortie} onClose={() => setSoon(null)}>
-        {soon}
-      </Modal>
     </div>
   );
 }

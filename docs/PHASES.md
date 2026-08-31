@@ -30,7 +30,7 @@ Une phase n’est close que si UI, états, validation, tests et liaisons backend
 
 ## Phase 4 — Booking
 
-- [ ] Réservations, paiements mock, tickets, QR, validation
+- [x] Réservations, paiements mock, tickets, QR HMAC, validation hôte
 
 ## Phase 5 — Communication
 

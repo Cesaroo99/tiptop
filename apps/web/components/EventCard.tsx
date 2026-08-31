@@ -15,7 +15,6 @@ export function EventCard({
 }) {
   const { messages } = useI18n();
   const [transfer, setTransfer] = useState<string | null>(null);
-  const [soon, setSoon] = useState<string | null>(null);
 
   async function heart(confirmTransfer = false) {
     try {
@@ -91,14 +90,20 @@ export function EventCard({
               {event.viewerInterested ? messages.world.notInterested : messages.world.interested}
             </button>
           ) : null}
-          {event.priceXaf > 0 ? (
-            <button
-              type="button"
-              className="rounded-pill bg-[var(--border)] px-4 py-2 text-sm"
-              onClick={() => setSoon(messages.world.bookLater)}
-            >
-              {messages.world.tabReservations}
-            </button>
+          {event.canBook ? (
+            <Link href={`/events/${event.id}/book`} className="rounded-pill bg-accent px-4 py-2 text-sm font-semibold text-white">
+              {messages.booking.reserve}
+            </Link>
+          ) : null}
+          {event.viewerTicketId ? (
+            <Link href={`/tickets/${event.viewerTicketId}`} className="rounded-pill bg-[var(--border)] px-4 py-2 text-sm">
+              {messages.booking.viewTicket}
+            </Link>
+          ) : null}
+          {event.isHost ? (
+            <Link href={`/events/${event.id}/manage`} className="rounded-pill bg-[var(--border)] px-4 py-2 text-sm">
+              {messages.booking.manageEvent}
+            </Link>
           ) : null}
         </div>
       </div>
@@ -110,9 +115,6 @@ export function EventCard({
         confirmLabel={messages.common.confirm}
       >
         {messages.world.heartTransferBody.replace("{title}", transfer ?? "")}
-      </Modal>
-      <Modal open={Boolean(soon)} title={messages.world.sortie} onClose={() => setSoon(null)}>
-        {soon}
       </Modal>
     </article>
   );

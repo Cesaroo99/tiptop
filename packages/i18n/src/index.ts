@@ -124,6 +124,8 @@ export type Messages = {
     noImageHint: string;
     posted: string;
     notifInvite: string;
+    notifTicket: string;
+    notifPayment: string;
   };
   world: {
     available: string;
@@ -211,6 +213,54 @@ export type Messages = {
     tabInvites: string;
     tabReservations: string;
     sortie: string;
+  };
+  booking: {
+    reserve: string;
+    bookSelf: string;
+    pay: string;
+    paySuccess: string;
+    paySuccessBody: string;
+    payFail: string;
+    payRetry: string;
+    pendingPayment: string;
+    card: string;
+    orange: string;
+    momo: string;
+    addMethod: string;
+    methodsEmpty: string;
+    ticketActive: string;
+    ticketConsumed: string;
+    ticketQrLater: string;
+    ticketQrHint: string;
+    validateTicket: string;
+    scanTitle: string;
+    scanPaste: string;
+    scanOk: string;
+    alreadyConsumed: string;
+    invalidQr: string;
+    viewTicket: string;
+    manageEvent: string;
+    tabInterested: string;
+    tabReserved: string;
+    tabValidated: string;
+    paidBadge: string;
+    unpaidBadge: string;
+    amount: string;
+    mockHint: string;
+    failDemo: string;
+    awaiting: string;
+    confirmed: string;
+    past: string;
+    seeTicket: string;
+    full: string;
+    ticketQrInactive: string;
+    ticketsEmpty: string;
+    hostPayPending: string;
+    invitePayHost: string;
+    methodsTitle: string;
+    labelHint: string;
+    entryClosed: string;
+    notHost: string;
   };
 };
 
@@ -340,6 +390,8 @@ export const fr: Messages = {
     noImageHint: "Visuel local de démo (stockage objet plus tard).",
     posted: "Publication envoyée",
     notifInvite: "t’a invité à une sortie",
+    notifTicket: "ticket mis à jour",
+    notifPayment: "paiement mis à jour",
   },
   world: {
     available: "Disponible",
@@ -407,7 +459,7 @@ export const fr: Messages = {
     payerFree: "Gratuit — pas de paiement",
     payerHost: "Je paie (invitant)",
     payerGuest: "L’invité paie",
-    payerHostLater: "Payer pour quelqu’un arrive avec le checkout Phase 4.",
+    payerHostLater: "Tu paies pour l’invité — checkout mock ensuite.",
     inviteSent: "Invitation envoyée",
     inviteReceived: "Invitations reçues",
     inviteSentBox: "Envoyées",
@@ -417,9 +469,9 @@ export const fr: Messages = {
     refused: "Refusée",
     expired: "Expirée",
     pending: "En attente",
-    paymentLater: "Cette sortie est payante. Le paiement mock arrive en Phase 4 — l’invitation reste en attente.",
-    ticketsLater: "Les tickets QR arrivent avec le booking (Phase 4).",
-    reservationsEmpty: "Pas encore de réservation. Les places payantes se gèrent en Phase 4.",
+    paymentLater: "Cette sortie est payante — paie pour confirmer, ou attends que l’invitant paie.",
+    ticketsLater: "Pas encore de ticket. Réserve une sortie pour en avoir un.",
+    reservationsEmpty: "Pas encore de réservation.",
     invitationsEmpty: "Aucune invitation pour l’instant.",
     contactsEmpty: "Tes contacts apparaissent après une invitation acceptée.",
     favoritesEmpty: "Aucun coup de cœur. Le cœur sur un événement en crée un.",
@@ -427,6 +479,54 @@ export const fr: Messages = {
     tabInvites: "Invitations",
     tabReservations: "Réservations",
     sortie: "Sortie",
+  },
+  booking: {
+    reserve: "Réserver",
+    bookSelf: "Réserver pour moi",
+    pay: "Payer",
+    paySuccess: "Paiement réussi",
+    paySuccessBody: "Tes tickets sont prêts. Montre le QR à l’entrée.",
+    payFail: "Paiement échoué. Réessaie ou change de moyen.",
+    payRetry: "Réessayer",
+    pendingPayment: "Paiement en attente…",
+    card: "Carte bancaire",
+    orange: "Orange Money",
+    momo: "MTN MoMo",
+    addMethod: "Ajouter un moyen",
+    methodsEmpty: "Ajoute un moyen mock (aucun vrai débit).",
+    ticketActive: "Ticket d’entrée",
+    ticketConsumed: "Ticket consommé",
+    ticketQrLater: "Le QR s’active 2 h avant l’entrée.",
+    ticketQrHint: "L’organisateur colle ce code pour valider. Pas de faux scanner caméra.",
+    validateTicket: "Valider ticket",
+    scanTitle: "Valider une entrée",
+    scanPaste: "Colle le code du ticket",
+    scanOk: "Entrée validée",
+    alreadyConsumed: "Déjà consommé",
+    invalidQr: "Code invalide ou expiré",
+    viewTicket: "Voir le ticket",
+    manageEvent: "Gérer la sortie",
+    tabInterested: "Intéressés",
+    tabReserved: "Réservés",
+    tabValidated: "Validés",
+    paidBadge: "Payé",
+    unpaidBadge: "Non payé",
+    amount: "{amount} FCFA",
+    mockHint: "Paiement mock : aucun argent réel. Échec volontaire pour tester.",
+    failDemo: "Simuler un échec",
+    awaiting: "En attente",
+    confirmed: "Confirmé",
+    past: "Passé",
+    seeTicket: "Ouvrir le ticket",
+    full: "Complet",
+    ticketQrInactive: "QR inactif",
+    ticketsEmpty: "Pas encore de ticket. Réserve une sortie pour en avoir un.",
+    hostPayPending: "L’invitant n’a pas encore payé.",
+    invitePayHost: "Tu paies pour l’invité. Checkout mock ensuite — aucun vrai débit.",
+    methodsTitle: "Moyens de paiement",
+    labelHint: "Libellé (ex. Visa •• 4242)",
+    entryClosed: "Hors fenêtre d’entrée",
+    notHost: "Seul l’organisateur peut valider.",
   },
 };
 
@@ -556,6 +656,8 @@ export const en: Messages = {
     noImageHint: "Local demo visual (object storage later).",
     posted: "Post published",
     notifInvite: "invited you to a meetup",
+    notifTicket: "ticket updated",
+    notifPayment: "payment updated",
   },
   world: {
     available: "Available",
@@ -623,7 +725,7 @@ export const en: Messages = {
     payerFree: "Free — no payment",
     payerHost: "I pay (host)",
     payerGuest: "The guest pays",
-    payerHostLater: "Paying for someone ships with Phase 4 checkout.",
+    payerHostLater: "You pay for the guest — mock checkout next.",
     inviteSent: "Invite sent",
     inviteReceived: "Received invites",
     inviteSentBox: "Sent",
@@ -633,9 +735,9 @@ export const en: Messages = {
     refused: "Declined",
     expired: "Expired",
     pending: "Pending",
-    paymentLater: "This meetup is paid. Mock checkout ships in Phase 4 — the invite stays pending.",
-    ticketsLater: "QR tickets ship with booking (Phase 4).",
-    reservationsEmpty: "No reservation yet. Paid seats are Phase 4.",
+    paymentLater: "This meetup is paid — pay to confirm, or wait for the host to pay.",
+    ticketsLater: "No ticket yet. Book a meetup to get one.",
+    reservationsEmpty: "No reservation yet.",
     invitationsEmpty: "No invitations yet.",
     contactsEmpty: "Contacts appear after an accepted invite.",
     favoritesEmpty: "No favorites. A heart on an event creates one.",
@@ -643,6 +745,54 @@ export const en: Messages = {
     tabInvites: "Invites",
     tabReservations: "Bookings",
     sortie: "Meetup",
+  },
+  booking: {
+    reserve: "Book",
+    bookSelf: "Book for myself",
+    pay: "Pay",
+    paySuccess: "Payment succeeded",
+    paySuccessBody: "Your tickets are ready. Show the QR at the door.",
+    payFail: "Payment failed. Retry or pick another method.",
+    payRetry: "Retry",
+    pendingPayment: "Payment pending…",
+    card: "Card",
+    orange: "Orange Money",
+    momo: "MTN MoMo",
+    addMethod: "Add a method",
+    methodsEmpty: "Add a mock method (no real charge).",
+    ticketActive: "Entry ticket",
+    ticketConsumed: "Ticket used",
+    ticketQrLater: "The QR turns on 2h before entry.",
+    ticketQrHint: "The host pastes this code to validate. No fake camera scanner.",
+    validateTicket: "Validate ticket",
+    scanTitle: "Validate entry",
+    scanPaste: "Paste the ticket code",
+    scanOk: "Entry validated",
+    alreadyConsumed: "Already used",
+    invalidQr: "Invalid or expired code",
+    viewTicket: "View ticket",
+    manageEvent: "Manage meetup",
+    tabInterested: "Interested",
+    tabReserved: "Reserved",
+    tabValidated: "Checked in",
+    paidBadge: "Paid",
+    unpaidBadge: "Unpaid",
+    amount: "{amount} XAF",
+    mockHint: "Mock payment: no real money. Optional fail to test errors.",
+    failDemo: "Simulate a failure",
+    awaiting: "Pending",
+    confirmed: "Confirmed",
+    past: "Past",
+    seeTicket: "Open ticket",
+    full: "Sold out",
+    ticketQrInactive: "QR inactive",
+    ticketsEmpty: "No ticket yet. Book a meetup to get one.",
+    hostPayPending: "The host has not paid yet.",
+    invitePayHost: "You pay for the guest. Mock checkout next — no real charge.",
+    methodsTitle: "Payment methods",
+    labelHint: "Label (e.g. Visa •• 4242)",
+    entryClosed: "Outside entry window",
+    notHost: "Only the host can validate.",
   },
 };
 
