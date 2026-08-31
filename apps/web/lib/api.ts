@@ -14,6 +14,94 @@ export type PublicUser = {
   city: string | null;
   zone: string | null;
   availability: string;
+  availabilityUntil: string | null;
+  locationPrecision: string;
+  latitude: number | null;
+  longitude: number | null;
+};
+
+export type EventCard = {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string | null;
+  city: string;
+  zone: string | null;
+  venue: string | null;
+  startsAt: string;
+  endsAt: string | null;
+  priceXaf: number;
+  currency: string;
+  capacity: number | null;
+  taken: number;
+  minAge: number | null;
+  requiresReservation: boolean;
+  status: string;
+  hearts: number;
+  viewerHearted: boolean;
+  viewerInterested: boolean;
+  viewerStatus: string | null;
+  isHost: boolean;
+  host: {
+    id: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+    certified: boolean;
+    avatarUrl: string | null;
+  };
+  people?: Array<{
+    id: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+    certified: boolean;
+    status: string;
+  }>;
+};
+
+export type MoodItem = {
+  id: string;
+  body: string;
+  imageUrl: string | null;
+  expiresAt: string;
+  createdAt: string;
+  commentsCount: number;
+  likedAuthor: boolean;
+  authorActiveLikes: number;
+  event: { id: string; title: string } | null;
+  author: {
+    id: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+    certified: boolean;
+    avatarUrl: string | null;
+    city: string | null;
+  };
+};
+
+export type PersonCard = {
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  certified: boolean;
+  profession: string | null;
+  age: number | null;
+  locationLabel: string | null;
+  approximate: boolean;
+  distanceKm: number | null;
+};
+
+export type InvitationItem = {
+  id: string;
+  payer: string;
+  status: string;
+  expiresAt: string;
+  event: { id: string; title: string; startsAt: string; city: string; zone: string | null; priceXaf: number };
+  inviter: { id: string; username: string; firstName: string; lastName: string };
+  invitee: { id: string; username: string; firstName: string; lastName: string };
 };
 
 export type FeedItem = {
@@ -46,7 +134,7 @@ export type CommentItem = {
 
 export type NotifItem = {
   id: string;
-  type: "LIKE" | "COMMENT" | "FOLLOW";
+  type: "LIKE" | "COMMENT" | "FOLLOW" | "INVITE";
   entityType: string | null;
   entityId: string | null;
   read: boolean;

@@ -37,6 +37,10 @@ export type PublicUser = {
   city: string | null;
   zone: string | null;
   availability: Availability;
+  availabilityUntil: string | null;
+  locationPrecision: LocationPrecision;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 @Injectable()
@@ -59,6 +63,10 @@ export class AuthService {
       city: string | null;
       zone: string | null;
       availability: Availability;
+      availabilityUntil: Date | null;
+      locationPrecision: LocationPrecision;
+      latitude: number | null;
+      longitude: number | null;
     } | null;
   }): PublicUser {
     return {
@@ -77,6 +85,10 @@ export class AuthService {
       city: user.profile?.city ?? null,
       zone: user.profile?.zone ?? null,
       availability: user.profile?.availability ?? Availability.HIDDEN,
+      availabilityUntil: user.profile?.availabilityUntil?.toISOString() ?? null,
+      locationPrecision: user.profile?.locationPrecision ?? LocationPrecision.ZONE,
+      latitude: user.profile?.latitude ?? null,
+      longitude: user.profile?.longitude ?? null,
     };
   }
 

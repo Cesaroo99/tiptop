@@ -10,6 +10,11 @@ import { LikesModule } from "./likes/likes.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { SearchModule } from "./search/search.module";
 import { ProfilesModule } from "./profiles/profiles.module";
+import { EventsModule } from "./events/events.module";
+import { DiscoveryModule } from "./discovery/discovery.module";
+import { MoodsModule } from "./moods/moods.module";
+import { InvitationsModule } from "./invitations/invitations.module";
+import { ContactsModule } from "./contacts/contacts.module";
 
 @Module({
   imports: [
@@ -23,6 +28,11 @@ import { ProfilesModule } from "./profiles/profiles.module";
     NotificationsModule,
     SearchModule,
     ProfilesModule,
+    EventsModule,
+    DiscoveryModule,
+    MoodsModule,
+    InvitationsModule,
+    ContactsModule,
   ],
   controllers: [HealthController],
 })

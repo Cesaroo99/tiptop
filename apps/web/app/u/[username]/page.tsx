@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
@@ -18,7 +19,9 @@ type Profile = {
   profession: string | null;
   bio: string | null;
   city: string | null;
+  zone: string | null;
   website: string | null;
+  availability: string;
   isSelf: boolean;
   following: boolean;
   followersCount: number;
@@ -110,7 +113,15 @@ function ProfileView() {
         </h1>
         <p className="text-sm text-muted">@{profile.username}</p>
         {profile.profession ? <p className="mt-1 text-sm text-muted">{profile.profession}</p> : null}
-        {profile.city ? <p className="text-sm text-muted">Vie à {profile.city}</p> : null}
+        {profile.city ? (
+          <p className="text-sm text-muted">
+            Vie à {profile.city}
+            {profile.zone ? ` - ${profile.zone}` : ""}
+          </p>
+        ) : null}
+        {profile.availability === "AVAILABLE" ? (
+          <p className="mt-1 text-xs font-semibold text-accent">{messages.world.available}</p>
+        ) : null}
         <p className="mt-2 text-xs text-muted">
           {profile.followersCount} · {profile.followingCount} · {profile.likeStats.active} likes
         </p>
@@ -129,12 +140,17 @@ function ProfileView() {
             <button type="button" className="rounded-pill bg-[var(--border)] px-5 py-3" onClick={() => setSoon(messages.social.chatLater)}>
               Message
             </button>
-            <button type="button" className="rounded-pill bg-[var(--border)] px-5 py-3" onClick={() => setSoon(messages.social.inviteLater)}>
-              + Inviter
-            </button>
+            <Link href={`/invite/${profile.id}`} className="rounded-pill bg-[var(--border)] px-5 py-3">
+              + {messages.world.invite}
+            </Link>
           </div>
         ) : (
-          <p className="mt-3 text-sm text-muted">{user?.username}</p>
+          <div className="mt-3 space-y-2">
+            <p className="text-sm text-muted">@{user?.username}</p>
+            <Link href="/zone" className="text-sm font-semibold text-accent">
+              {messages.world.goAvailable} · {messages.world.zoneTitle}
+            </Link>
+          </div>
         )}
       </div>
       <div className="mt-6 px-4">

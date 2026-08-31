@@ -52,6 +52,10 @@ export default function SettingsPage() {
             />
           </span>
         </CardButton>
+        <CardButton onClick={() => router.push("/zone")}>
+          <span>{messages.world.precision}</span>
+          <span>›</span>
+        </CardButton>
         <CardButton onClick={() => setLangOpen((v) => !v)}>
           <span>{messages.settings.language}</span>
           <span>›</span>

@@ -17,6 +17,13 @@ pnpm db:reset      # destructif, local uniquement
 - `Post`, `Comment` (lecture feed)
 - `AppConfig` (`influencerThresholdLikesPerHour`)
 
+## Tables Phase 3
+
+- `Event`, `EventParticipant`, `Invitation`, `EventHeart` (index unique actif par user)
+- `Mood`, `MoodComment`, `Contact`
+- `Post.eventId` optionnel (carte sortie dans le feed)
+- `NotificationType.INVITE`
+
 ## Tables / champs préparés
 
 - `Device` (push)

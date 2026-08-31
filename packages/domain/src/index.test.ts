@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import { maskPhone, parsePhone } from "../src/phone";
 import { canResendOtp, evaluateOtp } from "../src/otp";
 import { availableBalance, displayLikeRatio, pickUnitForLike, planHeartTransfer, planTransfer } from "../src/likes";
+import { availabilityUntil, isCurrentlyAvailable } from "../src/availability";
+import { displayLocation, roundDistanceKm } from "../src/location";
+import { canAcceptInvitation, evaluateInvite, moodExpiresAt } from "../src/events";
 
 describe("parsePhone", () => {
   it("accepte un numéro camerounais national", () => {
@@ -146,5 +149,98 @@ describe("likes", () => {
     const ratio = displayLikeRatio(120, 50);
     expect(ratio.unit).toBe("second");
     expect(ratio.value).toBeCloseTo(120 / 3600);
+  });
+});
+
+describe("disponibilité", () => {
+  it("expire après le TTL", () => {
+    const from = new Date("2026-08-31T10:00:00Z");
+    const until = availabilityUntil(from, 4);
+    expect(until.toISOString()).toBe("2026-08-31T14:00:00.000Z");
+    expect(
+      isCurrentlyAvailable({
+        availability: "AVAILABLE",
+        availabilityUntil: until,
+        now: new Date("2026-08-31T13:59:00Z"),
+      }),
+    ).toBe(true);
+    expect(
+      isCurrentlyAvailable({
+        availability: "AVAILABLE",
+        availabilityUntil: until,
+        now: new Date("2026-08-31T14:01:00Z"),
+      }),
+    ).toBe(false);
+  });
+
+  it("ignore un statut busy même avec TTL", () => {
+    expect(
+      isCurrentlyAvailable({
+        availability: "BUSY",
+        availabilityUntil: new Date(Date.now() + 3600_000),
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("localisation", () => {
+  it("n’arrondit jamais au mètre", () => {
+    expect(roundDistanceKm(0.14)).toBe(1);
+    expect(roundDistanceKm(13.6)).toBe(14);
+  });
+
+  it("masque la position au niveau HIDDEN", () => {
+    expect(displayLocation({ precision: "HIDDEN", city: "Yaoundé", zone: "Bastos" }).label).toBeNull();
+  });
+
+  it("grise la carte hors EXACT", () => {
+    expect(displayLocation({ precision: "ZONE", city: "Yaoundé", zone: "Bastos" }).mapGrayed).toBe(true);
+    expect(displayLocation({ precision: "EXACT", city: "Yaoundé", zone: "Bastos" }).mapGrayed).toBe(false);
+  });
+});
+
+describe("invitations & moods", () => {
+  const base = {
+    inviterId: "cesar",
+    inviteeId: "erica",
+    startsAt: new Date(Date.now() + 86400_000),
+    status: "PUBLISHED",
+    capacity: 10,
+    taken: 2,
+    minAge: 18,
+    inviteeBirthDate: new Date("1996-07-22"),
+    alreadyParticipating: false,
+    priceXaf: 0,
+    payer: "FREE" as const,
+  };
+
+  it("interdit de s’inviter soi-même", () => {
+    expect(evaluateInvite({ ...base, inviteeId: "cesar" })).toBe("INVITE_SELF");
+  });
+
+  it("bloque le paiement par l’hôte (Phase 4)", () => {
+    expect(evaluateInvite({ ...base, priceXaf: 2500, payer: "HOST" })).toBe("PAYMENT_BY_HOST_PHASE");
+  });
+
+  it("refuse un event complet", () => {
+    expect(evaluateInvite({ ...base, capacity: 2, taken: 2 })).toBe("EVENT_FULL");
+  });
+
+  it("refuse une invitation expirée", () => {
+    expect(
+      canAcceptInvitation({
+        status: "PENDING",
+        expiresAt: new Date(Date.now() - 1000),
+        inviteeId: "erica",
+        actorId: "erica",
+      }),
+    ).toBe("INVITE_EXPIRED");
+  });
+
+  it("limite un mood à 24 h", () => {
+    expect(() => moodExpiresAt(new Date(), 48)).toThrow("MOOD_DURATION_INVALID");
+    expect(moodExpiresAt(new Date("2026-08-31T00:00:00Z"), 12).toISOString()).toBe(
+      "2026-08-31T12:00:00.000Z",
+    );
   });
 });

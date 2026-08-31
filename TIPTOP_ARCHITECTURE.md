@@ -21,6 +21,17 @@ Le client web appelle `/api/*` (rewrite Next → Nest) **et** envoie `Authorizat
 | Règles testables | `packages/domain` | I/O |
 | Persistance | Prisma `apps/api/prisma` | |
 
+## Monde réel (Phase 3)
+
+- `PATCH /api/users/me` — disponibilité + TTL, zone, précision
+- `GET /api/discovery/people` — carousel personnes disponibles
+- `GET /api/geo/zones` — catalogue Yaoundé
+- `POST|GET /api/events` — création + fil Tous / Mes
+- `POST /api/events/:id/interested` + coup de cœur transférable
+- `POST|GET /api/moods` — TTL max 24 h
+- `POST /api/invitations` + accept/refuse (gratuit réel ; payant = honnête Phase 4)
+- `GET /api/favorites`, `GET /api/contacts`
+
 ## Social (Phase 2)
 
 - `POST /api/posts` — publication texte + lieu + image `/seed/*`

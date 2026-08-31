@@ -25,10 +25,13 @@ export default function NotificationsPage() {
     const name = n.actor ? `${n.actor.firstName} ${n.actor.lastName}` : "Quelqu’un";
     if (n.type === "LIKE") return `${name} ${messages.social.notifLike}`;
     if (n.type === "COMMENT") return `${name} ${messages.social.notifComment}`;
+    if (n.type === "INVITE") return `${name} ${messages.social.notifInvite}`;
     return `${name} ${messages.social.notifFollow}`;
   }
 
   function href(n: NotifItem) {
+    if (n.type === "INVITE") return "/tickets";
+    if (n.type === "COMMENT" && n.entityType === "mood" && n.entityId) return `/mood/${n.entityId}`;
     if (n.type === "COMMENT" && n.entityId) return `/posts/${n.entityId}`;
     if (n.actor) return `/u/${n.actor.username}`;
     return "/";

@@ -25,8 +25,8 @@ Une phase n’est close que si UI, états, validation, tests et liaisons backend
 
 ## Phase 3 — Real world core
 
-- [ ] Disponibilité, localisation, découverte
-- [ ] Événements, moods, invitations
+- [x] Disponibilité, localisation, découverte
+- [x] Événements, moods, invitations
 
 ## Phase 4 — Booking
 

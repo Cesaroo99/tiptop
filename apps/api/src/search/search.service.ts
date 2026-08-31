@@ -39,6 +39,25 @@ export class SearchService {
               author: { select: { id: true, username: true, firstName: true, lastName: true } },
             },
           });
+    const events =
+      type === "people" || type === "posts"
+        ? []
+        : await this.prisma.event.findMany({
+            where: {
+              status: "PUBLISHED",
+              OR: [
+                { title: { contains: query, mode: Prisma.QueryMode.insensitive } },
+                { description: { contains: query, mode: Prisma.QueryMode.insensitive } },
+                { city: { contains: query, mode: Prisma.QueryMode.insensitive } },
+                { zone: { contains: query, mode: Prisma.QueryMode.insensitive } },
+              ],
+            },
+            take: 20,
+            orderBy: { startsAt: "asc" },
+            include: {
+              host: { select: { username: true, firstName: true, lastName: true } },
+            },
+          });
     return {
       people: people.map((u) => ({
         id: u.id,
@@ -55,7 +74,15 @@ export class SearchService {
         createdAt: p.createdAt.toISOString(),
         author: p.author,
       })),
-      events: [],
+      events: events.map((e) => ({
+        id: e.id,
+        title: e.title,
+        startsAt: e.startsAt.toISOString(),
+        city: e.city,
+        zone: e.zone,
+        priceXaf: e.priceXaf,
+        host: e.host,
+      })),
     };
   }
 }

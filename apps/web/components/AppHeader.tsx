@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
+import { useSession } from "@/lib/session";
 import { Logo } from "./Logo";
 
 export function AppHeader({
@@ -10,12 +12,36 @@ export function AppHeader({
 }: {
   location?: string | null;
 }) {
+  const { messages } = useI18n();
+  const { user, refresh } = useSession();
   const [unread, setUnread] = useState(0);
+  const [busy, setBusy] = useState(false);
   useEffect(() => {
     api<{ unreadCount: number }>("/notifications")
       .then((d) => setUnread(d.unreadCount))
       .catch(() => setUnread(0));
   }, []);
+
+  const available =
+    user?.availability === "AVAILABLE" &&
+    Boolean(user.availabilityUntil && new Date(user.availabilityUntil).getTime() > Date.now());
+
+  async function toggleAvail() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await api("/users/me", {
+        method: "PATCH",
+        body: JSON.stringify(
+          available ? { availability: "HIDDEN" } : { availability: "AVAILABLE", ttlHours: 4 },
+        ),
+      });
+      await refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <header className="space-y-3 px-4 pt-2">
       <div className="flex items-center justify-between">
@@ -34,11 +60,11 @@ export function AppHeader({
       </div>
       <div className="flex gap-2">
         <Link
-          href="/search"
+          href="/zone"
           className="flex flex-1 items-center gap-2 rounded-2xl bg-[var(--border)]/60 px-3 py-3 text-left text-sm text-muted"
         >
           <Pin />
-          <span className="flex-1 truncate">{location || "Choisir une zone"}</span>
+          <span className="flex-1 truncate">{location || messages.home.locationFallback}</span>
           <span>▾</span>
         </Link>
         <Link
@@ -49,6 +75,13 @@ export function AppHeader({
           <Search />
         </Link>
       </div>
+      <button
+        type="button"
+        onClick={() => void toggleAvail()}
+        className={`rounded-pill px-3 py-1.5 text-xs font-semibold ${available ? "bg-accent text-white" : "bg-[var(--border)] text-muted"}`}
+      >
+        {available ? messages.world.available : messages.world.goAvailable}
+      </button>
     </header>
   );
 }

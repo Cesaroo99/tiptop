@@ -44,6 +44,8 @@ export class ProfilesService {
       zone: user.profile?.zone ?? null,
       website: user.profile?.website ?? null,
       availability: user.profile?.availability ?? "HIDDEN",
+      availabilityUntil: user.profile?.availabilityUntil?.toISOString() ?? null,
+      locationPrecision: user.profile?.locationPrecision ?? "ZONE",
       isSelf: viewerId === user.id,
       following,
       followersCount: followCounts.followers,

@@ -23,7 +23,14 @@ type SearchResult = {
     createdAt: string;
     author: { username: string; firstName: string; lastName: string };
   }>;
-  events: unknown[];
+  events: Array<{
+    id: string;
+    title: string;
+    startsAt: string;
+    city: string;
+    zone: string | null;
+    priceXaf: number;
+  }>;
 };
 
 const filters = ["all", "people", "posts", "events"] as const;
@@ -52,7 +59,8 @@ export default function SearchPage() {
     events: messages.social.events,
   };
 
-  const empty = result && result.people.length === 0 && result.posts.length === 0;
+  const empty =
+    result && result.people.length === 0 && result.posts.length === 0 && result.events.length === 0;
 
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-4 py-4">
@@ -79,9 +87,6 @@ export default function SearchPage() {
       </button>
       {loading ? <p className="mt-4 text-sm text-muted">{messages.common.loading}</p> : null}
       {empty ? <EmptyState title={messages.common.search} body={messages.social.emptySearch} /> : null}
-      {type === "events" && result ? (
-        <p className="mt-4 text-sm text-muted">{messages.social.eventsLater}</p>
-      ) : null}
       <div className="mt-4 space-y-3">
         {result?.people.map((p) => (
           <Link key={p.id} href={`/u/${p.username}`} className="block rounded-card bg-surface p-4 shadow-card">
@@ -89,6 +94,15 @@ export default function SearchPage() {
               {p.firstName} {p.lastName} {p.certified ? "✓" : ""}
             </p>
             <p className="text-sm text-muted">{p.profession || `@${p.username}`}</p>
+          </Link>
+        ))}
+        {result?.events.map((e) => (
+          <Link key={e.id} href={`/events/${e.id}`} className="block rounded-card bg-surface p-4 shadow-card">
+            <p className="text-sm font-semibold text-accent">{e.title}</p>
+            <p className="text-xs text-muted">
+              {new Date(e.startsAt).toLocaleString()} · {e.city}
+              {e.priceXaf > 0 ? ` · ${e.priceXaf} FCFA` : ""}
+            </p>
           </Link>
         ))}
         {result?.posts.map((p) => (

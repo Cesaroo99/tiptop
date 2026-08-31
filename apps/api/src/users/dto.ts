@@ -1,4 +1,4 @@
-import { IsOptional, IsString, Length, Matches } from "class-validator";
+import { IsIn, IsNumber, IsOptional, IsString, Length, Matches, Max, Min } from "class-validator";
 
 export class UpdateMeDto {
   @IsOptional()
@@ -41,4 +41,26 @@ export class UpdateMeDto {
   @IsString()
   @Length(0, 80)
   zone?: string;
+
+  @IsOptional()
+  @IsIn(["HIDDEN", "BUSY", "AVAILABLE"])
+  availability?: "HIDDEN" | "BUSY" | "AVAILABLE";
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(24)
+  ttlHours?: number;
+
+  @IsOptional()
+  @IsIn(["EXACT", "ZONE", "CITY", "HIDDEN"])
+  locationPrecision?: "EXACT" | "ZONE" | "CITY" | "HIDDEN";
+
+  @IsOptional()
+  @IsNumber()
+  latitude?: number;
+
+  @IsOptional()
+  @IsNumber()
+  longitude?: number;
 }

@@ -19,7 +19,7 @@ export function BottomNav() {
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center p-3 md:hidden">
       <div className="pointer-events-auto flex w-full max-w-md items-stretch justify-between rounded-[28px] bg-[var(--nav)] px-2 py-2 shadow-card">
         {items.map((item) => {
-          const active = pathname === item.href;
+          const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
           return (
             <Link
@@ -43,7 +43,7 @@ export function SideNav() {
   return (
     <nav className="hidden w-56 shrink-0 flex-col gap-1 p-4 md:flex">
       {items.map((item) => {
-        const active = pathname === item.href;
+          const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
         return (
           <Link
             key={item.href}

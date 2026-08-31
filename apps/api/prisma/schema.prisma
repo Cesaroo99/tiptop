@@ -78,6 +78,15 @@ model User {
   followers          Follow[]         @relation("Followers")
   notifications      Notification[]   @relation("NotifRecipient")
   notificationsActed Notification[]   @relation("NotifActor")
+  hostedEvents       Event[]              @relation("EventHost")
+  eventParticipations EventParticipant[]
+  sentInvitations    Invitation[]         @relation("Inviter")
+  receivedInvitations Invitation[]        @relation("Invitee")
+  eventHearts        EventHeart[]
+  moods              Mood[]
+  moodComments       MoodComment[]
+  contactsOwned      Contact[]            @relation("ContactOwner")
+  contactsOf         Contact[]            @relation("ContactPerson")
 }
 
 model Profile {
@@ -146,6 +155,8 @@ model Post {
   imageUrl  String?
   city      String?
   zone      String?
+  eventId   String?
+  event     Event?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
   comments  Comment[]
 
@@ -177,6 +188,43 @@ enum NotificationType {
   LIKE
   COMMENT
   FOLLOW
+  INVITE
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  ENDED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REFUSED
+  EXPIRED
+  CANCELLED
+}
+
+enum InvitationPayer {
+  HOST
+  GUEST
+  FREE
+}
+
+enum ParticipantStatus {
+  HOST
+  INTERESTED
+  RESERVED
+  CONFIRMED
+  PRESENT
+  CANCELLED
+}
+
+enum MoodVisibility {
+  ZONE
+  FOLLOWERS
+  EVENT
 }
 
 model Follow {
@@ -217,4 +265,114 @@ model LikeAllocation {
 
   @@index([unitId, releasedAt])
   @@index([toUserId, releasedAt])
+}
+
+model Event {
+  id                  String      @id @default(cuid())
+  hostId              String
+  host                User        @relation("EventHost", fields: [hostId], references: [id], onDelete: Cascade)
+  title               String
+  description         String      @default("")
+  imageUrl            String?
+  city                String
+  zone                String?
+  venue               String?
+  startsAt            DateTime
+  endsAt              DateTime?
+  priceXaf            Int         @default(0)
+  currency            String      @default("XAF")
+  capacity            Int?
+  minAge              Int?
+  requiresReservation Boolean     @default(false)
+  status              EventStatus @default(PUBLISHED)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  participants        EventParticipant[]
+  invitations         Invitation[]
+  hearts              EventHeart[]
+  moods               Mood[]
+  posts               Post[]
+
+  @@index([startsAt, status])
+  @@index([city])
+}
+
+model EventParticipant {
+  id        String            @id @default(cuid())
+  eventId   String
+  event     Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    ParticipantStatus
+  createdAt DateTime          @default(now())
+
+  @@unique([eventId, userId])
+}
+
+model Invitation {
+  id          String           @id @default(cuid())
+  eventId     String
+  event       Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  inviterId   String
+  inviter     User             @relation("Inviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  inviteeId   String
+  invitee     User             @relation("Invitee", fields: [inviteeId], references: [id], onDelete: Cascade)
+  payer       InvitationPayer
+  status      InvitationStatus @default(PENDING)
+  expiresAt   DateTime
+  createdAt   DateTime         @default(now())
+  respondedAt DateTime?
+
+  @@index([inviteeId, status])
+  @@index([inviterId])
+}
+
+model EventHeart {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId    String
+  event      Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  releasedAt DateTime?
+
+  @@index([userId, releasedAt])
+  @@index([eventId, releasedAt])
+}
+
+model Mood {
+  id         String         @id @default(cuid())
+  authorId   String
+  author     User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body       String         @default("")
+  imageUrl   String?
+  eventId    String?
+  event      Event?         @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  visibility MoodVisibility @default(ZONE)
+  expiresAt  DateTime
+  createdAt  DateTime       @default(now())
+  comments   MoodComment[]
+
+  @@index([expiresAt])
+}
+
+model MoodComment {
+  id        String   @id @default(cuid())
+  moodId    String
+  mood      Mood     @relation(fields: [moodId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  ownerId   String
+  owner     User     @relation("ContactOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  personId  String
+  person    User     @relation("ContactPerson", fields: [personId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([ownerId, personId])
 }

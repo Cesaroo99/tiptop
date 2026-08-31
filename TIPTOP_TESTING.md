@@ -7,13 +7,14 @@ pnpm --filter @tiptop/domain test
 pnpm --filter @tiptop/api test
 ```
 
-## Couverture actuelle (Phase 1)
+## Couverture actuelle (Phase 3)
 
 | Zone | Type | Fichier |
 | --- | --- | --- |
-| Téléphone / OTP / likes pures | unitaire | `packages/domain/src/index.test.ts` |
+| Téléphone / OTP / likes / dispo / invitations | unitaire | `packages/domain/src/index.test.ts` |
 | HMAC session | unitaire | `apps/api/src/crypto.test.ts` |
 | Transfert like + unicité | DB | `apps/api/src/likes/likes.transfer.test.ts` |
+| Disponibilité + invitations | DB | `apps/api/src/invitations/invitations.realworld.test.ts` |
 | Auth OTP → me → logout | intégration manuelle / curl | voir ci-dessous |
 | Parcours UI login | E2E navigateur Phase 1 | à exécuter sur le web local |
 

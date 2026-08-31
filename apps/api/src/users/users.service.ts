@@ -1,5 +1,6 @@
 import { ConflictException, Inject, Injectable } from "@nestjs/common";
-import { Prisma } from "@prisma/client";
+import { Availability, LocationPrecision, Prisma } from "@prisma/client";
+import { availabilityUntil, findZone } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { AuthService } from "../auth/auth.service";
 import type { UpdateMeDto } from "./dto";
@@ -19,6 +20,25 @@ export class UsersService {
         Boolean(firstName && lastName) ||
         (await this.prisma.user.findUnique({ where: { id: userId } }))?.profileCompleted;
 
+      const zoneHint = findZone(dto.city, dto.zone);
+      let availabilityUntilAt: Date | null | undefined;
+      if (dto.availability === "AVAILABLE") {
+        availabilityUntilAt = availabilityUntil(new Date(), dto.ttlHours);
+      } else if (dto.availability === "HIDDEN" || dto.availability === "BUSY") {
+        availabilityUntilAt = null;
+      }
+
+      const profilePatch = {
+        profession: dto.profession,
+        city: dto.city,
+        zone: dto.zone,
+        availability: dto.availability as Availability | undefined,
+        availabilityUntil: availabilityUntilAt,
+        locationPrecision: dto.locationPrecision as LocationPrecision | undefined,
+        latitude: dto.latitude ?? zoneHint?.latitude,
+        longitude: dto.longitude ?? zoneHint?.longitude,
+      };
+
       const user = await this.prisma.user.update({
         where: { id: userId },
         data: {
@@ -32,14 +52,15 @@ export class UsersService {
             upsert: {
               create: {
                 profession: dto.profession,
-                city: dto.city,
+                city: dto.city ?? "Yaoundé",
                 zone: dto.zone,
+                availability: (dto.availability as Availability | undefined) ?? Availability.HIDDEN,
+                availabilityUntil: availabilityUntilAt ?? undefined,
+                locationPrecision: (dto.locationPrecision as LocationPrecision | undefined) ?? LocationPrecision.ZONE,
+                latitude: dto.latitude ?? zoneHint?.latitude,
+                longitude: dto.longitude ?? zoneHint?.longitude,
               },
-              update: {
-                profession: dto.profession,
-                city: dto.city,
-                zone: dto.zone,
-              },
+              update: profilePatch,
             },
           },
         },
