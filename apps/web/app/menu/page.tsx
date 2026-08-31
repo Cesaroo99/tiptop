@@ -26,6 +26,7 @@ export default function MenuPage() {
   }
 
   const items = [
+    { href: "/likes", label: messages.menu.wallet },
     { href: "/tickets", label: messages.menu.tickets },
     { href: "/favorites", label: messages.menu.favorites },
     { href: "/contacts", label: messages.menu.contacts },
@@ -47,7 +48,7 @@ export default function MenuPage() {
         </div>
         <span className="text-muted">›</span>
       </Link>
-      <section className="mt-4 rounded-card bg-surface p-4 shadow-card">
+      <Link href="/likes" className="mt-4 block rounded-card bg-surface p-4 shadow-card">
         <p className="mb-3 text-sm text-accent">{messages.menu.likes}</p>
         <div className="grid grid-cols-3 text-center">
           <div>
@@ -63,7 +64,7 @@ export default function MenuPage() {
             <p className="text-xs text-muted">{messages.menu.perMonth}</p>
           </div>
         </div>
-      </section>
+      </Link>
       <div className="mt-4 space-y-3">
         {items.map((item) => (
           <CardButton key={item.href} onClick={() => router.push(item.href)}>

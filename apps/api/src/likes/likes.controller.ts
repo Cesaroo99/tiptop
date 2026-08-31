@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, Get, Inject, Param, Post, Req, UseGuards } from "@nestjs/common";
-import { IsBoolean, IsOptional } from "class-validator";
+import { Body, Controller, Delete, Get, Headers, Inject, Param, Post, Req, UseGuards } from "@nestjs/common";
+import { IsBoolean, IsIn, IsOptional, IsString } from "class-validator";
 import type { Request } from "express";
 import { SessionGuard } from "../auth/session.guard";
 import type { PublicUser } from "../auth/auth.service";
@@ -11,6 +11,22 @@ class LikeDto {
   confirmTransfer?: boolean;
 }
 
+class PurchaseDto {
+  @IsString()
+  packCode!: string;
+
+  @IsIn(["CARD", "ORANGE_MONEY", "MTN_MOMO"])
+  provider!: "CARD" | "ORANGE_MONEY" | "MTN_MOMO";
+
+  @IsOptional()
+  @IsBoolean()
+  fail?: boolean;
+
+  @IsOptional()
+  @IsString()
+  idempotencyKey?: string;
+}
+
 @Controller()
 @UseGuards(SessionGuard)
 export class LikesController {
@@ -19,6 +35,30 @@ export class LikesController {
   @Get("likes/me")
   mine(@Req() req: Request & { user: PublicUser }) {
     return this.likes.mine(req.user.id);
+  }
+
+  @Get("likes/wallet")
+  wallet(@Req() req: Request & { user: PublicUser }) {
+    return this.likes.wallet(req.user.id);
+  }
+
+  @Get("likes/packs")
+  packs() {
+    return this.likes.packs();
+  }
+
+  @Post("likes/purchase")
+  purchase(
+    @Req() req: Request & { user: PublicUser },
+    @Body() body: PurchaseDto,
+    @Headers("idempotency-key") headerKey?: string,
+  ) {
+    return this.likes.purchase(req.user.id, {
+      packCode: body.packCode,
+      provider: body.provider,
+      fail: body.fail,
+      idempotencyKey: body.idempotencyKey || headerKey || `likes_${req.user.id}_${Date.now()}`,
+    });
   }
 
   @Get("likes/stats/:userId")

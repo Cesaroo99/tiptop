@@ -73,6 +73,10 @@ model User {
   posts              Post[]
   likeUnits          LikeUnit[]
   likeReceived       LikeAllocation[] @relation("LikeReceived")
+  likePurchases      LikePurchase[]
+  likeTransactions   LikeTransaction[] @relation("LikeTxOwner")
+  likeTxReceived     LikeTransaction[] @relation("LikeTxTarget")
+  payments           Payment[]
   comments           Comment[]
   following          Follow[]         @relation("Following")
   followers          Follow[]         @relation("Followers")
@@ -188,10 +192,57 @@ model LikeUnit {
   ownerId              String
   owner                User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   source               LikeUnitSource @default(FREE)
+  purchaseId           String?
+  purchase             LikePurchase?  @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
   createdAt            DateTime       @default(now())
   allocations          LikeAllocation[]
+  transactions         LikeTransaction[]
 
   @@index([ownerId])
+  @@index([purchaseId])
+}
+
+enum PaymentKind {
+  RESERVATION
+  LIKE_PACK
+}
+
+enum LikeTransactionKind {
+  PURCHASE
+  ALLOCATE
+  RELEASE
+}
+
+model LikePurchase {
+  id        String            @id @default(cuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  packCode  String
+  units     Int
+  amountXaf Int
+  createdAt DateTime          @default(now())
+  payment   Payment?
+  unitsMade LikeUnit[]
+  ledger    LikeTransaction[]
+
+  @@index([userId, createdAt])
+}
+
+model LikeTransaction {
+  id         String               @id @default(cuid())
+  userId     String
+  user       User                 @relation("LikeTxOwner", fields: [userId], references: [id], onDelete: Cascade)
+  kind       LikeTransactionKind
+  delta      Int                  @default(0)
+  unitId     String?
+  unit       LikeUnit?            @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  toUserId   String?
+  toUser     User?                @relation("LikeTxTarget", fields: [toUserId], references: [id], onDelete: SetNull)
+  purchaseId String?
+  purchase   LikePurchase?        @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
+  createdAt  DateTime             @default(now())
+
+  @@index([userId, createdAt])
 }
 
 enum NotificationType {
@@ -465,8 +516,13 @@ model Ticket {
 
 model Payment {
   id              String          @id @default(cuid())
-  reservationId   String          @unique
-  reservation     Reservation     @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  kind            PaymentKind     @default(RESERVATION)
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reservationId   String?         @unique
+  reservation     Reservation?    @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  likePurchaseId  String?         @unique
+  likePurchase    LikePurchase?   @relation(fields: [likePurchaseId], references: [id], onDelete: SetNull)
   provider        PaymentProvider
   status          PaymentStatus   @default(PENDING)
   amountXaf       Int
@@ -475,6 +531,8 @@ model Payment {
   providerRef     String?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+
+  @@index([userId, createdAt])
 }
 
 model PaymentMethod {

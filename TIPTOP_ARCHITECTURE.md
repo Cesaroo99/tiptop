@@ -62,6 +62,15 @@ Invitations payantes : hôte paie à l’envoi ; invité paie à l’acceptation
 - `GET /api/notifications` + lecture
 - `GET /api/profiles/:username`
 
+## Monétisation likes (Phase 6)
+
+- `GET /api/likes/wallet` — solde disponible / total, allocations, historique `LikeTransaction`
+- `GET /api/likes/packs` — +1 / +5 / +20 (D17)
+- `POST /api/likes/purchase` — paiement mock Card / OM / MoMo ; ledger XAF (`Payment.kind = LIKE_PACK`) **séparé** du ledger likes
+- Échec (`fail: true`) : paiement `FAILED`, **aucun** `LikeUnit` créé
+- `POST /api/payments/webhook` — si pack likes, crédit idempotent (index unique un `PURCHASE` par achat)
+- UI `/likes`, `/likes/buy` (G25), `/likes/success` ; like sans unité → achat ; transfert G23 propose aussi l’achat
+
 ## Auth
 
 1. `POST /api/auth/otp/request` — crée un challenge, SMS mock (log + code `1234` hors prod).

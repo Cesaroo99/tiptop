@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { ErrorBanner, Modal, TextInput } from "@/components/ui";
+import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
+import { ErrorBanner, TextInput } from "@/components/ui";
 import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -26,6 +27,7 @@ function MoodViewer() {
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [transfer, setTransfer] = useState<string | null>(null);
+  const [buy, setBuy] = useState(false);
 
   async function load() {
     try {
@@ -59,16 +61,24 @@ function MoodViewer() {
       });
       setMood({ ...mood, likedAuthor: true });
       setTransfer(null);
+      setBuy(false);
     } catch (e) {
-      if (e instanceof ApiError && String(e.code).includes("TRANSFER")) {
-        const preview = await api<{ wouldTransferFrom: { firstName: string; lastName: string } | null }>(
-          `/users/${mood.author.id}/like/preview`,
-        );
-        setTransfer(
-          preview.wouldTransferFrom
-            ? `${preview.wouldTransferFrom.firstName} ${preview.wouldTransferFrom.lastName}`
-            : "…",
-        );
+      if (e instanceof ApiError) {
+        const kind = likeErrorKind(String(e.code));
+        if (kind === "buy") {
+          setBuy(true);
+          return;
+        }
+        if (kind === "transfer") {
+          const preview = await api<{ wouldTransferFrom: { firstName: string; lastName: string } | null }>(
+            `/users/${mood.author.id}/like/preview`,
+          );
+          setTransfer(
+            preview.wouldTransferFrom
+              ? `${preview.wouldTransferFrom.firstName} ${preview.wouldTransferFrom.lastName}`
+              : "…",
+          );
+        }
       }
     }
   }
@@ -130,15 +140,13 @@ function MoodViewer() {
           OK
         </button>
       </div>
-      <Modal
-        open={Boolean(transfer)}
-        title={messages.social.transferTitle}
-        onClose={() => setTransfer(null)}
-        onConfirm={() => void like(true)}
-        confirmLabel={messages.common.confirm}
-      >
-        {messages.social.transferBody.replace("{name}", transfer ?? "")}
-      </Modal>
+      <LikeDialogs
+        transferName={transfer}
+        buyOpen={buy}
+        onCloseTransfer={() => setTransfer(null)}
+        onConfirmTransfer={() => void like(true)}
+        onCloseBuy={() => setBuy(false)}
+      />
     </div>
   );
 }

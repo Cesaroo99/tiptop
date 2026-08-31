@@ -42,6 +42,7 @@ export type Messages = {
     settings: string;
     help: string;
     likes: string;
+    wallet: string;
     perHour: string;
     perDay: string;
     perMonth: string;
@@ -293,6 +294,34 @@ export type Messages = {
     livesIn: string;
     groupFromEvent: string;
   };
+  wallet: {
+    title: string;
+    buyTitle: string;
+    available: string;
+    total: string;
+    allocated: string;
+    emptyAlloc: string;
+    emptyHistory: string;
+    history: string;
+    packs: string;
+    packLabel: string;
+    buy: string;
+    buyCta: string;
+    buyInstead: string;
+    needPack: string;
+    needPackBody: string;
+    success: string;
+    successBody: string;
+    seeWallet: string;
+    mockHint: string;
+    txPurchase: string;
+    txAllocate: string;
+    txRelease: string;
+    paymentFailed: string;
+    sourcePurchased: string;
+    sourceFree: string;
+    sourceBonus: string;
+  };
 };
 
 export const fr: Messages = {
@@ -339,6 +368,7 @@ export const fr: Messages = {
     settings: "Paramètres",
     help: "Aide",
     likes: "Mes likes",
+    wallet: "Portefeuille likes",
     perHour: "/heure",
     perDay: "/Jour",
     perMonth: "/Mois",
@@ -590,6 +620,34 @@ export const fr: Messages = {
     livesIn: "Vie à {place}",
     groupFromEvent: "Ouvrir le groupe",
   },
+  wallet: {
+    title: "Portefeuille likes",
+    buyTitle: "Acheter des likes",
+    available: "Disponibles",
+    total: "Unités",
+    allocated: "Posés",
+    emptyAlloc: "Aucun like posé pour l’instant.",
+    emptyHistory: "Pas encore d’historique.",
+    history: "Historique",
+    packs: "Packs",
+    packLabel: "{units} likes",
+    buy: "Acheter",
+    buyCta: "Choisir un pack",
+    buyInstead: "Ou acheter plus de likes",
+    needPack: "Plus d’unité",
+    needPackBody: "Tu n’as plus d’unité de like. Achète un pack mock — aucun vrai débit, ledger likes séparé du paiement.",
+    success: "Likes ajoutés",
+    successBody: "{units} unités sont dans ton portefeuille.",
+    seeWallet: "Voir le portefeuille",
+    mockHint: "Paiement mock : le ledger likes est séparé du XAF. Aucun argent réel.",
+    txPurchase: "+{units} likes achetés",
+    txAllocate: "Like posé sur {name}",
+    txRelease: "Like retiré de {name}",
+    paymentFailed: "Paiement échoué. Aucun like n’a été crédité.",
+    sourcePurchased: "Acheté",
+    sourceFree: "Inclus",
+    sourceBonus: "Bonus certifié",
+  },
 };
 
 export const en: Messages = {
@@ -636,6 +694,7 @@ export const en: Messages = {
     settings: "Settings",
     help: "Help",
     likes: "My likes",
+    wallet: "Like wallet",
     perHour: "/hour",
     perDay: "/Day",
     perMonth: "/Month",
@@ -886,6 +945,34 @@ export const en: Messages = {
     messageCta: "Message",
     livesIn: "Lives in {place}",
     groupFromEvent: "Open group",
+  },
+  wallet: {
+    title: "Like wallet",
+    buyTitle: "Buy likes",
+    available: "Available",
+    total: "Units",
+    allocated: "Placed",
+    emptyAlloc: "No like placed yet.",
+    emptyHistory: "No history yet.",
+    history: "History",
+    packs: "Packs",
+    packLabel: "{units} likes",
+    buy: "Buy",
+    buyCta: "Choose a pack",
+    buyInstead: "Or buy more likes",
+    needPack: "No units left",
+    needPackBody: "You have no like units left. Buy a mock pack — no real charge, like ledger separate from payment.",
+    success: "Likes added",
+    successBody: "{units} units are in your wallet.",
+    seeWallet: "See wallet",
+    mockHint: "Mock payment: the like ledger is separate from XAF. No real money.",
+    txPurchase: "+{units} likes purchased",
+    txAllocate: "Like placed on {name}",
+    txRelease: "Like removed from {name}",
+    paymentFailed: "Payment failed. No like was credited.",
+    sourcePurchased: "Purchased",
+    sourceFree: "Included",
+    sourceBonus: "Certified bonus",
   },
 };
 

@@ -38,7 +38,7 @@ Une phase n’est close que si UI, états, validation, tests et liaisons backend
 
 ## Phase 6 — Monétisation
 
-- [ ] Achat de likes, portefeuille, historique
+- [x] Achat de likes, portefeuille, historique
 
 ## Phase 7 — Admin
 

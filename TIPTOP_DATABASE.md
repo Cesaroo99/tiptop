@@ -28,7 +28,7 @@ pnpm db:reset      # destructif, local uniquement
 
 - `Reservation` (index unique partiel : une résa self active par `(eventId, bookerId)` si `invitationId IS NULL`)
 - `Ticket` (conso atomique `CONFIRMED` + `consumed_at IS NULL`)
-- `Payment` (`reservationId` unique, `idempotencyKey` unique)
+- `Payment` (`kind` RESERVATION | LIKE_PACK, `userId`, `reservationId` optionnel, `likePurchaseId` optionnel, `idempotencyKey` unique)
 - `PaymentMethod` (Card / Orange Money / MTN MoMo — mock)
 - `NotificationType.TICKET`, `NotificationType.PAYMENT`
 
@@ -40,6 +40,12 @@ pnpm db:reset      # destructif, local uniquement
 - `UserBlock`
 - `PushPreference` + `Device` (unique `userId+platform`, `pushToken` optionnel)
 - `NotificationType.MESSAGE`
+
+## Tables Phase 6
+
+- `LikePurchase` (pack, unités, montant XAF — pas le solde likes)
+- `LikeTransaction` (PURCHASE / ALLOCATE / RELEASE) ; unique partiel un `PURCHASE` par `purchaseId`
+- `LikeUnit.purchaseId` optionnel (`source = PURCHASED`)
 
 ## Tables / champs préparés
 

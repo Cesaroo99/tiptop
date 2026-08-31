@@ -21,6 +21,7 @@ import {
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { LikesService } from "../likes/likes.service";
 import { hmac } from "../crypto";
 import { loadEnv } from "../env";
 
@@ -31,6 +32,7 @@ export class BookingService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(NotificationsService) private readonly notifications: NotificationsService,
+    @Inject(LikesService) private readonly likes: LikesService,
   ) {}
 
   async create(
@@ -198,6 +200,9 @@ export class BookingService {
 
     const existing = await this.prisma.payment.findUnique({ where: { idempotencyKey: input.idempotencyKey } });
     if (existing) {
+      if (existing.kind !== "RESERVATION" || !existing.reservationId) {
+        throw new ConflictException({ code: "IDEMPOTENCY_KIND_MISMATCH" });
+      }
       const full = await this.prisma.reservation.findUnique({
         where: { id: existing.reservationId },
         include: { tickets: true, payment: true, event: true },
@@ -223,7 +228,12 @@ export class BookingService {
         });
       } else {
         payment = await this.prisma.payment.create({
-          data: { reservationId: reservation.id, ...payload },
+          data: {
+            kind: "RESERVATION",
+            userId,
+            reservationId: reservation.id,
+            ...payload,
+          },
         });
       }
     } catch (e) {
@@ -264,7 +274,13 @@ export class BookingService {
       where: { id: payment.id },
       data: { status: result.status },
     });
-    if (result.status === "SUCCEEDED") await this.markPaid(payment.reservationId);
+    if (result.status === "SUCCEEDED") {
+      if (payment.kind === "LIKE_PACK") {
+        await this.likes.fulfillPaidPurchase(payment.id);
+      } else if (payment.reservationId) {
+        await this.markPaid(payment.reservationId);
+      }
+    }
     return { ok: true, duplicate: false, status: result.status };
   }
 

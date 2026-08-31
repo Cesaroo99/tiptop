@@ -5,6 +5,7 @@ import { useState } from "react";
 import { api, ApiError, type FeedItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
+import { LikeDialogs, likeErrorKind } from "./LikeDialogs";
 import { Modal } from "./ui";
 
 export function PostCard({
@@ -18,6 +19,7 @@ export function PostCard({
   const { user } = useSession();
   const [transfer, setTransfer] = useState<{ name: string } | null>(null);
   const [soon, setSoon] = useState<string | null>(null);
+  const [buy, setBuy] = useState(false);
   const mine = user?.id === post.author.id;
 
   async function like(confirmTransfer = false) {
@@ -37,15 +39,23 @@ export function PostCard({
       });
       onChanged?.({ ...post, likedAuthor: true, authorActiveLikes: post.authorActiveLikes + 1 });
       setTransfer(null);
+      setBuy(false);
     } catch (e) {
-      if (e instanceof ApiError && String(e.code).includes("TRANSFER")) {
-        const preview = await api<{ wouldTransferFrom: { firstName: string; lastName: string } | null }>(
-          `/users/${post.author.id}/like/preview`,
-        );
-        const n = preview.wouldTransferFrom
-          ? `${preview.wouldTransferFrom.firstName} ${preview.wouldTransferFrom.lastName}`
-          : "…";
-        setTransfer({ name: n });
+      if (e instanceof ApiError) {
+        const kind = likeErrorKind(String(e.code));
+        if (kind === "buy") {
+          setBuy(true);
+          return;
+        }
+        if (kind === "transfer") {
+          const preview = await api<{ wouldTransferFrom: { firstName: string; lastName: string } | null }>(
+            `/users/${post.author.id}/like/preview`,
+          );
+          const n = preview.wouldTransferFrom
+            ? `${preview.wouldTransferFrom.firstName} ${preview.wouldTransferFrom.lastName}`
+            : "…";
+          setTransfer({ name: n });
+        }
       }
     }
   }
@@ -104,15 +114,13 @@ export function PostCard({
           💬
         </Link>
       </div>
-      <Modal
-        open={Boolean(transfer)}
-        title={messages.social.transferTitle}
-        onClose={() => setTransfer(null)}
-        onConfirm={() => void like(true)}
-        confirmLabel={messages.common.confirm}
-      >
-        {messages.social.transferBody.replace("{name}", transfer?.name ?? "")}
-      </Modal>
+      <LikeDialogs
+        transferName={transfer?.name ?? null}
+        buyOpen={buy}
+        onCloseTransfer={() => setTransfer(null)}
+        onConfirmTransfer={() => void like(true)}
+        onCloseBuy={() => setBuy(false)}
+      />
       <Modal open={Boolean(soon)} title={messages.social.likePerson} onClose={() => setSoon(null)}>
         {soon}
       </Modal>

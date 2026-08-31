@@ -36,6 +36,7 @@ export default function NotificationsPage() {
     if (n.type === "INVITE") return "/tickets";
     if (n.type === "MESSAGE" && n.entityId) return `/messages/${n.entityId}`;
     if (n.type === "TICKET" && n.entityId) return `/tickets/${n.entityId}`;
+    if (n.type === "PAYMENT" && n.entityType === "like_purchase") return "/likes";
     if (n.type === "TICKET" || n.type === "PAYMENT") return "/tickets";
     if (n.type === "COMMENT" && n.entityType === "mood" && n.entityId) return `/mood/${n.entityId}`;
     if (n.type === "COMMENT" && n.entityId) return `/posts/${n.entityId}`;

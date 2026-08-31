@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { maskPhone, parsePhone } from "../src/phone";
 import { canResendOtp, evaluateOtp } from "../src/otp";
 import { availableBalance, displayLikeRatio, pickUnitForLike, planHeartTransfer, planTransfer } from "../src/likes";
+import { getLikePack, likeCreditAllowed, LIKE_PACKS, needsLikePurchase } from "../src/wallet";
 import { availabilityUntil, isCurrentlyAvailable } from "../src/availability";
 import { displayLocation, roundDistanceKm } from "../src/location";
 import { canAcceptInvitation, evaluateInvite, moodExpiresAt } from "../src/events";
@@ -152,6 +153,20 @@ describe("likes", () => {
     const ratio = displayLikeRatio(120, 50);
     expect(ratio.unit).toBe("second");
     expect(ratio.value).toBeCloseTo(120 / 3600);
+  });
+
+  it("expose les packs 1 / 5 / 20", () => {
+    expect(LIKE_PACKS.map((p) => p.units)).toEqual([1, 5, 20]);
+    expect(getLikePack("p5").amountXaf).toBe(2000);
+    expect(() => getLikePack("p99")).toThrow("LIKE_PACK_INVALID");
+  });
+
+  it("n’accorde des likes que si le paiement a réussi", () => {
+    expect(likeCreditAllowed("FAILED", false).ok).toBe(false);
+    expect(likeCreditAllowed("SUCCEEDED", true).ok).toBe(false);
+    expect(likeCreditAllowed("SUCCEEDED", false)).toEqual({ ok: true });
+    expect(needsLikePurchase(0)).toBe(true);
+    expect(needsLikePurchase(2)).toBe(false);
   });
 });
 

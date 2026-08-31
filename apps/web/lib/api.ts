@@ -177,6 +177,44 @@ export type NotifItem = {
   actor: { id: string; firstName: string; lastName: string; username: string; certified: boolean } | null;
 };
 
+export type LikePack = {
+  code: string;
+  units: number;
+  amountXaf: number;
+};
+
+export type LikePerson = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+};
+
+export type LikeWallet = {
+  available: number;
+  total: number;
+  packs: LikePack[];
+  allocations: Array<{ unitId: string; source: string; toUser: LikePerson }>;
+  history: Array<{
+    id: string;
+    kind: "PURCHASE" | "ALLOCATE" | "RELEASE";
+    delta: number;
+    createdAt: string;
+    toUser: LikePerson | null;
+    packCode: string | null;
+    units: number;
+  }>;
+  purchases: Array<{
+    id: string;
+    packCode: string;
+    units: number;
+    amountXaf: number;
+    createdAt: string;
+    paymentStatus: string | null;
+    provider: string | null;
+  }>;
+};
+
 export type ConversationItem = {
   id: string;
   kind: "DIRECT" | "GROUP" | "EVENT";
