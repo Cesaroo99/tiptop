@@ -84,6 +84,27 @@ export default function Page() {
             </div>
           )}
 
+          <h2 className="mb-2 mt-6 text-sm font-semibold text-accent">{messages.wallet.payments}</h2>
+          {wallet.purchases.length === 0 ? (
+            <p className="text-sm text-muted">{messages.wallet.emptyHistory}</p>
+          ) : (
+            <div className="space-y-2">
+              {wallet.purchases.map((p) => (
+                <article key={p.id} className="rounded-card bg-surface p-4 shadow-card">
+                  <p className="font-semibold">
+                    {messages.wallet.packLabel.replace("{units}", String(p.units))} ·{" "}
+                    {messages.booking.amount.replace("{amount}", String(p.amountXaf))}
+                  </p>
+                  <p className="text-xs text-muted">
+                    {p.paymentStatus === "SUCCEEDED" ? messages.wallet.credited : messages.wallet.notCredited}
+                    {" · "}
+                    {new Date(p.createdAt).toLocaleString()}
+                  </p>
+                </article>
+              ))}
+            </div>
+          )}
+
           <h2 className="mb-2 mt-6 text-sm font-semibold text-accent">{messages.wallet.history}</h2>
           {wallet.history.length === 0 ? (
             <p className="text-sm text-muted">{messages.wallet.emptyHistory}</p>

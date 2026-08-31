@@ -318,6 +318,9 @@ export type Messages = {
     txAllocate: string;
     txRelease: string;
     paymentFailed: string;
+    payments: string;
+    credited: string;
+    notCredited: string;
     sourcePurchased: string;
     sourceFree: string;
     sourceBonus: string;
@@ -644,6 +647,9 @@ export const fr: Messages = {
     txAllocate: "Like posé sur {name}",
     txRelease: "Like retiré de {name}",
     paymentFailed: "Paiement échoué. Aucun like n’a été crédité.",
+    payments: "Paiements packs",
+    credited: "Crédité",
+    notCredited: "Non crédité",
     sourcePurchased: "Acheté",
     sourceFree: "Inclus",
     sourceBonus: "Bonus certifié",
@@ -970,6 +976,9 @@ export const en: Messages = {
     txAllocate: "Like placed on {name}",
     txRelease: "Like removed from {name}",
     paymentFailed: "Payment failed. No like was credited.",
+    payments: "Pack payments",
+    credited: "Credited",
+    notCredited: "Not credited",
     sourcePurchased: "Purchased",
     sourceFree: "Included",
     sourceBonus: "Certified bonus",
