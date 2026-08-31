@@ -1,0 +1,378 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  DELETED
+}
+
+enum Availability {
+  HIDDEN
+  BUSY
+  AVAILABLE
+}
+
+enum LocationPrecision {
+  EXACT
+  ZONE
+  CITY
+  HIDDEN
+}
+
+enum PostKind {
+  ORGANIC
+  SPONSORED
+}
+
+enum LikeUnitSource {
+  FREE
+  PURCHASED
+  CERTIFIED_BONUS
+}
+
+model AppConfig {
+  key   String @id
+  value Json
+}
+
+model User {
+  id               String     @id @default(cuid())
+  phoneE164        String     @unique
+  phoneCountry     String     @default("CM")
+  email            String?    @unique
+  username         String     @unique
+  firstName        String
+  lastName         String
+  role             UserRole   @default(USER)
+  status           UserStatus @default(ACTIVE)
+  certified        Boolean    @default(false)
+  profileCompleted Boolean    @default(false)
+  locale           String     @default("fr")
+  theme            String     @default("light")
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  deletedAt        DateTime?
+
+  profile        Profile?
+  sessions       Session[]
+  devices        Device[]
+  otpChallenges  OtpChallenge[]
+  posts              Post[]
+  likeUnits          LikeUnit[]
+  likeReceived       LikeAllocation[] @relation("LikeReceived")
+  comments           Comment[]
+  following          Follow[]         @relation("Following")
+  followers          Follow[]         @relation("Followers")
+  notifications      Notification[]   @relation("NotifRecipient")
+  notificationsActed Notification[]   @relation("NotifActor")
+  hostedEvents       Event[]              @relation("EventHost")
+  eventParticipations EventParticipant[]
+  sentInvitations    Invitation[]         @relation("Inviter")
+  receivedInvitations Invitation[]        @relation("Invitee")
+  eventHearts        EventHeart[]
+  moods              Mood[]
+  moodComments       MoodComment[]
+  contactsOwned      Contact[]            @relation("ContactOwner")
+  contactsOf         Contact[]            @relation("ContactPerson")
+}
+
+model Profile {
+  id                 String             @id @default(cuid())
+  userId             String             @unique
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio                String?
+  profession         String?
+  avatarUrl          String?
+  coverUrl           String?
+  birthDate          DateTime?
+  availability       Availability       @default(HIDDEN)
+  availabilityUntil  DateTime?
+  locationPrecision  LocationPrecision  @default(ZONE)
+  country            String             @default("CM")
+  city               String?
+  zone               String?
+  latitude           Float?
+  longitude          Float?
+  website            String?
+}
+
+model Session {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  rememberMe Boolean   @default(false)
+  userAgent  String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model OtpChallenge {
+  id         String    @id @default(cuid())
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  phoneE164  String
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phoneE164, createdAt])
+}
+
+model Device {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pushToken String?
+  platform  String
+  lastSeenAt DateTime @default(now())
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body      String
+  kind      PostKind @default(ORGANIC)
+  imageUrl  String?
+  city      String?
+  zone      String?
+  eventId   String?
+  event     Event?   @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  comments  Comment[]
+
+  @@index([createdAt])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model LikeUnit {
+  id                   String         @id @default(cuid())
+  ownerId              String
+  owner                User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  source               LikeUnitSource @default(FREE)
+  createdAt            DateTime       @default(now())
+  allocations          LikeAllocation[]
+
+  @@index([ownerId])
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  FOLLOW
+  INVITE
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  ENDED
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REFUSED
+  EXPIRED
+  CANCELLED
+}
+
+enum InvitationPayer {
+  HOST
+  GUEST
+  FREE
+}
+
+enum ParticipantStatus {
+  HOST
+  INTERESTED
+  RESERVED
+  CONFIRMED
+  PRESENT
+  CANCELLED
+}
+
+enum MoodVisibility {
+  ZONE
+  FOLLOWERS
+  EVENT
+}
+
+model Follow {
+  id         String   @id @default(cuid())
+  followerId String
+  followeeId String
+  follower   User     @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  followee   User     @relation("Followers", fields: [followeeId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([followerId, followeeId])
+  @@index([followeeId])
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  userId     String
+  user       User             @relation("NotifRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actorId    String?
+  actor      User?            @relation("NotifActor", fields: [actorId], references: [id], onDelete: SetNull)
+  type       NotificationType
+  entityType String?
+  entityId   String?
+  readAt     DateTime?
+  createdAt  DateTime         @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model LikeAllocation {
+  id           String    @id @default(cuid())
+  unitId       String
+  unit         LikeUnit  @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  toUserId     String
+  toUser       User      @relation("LikeReceived", fields: [toUserId], references: [id], onDelete: Cascade)
+  allocatedAt  DateTime  @default(now())
+  releasedAt   DateTime?
+
+  @@index([unitId, releasedAt])
+  @@index([toUserId, releasedAt])
+}
+
+model Event {
+  id                  String      @id @default(cuid())
+  hostId              String
+  host                User        @relation("EventHost", fields: [hostId], references: [id], onDelete: Cascade)
+  title               String
+  description         String      @default("")
+  imageUrl            String?
+  city                String
+  zone                String?
+  venue               String?
+  startsAt            DateTime
+  endsAt              DateTime?
+  priceXaf            Int         @default(0)
+  currency            String      @default("XAF")
+  capacity            Int?
+  minAge              Int?
+  requiresReservation Boolean     @default(false)
+  status              EventStatus @default(PUBLISHED)
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  participants        EventParticipant[]
+  invitations         Invitation[]
+  hearts              EventHeart[]
+  moods               Mood[]
+  posts               Post[]
+
+  @@index([startsAt, status])
+  @@index([city])
+}
+
+model EventParticipant {
+  id        String            @id @default(cuid())
+  eventId   String
+  event     Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    ParticipantStatus
+  createdAt DateTime          @default(now())
+
+  @@unique([eventId, userId])
+}
+
+model Invitation {
+  id          String           @id @default(cuid())
+  eventId     String
+  event       Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  inviterId   String
+  inviter     User             @relation("Inviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  inviteeId   String
+  invitee     User             @relation("Invitee", fields: [inviteeId], references: [id], onDelete: Cascade)
+  payer       InvitationPayer
+  status      InvitationStatus @default(PENDING)
+  expiresAt   DateTime
+  createdAt   DateTime         @default(now())
+  respondedAt DateTime?
+
+  @@index([inviteeId, status])
+  @@index([inviterId])
+}
+
+model EventHeart {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId    String
+  event      Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  releasedAt DateTime?
+
+  @@index([userId, releasedAt])
+  @@index([eventId, releasedAt])
+}
+
+model Mood {
+  id         String         @id @default(cuid())
+  authorId   String
+  author     User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body       String         @default("")
+  imageUrl   String?
+  eventId    String?
+  event      Event?         @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  visibility MoodVisibility @default(ZONE)
+  expiresAt  DateTime
+  createdAt  DateTime       @default(now())
+  comments   MoodComment[]
+
+  @@index([expiresAt])
+}
+
+model MoodComment {
+  id        String   @id @default(cuid())
+  moodId    String
+  mood      Mood     @relation(fields: [moodId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  ownerId   String
+  owner     User     @relation("ContactOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  personId  String
+  person    User     @relation("ContactPerson", fields: [personId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([ownerId, personId])
+}

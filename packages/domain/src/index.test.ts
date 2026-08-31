@@ -1,0 +1,246 @@
+import { describe, expect, it } from "vitest";
+import { maskPhone, parsePhone } from "../src/phone";
+import { canResendOtp, evaluateOtp } from "../src/otp";
+import { availableBalance, displayLikeRatio, pickUnitForLike, planHeartTransfer, planTransfer } from "../src/likes";
+import { availabilityUntil, isCurrentlyAvailable } from "../src/availability";
+import { displayLocation, roundDistanceKm } from "../src/location";
+import { canAcceptInvitation, evaluateInvite, moodExpiresAt } from "../src/events";
+
+describe("parsePhone", () => {
+  it("accepte un numéro camerounais national", () => {
+    expect(parsePhone("695214785")).toEqual({
+      ok: true,
+      e164: "+237695214785",
+      country: "CM",
+      national: "695214785",
+    });
+  });
+
+  it("accepte un E.164 +237", () => {
+    expect(parsePhone("+237 695 21 47 85").ok).toBe(true);
+  });
+
+  it("rejette un numéro trop court", () => {
+    expect(parsePhone("123")).toEqual({ ok: false, error: "invalid" });
+  });
+});
+
+describe("maskPhone", () => {
+  it("masque le milieu", () => {
+    expect(maskPhone("+237695214785")).toMatch(/\*\*\*/);
+  });
+});
+
+describe("OTP", () => {
+  const hash = "abc";
+  const future = new Date(Date.now() + 60_000);
+
+  it("valide un code correct", () => {
+    expect(
+      evaluateOtp({
+        expectedHash: hash,
+        providedHash: hash,
+        expiresAt: future,
+        consumedAt: null,
+        attempts: 0,
+      }),
+    ).toBe("valid");
+  });
+
+  it("expire", () => {
+    expect(
+      evaluateOtp({
+        expectedHash: hash,
+        providedHash: hash,
+        expiresAt: new Date(Date.now() - 1),
+        consumedAt: null,
+        attempts: 0,
+      }),
+    ).toBe("expired");
+  });
+
+  it("refuse après trop de tentatives", () => {
+    expect(
+      evaluateOtp({
+        expectedHash: hash,
+        providedHash: "no",
+        expiresAt: future,
+        consumedAt: null,
+        attempts: 5,
+      }),
+    ).toBe("locked");
+  });
+
+  it("respecte le cooldown de renvoi", () => {
+    expect(canResendOtp({ lastSentAt: new Date(), cooldownSeconds: 30 })).toBe(false);
+    expect(
+      canResendOtp({
+        lastSentAt: new Date(Date.now() - 31_000),
+        cooldownSeconds: 30,
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("likes", () => {
+  it("transfère une unité d'Alice vers Sarah", () => {
+    const plan = planTransfer(
+      {
+        id: "u1",
+        ownerId: "cesar",
+        source: "free",
+        activeAllocationUserId: "alice",
+      },
+      "sarah",
+      "cesar",
+    );
+    expect(plan.fromBeneficiaryId).toBe("alice");
+    expect(plan.toBeneficiaryId).toBe("sarah");
+  });
+
+  it("interdit le like de soi-même", () => {
+    expect(() =>
+      planTransfer(
+        { id: "u1", ownerId: "cesar", source: "free", activeAllocationUserId: null },
+        "cesar",
+        "cesar",
+      ),
+    ).toThrow("LIKE_SELF");
+  });
+
+  it("compte le solde disponible", () => {
+    expect(
+      availableBalance([
+        { id: "1", ownerId: "c", source: "free", activeAllocationUserId: "a" },
+        { id: "2", ownerId: "c", source: "purchased", activeAllocationUserId: null },
+      ]),
+    ).toBe(1);
+  });
+
+  it("transfère le coup de cœur", () => {
+    const plan = planHeartTransfer({ userId: "c", eventId: "e1" }, "c", "e2");
+    expect(plan.fromEventId).toBe("e1");
+    expect(plan.toEventId).toBe("e2");
+  });
+
+  it("préfère une unité libre avant de transférer", () => {
+    const plan = pickUnitForLike(
+      [
+        { id: "busy", ownerId: "c", source: "free", activeAllocationUserId: "alice" },
+        { id: "free", ownerId: "c", source: "purchased", activeAllocationUserId: null },
+      ],
+      "sarah",
+      "c",
+    );
+    expect(plan.unitId).toBe("free");
+    expect(plan.fromBeneficiaryId).toBeNull();
+  });
+
+  it("transfère si plus d'unité libre", () => {
+    const plan = pickUnitForLike(
+      [{ id: "only", ownerId: "c", source: "free", activeAllocationUserId: "alice" }],
+      "sarah",
+      "c",
+    );
+    expect(plan.fromBeneficiaryId).toBe("alice");
+  });
+
+  it("affiche /seconde au-delà du seuil influenceur", () => {
+    const ratio = displayLikeRatio(120, 50);
+    expect(ratio.unit).toBe("second");
+    expect(ratio.value).toBeCloseTo(120 / 3600);
+  });
+});
+
+describe("disponibilité", () => {
+  it("expire après le TTL", () => {
+    const from = new Date("2026-08-31T10:00:00Z");
+    const until = availabilityUntil(from, 4);
+    expect(until.toISOString()).toBe("2026-08-31T14:00:00.000Z");
+    expect(
+      isCurrentlyAvailable({
+        availability: "AVAILABLE",
+        availabilityUntil: until,
+        now: new Date("2026-08-31T13:59:00Z"),
+      }),
+    ).toBe(true);
+    expect(
+      isCurrentlyAvailable({
+        availability: "AVAILABLE",
+        availabilityUntil: until,
+        now: new Date("2026-08-31T14:01:00Z"),
+      }),
+    ).toBe(false);
+  });
+
+  it("ignore un statut busy même avec TTL", () => {
+    expect(
+      isCurrentlyAvailable({
+        availability: "BUSY",
+        availabilityUntil: new Date(Date.now() + 3600_000),
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("localisation", () => {
+  it("n’arrondit jamais au mètre", () => {
+    expect(roundDistanceKm(0.14)).toBe(1);
+    expect(roundDistanceKm(13.6)).toBe(14);
+  });
+
+  it("masque la position au niveau HIDDEN", () => {
+    expect(displayLocation({ precision: "HIDDEN", city: "Yaoundé", zone: "Bastos" }).label).toBeNull();
+  });
+
+  it("grise la carte hors EXACT", () => {
+    expect(displayLocation({ precision: "ZONE", city: "Yaoundé", zone: "Bastos" }).mapGrayed).toBe(true);
+    expect(displayLocation({ precision: "EXACT", city: "Yaoundé", zone: "Bastos" }).mapGrayed).toBe(false);
+  });
+});
+
+describe("invitations & moods", () => {
+  const base = {
+    inviterId: "cesar",
+    inviteeId: "erica",
+    startsAt: new Date(Date.now() + 86400_000),
+    status: "PUBLISHED",
+    capacity: 10,
+    taken: 2,
+    minAge: 18,
+    inviteeBirthDate: new Date("1996-07-22"),
+    alreadyParticipating: false,
+    priceXaf: 0,
+    payer: "FREE" as const,
+  };
+
+  it("interdit de s’inviter soi-même", () => {
+    expect(evaluateInvite({ ...base, inviteeId: "cesar" })).toBe("INVITE_SELF");
+  });
+
+  it("bloque le paiement par l’hôte (Phase 4)", () => {
+    expect(evaluateInvite({ ...base, priceXaf: 2500, payer: "HOST" })).toBe("PAYMENT_BY_HOST_PHASE");
+  });
+
+  it("refuse un event complet", () => {
+    expect(evaluateInvite({ ...base, capacity: 2, taken: 2 })).toBe("EVENT_FULL");
+  });
+
+  it("refuse une invitation expirée", () => {
+    expect(
+      canAcceptInvitation({
+        status: "PENDING",
+        expiresAt: new Date(Date.now() - 1000),
+        inviteeId: "erica",
+        actorId: "erica",
+      }),
+    ).toBe("INVITE_EXPIRED");
+  });
+
+  it("limite un mood à 24 h", () => {
+    expect(() => moodExpiresAt(new Date(), 48)).toThrow("MOOD_DURATION_INVALID");
+    expect(moodExpiresAt(new Date("2026-08-31T00:00:00Z"), 12).toISOString()).toBe(
+      "2026-08-31T12:00:00.000Z",
+    );
+  });
+});
