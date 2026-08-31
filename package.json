@@ -1,0 +1,24 @@
+{
+  "name": "tiptop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "TipTop — réseau social pour reconnecter au monde réel",
+  "scripts": {
+    "dev": "pnpm --filter @tiptop/api dev & pnpm --filter @tiptop/web dev",
+    "dev:api": "pnpm --filter @tiptop/api dev",
+    "dev:web": "pnpm --filter @tiptop/web dev",
+    "build": "pnpm -r --if-present build",
+    "test": "pnpm -r --if-present test",
+    "lint": "pnpm -r --if-present lint",
+    "db:migrate": "pnpm --filter @tiptop/api prisma:migrate",
+    "db:seed": "pnpm --filter @tiptop/api prisma:seed",
+    "db:reset": "pnpm --filter @tiptop/api prisma:reset"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.34.5",
+  "pnpm": {
+    "onlyBuiltDependencies": ["prisma", "@prisma/client", "@prisma/engines", "esbuild"]
+  }
+}
