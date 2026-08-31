@@ -18,7 +18,7 @@ export default function Page() {
 
 function Inbox() {
   const { messages } = useI18n();
-  const [items, setItems] = useState<ConversationItem[]>([]);
+  const [items, setItems] = useState<ConversationItem[] | null>(null);
 
   async function load() {
     const data = await api<{ items: ConversationItem[] }>("/conversations");
@@ -51,9 +51,9 @@ function Inbox() {
           +
         </Link>
       </div>
-      {items.length === 0 ? <EmptyState title={messages.chat.empty} body={messages.chat.emptyBody} /> : null}
+      {items && items.length === 0 ? <EmptyState title={messages.chat.empty} body={messages.chat.emptyBody} /> : null}
       <div className="space-y-2">
-        {items.map((c) => (
+        {items?.map((c) => (
           <Link key={c.id} href={`/messages/${c.id}`} className="flex items-center gap-3 rounded-card bg-surface p-4 shadow-card">
             <div className="relative">
               <div className="h-12 w-12 rounded-full bg-accent/20" />
