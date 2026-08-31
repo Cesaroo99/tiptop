@@ -62,14 +62,21 @@ function ManageView() {
 
   if (!data) return <p className="p-4 text-sm text-muted">{messages.common.loading}</p>;
 
+  const holderIds = new Set(data.tickets.map((t) => t.holder.id));
   const people =
     tab === "interested"
       ? data.people.filter((p) => p.status === "INTERESTED")
+      : tab === "reserved" || tab === "validated"
+        ? []
+        : data.people.filter((p) => p.status === "INTERESTED" || !holderIds.has(p.id));
+  const tickets =
+    tab === "interested"
+      ? []
       : tab === "reserved"
-        ? data.people.filter((p) => p.status === "RESERVED" || p.status === "CONFIRMED")
+        ? data.tickets.filter((t) => t.status === "CONFIRMED" || t.status === "AWAITING_PAYMENT")
         : tab === "validated"
-          ? data.people.filter((p) => p.status === "PRESENT")
-          : data.people;
+          ? data.tickets.filter((t) => t.status === "CONSUMED")
+          : data.tickets;
 
   return (
     <div className="px-4 py-4">
@@ -102,7 +109,7 @@ function ManageView() {
             <span className="text-xs text-muted">{p.status}</span>
           </div>
         ))}
-        {data.tickets.map((t) => (
+        {tickets.map((t) => (
           <div key={t.id} className="rounded-card bg-surface p-3 shadow-card">
             <div className="flex items-center justify-between">
               <p className="text-sm">
@@ -122,7 +129,7 @@ function ManageView() {
           </div>
         ))}
       </div>
-      {people.length === 0 && data.tickets.length === 0 ? <ErrorBanner message={messages.home.emptyBody} /> : null}
+      {people.length === 0 && tickets.length === 0 ? <ErrorBanner message={messages.home.emptyBody} /> : null}
     </div>
   );
 }
