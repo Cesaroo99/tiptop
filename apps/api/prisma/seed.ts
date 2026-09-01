@@ -1,4 +1,4 @@
-import { PrismaClient, LikeUnitSource } from "@prisma/client";
+import { PrismaClient, LikeUnitSource, UserRole, ReportKind, ReportReason } from "@prisma/client";
 import { invitationExpiresAt, directKey } from "@tiptop/domain";
 
 const prisma = new PrismaClient();
@@ -7,7 +7,7 @@ async function main() {
   const availableUntil = new Date(Date.now() + 7 * 24 * 3600_000);
   const cesar = await prisma.user.upsert({
     where: { phoneE164: "+237695214785" },
-    update: {},
+    update: { role: UserRole.ADMIN },
     create: {
       phoneE164: "+237695214785",
       phoneCountry: "CM",
@@ -15,6 +15,7 @@ async function main() {
       firstName: "César",
       lastName: "Memoli",
       certified: true,
+      role: UserRole.ADMIN,
       profileCompleted: true,
       locale: "fr",
       profile: {
@@ -405,7 +406,26 @@ async function main() {
     create: { key: "influencerThresholdLikesPerHour", value: 50 },
   });
 
-  console.log("Seed OK — OTP mock 1234, démo César +237 695 21 47 85 — events + moods + invitation");
+  const cesarPost = await prisma.post.findFirst({ where: { authorId: cesar.id } });
+  if (cesarPost) {
+    const existingReport = await prisma.report.findFirst({
+      where: { reporterId: erica.id, postId: cesarPost.id },
+    });
+    if (!existingReport) {
+      await prisma.report.create({
+        data: {
+          reporterId: erica.id,
+          kind: ReportKind.POST,
+          reason: ReportReason.SPAM,
+          body: "Signalement de démo — contenu à vérifier.",
+          postId: cesarPost.id,
+          targetUserId: cesar.id,
+        },
+      });
+    }
+  }
+
+  console.log("Seed OK — OTP mock 1234, démo César admin +237 695 21 47 85");
 }
 
 main()

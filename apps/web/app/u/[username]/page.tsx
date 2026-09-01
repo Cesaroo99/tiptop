@@ -50,6 +50,7 @@ function ProfileView() {
   const [soon, setSoon] = useState<string | null>(null);
   const [transfer, setTransfer] = useState<string | null>(null);
   const [buy, setBuy] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   async function load() {
     try {
@@ -167,6 +168,13 @@ function ProfileView() {
             <Link href={`/invite/${profile.id}`} className="rounded-pill bg-[var(--border)] px-5 py-3">
               + {messages.world.invite}
             </Link>
+            <button
+              type="button"
+              className="rounded-pill bg-[var(--border)] px-5 py-3"
+              onClick={() => setReportOpen(true)}
+            >
+              {messages.admin.report}
+            </button>
           </div>
         ) : (
           <div className="mt-3 space-y-2">
@@ -199,6 +207,35 @@ function ProfileView() {
         onConfirmTransfer={() => void like(true)}
         onCloseBuy={() => setBuy(false)}
       />
+      <Modal open={reportOpen} title={messages.admin.reportTitle} onClose={() => setReportOpen(false)}>
+        <p className="mb-3">{messages.admin.reportBody}</p>
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              ["SPAM", messages.admin.reasonSpam],
+              ["ABUSE", messages.admin.reasonAbuse],
+              ["FAKE", messages.admin.reasonFake],
+              ["OTHER", messages.admin.reasonOther],
+            ] as const
+          ).map(([reason, label]) => (
+            <button
+              key={reason}
+              type="button"
+              className="rounded-pill bg-[var(--border)] px-3 py-2"
+              onClick={async () => {
+                await api("/reports", {
+                  method: "POST",
+                  body: JSON.stringify({ kind: "USER", reason, targetUserId: profile.id }),
+                });
+                setReportOpen(false);
+                setSoon(messages.admin.reportSent);
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </Modal>
     </div>
   );
 }

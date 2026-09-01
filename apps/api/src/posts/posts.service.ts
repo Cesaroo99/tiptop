@@ -146,14 +146,14 @@ export class PostsService {
         _count: { select: { comments: true } },
       },
     });
-    if (!post) throw new NotFoundException({ code: "POST_NOT_FOUND" });
+    if (!post || post.hiddenAt) throw new NotFoundException({ code: "POST_NOT_FOUND" });
     const [item] = await this.decorate(viewerId, [post]);
     return item;
   }
 
   async listByAuthor(viewerId: string, authorId: string) {
     const posts = await this.prisma.post.findMany({
-      where: { authorId },
+      where: { authorId, hiddenAt: null },
       orderBy: { createdAt: "desc" },
       take: 30,
       include: {
@@ -166,7 +166,7 @@ export class PostsService {
 
   async comments(postId: string) {
     const post = await this.prisma.post.findUnique({ where: { id: postId } });
-    if (!post) throw new NotFoundException({ code: "POST_NOT_FOUND" });
+    if (!post || post.hiddenAt) throw new NotFoundException({ code: "POST_NOT_FOUND" });
     const rows = await this.prisma.comment.findMany({
       where: { postId },
       orderBy: { createdAt: "asc" },
@@ -188,7 +188,7 @@ export class PostsService {
     const text = body.trim();
     if (!text) throw new BadRequestException({ code: "COMMENT_EMPTY" });
     const post = await this.prisma.post.findUnique({ where: { id: postId } });
-    if (!post) throw new NotFoundException({ code: "POST_NOT_FOUND" });
+    if (!post || post.hiddenAt) throw new NotFoundException({ code: "POST_NOT_FOUND" });
     const comment = await this.prisma.comment.create({
       data: { postId, authorId, body: text.slice(0, 1000) },
       include: {

@@ -9,6 +9,14 @@ import { canAcceptInvitation, evaluateInvite, moodExpiresAt } from "../src/event
 import { canConsumeTicket, canShowQr, isInEntryWindow, signTicketQr, verifyTicketQr } from "../src/tickets";
 import { applyWebhook, mockCharge, reservationAmountXaf } from "../src/payments";
 import { canSendMessage, canStartDirect, directKey, pairIsBlocked, shouldNotifyOffline } from "../src/chat";
+import {
+  assertNotSelf,
+  canAccessAdmin,
+  canRefundPayments,
+  isValidReportReason,
+  likeAnomalyFlags,
+  refundAllowed,
+} from "../src/admin";
 
 describe("parsePhone", () => {
   it("accepte un numéro camerounais national", () => {
@@ -322,5 +330,43 @@ describe("chat", () => {
     expect(shouldNotifyOffline({ viewingThread: true, pushEnabled: true })).toBe(false);
     expect(shouldNotifyOffline({ viewingThread: false, pushEnabled: true })).toBe(true);
     expect(shouldNotifyOffline({ viewingThread: false, pushEnabled: false })).toBe(false);
+  });
+});
+
+describe("admin", () => {
+  it("ouvre le back-office aux staff seulement", () => {
+    expect(canAccessAdmin("ADMIN")).toBe(true);
+    expect(canAccessAdmin("MODERATOR")).toBe(true);
+    expect(canAccessAdmin("USER")).toBe(false);
+    expect(canRefundPayments("ADMIN")).toBe(true);
+    expect(canRefundPayments("MODERATOR")).toBe(false);
+  });
+
+  it("interdit de se bloquer soi-même et un remboursement non réussi", () => {
+    expect(() => assertNotSelf("a", "a")).toThrow("ADMIN_SELF");
+    assertNotSelf("a", "b");
+    expect(() => refundAllowed("FAILED")).toThrow("PAYMENT_NOT_REFUNDABLE");
+    refundAllowed("SUCCEEDED");
+    expect(isValidReportReason("SPAM")).toBe(true);
+    expect(isValidReportReason("xyz")).toBe(false);
+  });
+
+  it("signale un pack acheté non utilisé", () => {
+    expect(
+      likeAnomalyFlags({
+        allocationsLastHour: 0,
+        totalUnits: 8,
+        purchasedUnits: 6,
+        allocatedActive: 0,
+      }),
+    ).toEqual(["UNUSED_PACK"]);
+    expect(
+      likeAnomalyFlags({
+        allocationsLastHour: 8,
+        totalUnits: 40,
+        purchasedUnits: 0,
+        allocatedActive: 1,
+      }),
+    ).toEqual(["BURST", "HIGH_BALANCE"]);
   });
 });

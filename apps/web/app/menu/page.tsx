@@ -26,6 +26,9 @@ export default function MenuPage() {
   }
 
   const items = [
+    ...(user.role === "ADMIN" || user.role === "MODERATOR"
+      ? [{ href: "/admin", label: messages.menu.admin }]
+      : []),
     { href: "/likes", label: messages.menu.wallet },
     { href: "/tickets", label: messages.menu.tickets },
     { href: "/favorites", label: messages.menu.favorites },

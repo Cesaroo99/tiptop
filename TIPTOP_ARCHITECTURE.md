@@ -71,6 +71,17 @@ Invitations payantes : hôte paie à l’envoi ; invité paie à l’acceptation
 - `POST /api/payments/webhook` — si pack likes, crédit idempotent (index unique un `PURCHASE` par achat)
 - UI `/likes`, `/likes/buy` (G25), `/likes/success` ; like sans unité → achat ; transfert G23 propose aussi l’achat
 
+## Admin (Phase 7)
+
+- Rôles `ADMIN` / `MODERATOR` (`canAccessAdmin`) ; César seed = admin
+- `GET /api/admin/overview|users|posts|events|payments|likes/anomalies|reports`
+- `PATCH /api/admin/users/:id` — certifier, bloquer (révoque les sessions)
+- `POST /api/admin/posts/:id/hide` — `Post.hiddenAt` (hors feed / recherche)
+- `POST /api/admin/events/:id/cancel`
+- `POST /api/admin/payments/:id/refund` — mock ledger XAF (`REFUNDED`) ; likes déjà crédités restent
+- `POST /api/reports` — signalement user/post/event ; revue staff
+- UI `/admin/*` ; 403 pour un compte non staff
+
 ## Auth
 
 1. `POST /api/auth/otp/request` — crée un challenge, SMS mock (log + code `1234` hors prod).

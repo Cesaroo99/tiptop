@@ -17,6 +17,7 @@ import { InvitationsModule } from "./invitations/invitations.module";
 import { ContactsModule } from "./contacts/contacts.module";
 import { BookingModule } from "./booking/booking.module";
 import { ChatModule } from "./chat/chat.module";
+import { AdminModule } from "./admin/admin.module";
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { ChatModule } from "./chat/chat.module";
     ContactsModule,
     BookingModule,
     ChatModule,
+    AdminModule,
   ],
   controllers: [HealthController],
 })

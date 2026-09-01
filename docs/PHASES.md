@@ -42,7 +42,7 @@ Une phase n’est close que si UI, états, validation, tests et liaisons backend
 
 ## Phase 7 — Admin
 
-- [ ] Back-office utilisateurs, contenus, événements, paiements
+- [x] Back-office utilisateurs, contenus, événements, paiements
 
 ## Phase 8 — QA
 

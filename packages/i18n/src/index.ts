@@ -47,6 +47,7 @@ export type Messages = {
     perDay: string;
     perMonth: string;
     comingSoon: string;
+    admin: string;
   };
   settings: {
     title: string;
@@ -325,6 +326,58 @@ export type Messages = {
     sourceFree: string;
     sourceBonus: string;
   };
+  admin: {
+    title: string;
+    home: string;
+    users: string;
+    posts: string;
+    events: string;
+    payments: string;
+    likes: string;
+    reports: string;
+    forbidden: string;
+    forbiddenBody: string;
+    usersCount: string;
+    blockedCount: string;
+    postsCount: string;
+    hiddenCount: string;
+    eventsCount: string;
+    paymentsCount: string;
+    openReports: string;
+    search: string;
+    certify: string;
+    uncertify: string;
+    block: string;
+    unblock: string;
+    hide: string;
+    unhide: string;
+    cancelEvent: string;
+    refund: string;
+    refunded: string;
+    mockRefundHint: string;
+    anomalyBurst: string;
+    anomalyBalance: string;
+    anomalyUnused: string;
+    noAnomalies: string;
+    report: string;
+    reportTitle: string;
+    reportBody: string;
+    reportSent: string;
+    reasonSpam: string;
+    reasonAbuse: string;
+    reasonFake: string;
+    reasonOther: string;
+    sendReport: string;
+    dismiss: string;
+    actioned: string;
+    open: string;
+    hidden: string;
+    empty: string;
+    roleAdmin: string;
+    roleMod: string;
+    statusActive: string;
+    statusBlocked: string;
+  };
 };
 
 export const fr: Messages = {
@@ -376,6 +429,7 @@ export const fr: Messages = {
     perDay: "/Jour",
     perMonth: "/Mois",
     comingSoon: "Cette section arrive dans une prochaine phase — le bouton n’invente pas de données.",
+    admin: "Back-office",
   },
   settings: {
     title: "Paramètres",
@@ -654,6 +708,58 @@ export const fr: Messages = {
     sourceFree: "Inclus",
     sourceBonus: "Bonus certifié",
   },
+  admin: {
+    title: "Back-office",
+    home: "Vue d’ensemble",
+    users: "Utilisateurs",
+    posts: "Contenus",
+    events: "Sorties",
+    payments: "Paiements",
+    likes: "Anomalies likes",
+    reports: "Signalements",
+    forbidden: "Accès refusé",
+    forbiddenBody: "Le back-office est réservé à l’équipe TipTop.",
+    usersCount: "Comptes",
+    blockedCount: "Bloqués",
+    postsCount: "Publications",
+    hiddenCount: "Masquées",
+    eventsCount: "Sorties publiées",
+    paymentsCount: "Paiements OK",
+    openReports: "Signalements ouverts",
+    search: "Chercher un compte",
+    certify: "Certifier",
+    uncertify: "Retirer la certif",
+    block: "Bloquer",
+    unblock: "Débloquer",
+    hide: "Masquer",
+    unhide: "Rétablir",
+    cancelEvent: "Annuler la sortie",
+    refund: "Rembourser (mock)",
+    refunded: "Remboursé",
+    mockRefundHint: "Remboursement mock du ledger XAF. Les likes déjà crédités restent.",
+    anomalyBurst: "Rafale d’allocations",
+    anomalyBalance: "Solde élevé",
+    anomalyUnused: "Packs non utilisés",
+    noAnomalies: "Aucune anomalie pour l’instant.",
+    report: "Signaler",
+    reportTitle: "Signaler",
+    reportBody: "Explique brièvement. L’équipe TipTop verra le signalement.",
+    reportSent: "Signalement envoyé.",
+    reasonSpam: "Spam",
+    reasonAbuse: "Abus",
+    reasonFake: "Faux compte / contenu",
+    reasonOther: "Autre",
+    sendReport: "Envoyer",
+    dismiss: "Classer",
+    actioned: "Traité",
+    open: "Ouvert",
+    hidden: "Masqué",
+    empty: "Rien à afficher.",
+    roleAdmin: "Admin",
+    roleMod: "Modération",
+    statusActive: "Actif",
+    statusBlocked: "Bloqué",
+  },
 };
 
 export const en: Messages = {
@@ -705,6 +811,7 @@ export const en: Messages = {
     perDay: "/Day",
     perMonth: "/Month",
     comingSoon: "This section ships in a later phase — the button does not invent data.",
+    admin: "Back office",
   },
   settings: {
     title: "Settings",
@@ -982,6 +1089,58 @@ export const en: Messages = {
     sourcePurchased: "Purchased",
     sourceFree: "Included",
     sourceBonus: "Certified bonus",
+  },
+  admin: {
+    title: "Back office",
+    home: "Overview",
+    users: "Users",
+    posts: "Content",
+    events: "Meetups",
+    payments: "Payments",
+    likes: "Like anomalies",
+    reports: "Reports",
+    forbidden: "Access denied",
+    forbiddenBody: "The back office is for the TipTop team only.",
+    usersCount: "Accounts",
+    blockedCount: "Blocked",
+    postsCount: "Posts",
+    hiddenCount: "Hidden",
+    eventsCount: "Published meetups",
+    paymentsCount: "Successful payments",
+    openReports: "Open reports",
+    search: "Search an account",
+    certify: "Certify",
+    uncertify: "Remove certif",
+    block: "Block",
+    unblock: "Unblock",
+    hide: "Hide",
+    unhide: "Restore",
+    cancelEvent: "Cancel meetup",
+    refund: "Refund (mock)",
+    refunded: "Refunded",
+    mockRefundHint: "Mock XAF ledger refund. Already credited likes stay.",
+    anomalyBurst: "Allocation burst",
+    anomalyBalance: "High balance",
+    anomalyUnused: "Unused packs",
+    noAnomalies: "No anomalies right now.",
+    report: "Report",
+    reportTitle: "Report",
+    reportBody: "Short note. The TipTop team will see this report.",
+    reportSent: "Report sent.",
+    reasonSpam: "Spam",
+    reasonAbuse: "Abuse",
+    reasonFake: "Fake account / content",
+    reasonOther: "Other",
+    sendReport: "Send",
+    dismiss: "Dismiss",
+    actioned: "Actioned",
+    open: "Open",
+    hidden: "Hidden",
+    empty: "Nothing to show.",
+    roleAdmin: "Admin",
+    roleMod: "Moderation",
+    statusActive: "Active",
+    statusBlocked: "Blocked",
   },
 };
 

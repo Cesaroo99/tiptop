@@ -32,7 +32,7 @@ export class SearchService {
       type === "people" || type === "events"
         ? []
         : await this.prisma.post.findMany({
-            where: { body: { contains: query, mode: Prisma.QueryMode.insensitive } },
+            where: { hiddenAt: null, body: { contains: query, mode: Prisma.QueryMode.insensitive } },
             take: 20,
             orderBy: { createdAt: "desc" },
             include: {

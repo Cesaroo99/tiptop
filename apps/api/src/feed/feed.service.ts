@@ -19,6 +19,7 @@ export class FeedService {
       include: { profile: true },
     });
     const rows = await this.prisma.post.findMany({
+      where: { hiddenAt: null },
       orderBy: { createdAt: "desc" },
       take: 30,
       include: {

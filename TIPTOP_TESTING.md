@@ -7,14 +7,15 @@ pnpm --filter @tiptop/domain test
 pnpm --filter @tiptop/api test
 ```
 
-## Couverture actuelle (Phase 6)
+## Couverture actuelle (Phase 7)
 
 | Zone | Type | Fichier |
 | --- | --- | --- |
-| Téléphone / OTP / likes / packs / dispo / invitations / tickets / paiement / chat | unitaire | `packages/domain/src/index.test.ts` |
+| Téléphone / OTP / likes / packs / admin / dispo / invitations / tickets / paiement / chat | unitaire | `packages/domain/src/index.test.ts` |
 | HMAC session | unitaire | `apps/api/src/crypto.test.ts` |
 | Transfert like + unicité | DB | `apps/api/src/likes/likes.transfer.test.ts` |
 | Achat likes : pas de crédit si fail, unicité PURCHASE | DB | `apps/api/src/likes/likes.wallet.test.ts` |
+| Masquage post + remboursement mock | DB | `apps/api/src/admin/admin.realworld.test.ts` |
 | Disponibilité + invitations | DB | `apps/api/src/invitations/invitations.realworld.test.ts` |
 | Double résa + double conso ticket | DB | `apps/api/src/booking/booking.realworld.test.ts` |
 | Unicité DM | DB | `apps/api/src/chat/chat.realworld.test.ts` |

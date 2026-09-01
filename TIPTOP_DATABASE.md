@@ -47,6 +47,13 @@ pnpm db:reset      # destructif, local uniquement
 - `LikeTransaction` (PURCHASE / ALLOCATE / RELEASE) ; unique partiel un `PURCHASE` par `purchaseId`
 - `LikeUnit.purchaseId` optionnel (`source = PURCHASED`)
 
+## Tables Phase 7
+
+- `Post.hiddenAt`
+- `Report` (USER / POST / EVENT, statuts OPEN / DISMISSED / ACTIONED)
+- `AdminAudit`
+- `PaymentStatus.REFUNDED`
+
 ## Tables / champs préparés
 
 - `Device` (push)

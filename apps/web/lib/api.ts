@@ -6,6 +6,7 @@ export type PublicUser = {
   firstName: string;
   lastName: string;
   certified: boolean;
+  role: string;
   profileCompleted: boolean;
   locale: string;
   theme: string;

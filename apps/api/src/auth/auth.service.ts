@@ -29,6 +29,7 @@ export type PublicUser = {
   firstName: string;
   lastName: string;
   certified: boolean;
+  role: string;
   profileCompleted: boolean;
   locale: string;
   theme: string;
@@ -54,6 +55,7 @@ export class AuthService {
     firstName: string;
     lastName: string;
     certified: boolean;
+    role: string;
     profileCompleted: boolean;
     locale: string;
     theme: string;
@@ -77,6 +79,7 @@ export class AuthService {
       firstName: user.firstName,
       lastName: user.lastName,
       certified: user.certified,
+      role: user.role,
       profileCompleted: user.profileCompleted,
       locale: user.locale,
       theme: user.theme,
