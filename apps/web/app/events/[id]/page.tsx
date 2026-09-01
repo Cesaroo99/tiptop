@@ -58,7 +58,7 @@ function EventDetail() {
         <div className="mt-3 space-y-2">
           {event.people?.map((p) => (
             <Link key={p.id} href={`/u/${p.username}`} className="flex items-center gap-3 text-sm">
-              <Avatar firstName={p.firstName} lastName={p.lastName} size={36} />
+              <Avatar src={p.avatarUrl} firstName={p.firstName} lastName={p.lastName} size={36} />
               <span className="flex-1 text-ink">
                 {p.firstName} {p.lastName} {p.certified ? <CertifiedMark /> : null}
               </span>

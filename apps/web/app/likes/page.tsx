@@ -6,9 +6,10 @@ import { useEffect, useState } from "react";
 import { PrimaryButton, ScreenHeader, Skeleton } from "@/components/ui";
 import { api, type LikeWallet } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { formatDateTime } from "@/lib/time";
 
 export default function Page() {
-  const { messages } = useI18n();
+  const { locale, messages } = useI18n();
   const router = useRouter();
   const [wallet, setWallet] = useState<LikeWallet | null>(null);
 
@@ -98,7 +99,7 @@ export default function Page() {
                   <p className="text-xs text-muted">
                     {p.paymentStatus === "SUCCEEDED" ? messages.wallet.credited : messages.wallet.notCredited}
                     {" · "}
-                    {new Date(p.createdAt).toLocaleString()}
+                    {formatDateTime(p.createdAt, locale)}
                   </p>
                 </article>
               ))}
@@ -113,7 +114,7 @@ export default function Page() {
               {wallet.history.map((h) => (
                 <article key={h.id} className="rounded-card bg-surface p-4 shadow-card">
                   <p className="font-semibold">{txLabel(h)}</p>
-                  <p className="text-xs text-muted">{new Date(h.createdAt).toLocaleString()}</p>
+                  <p className="text-xs text-muted">{formatDateTime(h.createdAt, locale)}</p>
                 </article>
               ))}
             </div>

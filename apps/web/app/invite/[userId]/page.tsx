@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { EmptyState, Modal, PrimaryButton, ScreenHeader } from "@/components/ui";
 import { api, ApiError, type InvitationItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { formatEventWhen } from "@/lib/time";
 
 type Relevant = {
   id: string;
@@ -20,7 +21,7 @@ type Relevant = {
 
 export default function InvitePage() {
   const { userId } = useParams<{ userId: string }>();
-  const { messages } = useI18n();
+  const { locale, messages } = useI18n();
   const router = useRouter();
   const [events, setEvents] = useState<Relevant[] | null>(null);
   const [picked, setPicked] = useState<Relevant | null>(null);
@@ -84,7 +85,7 @@ export default function InvitePage() {
             >
               <p className="font-semibold text-accent">{e.title}</p>
               <p className="text-xs text-muted">
-                {new Date(e.startsAt).toLocaleString()} · {e.city}
+                {formatEventWhen(e.startsAt, locale)} · {e.city}
                 {e.priceXaf > 0 ? ` · ${e.priceXaf} FCFA` : ` · ${messages.world.free}`}
               </p>
             </button>

@@ -32,7 +32,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto flex min-h-dvh max-w-6xl">
       <SideNav />
-      <div className="flex min-h-dvh flex-1 flex-col pb-24 md:pb-6">
+      <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col pb-24 md:pb-6">
         <AppHeader location={location} />
         <main className="flex-1">{children}</main>
         <BottomNav />

@@ -6,10 +6,11 @@ import { useEffect, useState } from "react";
 import { ErrorBanner, ScreenHeader } from "@/components/ui";
 import { api, type TicketItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { formatEventWhen } from "@/lib/time";
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
-  const { messages } = useI18n();
+  const { locale, messages } = useI18n();
   const router = useRouter();
   const [ticket, setTicket] = useState<TicketItem | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +39,7 @@ export default function Page() {
       <div className="rounded-card bg-surface p-5 text-center shadow-card">
         <p className="font-semibold text-accent">{ticket.event.title}</p>
         <p className="mt-1 text-xs text-muted">
-          {new Date(ticket.event.startsAt).toLocaleString()} · {ticket.event.city}
+          {formatEventWhen(ticket.event.startsAt, locale)} · {ticket.event.city}
         </p>
         {consumed ? (
           <div className="mt-6 rounded-2xl bg-[var(--border)] px-4 py-10 text-sm text-muted">{messages.booking.ticketQrInactive}</div>

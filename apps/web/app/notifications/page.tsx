@@ -7,6 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { EmptyState, ScreenHeader } from "@/components/ui";
 import { api, type NotifItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { formatDateTime } from "@/lib/time";
 
 export default function NotificationsPage() {
   const { messages } = useI18n();
@@ -94,6 +95,7 @@ function NotifCard({
   href: string;
   unread?: boolean;
 }) {
+  const { locale } = useI18n();
   return (
     <Link
       href={href}
@@ -105,7 +107,7 @@ function NotifCard({
       <Avatar src={n.actor?.avatarUrl} firstName={n.actor?.firstName} lastName={n.actor?.lastName} size={40} />
       <div className="flex-1">
         <p className="text-sm text-ink">{label}</p>
-        <p className="text-xs text-muted">{new Date(n.createdAt).toLocaleString()}</p>
+        <p className="text-xs text-muted">{formatDateTime(n.createdAt, locale)}</p>
       </div>
       {unread ? <span className="mt-1 h-2 w-2 rounded-full bg-yellow" /> : null}
     </Link>

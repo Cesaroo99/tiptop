@@ -5,6 +5,7 @@ import { useState } from "react";
 import { EmptyState, ScreenHeader, TextInput } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { formatEventWhen } from "@/lib/time";
 import { useRouter } from "next/navigation";
 
 type SearchResult = {
@@ -36,7 +37,7 @@ type SearchResult = {
 const filters = ["all", "people", "posts", "events"] as const;
 
 export default function SearchPage() {
-  const { messages } = useI18n();
+  const { locale, messages } = useI18n();
   const router = useRouter();
   const [q, setQ] = useState("");
   const [type, setType] = useState<(typeof filters)[number]>("all");
@@ -100,7 +101,7 @@ export default function SearchPage() {
           <Link key={e.id} href={`/events/${e.id}`} className="block rounded-card bg-surface p-4 shadow-card">
             <p className="text-sm font-semibold text-accent">{e.title}</p>
             <p className="text-xs text-muted">
-              {new Date(e.startsAt).toLocaleString()} · {e.city}
+              {formatEventWhen(e.startsAt, locale)} · {e.city}
               {e.priceXaf > 0 ? ` · ${e.priceXaf} FCFA` : ""}
             </p>
           </Link>

@@ -198,7 +198,16 @@ export class EventsService {
       host: { include: { profile: true } },
       participants: {
         include: {
-          user: { select: { id: true, username: true, firstName: true, lastName: true, certified: true } },
+          user: {
+            select: {
+              id: true,
+              username: true,
+              firstName: true,
+              lastName: true,
+              certified: true,
+              profile: { select: { avatarUrl: true } },
+            },
+          },
         },
       },
       _count: { select: { hearts: { where: { releasedAt: null } } } },
@@ -236,7 +245,14 @@ export class EventsService {
       participants: Array<{
         userId: string;
         status: string;
-        user: { id: string; username: string; firstName: string; lastName: string; certified: boolean };
+        user: {
+          id: string;
+          username: string;
+          firstName: string;
+          lastName: string;
+          certified: boolean;
+          profile: { avatarUrl: string | null } | null;
+        };
       }>;
       _count: { hearts: number };
     },
@@ -293,7 +309,15 @@ export class EventsService {
       },
       people: e.participants
         .filter((p) => p.status !== "CANCELLED")
-        .map((p) => ({ ...p.user, status: p.status })),
+        .map((p) => ({
+          id: p.user.id,
+          username: p.user.username,
+          firstName: p.user.firstName,
+          lastName: p.user.lastName,
+          certified: p.user.certified,
+          avatarUrl: p.user.profile?.avatarUrl ?? null,
+          status: p.status,
+        })),
     };
   }
 }

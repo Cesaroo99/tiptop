@@ -12,6 +12,29 @@ export function formatRelative(
   return labels.daysAgo.replace("{n}", String(days));
 }
 
+export function dateLocale(locale: string) {
+  return locale === "en" ? "en-GB" : "fr-FR";
+}
+
+export function formatEventWhen(iso: string, locale: string) {
+  return new Date(iso).toLocaleString(dateLocale(locale), {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+export function formatDateTime(iso: string, locale: string) {
+  return new Date(iso).toLocaleString(dateLocale(locale), {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function eventCountdown(startsAt: string) {
   const ms = new Date(startsAt).getTime() - Date.now();
   if (ms <= 0) return null;

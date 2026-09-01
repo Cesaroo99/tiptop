@@ -7,7 +7,7 @@ async function main() {
   const availableUntil = new Date(Date.now() + 7 * 24 * 3600_000);
   const cesar = await prisma.user.upsert({
     where: { phoneE164: "+237695214785" },
-    update: { role: UserRole.ADMIN },
+    update: { role: UserRole.ADMIN, theme: "light" },
     create: {
       phoneE164: "+237695214785",
       phoneCountry: "CM",
@@ -18,6 +18,7 @@ async function main() {
       role: UserRole.ADMIN,
       profileCompleted: true,
       locale: "fr",
+      theme: "light",
       profile: {
         create: {
           profession: "Fondateur TipTop",

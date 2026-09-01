@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { api, ApiError, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { eventCountdown, formatRelative } from "@/lib/time";
+import { eventCountdown, formatEventWhen, formatRelative } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
 import { MapThumb } from "./MapThumb";
 import { Modal } from "./ui";
@@ -16,7 +16,7 @@ export function EventCard({
   event: EventCardType;
   onChanged?: (next: EventCardType) => void;
 }) {
-  const { messages } = useI18n();
+  const { locale, messages } = useI18n();
   const [transfer, setTransfer] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -93,7 +93,7 @@ export function EventCard({
         <span className="rounded-full bg-yellow px-2 py-0.5 text-[11px] font-bold text-ink">{messages.world.sortie}</span>
         <p className="mt-2 font-semibold text-ink">{event.title}</p>
         <p className="text-xs text-muted">
-          {new Date(event.startsAt).toLocaleString()} · {event.city}
+          {formatEventWhen(event.startsAt, locale)} · {event.city}
           {event.zone ? ` - ${event.zone}` : ""} · {price}
         </p>
       </Link>

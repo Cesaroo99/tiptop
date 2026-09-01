@@ -10,6 +10,7 @@ import { Avatar, CertifiedMark } from "@/components/Avatar";
 import { EmptyState, ErrorBanner, Modal, PrimaryButton, Skeleton } from "@/components/ui";
 import { api, ApiError, type FeedItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { formatEventWhen } from "@/lib/time";
 
 type EventPreview = {
   id: string;
@@ -312,7 +313,7 @@ function ProfileView() {
 }
 
 function EventRail({ title, items }: { title: string; items: EventPreview[] }) {
-  const { messages } = useI18n();
+  const { locale, messages } = useI18n();
   if (!items.length) return null;
   return (
     <section>
@@ -339,7 +340,7 @@ function EventRail({ title, items }: { title: string; items: EventPreview[] }) {
               <p className="text-xs text-muted">
                 {e.host.firstName} {e.host.lastName}
               </p>
-              <p className="text-xs text-yellow">{new Date(e.startsAt).toLocaleString()}</p>
+              <p className="text-xs text-yellow">{formatEventWhen(e.startsAt, locale)}</p>
             </div>
           </Link>
         ))}

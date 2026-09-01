@@ -63,6 +63,7 @@ export type EventCard = {
     firstName: string;
     lastName: string;
     certified: boolean;
+    avatarUrl: string | null;
     status: string;
   }>;
 };
