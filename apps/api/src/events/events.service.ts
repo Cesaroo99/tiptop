@@ -279,6 +279,10 @@ export class EventsService {
       canBook: !isHost && (e.requiresReservation || e.priceXaf > 0) && !seated,
       viewerTicketId: ticket?.id ?? null,
       canChatGroup: seated,
+      interestedCount: e.participants.filter((p) => p.status === "INTERESTED").length,
+      reservedCount: e.participants.filter((p) =>
+        ["RESERVED", "CONFIRMED", "PRESENT", "HOST"].includes(p.status),
+      ).length,
       host: {
         id: e.host.id,
         username: e.host.username,

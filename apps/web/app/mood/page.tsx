@@ -46,14 +46,20 @@ function MoodRail() {
         {messages.world.moodCreate}
       </Link>
       {items.map((m) => (
-        <Link key={m.id} href={`/mood/${m.id}`} className="block rounded-card bg-surface p-4 shadow-card">
-          <p className="font-semibold text-accent">
-            {m.author.firstName} {m.author.lastName}
-          </p>
-          <p className="mt-1 text-sm text-ink">{m.body || messages.world.typeMood}</p>
-          <p className="mt-2 text-xs text-muted">
-            {m.commentsCount} {messages.social.comments} · {m.authorActiveLikes} likes
-          </p>
+        <Link key={m.id} href={`/mood/${m.id}`} className="overflow-hidden rounded-card bg-surface shadow-card">
+          {m.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={m.imageUrl} alt="" className="h-40 w-full object-cover" />
+          ) : null}
+          <div className="p-4">
+            <p className="font-semibold text-ink">
+              {m.author.firstName} {m.author.lastName}
+            </p>
+            <p className="mt-1 text-sm text-ink">{m.body || messages.world.typeMood}</p>
+            <p className="mt-2 text-xs text-muted">
+              {m.commentsCount} {messages.social.comments} · {m.authorActiveLikes} likes
+            </p>
+          </div>
         </Link>
       ))}
     </div>

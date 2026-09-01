@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { api, ApiError, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { eventCountdown, formatRelative } from "@/lib/time";
+import { Avatar, CertifiedMark } from "./Avatar";
+import { MapThumb } from "./MapThumb";
 import { Modal } from "./ui";
 
 export function EventCard({
@@ -15,6 +18,7 @@ export function EventCard({
 }) {
   const { messages } = useI18n();
   const [transfer, setTransfer] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   async function heart(confirmTransfer = false) {
     try {
@@ -41,38 +45,74 @@ export function EventCard({
 
   async function interested() {
     const res = await api<{ interested: boolean }>(`/events/${event.id}/interested`, { method: "POST" });
-    onChanged?.({ ...event, viewerInterested: res.interested });
+    onChanged?.({
+      ...event,
+      viewerInterested: res.interested,
+      interestedCount: Math.max(0, (event.interestedCount ?? 0) + (res.interested ? 1 : -1)),
+    });
   }
 
-  const when = new Date(event.startsAt).toLocaleString();
+  async function share() {
+    const url = `${window.location.origin}/events/${event.id}`;
+    try {
+      if (navigator.share) await navigator.share({ title: event.title, url });
+      else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1600);
+      }
+    } catch {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+    }
+  }
+
   const price = event.priceXaf > 0 ? messages.world.paid.replace("{amount}", String(event.priceXaf)) : messages.world.free;
+  const countdown = eventCountdown(event.startsAt);
+  const relative = formatRelative(event.createdAt ?? event.startsAt, messages.social);
 
   return (
     <article className="overflow-hidden rounded-card bg-surface shadow-card">
-      <Link href={`/events/${event.id}`} className="block">
+      <div className="flex items-start gap-3 p-4 pb-0">
+        <Link href={`/u/${event.host.username}`}>
+          <Avatar src={event.host.avatarUrl} firstName={event.host.firstName} lastName={event.host.lastName} size={44} />
+        </Link>
+        <div className="min-w-0 flex-1">
+          <Link href={`/u/${event.host.username}`} className="flex items-center gap-1 font-semibold text-ink">
+            {event.host.firstName} {event.host.lastName}
+            {event.host.certified ? <CertifiedMark /> : null}
+          </Link>
+          <p className="text-xs text-muted">{relative}</p>
+        </div>
+        {event.minAge ? <span className="rounded-full bg-[#f3b6c8] px-2 py-0.5 text-[11px] font-bold text-ink">-{event.minAge}</span> : null}
+        <button type="button" onClick={() => void share()} className="grid h-9 w-9 place-items-center rounded-full bg-[var(--border)] text-accent" aria-label={messages.social.share}>
+          ↗
+        </button>
+      </div>
+      <Link href={`/events/${event.id}`} className="mt-3 block px-4">
+        <span className="rounded-full bg-yellow px-2 py-0.5 text-[11px] font-bold text-ink">{messages.world.sortie}</span>
+        <p className="mt-2 font-semibold text-ink">{event.title}</p>
+        <p className="text-xs text-muted">
+          {new Date(event.startsAt).toLocaleString()} · {event.city}
+          {event.zone ? ` - ${event.zone}` : ""} · {price}
+        </p>
+      </Link>
+      <Link href={`/events/${event.id}`} className="relative mt-3 block">
         {event.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={event.imageUrl} alt="" className="h-40 w-full object-cover" />
+          <img src={event.imageUrl} alt="" className="h-48 w-full object-cover" />
         ) : (
           <div className="grid h-28 place-items-center bg-accent/10 text-sm text-accent">{messages.world.sortie}</div>
         )}
+        <div className="absolute bottom-2 right-2 h-16 w-24">
+          <MapThumb city={event.city} zone={event.zone} className="h-full w-full" />
+        </div>
       </Link>
       <div className="p-4">
-        <div className="flex items-center gap-2">
-          <span className="rounded-full bg-yellow px-2 py-0.5 text-[11px] font-bold text-ink">{messages.world.sortie}</span>
-          {event.minAge ? <span className="text-[11px] text-muted">-{event.minAge}</span> : null}
-        </div>
-        <Link href={`/events/${event.id}`} className="mt-2 block font-semibold text-accent">
-          {event.title}
-        </Link>
         <p className="text-xs text-muted">
-          {when} · {event.city}
-          {event.zone ? ` - ${event.zone}` : ""} · {price}
+          {event.reservedCount ?? event.taken} {messages.world.reservationsCount} · {event.interestedCount ?? 0} {messages.world.interestedCount} · {event.hearts} ♥
         </p>
-        <p className="mt-1 text-xs text-muted">
-          {messages.world.host} {event.host.firstName} {event.host.lastName}
-        </p>
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <button
             type="button"
             aria-label={messages.world.heartEvent}
@@ -105,7 +145,16 @@ export function EventCard({
               {messages.booking.manageEvent}
             </Link>
           ) : null}
+          {countdown ? (
+            <span className="ml-auto rounded-full bg-yellow px-3 py-1.5 text-[11px] font-bold text-ink">
+              {messages.world.eventIn.replace(
+                "{when}",
+                countdown.unit === "min" ? `${countdown.value}min` : countdown.unit === "h" ? `${countdown.value}h` : `${countdown.value}j`,
+              )}
+            </span>
+          ) : null}
         </div>
+        {copied ? <p className="mt-2 text-xs text-accent">{messages.social.copied}</p> : null}
       </div>
       <Modal
         open={Boolean(transfer)}

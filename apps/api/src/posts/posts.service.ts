@@ -4,6 +4,12 @@ import { NotificationsService } from "../notifications/notifications.service";
 
 const MAX_BODY = 2000;
 
+const POST_INCLUDE = {
+  author: { include: { profile: true } },
+  event: { select: { id: true, title: true, startsAt: true, minAge: true, participants: { select: { status: true } } } },
+  _count: { select: { comments: true } },
+} as const;
+
 @Injectable()
 export class PostsService {
   constructor(
@@ -28,9 +34,28 @@ export class PostsService {
         profile: { avatarUrl: string | null } | null;
       };
       _count: { comments: number };
+      event?: {
+        id: string;
+        title: string;
+        startsAt: Date;
+        minAge: number | null;
+        participants: Array<{ status: string }>;
+      } | null;
     },
     extra: { likedAuthor: boolean; viewerFollows: boolean; authorLikes: number },
   ) {
+    const event = p.event
+      ? {
+          id: p.event.id,
+          title: p.event.title,
+          startsAt: p.event.startsAt.toISOString(),
+          minAge: p.event.minAge,
+          interestedCount: p.event.participants.filter((x) => x.status === "INTERESTED").length,
+          reservedCount: p.event.participants.filter((x) =>
+            ["RESERVED", "CONFIRMED", "PRESENT", "HOST"].includes(x.status),
+          ).length,
+        }
+      : null;
     return {
       id: p.id,
       body: p.body,
@@ -50,6 +75,7 @@ export class PostsService {
         certified: p.author.certified,
         avatarUrl: p.author.profile?.avatarUrl ?? null,
       },
+      event,
     };
   }
 
@@ -94,6 +120,13 @@ export class PostsService {
         profile: { avatarUrl: string | null } | null;
       };
       _count: { comments: number };
+      event?: {
+        id: string;
+        title: string;
+        startsAt: Date;
+        minAge: number | null;
+        participants: Array<{ status: string }>;
+      } | null;
     }>,
   ) {
     const extras = await this.extras(
@@ -129,10 +162,7 @@ export class PostsService {
         city: input.city ?? author?.profile?.city,
         zone: input.zone ?? author?.profile?.zone,
       },
-      include: {
-        author: { include: { profile: true } },
-        _count: { select: { comments: true } },
-      },
+      include: POST_INCLUDE,
     });
     const [item] = await this.decorate(authorId, [post]);
     return item;
@@ -141,10 +171,7 @@ export class PostsService {
   async get(viewerId: string, id: string) {
     const post = await this.prisma.post.findUnique({
       where: { id },
-      include: {
-        author: { include: { profile: true } },
-        _count: { select: { comments: true } },
-      },
+      include: POST_INCLUDE,
     });
     if (!post || post.hiddenAt) throw new NotFoundException({ code: "POST_NOT_FOUND" });
     const [item] = await this.decorate(viewerId, [post]);
@@ -156,10 +183,7 @@ export class PostsService {
       where: { authorId, hiddenAt: null },
       orderBy: { createdAt: "desc" },
       take: 30,
-      include: {
-        author: { include: { profile: true } },
-        _count: { select: { comments: true } },
-      },
+      include: POST_INCLUDE,
     });
     return this.decorate(viewerId, posts);
   }
@@ -171,7 +195,7 @@ export class PostsService {
       where: { postId },
       orderBy: { createdAt: "asc" },
       include: {
-        author: { select: { id: true, firstName: true, lastName: true, username: true, certified: true } },
+        author: { select: { id: true, firstName: true, lastName: true, username: true, certified: true, profile: { select: { avatarUrl: true } } } },
       },
     });
     return {
@@ -179,7 +203,7 @@ export class PostsService {
         id: c.id,
         body: c.body,
         createdAt: c.createdAt.toISOString(),
-        author: c.author,
+        author: { ...c.author, avatarUrl: c.author.profile?.avatarUrl ?? null },
       })),
     };
   }

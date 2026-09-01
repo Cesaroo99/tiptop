@@ -3,16 +3,16 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f5f7fa;
+  --bg: #f4f6fb;
   --surface: #ffffff;
-  --text: #1e2a3a;
-  --text-secondary: #8a94a6;
+  --text: #1b2b4b;
+  --text-secondary: #8b97ad;
   --accent: #00baf2;
-  --accent-soft: #e6f8fd;
-  --yellow: #f5c518;
+  --accent-soft: #e6f7fd;
+  --yellow: #d4de4a;
   --success: #27ae60;
   --danger: #c45c5c;
-  --border: #e6ebf2;
+  --border: #e8eef6;
   --nav: #ffffff;
 }
 
@@ -23,7 +23,7 @@
   --text-secondary: #9aa3b5;
   --accent: #00baf2;
   --accent-soft: #0c2a36;
-  --yellow: #f5c518;
+  --yellow: #d4de4a;
   --success: #3dce7a;
   --danger: #e07a7a;
   --border: #242a36;
@@ -44,4 +44,29 @@ body {
 *:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+.ticket-stub {
+  position: relative;
+  overflow: hidden;
+}
+
+.ticket-stub::after {
+  content: "";
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--bg);
+  transform: translateY(-50%);
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

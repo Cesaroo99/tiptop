@@ -54,6 +54,9 @@ export type EventCard = {
     certified: boolean;
     avatarUrl: string | null;
   };
+  interestedCount?: number;
+  reservedCount?: number;
+  createdAt?: string;
   people?: Array<{
     id: string;
     username: string;
@@ -93,6 +96,7 @@ export type PersonCard = {
   certified: boolean;
   profession: string | null;
   age: number | null;
+  avatarUrl: string | null;
   locationLabel: string | null;
   approximate: boolean;
   distanceKm: number | null;
@@ -159,23 +163,31 @@ export type FeedItem = {
     certified: boolean;
     avatarUrl: string | null;
   };
+  event?: {
+    id: string;
+    title: string;
+    startsAt: string;
+    minAge: number | null;
+    interestedCount: number;
+    reservedCount: number;
+  } | null;
 };
 
 export type CommentItem = {
   id: string;
   body: string;
   createdAt: string;
-  author: { id: string; firstName: string; lastName: string; username: string; certified: boolean };
+  author: { id: string; firstName: string; lastName: string; username: string; certified: boolean; avatarUrl?: string | null };
 };
 
 export type NotifItem = {
   id: string;
-  type: "LIKE" | "COMMENT" | "FOLLOW" | "INVITE" | "TICKET" | "PAYMENT" | "MESSAGE";
+  type: "LIKE" | "COMMENT" | "FOLLOW" | "INVITE" | "TICKET" | "PAYMENT" | "MESSAGE" | "REVIEW";
   entityType: string | null;
   entityId: string | null;
   read: boolean;
   createdAt: string;
-  actor: { id: string; firstName: string; lastName: string; username: string; certified: boolean } | null;
+  actor: { id: string; firstName: string; lastName: string; username: string; certified: boolean; avatarUrl?: string | null } | null;
 };
 
 export type LikePack = {
@@ -224,8 +236,8 @@ export type ConversationItem = {
   eventId: string | null;
   unreadCount: number;
   online: boolean;
-  peer: { id: string; username: string; firstName: string; lastName: string; certified: boolean } | null;
-  members: Array<{ id: string; username: string; firstName: string; lastName: string; certified: boolean }>;
+  peer: { id: string; username: string; firstName: string; lastName: string; certified: boolean; avatarUrl?: string | null } | null;
+  members: Array<{ id: string; username: string; firstName: string; lastName: string; certified: boolean; avatarUrl?: string | null }>;
   lastMessage: { body: string; kind: string; createdAt: string; senderId: string } | null;
   updatedAt: string;
 };
@@ -236,7 +248,7 @@ export type ChatMessage = {
   body: string;
   imageUrl: string | null;
   createdAt: string;
-  sender: { id: string; username: string; firstName: string; lastName: string; certified: boolean };
+  sender: { id: string; username: string; firstName: string; lastName: string; certified: boolean; avatarUrl?: string | null };
 };
 
 const TOKEN_KEY = "tiptop_token";

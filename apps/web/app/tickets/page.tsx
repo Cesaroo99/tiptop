@@ -102,11 +102,17 @@ export default function Page() {
         <div className="space-y-3">
           {tickets.length === 0 ? <EmptyState title={messages.world.tabTickets} body={messages.booking.ticketsEmpty} /> : null}
           {tickets.map((t) => (
-            <Link key={t.id} href={`/tickets/${t.id}`} className="block rounded-card bg-surface p-4 shadow-card">
-              <p className="font-semibold text-accent">{t.event.title}</p>
-              <p className="text-xs text-muted">
-                {statusLabel[t.status] ?? t.status} · {new Date(t.event.startsAt).toLocaleString()}
+            <Link key={t.id} href={`/tickets/${t.id}`} className="ticket-stub block rounded-card bg-surface p-4 shadow-card">
+              <p className="font-semibold text-ink">{t.event.title}</p>
+              <p className="mt-1 text-xs text-muted">
+                {t.holder.firstName === "César" ? "Moi" : `${t.holder.firstName} ${t.holder.lastName}`}
               </p>
+              <div className="mt-3 flex items-center justify-between">
+                <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${t.status === "CONSUMED" ? "bg-[var(--border)] text-muted" : "bg-success/15 text-success"}`}>
+                  {statusLabel[t.status] ?? t.status}
+                </span>
+                <span className="text-xs text-muted">{new Date(t.event.startsAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}</span>
+              </div>
             </Link>
           ))}
         </div>

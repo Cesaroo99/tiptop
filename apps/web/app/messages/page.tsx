@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { Avatar } from "@/components/Avatar";
 import { EmptyState } from "@/components/ui";
 import { api, type ConversationItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -55,10 +56,13 @@ function Inbox() {
       <div className="space-y-2">
         {items?.map((c) => (
           <Link key={c.id} href={`/messages/${c.id}`} className="flex items-center gap-3 rounded-card bg-surface p-4 shadow-card">
-            <div className="relative">
-              <div className="h-12 w-12 rounded-full bg-accent/20" />
-              {c.online ? <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-success ring-2 ring-surface" /> : null}
-            </div>
+            <Avatar
+              src={c.peer?.avatarUrl}
+              firstName={c.peer?.firstName ?? c.title}
+              lastName={c.peer?.lastName}
+              size={48}
+              online={c.online}
+            />
             <div className="min-w-0 flex-1">
               <p className="font-semibold text-ink">
                 {c.title}

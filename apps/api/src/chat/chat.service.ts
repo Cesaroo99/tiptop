@@ -21,7 +21,34 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { ChatRealtime } from "./chat.realtime";
 import { PushService } from "./push.service";
 
-const PERSON = { select: { id: true, username: true, firstName: true, lastName: true, certified: true } };
+const PERSON = {
+  select: {
+    id: true,
+    username: true,
+    firstName: true,
+    lastName: true,
+    certified: true,
+    profile: { select: { avatarUrl: true } },
+  },
+};
+
+function publicPerson(u: {
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  certified: boolean;
+  profile?: { avatarUrl: string | null } | null;
+}) {
+  return {
+    id: u.id,
+    username: u.username,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    certified: u.certified,
+    avatarUrl: u.profile?.avatarUrl ?? null,
+  };
+}
 
 @Injectable()
 export class ChatService {
@@ -273,7 +300,14 @@ export class ChatService {
       members: Array<{
         userId: string;
         lastReadAt: Date;
-        user: { id: string; username: string; firstName: string; lastName: string; certified: boolean };
+        user: {
+          id: string;
+          username: string;
+          firstName: string;
+          lastName: string;
+          certified: boolean;
+          profile?: { avatarUrl: string | null } | null;
+        };
       }>;
       messages: Array<{ body: string; kind: string; createdAt: Date; senderId: string }>;
     },
@@ -289,6 +323,7 @@ export class ChatService {
       },
     });
     const peer = row.kind === "DIRECT" ? row.members.find((m) => m.userId !== viewerId)?.user : null;
+    const peerPublic = peer ? publicPerson(peer) : null;
     let online = false;
     if (peer) {
       if (this.realtime.isConnected(peer.id)) online = true;
@@ -299,8 +334,8 @@ export class ChatService {
     }
     const title =
       row.kind === "DIRECT"
-        ? peer
-          ? `${peer.firstName} ${peer.lastName}`
+        ? peerPublic
+          ? `${peerPublic.firstName} ${peerPublic.lastName}`
           : row.title
         : row.title || row.event?.title || "Groupe";
     return {
@@ -311,8 +346,8 @@ export class ChatService {
       eventId: row.eventId,
       unreadCount,
       online,
-      peer,
-      members: row.members.map((m) => m.user),
+      peer: peerPublic,
+      members: row.members.map((m) => publicPerson(m.user)),
       lastMessage: last
         ? { body: last.body, kind: last.kind, createdAt: last.createdAt.toISOString(), senderId: last.senderId }
         : null,
@@ -327,7 +362,7 @@ export class ChatService {
     imageUrl: string | null;
     createdAt: Date;
     senderId: string;
-    sender: { id: string; username: string; firstName: string; lastName: string; certified: boolean };
+    sender: { id: string; username: string; firstName: string; lastName: string; certified: boolean; profile?: { avatarUrl: string | null } | null };
   }) {
     return {
       id: m.id,
@@ -335,7 +370,7 @@ export class ChatService {
       body: m.body,
       imageUrl: m.imageUrl,
       createdAt: m.createdAt.toISOString(),
-      sender: m.sender,
+      sender: publicPerson(m.sender),
     };
   }
 }

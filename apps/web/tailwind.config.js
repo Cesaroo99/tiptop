@@ -22,7 +22,7 @@ module.exports = {
         pill: "999px",
       },
       boxShadow: {
-        card: "0 8px 24px rgba(20, 40, 80, 0.06)",
+        card: "0 10px 28px rgba(28, 50, 90, 0.07)",
       },
     },
   },

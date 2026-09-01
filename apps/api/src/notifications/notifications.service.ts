@@ -31,7 +31,16 @@ export class NotificationsService {
       orderBy: { createdAt: "desc" },
       take: 50,
       include: {
-        actor: { select: { id: true, firstName: true, lastName: true, username: true, certified: true } },
+        actor: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            username: true,
+            certified: true,
+            profile: { select: { avatarUrl: true } },
+          },
+        },
       },
     });
     const unreadCount = await this.prisma.notification.count({
@@ -46,7 +55,16 @@ export class NotificationsService {
         entityId: n.entityId,
         read: Boolean(n.readAt),
         createdAt: n.createdAt.toISOString(),
-        actor: n.actor,
+        actor: n.actor
+          ? {
+              id: n.actor.id,
+              firstName: n.actor.firstName,
+              lastName: n.actor.lastName,
+              username: n.actor.username,
+              certified: n.actor.certified,
+              avatarUrl: n.actor.profile?.avatarUrl ?? null,
+            }
+          : null,
       })),
     };
   }

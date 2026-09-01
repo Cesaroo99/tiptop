@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { Avatar, CertifiedMark } from "@/components/Avatar";
 import { EventCard } from "@/components/EventCard";
+import { MapThumb } from "@/components/MapThumb";
 import { ErrorBanner, Skeleton } from "@/components/ui";
 import { api, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -43,23 +45,22 @@ function EventDetail() {
   return (
     <div className="space-y-4 px-4 py-4">
       <EventCard event={event} onChanged={setEvent} />
-      <div
-        className={`grid h-36 place-items-center rounded-2xl text-sm ${event.zone ? "bg-[var(--border)] text-muted" : "bg-accent/10 text-accent"}`}
-      >
-        {messages.world.approximate}
-        <span className="mt-1 block text-xs">
-          {event.city}
+      <div className="overflow-hidden rounded-2xl">
+        <MapThumb city={event.city} zone={event.zone} className="h-40 w-full border-0" />
+        <p className="bg-surface px-3 py-2 text-xs text-muted">
+          {messages.world.approximate} · {event.city}
           {event.zone ? ` - ${event.zone}` : ""}
           {event.venue ? ` · ${event.venue}` : ""}
-        </span>
+        </p>
       </div>
       <section className="rounded-card bg-surface p-4 shadow-card">
         <p className="font-semibold">{messages.world.peopleLinked}</p>
         <div className="mt-3 space-y-2">
           {event.people?.map((p) => (
-            <Link key={p.id} href={`/u/${p.username}`} className="flex items-center justify-between text-sm">
-              <span className="text-accent">
-                {p.firstName} {p.lastName} {p.certified ? "✓" : ""}
+            <Link key={p.id} href={`/u/${p.username}`} className="flex items-center gap-3 text-sm">
+              <Avatar firstName={p.firstName} lastName={p.lastName} size={36} />
+              <span className="flex-1 text-ink">
+                {p.firstName} {p.lastName} {p.certified ? <CertifiedMark /> : null}
               </span>
               <span className="text-xs text-muted">{p.status}</span>
             </Link>

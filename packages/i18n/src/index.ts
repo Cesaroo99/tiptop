@@ -48,6 +48,7 @@ export type Messages = {
     perMonth: string;
     comingSoon: string;
     admin: string;
+    newBadge: string;
   };
   settings: {
     title: string;
@@ -130,6 +131,14 @@ export type Messages = {
     notifPayment: string;
     notifMessage: string;
     notifReview: string;
+    share: string;
+    copied: string;
+    copyLink: string;
+    justNow: string;
+    minutesAgo: string;
+    hoursAgo: string;
+    daysAgo: string;
+    moodsTab: string;
   };
   world: {
     available: string;
@@ -217,6 +226,15 @@ export type Messages = {
     tabInvites: string;
     tabReservations: string;
     sortie: string;
+    eventIn: string;
+    inviteNamed: string;
+    seeAll: string;
+    eventsInterested: string;
+    eventsLinked: string;
+    moreAbout: string;
+    reservationsCount: string;
+    interestedCount: string;
+    livesAt: string;
   };
   booking: {
     reserve: string;
@@ -452,6 +470,7 @@ export const fr: Messages = {
     perMonth: "/Mois",
     comingSoon: "Cette section arrive dans une prochaine phase — le bouton n’invente pas de données.",
     admin: "Back-office",
+    newBadge: "NEW",
   },
   settings: {
     title: "Paramètres",
@@ -534,6 +553,14 @@ export const fr: Messages = {
     notifPayment: "paiement mis à jour",
     notifMessage: "t’a écrit",
     notifReview: "a laissé un avis sur ta sortie",
+    share: "Partager",
+    copied: "Lien copié",
+    copyLink: "Copier le lien",
+    justNow: "À l’instant",
+    minutesAgo: "Il y a {n} min",
+    hoursAgo: "Il y a {n} heures",
+    daysAgo: "Il y a {n} j",
+    moodsTab: "Moods",
   },
   world: {
     available: "Disponible",
@@ -621,6 +648,15 @@ export const fr: Messages = {
     tabInvites: "Invitations",
     tabReservations: "Réservations",
     sortie: "Sortie",
+    eventIn: "Événement dans : {when}",
+    inviteNamed: "+ Inviter {name}",
+    seeAll: "Tous voir",
+    eventsInterested: "Événements qui m’intéressent",
+    eventsLinked: "{n} événement(s) lié(s)",
+    moreAbout: "Plus d’infos à propos de {name}",
+    reservationsCount: "Réservations",
+    interestedCount: "Intéressés",
+    livesAt: "Vie à {place}",
   },
   booking: {
     reserve: "Réserver",
@@ -856,6 +892,7 @@ export const en: Messages = {
     perMonth: "/Month",
     comingSoon: "This section ships in a later phase — the button does not invent data.",
     admin: "Back office",
+    newBadge: "NEW",
   },
   settings: {
     title: "Settings",
@@ -938,6 +975,14 @@ export const en: Messages = {
     notifPayment: "payment updated",
     notifMessage: "sent you a message",
     notifReview: "left a review on your meetup",
+    share: "Share",
+    copied: "Link copied",
+    copyLink: "Copy link",
+    justNow: "Just now",
+    minutesAgo: "{n} min ago",
+    hoursAgo: "{n} hours ago",
+    daysAgo: "{n} d ago",
+    moodsTab: "Moods",
   },
   world: {
     available: "Available",
@@ -1025,6 +1070,15 @@ export const en: Messages = {
     tabInvites: "Invites",
     tabReservations: "Bookings",
     sortie: "Meetup",
+    eventIn: "Event in: {when}",
+    inviteNamed: "+ Invite {name}",
+    seeAll: "See all",
+    eventsInterested: "Events I’m interested in",
+    eventsLinked: "{n} linked event(s)",
+    moreAbout: "More about {name}",
+    reservationsCount: "Bookings",
+    interestedCount: "Interested",
+    livesAt: "Lives in {place}",
   },
   booking: {
     reserve: "Book",

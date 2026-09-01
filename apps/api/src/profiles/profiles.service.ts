@@ -19,7 +19,7 @@ export class ProfilesService {
       include: { profile: true },
     });
     if (!user || user.status !== "ACTIVE") throw new NotFoundException({ code: "USER_NOT_FOUND" });
-    const [followCounts, following, likePreview, likeStats, posts] = await Promise.all([
+    const [followCounts, following, likePreview, likeStats, posts, hosted, interested, moods] = await Promise.all([
       this.follows.counts(user.id),
       this.follows.isFollowing(viewerId, user.id),
       this.likes.preview(viewerId, user.id).catch(() => ({
@@ -29,6 +29,23 @@ export class ProfilesService {
       })),
       this.likes.statsFor(user.id),
       this.posts.listByAuthor(viewerId, user.id),
+      this.prisma.event.findMany({
+        where: { hostId: user.id, status: { not: "CANCELLED" } },
+        orderBy: { startsAt: "desc" },
+        take: 8,
+        include: { host: { include: { profile: true } }, participants: true, _count: { select: { hearts: true } } },
+      }),
+      this.prisma.event.findMany({
+        where: { participants: { some: { userId: user.id, status: "INTERESTED" } }, status: { not: "CANCELLED" } },
+        orderBy: { startsAt: "asc" },
+        take: 8,
+        include: { host: { include: { profile: true } }, participants: true, _count: { select: { hearts: true } } },
+      }),
+      this.prisma.mood.findMany({
+        where: { authorId: user.id, expiresAt: { gt: new Date() } },
+        orderBy: { createdAt: "desc" },
+        take: 12,
+      }),
     ]);
     return {
       id: user.id,
@@ -54,6 +71,42 @@ export class ProfilesService {
       likePreview,
       likeStats,
       posts,
+      eventsInterested: interested.map((e) => ({
+        id: e.id,
+        title: e.title,
+        imageUrl: e.imageUrl,
+        city: e.city,
+        zone: e.zone,
+        startsAt: e.startsAt.toISOString(),
+        minAge: e.minAge,
+        taken: e.participants.filter((p) => ["RESERVED", "CONFIRMED", "PRESENT", "HOST"].includes(p.status)).length,
+        host: {
+          firstName: e.host.firstName,
+          lastName: e.host.lastName,
+          avatarUrl: e.host.profile?.avatarUrl ?? null,
+        },
+      })),
+      eventsLinked: hosted.map((e) => ({
+        id: e.id,
+        title: e.title,
+        imageUrl: e.imageUrl,
+        city: e.city,
+        zone: e.zone,
+        startsAt: e.startsAt.toISOString(),
+        minAge: e.minAge,
+        taken: e.participants.filter((p) => ["RESERVED", "CONFIRMED", "PRESENT", "HOST"].includes(p.status)).length,
+        host: {
+          firstName: e.host.firstName,
+          lastName: e.host.lastName,
+          avatarUrl: e.host.profile?.avatarUrl ?? null,
+        },
+      })),
+      moods: moods.map((m) => ({
+        id: m.id,
+        body: m.body,
+        imageUrl: m.imageUrl,
+        expiresAt: m.expiresAt.toISOString(),
+      })),
     };
   }
 }

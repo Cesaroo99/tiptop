@@ -24,6 +24,7 @@ export class FeedService {
       take: 30,
       include: {
         author: { include: { profile: true } },
+        event: { select: { id: true, title: true, startsAt: true, minAge: true, participants: { select: { status: true } } } },
         _count: { select: { comments: true } },
       },
     });

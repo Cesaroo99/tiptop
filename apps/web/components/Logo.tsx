@@ -5,29 +5,21 @@ export function Logo({ size = 40, withWordmark = true }: { size?: number; withWo
     <div className="flex items-center gap-2" aria-label="TipTop">
       <svg width={size} height={size} viewBox="0 0 80 80" fill="none" aria-hidden>
         <defs>
-          <linearGradient id="ttg" x1="8" y1="8" x2="72" y2="72">
-            <stop stopColor="#E5F022" />
-            <stop offset="1" stopColor="#00B5E2" />
+          <linearGradient id="tt-orbit" x1="8" y1="4" x2="72" y2="76">
+            <stop stopColor="#F5E400" />
+            <stop offset="0.45" stopColor="#7BE04A" />
+            <stop offset="1" stopColor="#00BAF2" />
           </linearGradient>
         </defs>
-        <path
-          d="M40 12c18 0 28 12 28 28S54 68 36 68 12 56 12 40 22 12 40 12"
-          stroke="url(#ttg)"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-        <path
-          d="M18 28c12-16 36-16 50 0 10 12 6 32-8 40"
-          stroke="url(#ttg)"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-        <circle cx="22" cy="24" r="6" fill="#C8F04A" />
-        <circle cx="58" cy="40" r="7" fill="#7EE08A" />
-        <circle cx="34" cy="62" r="4" fill="#00C2E8" />
+        <ellipse cx="40" cy="40" rx="26" ry="16" transform="rotate(-28 40 40)" stroke="url(#tt-orbit)" strokeWidth="5" />
+        <ellipse cx="40" cy="40" rx="26" ry="16" transform="rotate(38 40 40)" stroke="url(#tt-orbit)" strokeWidth="5" />
+        <circle cx="18" cy="28" r="6" fill="#F5E400" />
+        <circle cx="62" cy="34" r="5.5" fill="#5EE07A" />
+        <circle cx="48" cy="62" r="4.5" fill="#00BAF2" />
+        <circle cx="30" cy="16" r="3.5" fill="#E8F07A" />
       </svg>
       {withWordmark ? (
-        <span className="text-2xl font-semibold tracking-tight text-accent">TipTop</span>
+        <span className="text-[1.65rem] font-semibold leading-none tracking-tight text-accent">TipTop</span>
       ) : null}
     </div>
   );

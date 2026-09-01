@@ -100,7 +100,7 @@ async function main() {
         body: "Un tour au Black&White : on se retrouve ce soir, on sort vraiment. 🥳💎",
         city: "Yaoundé",
         zone: "Carrefour Damas",
-        imageUrl: "/seed/black-white.svg",
+        imageUrl: "/seed/events/black-white.jpg",
       },
     });
     cesarPostId = p1.id;
@@ -174,6 +174,10 @@ async function main() {
       zone: "Carrefour Damas",
       latitude: 3.848,
       longitude: 11.5021,
+      bio: "On sort vraiment. Fondateur TipTop, Yaoundé.",
+      avatarUrl: "/seed/avatars/cesar.jpg",
+      coverUrl: "/seed/covers/night.jpg",
+      website: "tiptop.cm",
     },
   });
   await prisma.profile.update({
@@ -187,6 +191,11 @@ async function main() {
       zone: "Bastos",
       latitude: 3.89,
       longitude: 11.512,
+      bio: "Lumière, rumba, rooftops. Photographe à Bastos.",
+      avatarUrl: "/seed/avatars/erica.jpg",
+      coverUrl: "/seed/covers/crowd.jpg",
+      website: "behance.net/ericasinclair",
+      profession: "Photographer | videographer",
     },
   });
   await prisma.profile.update({
@@ -200,6 +209,10 @@ async function main() {
       zone: "Odza",
       latitude: 3.8,
       longitude: 11.54,
+      bio: "J’organise des sorties pour qu’on se voie IRL.",
+      avatarUrl: "/seed/avatars/mbelle.jpg",
+      coverUrl: "/seed/covers/rooftop.jpg",
+      profession: "Organisateur",
     },
   });
 
@@ -214,7 +227,7 @@ async function main() {
         hostId: cesar.id,
         title: "Soirée Black & White",
         description: "On sort vraiment — tenues noires et blanches, Carrefour Damas.",
-        imageUrl: "/seed/black-white.svg",
+        imageUrl: "/seed/events/black-white.jpg",
         city: "Yaoundé",
         zone: "Carrefour Damas",
         venue: "Black&White",
@@ -233,7 +246,7 @@ async function main() {
         body: "Soirée Black & White — on se retrouve à Damas.",
         city: "Yaoundé",
         zone: "Carrefour Damas",
-        imageUrl: "/seed/black-white.svg",
+        imageUrl: "/seed/events/black-white.jpg",
         eventId: black.id,
       },
     });
@@ -246,6 +259,7 @@ async function main() {
         hostId: erica.id,
         title: "Afterwork Bastos",
         description: "Afterwork photo + rooftop. Entrée 2 500 FCFA — paiement mock.",
+        imageUrl: "/seed/events/afterwork.jpg",
         city: "Yaoundé",
         zone: "Bastos",
         venue: "Rooftop Bastos",
@@ -267,6 +281,7 @@ async function main() {
         hostId: mbelle.id,
         title: "Brunch Odza",
         description: "Brunch gratuit, places limitées. On se voit IRL.",
+        imageUrl: "/seed/events/brunch.jpg",
         city: "Yaoundé",
         zone: "Odza",
         venue: "Jardin Odza",
@@ -285,7 +300,7 @@ async function main() {
       data: {
         authorId: erica.id,
         body: "Lumière de Bastos — qui sort ce soir ?",
-        imageUrl: "/seed/black-white.svg",
+        imageUrl: "/seed/moods/bastos.jpg",
         visibility: "ZONE",
         expiresAt: new Date(Date.now() + 20 * 3600_000),
       },
@@ -317,7 +332,7 @@ async function main() {
   if (black) {
     await prisma.event.update({
       where: { id: black.id },
-      data: { startsAt: blackAt, endsAt: new Date(blackAt.getTime() + 4 * 3600_000) },
+      data: { startsAt: blackAt, endsAt: new Date(blackAt.getTime() + 4 * 3600_000), imageUrl: "/seed/events/black-white.jpg" },
     });
   }
   if (paid) {
@@ -327,13 +342,14 @@ async function main() {
         startsAt: afterworkAt,
         endsAt: new Date(afterworkAt.getTime() + 4 * 3600_000),
         description: "Afterwork photo + rooftop. Entrée 2 500 FCFA — paiement mock.",
+        imageUrl: "/seed/events/afterwork.jpg",
       },
     });
   }
   if (picnic) {
     await prisma.event.update({
       where: { id: picnic.id },
-      data: { startsAt: brunchAt },
+      data: { startsAt: brunchAt, imageUrl: "/seed/events/brunch.jpg" },
     });
   }
 
@@ -434,6 +450,7 @@ async function main() {
         hostId: mbelle.id,
         title: "Rooftop Damas (passée)",
         description: "Sortie déjà vécue — ticket validé, avis 24 h après la fin.",
+        imageUrl: "/seed/events/rooftop.jpg",
         city: "Yaoundé",
         zone: "Carrefour Damas",
         venue: "Rooftop Damas",
@@ -492,7 +509,428 @@ async function main() {
     });
   }
 
+  await enrichLivingWorld(prisma, { cesar, erica, mbelle, availableUntil });
+
   console.log("Seed OK — OTP mock 1234, démo César admin +237 695 21 47 85");
+}
+
+type SeedUser = { id: string };
+
+async function enrichLivingWorld(
+  db: PrismaClient,
+  ctx: { cesar: SeedUser; erica: SeedUser; mbelle: SeedUser; availableUntil: Date },
+) {
+  const { cesar, erica, mbelle, availableUntil } = ctx;
+  await db.post.deleteMany({ where: { body: { startsWith: "E2E " } } });
+  await db.message.deleteMany({ where: { body: { startsWith: "E2E " } } });
+  await db.post.updateMany({ where: { imageUrl: "/seed/black-white.svg" }, data: { imageUrl: "/seed/events/black-white.jpg" } });
+  await db.event.updateMany({ where: { imageUrl: "/seed/black-white.svg" }, data: { imageUrl: "/seed/events/black-white.jpg" } });
+  await db.mood.updateMany({ where: { imageUrl: "/seed/black-white.svg" }, data: { imageUrl: "/seed/moods/bastos.jpg" } });
+
+  const extras = [
+    {
+      phone: "+237690000003",
+      username: "onguene.landry",
+      firstName: "Onguene",
+      lastName: "Landry",
+      profession: "Designer UI",
+      city: "Yaoundé",
+      zone: "Nlongkak",
+      birth: "2002-04-18",
+      lat: 3.875,
+      lng: 11.512,
+      avatar: "/seed/avatars/onguene.jpg",
+      cover: "/seed/covers/city.jpg",
+      bio: "Je dessine des interfaces, je vis les sorties.",
+    },
+    {
+      phone: "+237690000004",
+      username: "amina.ngo",
+      firstName: "Amina",
+      lastName: "Ngo",
+      profession: "Avocate",
+      city: "Yaoundé",
+      zone: "Bastos",
+      birth: "1998-09-03",
+      lat: 3.888,
+      lng: 11.51,
+      avatar: "/seed/avatars/amina.jpg",
+      cover: "/seed/covers/night.jpg",
+      bio: "Après le palais, un rooftop. Toujours.",
+    },
+    {
+      phone: "+237690000005",
+      username: "jp.fouda",
+      firstName: "Jean-Pierre",
+      lastName: "Fouda",
+      profession: "Chef",
+      city: "Yaoundé",
+      zone: "Mvog-Mbi",
+      birth: "1993-01-14",
+      lat: 3.85,
+      lng: 11.52,
+      avatar: "/seed/avatars/fouda.jpg",
+      cover: "/seed/covers/rooftop.jpg",
+      bio: "Brunch, ndolé, et des tables trop petites pour rester assis.",
+    },
+    {
+      phone: "+237690000006",
+      username: "nadege.atangana",
+      firstName: "Nadège",
+      lastName: "Atangana",
+      profession: "Étudiante",
+      city: "Yaoundé",
+      zone: "Ngoa-Ekellé",
+      birth: "2003-06-21",
+      lat: 3.863,
+      lng: 11.5,
+      avatar: "/seed/avatars/nadege.jpg",
+      cover: "/seed/covers/crowd.jpg",
+      bio: "Campus le jour, Damas le soir.",
+    },
+    {
+      phone: "+237690000007",
+      username: "koffi.mensah",
+      firstName: "Koffi",
+      lastName: "Mensah",
+      profession: "DJ",
+      city: "Yaoundé",
+      zone: "Melen",
+      birth: "1995-12-02",
+      lat: 3.86,
+      lng: 11.49,
+      avatar: "/seed/avatars/koffi.jpg",
+      cover: "/seed/covers/night.jpg",
+      bio: "Sets live, pas de playlist infinie derrière un écran.",
+    },
+    {
+      phone: "+237690000008",
+      username: "sarah.nkodo",
+      firstName: "Sarah",
+      lastName: "Nkodo",
+      profession: "Infirmière",
+      city: "Yaoundé",
+      zone: "Mimboman",
+      birth: "1999-08-11",
+      lat: 3.87,
+      lng: 11.55,
+      avatar: "/seed/avatars/sarah.jpg",
+      cover: "/seed/covers/city.jpg",
+      bio: "Garde de nuit, afterwork le jeudi.",
+    },
+    {
+      phone: "+237690000009",
+      username: "alex.moullion",
+      firstName: "Alex",
+      lastName: "Moullion",
+      profession: "Entrepreneur",
+      city: "Yaoundé",
+      zone: "Odza",
+      birth: "1994-02-28",
+      lat: 3.805,
+      lng: 11.538,
+      avatar: "/seed/avatars/alex.jpg",
+      cover: "/seed/covers/rooftop.jpg",
+      bio: "Piscine party, networking, et on range le téléphone.",
+    },
+    {
+      phone: "+237690000010",
+      username: "rachel.essomba",
+      firstName: "Rachel",
+      lastName: "Essomba",
+      profession: "Community manager",
+      city: "Yaoundé",
+      zone: "Essos",
+      birth: "1997-05-09",
+      lat: 3.88,
+      lng: 11.54,
+      avatar: "/seed/avatars/rachel.jpg",
+      cover: "/seed/covers/crowd.jpg",
+      bio: "Je raconte Yaoundé. En vrai, pas en stories sans fin.",
+    },
+    {
+      phone: "+237690000011",
+      username: "william.ekani",
+      firstName: "William",
+      lastName: "Ekani",
+      profession: "Footballeur amateur",
+      city: "Yaoundé",
+      zone: "Omnisports",
+      birth: "1996-11-19",
+      lat: 3.87,
+      lng: 11.52,
+      avatar: "/seed/avatars/william.jpg",
+      cover: "/seed/covers/night.jpg",
+      bio: "Match le samedi, bières ensuite. Simple.",
+    },
+    {
+      phone: "+237690000012",
+      username: "mireille.owona",
+      firstName: "Mireille",
+      lastName: "Owona",
+      profession: "Styliste",
+      city: "Yaoundé",
+      zone: "Bastos",
+      birth: "1998-03-30",
+      lat: 3.892,
+      lng: 11.508,
+      avatar: "/seed/avatars/mireille.jpg",
+      cover: "/seed/covers/crowd.jpg",
+      bio: "Tenues Black & White et ndolè le dimanche.",
+    },
+  ];
+
+  const people: Record<string, SeedUser> = {};
+  for (const u of extras) {
+    const row = await db.user.upsert({
+      where: { phoneE164: u.phone },
+      update: {
+        firstName: u.firstName,
+        lastName: u.lastName,
+        profileCompleted: true,
+      },
+      create: {
+        phoneE164: u.phone,
+        phoneCountry: "CM",
+        username: u.username,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        certified: u.username === "alex.moullion",
+        profileCompleted: true,
+        profile: {
+          create: {
+            profession: u.profession,
+            bio: u.bio,
+            city: u.city,
+            zone: u.zone,
+            country: "CM",
+            availability: "AVAILABLE",
+            availabilityUntil: availableUntil,
+            locationPrecision: "ZONE",
+            birthDate: new Date(u.birth),
+            latitude: u.lat,
+            longitude: u.lng,
+            avatarUrl: u.avatar,
+            coverUrl: u.cover,
+          },
+        },
+        likeUnits: { create: [{ source: LikeUnitSource.FREE }] },
+      },
+    });
+    people[u.username] = row;
+    await db.profile.update({
+      where: { userId: row.id },
+      data: {
+        profession: u.profession,
+        bio: u.bio,
+        city: u.city,
+        zone: u.zone,
+        availability: "AVAILABLE",
+        availabilityUntil: availableUntil,
+        birthDate: new Date(u.birth),
+        latitude: u.lat,
+        longitude: u.lng,
+        avatarUrl: u.avatar,
+        coverUrl: u.cover,
+      },
+    });
+  }
+
+  const onguene = people["onguene.landry"];
+  const amina = people["amina.ngo"];
+  const fouda = people["jp.fouda"];
+  const nadege = people["nadege.atangana"];
+  const koffi = people["koffi.mensah"];
+  const sarah = people["sarah.nkodo"];
+  const alex = people["alex.moullion"];
+  const rachel = people["rachel.essomba"];
+  const william = people["william.ekani"];
+  const mireille = people["mireille.owona"];
+  if (!onguene || !amina || !fouda || !nadege || !koffi || !sarah || !alex || !rachel || !william || !mireille) return;
+
+  const follows: Array<[string, string]> = [
+    [cesar.id, onguene.id],
+    [cesar.id, amina.id],
+    [cesar.id, alex.id],
+    [cesar.id, koffi.id],
+    [erica.id, mireille.id],
+    [erica.id, rachel.id],
+    [mbelle.id, alex.id],
+    [onguene.id, cesar.id],
+    [amina.id, erica.id],
+    [koffi.id, cesar.id],
+    [alex.id, mbelle.id],
+    [nadege.id, erica.id],
+    [william.id, cesar.id],
+    [mireille.id, erica.id],
+    [sarah.id, amina.id],
+    [rachel.id, cesar.id],
+  ];
+  for (const [a, b] of follows) {
+    await db.follow.upsert({
+      where: { followerId_followeeId: { followerId: a, followeeId: b } },
+      update: {},
+      create: { followerId: a, followeeId: b },
+    });
+  }
+
+  const postsWanted = [
+    { authorId: onguene.id, body: "Mood Damas — qui est chaud pour un afterwork sans écran ?", imageUrl: "/seed/posts/lights.jpg", city: "Yaoundé", zone: "Nlongkak" },
+    { authorId: amina.id, body: "Plaidoirie le matin, rooftop Bastos le soir. Qui sort ?", imageUrl: "/seed/posts/rooftop.jpg", city: "Yaoundé", zone: "Bastos" },
+    { authorId: fouda.id, body: "J’ai mis le ndolé au feu. Table de 8, Odza, on se voit IRL.", imageUrl: "/seed/posts/food.jpg", city: "Yaoundé", zone: "Mvog-Mbi" },
+    { authorId: koffi.id, body: "Set live à Melen ce week-end. Pas de replay, faut venir.", imageUrl: "/seed/events/live.jpg", city: "Yaoundé", zone: "Melen" },
+    { authorId: nadege.id, body: "Fin des partiels. Qui prend un jus à Ngoa-Ekellé ?", imageUrl: "/seed/posts/drinks.jpg", city: "Yaoundé", zone: "Ngoa-Ekellé" },
+    { authorId: mireille.id, body: "Look Black & White prêt. On se retrouve à l’entrée.", imageUrl: "/seed/posts/friends.jpg", city: "Yaoundé", zone: "Bastos" },
+    { authorId: rachel.id, body: "Yaoundé la nuit, c’est mieux dehors que dans le fil.", imageUrl: "/seed/covers/night.jpg", city: "Yaoundé", zone: "Essos" },
+    { authorId: william.id, body: "Match à Omnisports puis bières. Places limitées, on se parle.", imageUrl: "/seed/posts/friends.jpg", city: "Yaoundé", zone: "Omnisports" },
+  ];
+  for (const p of postsWanted) {
+    const exists = await db.post.findFirst({ where: { authorId: p.authorId, body: p.body } });
+    if (!exists) await db.post.create({ data: p });
+  }
+
+  async function ensureEvent(title: string, data: Parameters<typeof db.event.create>[0]["data"]) {
+    let e = await db.event.findFirst({ where: { title } });
+    if (!e) e = await db.event.create({ data });
+    else await db.event.update({ where: { id: e.id }, data: { imageUrl: data.imageUrl, description: data.description } });
+    return e;
+  }
+
+  const piscineAt = new Date(Date.now() + 3 * 24 * 3600_000);
+  const liveAt = new Date(Date.now() + 8 * 3600_000);
+  const expoAt = new Date(Date.now() + 5 * 24 * 3600_000);
+
+  const piscine = await ensureEvent("Piscine party - Odza, Yaoundé", {
+    hostId: alex.id,
+    title: "Piscine party - Odza, Yaoundé",
+    description: "Bassin, dj set, -18. On se voit vraiment — pas un live Instagram.",
+    imageUrl: "/seed/events/piscine.jpg",
+    city: "Yaoundé",
+    zone: "Odza",
+    venue: "Villa Odza",
+    startsAt: piscineAt,
+    endsAt: new Date(piscineAt.getTime() + 6 * 3600_000),
+    priceXaf: 5000,
+    capacity: 40,
+    minAge: 18,
+    requiresReservation: true,
+    participants: { create: { userId: alex.id, status: "HOST" } },
+  });
+  const live = await ensureEvent("Live session Melen", {
+    hostId: koffi.id,
+    title: "Live session Melen",
+    description: "Set afro-house, entrée 1 500 FCFA. Paiement mock.",
+    imageUrl: "/seed/events/live.jpg",
+    city: "Yaoundé",
+    zone: "Melen",
+    venue: "Club Melen",
+    startsAt: liveAt,
+    endsAt: new Date(liveAt.getTime() + 5 * 3600_000),
+    priceXaf: 1500,
+    capacity: 80,
+    minAge: 18,
+    requiresReservation: true,
+    participants: { create: { userId: koffi.id, status: "HOST" } },
+  });
+  await ensureEvent("Expo photo Hilton", {
+    hostId: erica.id,
+    title: "Expo photo Hilton",
+    description: "Tirages Yaoundé nuit. Gratuit, places limitées.",
+    imageUrl: "/seed/events/expo.jpg",
+    city: "Yaoundé",
+    zone: "Bastos",
+    venue: "Hilton",
+    startsAt: expoAt,
+    priceXaf: 0,
+    capacity: 60,
+    requiresReservation: true,
+    participants: { create: { userId: erica.id, status: "HOST" } },
+  });
+
+  for (const [eventId, userId, status] of [
+    [piscine.id, cesar.id, "INTERESTED"],
+    [piscine.id, erica.id, "INTERESTED"],
+    [piscine.id, mireille.id, "RESERVED"],
+    [live.id, nadege.id, "INTERESTED"],
+    [live.id, william.id, "INTERESTED"],
+    [live.id, cesar.id, "INTERESTED"],
+  ] as Array<[string, string, "INTERESTED" | "RESERVED"]>) {
+    await db.eventParticipant.upsert({
+      where: { eventId_userId: { eventId, userId } },
+      update: { status },
+      create: { eventId, userId, status },
+    });
+  }
+
+  const moodsWanted = [
+    { authorId: koffi.id, body: "Soundcheck Melen — venez maintenant.", imageUrl: "/seed/moods/concert.jpg" },
+    { authorId: amina.id, body: "Golden hour Bastos. Table dehors.", imageUrl: "/seed/moods/bastos.jpg" },
+    { authorId: onguene.id, body: "Je suis dispo 4 h autour de Nlongkak.", imageUrl: "/seed/moods/street.jpg" },
+    { authorId: alex.id, body: "Test lumière piscine Odza.", imageUrl: "/seed/events/piscine.jpg" },
+  ];
+  for (const m of moodsWanted) {
+    const exists = await db.mood.findFirst({ where: { authorId: m.authorId, body: m.body } });
+    if (!exists) {
+      await db.mood.create({
+        data: {
+          ...m,
+          visibility: "ZONE",
+          expiresAt: new Date(Date.now() + 18 * 3600_000),
+        },
+      });
+    }
+  }
+
+  const blackPost = await db.post.findFirst({ where: { authorId: cesar.id, body: { contains: "Black" } } });
+  if (blackPost) {
+    const comments = [
+      { authorId: erica.id, body: "J’y serai — on se retrouve à l’entrée." },
+      { authorId: mireille.id, body: "Tenue blanche, je confirme." },
+      { authorId: koffi.id, body: "Je passe un set si vous voulez." },
+      { authorId: onguene.id, body: "Carrefour Damas 23h, c’est noté." },
+    ];
+    for (const c of comments) {
+      const hit = await db.comment.findFirst({ where: { postId: blackPost.id, authorId: c.authorId, body: c.body } });
+      if (!hit) await db.comment.create({ data: { postId: blackPost.id, ...c } });
+    }
+  }
+
+  for (const personId of [erica.id, mbelle.id, onguene.id, amina.id, alex.id, koffi.id, mireille.id]) {
+    await db.contact.upsert({
+      where: { ownerId_personId: { ownerId: cesar.id, personId } },
+      update: {},
+      create: { ownerId: cesar.id, personId },
+    });
+  }
+
+  const extraNotifs = await db.notification.count({ where: { userId: cesar.id, type: "FOLLOW" } });
+  if (extraNotifs < 4) {
+    await db.notification.createMany({
+      data: [
+        { userId: cesar.id, actorId: onguene.id, type: "FOLLOW", entityType: "user", entityId: cesar.id },
+        { userId: cesar.id, actorId: koffi.id, type: "FOLLOW", entityType: "user", entityId: cesar.id },
+        { userId: cesar.id, actorId: amina.id, type: "LIKE", entityType: "user", entityId: cesar.id },
+      ],
+    });
+  }
+
+  const dmAminaKey = directKey(cesar.id, amina.id);
+  const existingAmina = await db.conversation.findUnique({ where: { directKey: dmAminaKey } });
+  if (!existingAmina) {
+    await db.conversation.create({
+      data: {
+        kind: "DIRECT",
+        directKey: dmAminaKey,
+        members: { create: [{ userId: cesar.id }, { userId: amina.id }] },
+        messages: {
+          create: [
+            { senderId: amina.id, kind: "TEXT", body: "Le rooftop Bastos, 19h, tu confirmes ?" },
+            { senderId: cesar.id, kind: "TEXT", body: "Confirmé. On sort vraiment." },
+          ],
+        },
+      },
+    });
+  }
 }
 
 main()

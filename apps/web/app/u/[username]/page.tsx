@@ -6,10 +6,22 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { PostCard } from "@/components/PostCard";
+import { Avatar, CertifiedMark } from "@/components/Avatar";
 import { EmptyState, ErrorBanner, Modal, PrimaryButton, Skeleton } from "@/components/ui";
 import { api, ApiError, type FeedItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { useSession } from "@/lib/session";
+
+type EventPreview = {
+  id: string;
+  title: string;
+  imageUrl: string | null;
+  city: string;
+  zone: string | null;
+  startsAt: string;
+  minAge: number | null;
+  taken: number;
+  host: { firstName: string; lastName: string; avatarUrl: string | null };
+};
 
 type Profile = {
   id: string;
@@ -19,6 +31,8 @@ type Profile = {
   certified: boolean;
   profession: string | null;
   bio: string | null;
+  avatarUrl: string | null;
+  coverUrl: string | null;
   city: string | null;
   zone: string | null;
   website: string | null;
@@ -30,6 +44,9 @@ type Profile = {
   likedByMe: boolean;
   likeStats: { active: number; perHour: number; perDay: number; perMonth: number };
   posts: FeedItem[];
+  eventsInterested?: EventPreview[];
+  eventsLinked?: EventPreview[];
+  moods?: Array<{ id: string; body: string; imageUrl: string | null; expiresAt: string }>;
 };
 
 export default function ProfilePage() {
@@ -43,13 +60,13 @@ export default function ProfilePage() {
 function ProfileView() {
   const { username } = useParams<{ username: string }>();
   const { messages } = useI18n();
-  const { user } = useSession();
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [soon, setSoon] = useState<string | null>(null);
   const [transfer, setTransfer] = useState<string | null>(null);
   const [buy, setBuy] = useState(false);
+  const [tab, setTab] = useState<"posts" | "events" | "moods">("events");
   const [reportOpen, setReportOpen] = useState(false);
 
   async function load() {
@@ -117,19 +134,31 @@ function ProfileView() {
 
   return (
     <div className="pb-8">
-      <div className="h-28 bg-gradient-to-r from-accent/30 to-yellow/20" />
-      <div className="-mt-10 px-4">
-        <div className="mx-auto h-20 w-20 rounded-full bg-accent/30 ring-4 ring-[var(--bg)]" />
-        <h1 className="mt-3 text-xl font-bold text-ink">
-          {profile.firstName} {profile.lastName} {profile.certified ? "✓" : ""}
+      <div className="relative h-36 bg-gradient-to-r from-accent/30 to-yellow/20">
+        {profile.coverUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={profile.coverUrl} alt="" className="h-full w-full object-cover" />
+        ) : null}
+      </div>
+      <div className="-mt-12 px-4 text-center">
+        <Avatar
+          src={profile.avatarUrl}
+          firstName={profile.firstName}
+          lastName={profile.lastName}
+          size={88}
+          online={profile.availability === "AVAILABLE"}
+          className="mx-auto ring-4 ring-[var(--bg)]"
+        />
+        <h1 className="mt-3 flex items-center justify-center gap-1 text-xl font-bold text-ink">
+          {profile.firstName} {profile.lastName}
+          {profile.certified ? <CertifiedMark /> : null}
         </h1>
         <p className="text-sm text-muted">@{profile.username}</p>
         {profile.profession ? <p className="mt-1 text-sm text-muted">{profile.profession}</p> : null}
         {profile.city ? (
-          <p className="text-sm text-muted">
-            {messages.chat.livesIn.replace("{place}", `${profile.city}${profile.zone ? ` - ${profile.zone}` : ""}`)}
-          </p>
+          <p className="mt-2 text-sm text-muted">🏠 {messages.world.livesAt.replace("{place}", `${profile.city}${profile.zone ? `, ${profile.zone}` : ""}`)}</p>
         ) : null}
+        {profile.website ? <p className="text-sm text-accent">🔗 {profile.website}</p> : null}
         {profile.availability === "AVAILABLE" ? (
           <p className="mt-1 text-xs font-semibold text-accent">{messages.world.available}</p>
         ) : null}
@@ -137,7 +166,7 @@ function ProfileView() {
           {profile.followersCount} · {profile.followingCount} · {profile.likeStats.active} likes
         </p>
         {!profile.isSelf ? (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
             <PrimaryButton className="!w-auto px-5" onClick={() => void toggleFollow()}>
               {profile.following ? messages.social.unfollow : messages.social.follow}
             </PrimaryButton>
@@ -150,7 +179,7 @@ function ProfileView() {
             </button>
             <button
               type="button"
-              className="rounded-pill bg-[var(--border)] px-5 py-3"
+              className="rounded-pill bg-accent px-5 py-3 font-semibold text-white"
               onClick={async () => {
                 try {
                   const conv = await api<{ id: string }>("/conversations/direct", {
@@ -168,34 +197,76 @@ function ProfileView() {
             <Link href={`/invite/${profile.id}`} className="rounded-pill bg-[var(--border)] px-5 py-3">
               + {messages.world.invite}
             </Link>
-            <button
-              type="button"
-              className="rounded-pill bg-[var(--border)] px-5 py-3"
-              onClick={() => setReportOpen(true)}
-            >
+            <button type="button" className="rounded-pill bg-[var(--border)] px-5 py-3" onClick={() => setReportOpen(true)}>
               {messages.admin.report}
             </button>
           </div>
         ) : (
           <div className="mt-3 space-y-2">
-            <p className="text-sm text-muted">@{user?.username}</p>
-            <Link href="/zone" className="text-sm font-semibold text-accent">
-              {messages.world.goAvailable} · {messages.world.zoneTitle}
+            <Link href="/account" className="text-sm font-semibold text-accent">
+              {messages.account.title}
             </Link>
           </div>
         )}
       </div>
+      <div className="mt-6 flex justify-center gap-2 px-4">
+        {(
+          [
+            ["posts", messages.social.postsTab],
+            ["events", messages.social.events],
+            ["moods", messages.social.moodsTab],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setTab(key)}
+            className={`rounded-pill px-4 py-2 text-sm font-semibold ${tab === key ? "bg-accent text-white" : "bg-accent/15 text-accent"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       <div className="mt-6 px-4">
-        <p className="mb-3 font-semibold">{messages.social.postsTab}</p>
-        {profile.posts.length === 0 ? (
-          <EmptyState title={messages.social.postsTab} body={messages.home.emptyBody} />
-        ) : (
-          <div className="space-y-3">
-            {profile.posts.map((p) => (
-              <PostCard key={p.id} post={p} />
-            ))}
+        {tab === "posts" ? (
+          profile.posts.length === 0 ? (
+            <EmptyState title={messages.social.postsTab} body={messages.home.emptyBody} />
+          ) : (
+            <div className="space-y-3">
+              {profile.posts.map((p) => (
+                <PostCard key={p.id} post={p} />
+              ))}
+            </div>
+          )
+        ) : null}
+        {tab === "events" ? (
+          <div className="space-y-6">
+            <EventRail title={messages.world.eventsInterested} items={profile.eventsInterested ?? []} />
+            <EventRail
+              title={messages.world.eventsLinked.replace("{n}", String(profile.eventsLinked?.length ?? 0))}
+              items={profile.eventsLinked ?? []}
+            />
           </div>
-        )}
+        ) : null}
+        {tab === "moods" ? (
+          profile.moods?.length ? (
+            <div className="grid grid-cols-2 gap-3">
+              {profile.moods.map((m) => (
+                <Link key={m.id} href={`/mood/${m.id}`} className="overflow-hidden rounded-card bg-surface shadow-card">
+                  {m.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={m.imageUrl} alt="" className="h-28 w-full object-cover" />
+                  ) : (
+                    <div className="h-28 bg-accent/10" />
+                  )}
+                  <p className="p-2 text-xs text-ink">{m.body}</p>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <EmptyState title={messages.social.moodsTab} body={messages.world.moodEmptyBody} />
+          )
+        ) : null}
       </div>
       <Modal open={Boolean(soon)} title="TipTop" onClose={() => setSoon(null)}>
         {soon}
@@ -237,5 +308,42 @@ function ProfileView() {
         </div>
       </Modal>
     </div>
+  );
+}
+
+function EventRail({ title, items }: { title: string; items: EventPreview[] }) {
+  const { messages } = useI18n();
+  if (!items.length) return null;
+  return (
+    <section>
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-sm font-semibold text-ink">{title}</p>
+        <span className="text-xs text-accent">{messages.world.seeAll} ›</span>
+      </div>
+      <div className="no-scrollbar flex gap-3 overflow-x-auto pb-2">
+        {items.map((e) => (
+          <Link key={e.id} href={`/events/${e.id}`} className="w-64 shrink-0 overflow-hidden rounded-card bg-surface shadow-card">
+            <div className="relative h-36">
+              {e.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={e.imageUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="h-full bg-accent/10" />
+              )}
+              <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-ink">
+                {e.taken} {messages.world.peopleLinked}
+              </span>
+            </div>
+            <div className="p-3">
+              <p className="truncate text-sm font-semibold text-ink">{e.title}</p>
+              <p className="text-xs text-muted">
+                {e.host.firstName} {e.host.lastName}
+              </p>
+              <p className="text-xs text-yellow">{new Date(e.startsAt).toLocaleString()}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }

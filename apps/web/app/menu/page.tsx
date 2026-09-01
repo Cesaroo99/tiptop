@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Avatar, CertifiedMark } from "@/components/Avatar";
 import { CardButton, ScreenHeader } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -28,13 +29,13 @@ export default function MenuPage() {
     return null;
   }
 
-  const items = [
+  const items: Array<{ href: string; label: string; fresh?: boolean }> = [
     ...(user.role === "ADMIN" || user.role === "MODERATOR"
       ? [{ href: "/admin", label: messages.menu.admin }]
       : []),
     { href: "/likes", label: messages.menu.wallet },
-    { href: "/tickets", label: messages.menu.tickets },
-    { href: "/favorites", label: messages.menu.favorites },
+    { href: "/tickets", label: messages.menu.tickets, fresh: true },
+    { href: "/favorites", label: messages.menu.favorites, fresh: true },
     { href: "/contacts", label: messages.menu.contacts },
     { href: "/payments", label: messages.menu.payments },
     { href: "/settings", label: messages.menu.settings },
@@ -45,14 +46,15 @@ export default function MenuPage() {
     <main className="mx-auto min-h-dvh max-w-lg px-4 py-4">
       <ScreenHeader title={messages.menu.title} onBack={() => router.back()} />
       <Link href={user ? `/u/${user.username}` : "/account"} className="mt-2 flex items-center gap-3 rounded-card bg-surface p-4 shadow-card">
-        <div className="h-14 w-14 rounded-full bg-accent/20" />
+        <Avatar src={user.avatarUrl} firstName={user.firstName} lastName={user.lastName} size={56} />
         <div className="flex-1">
-          <p className="font-semibold text-accent">
-            {user.firstName} {user.lastName} {user.certified ? "✓" : ""}
+          <p className="flex items-center gap-1 font-semibold text-accent">
+            {user.firstName} {user.lastName}
+            {user.certified ? <CertifiedMark /> : null}
           </p>
           <p className="text-sm text-muted">@{user.username}</p>
         </div>
-        <span className="text-muted">›</span>
+        <span className="text-accent">›</span>
       </Link>
       <Link href="/likes" className="mt-4 block rounded-card bg-surface p-4 shadow-card">
         <p className="mb-3 text-sm text-accent">{messages.menu.likes}</p>
@@ -74,7 +76,12 @@ export default function MenuPage() {
       <div className="mt-4 space-y-3">
         {items.map((item) => (
           <CardButton key={item.href} onClick={() => router.push(item.href)}>
-            <span>{item.label}</span>
+            <span className="flex items-center gap-2">
+              {item.label}
+              {"fresh" in item && item.fresh ? (
+                <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-white">{messages.menu.newBadge}</span>
+              ) : null}
+            </span>
             <span>›</span>
           </CardButton>
         ))}

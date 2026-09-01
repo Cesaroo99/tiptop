@@ -29,6 +29,7 @@ export class ContactsController {
         certified: c.person.certified,
         profession: c.person.profile?.profession ?? null,
         city: c.person.profile?.city ?? null,
+        avatarUrl: c.person.profile?.avatarUrl ?? null,
       })),
     };
   }

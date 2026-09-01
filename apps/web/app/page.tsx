@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { EventCard } from "@/components/EventCard";
 import { PostCard } from "@/components/PostCard";
+import { Avatar } from "@/components/Avatar";
 import { EmptyState, ErrorBanner, Skeleton } from "@/components/ui";
 import { api, type EventCard as EventCardType, type FeedItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -44,9 +45,12 @@ function HomeFeed() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const linked = new Set(items?.map((p) => p.event?.id).filter(Boolean));
+  const extraEvents = events.filter((e) => !linked.has(e.id));
+
   return (
     <div className="space-y-4 px-4 py-4">
-      <div className="flex gap-3 overflow-x-auto pb-2">
+      <div className="no-scrollbar flex gap-3 overflow-x-auto pb-2">
         <Link href="/compose?type=mood" className="flex w-16 shrink-0 flex-col items-center gap-1">
           <div className="grid h-16 w-16 place-items-center rounded-full border-2 border-dashed border-accent bg-accent text-2xl text-white">
             +
@@ -55,14 +59,20 @@ function HomeFeed() {
         </Link>
         {user ? (
           <Link href={`/u/${user.username}`} className="flex w-16 shrink-0 flex-col items-center gap-1">
-            <div className="h-16 w-16 rounded-full bg-accent/20 ring-2 ring-accent" />
-            <span className="truncate text-[11px] text-muted">{user.firstName}</span>
+            <Avatar src={user.avatarUrl} firstName={user.firstName} lastName={user.lastName} size={64} ring="accent" />
+            <span className="w-16 truncate text-center text-[11px] text-muted">{user.firstName}</span>
           </Link>
         ) : null}
         {moods.map((m) => (
           <Link key={m.id} href={`/mood/${m.id}`} className="flex w-16 shrink-0 flex-col items-center gap-1">
-            <div className="h-16 w-16 rounded-full bg-yellow/40 ring-2 ring-yellow" />
-            <span className="truncate text-[11px] text-muted">{m.author.firstName}</span>
+            <Avatar
+              src={m.imageUrl || m.author.avatarUrl}
+              firstName={m.author.firstName}
+              lastName={m.author.lastName}
+              size={64}
+              ring="yellow"
+            />
+            <span className="w-16 truncate text-center text-[11px] text-muted">{m.author.firstName}</span>
           </Link>
         ))}
       </div>
@@ -77,12 +87,6 @@ function HomeFeed() {
       {items && items.length === 0 && events.length === 0 && !error ? (
         <EmptyState title={messages.home.emptyTitle} body={messages.home.emptyBody} />
       ) : null}
-      {events[0] ? (
-        <EventCard
-          event={events[0]}
-          onChanged={(next) => setEvents((cur) => cur.map((e) => (e.id === next.id ? next : e)))}
-        />
-      ) : null}
       {items?.map((post) => (
         <PostCard
           key={post.id}
@@ -90,7 +94,7 @@ function HomeFeed() {
           onChanged={(next) => setItems((cur) => cur?.map((p) => (p.id === next.id ? next : p)) ?? null)}
         />
       ))}
-      {events.slice(1).map((ev) => (
+      {extraEvents.map((ev) => (
         <EventCard
           key={ev.id}
           event={ev}

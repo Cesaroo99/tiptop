@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Avatar } from "@/components/Avatar";
 import { EmptyState, ScreenHeader } from "@/components/ui";
 import { api, type NotifItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -101,7 +102,7 @@ function NotifCard({
       }}
       className="mb-2 flex items-start gap-3 rounded-card bg-surface p-4 shadow-card"
     >
-      <div className="h-10 w-10 rounded-full bg-accent/20" />
+      <Avatar src={n.actor?.avatarUrl} firstName={n.actor?.firstName} lastName={n.actor?.lastName} size={40} />
       <div className="flex-1">
         <p className="text-sm text-ink">{label}</p>
         <p className="text-xs text-muted">{new Date(n.createdAt).toLocaleString()}</p>
