@@ -2,7 +2,7 @@
 
 Réseau social pour **reconnecter les gens au monde réel**.
 
-Phase actuelle : **QA (Phase 8)** — unitaires domain/API, E2E Playwright, `TIPTOP_QA_AUDIT.md`.
+Phase actuelle : **parcours réel fermé (Phase 9)** — avis G22, Message Amies → DM, aide à jour.
 
 ## Démarrer
 

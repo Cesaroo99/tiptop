@@ -5,6 +5,7 @@ import type { Request } from "express";
 import { SessionGuard } from "../auth/session.guard";
 import type { PublicUser } from "../auth/auth.service";
 import { EventsService } from "./events.service";
+import { ReviewsService } from "./reviews.service";
 
 class CreateEventDto {
   @IsString()
@@ -70,10 +71,26 @@ class HeartDto {
   confirmTransfer?: boolean;
 }
 
+class ReviewDto {
+  @IsString()
+  @MaxLength(500)
+  body!: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  rating?: number;
+}
+
 @Controller()
 @UseGuards(SessionGuard)
 export class EventsController {
-  constructor(@Inject(EventsService) private readonly events: EventsService) {}
+  constructor(
+    @Inject(EventsService) private readonly events: EventsService,
+    @Inject(ReviewsService) private readonly reviews: ReviewsService,
+  ) {}
 
   @Get("events")
   list(
@@ -118,5 +135,29 @@ export class EventsController {
   @Get("favorites")
   favorites(@Req() req: Request & { user: PublicUser }) {
     return this.events.favorites(req.user.id);
+  }
+
+  @Get("reviews/pending")
+  pending(@Req() req: Request & { user: PublicUser }) {
+    return this.reviews.pending(req.user.id);
+  }
+
+  @Get("events/:id/reviews")
+  listReviews(@Param("id") id: string) {
+    return this.reviews.list(id);
+  }
+
+  @Get("events/:id/reviews/gate")
+  reviewGate(@Req() req: Request & { user: PublicUser }, @Param("id") id: string) {
+    return this.reviews.gate(req.user.id, id);
+  }
+
+  @Post("events/:id/reviews")
+  createReview(
+    @Req() req: Request & { user: PublicUser },
+    @Param("id") id: string,
+    @Body() body: ReviewDto,
+  ) {
+    return this.reviews.create(req.user.id, id, body);
   }
 }

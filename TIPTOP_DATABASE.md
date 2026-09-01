@@ -54,6 +54,11 @@ pnpm db:reset      # destructif, local uniquement
 - `AdminAudit`
 - `PaymentStatus.REFUNDED`
 
+## Tables Phase 9
+
+- `EventReview` (unique `(eventId, authorId)` ; `rating` optionnel non exposé en lecture publique)
+- `NotificationType.REVIEW`
+
 ## Tables / champs préparés
 
 - `Device` (push)

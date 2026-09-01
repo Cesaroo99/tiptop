@@ -47,3 +47,10 @@ Une phase n’est close que si UI, états, validation, tests et liaisons backend
 ## Phase 8 — QA
 
 - [x] Tests unitaires, intégration, E2E, audit final
+
+## Phase 9 — Parcours réel fermé
+
+- [x] Avis post-événement (G22 / D29)
+- [x] Message depuis Amies → vrai DM
+- [x] Aide à jour (FAQ réelle)
+- [ ] Expo natif (toujours reporté : pas de simulateur fiable ici)

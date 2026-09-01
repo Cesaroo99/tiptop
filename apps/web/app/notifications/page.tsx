@@ -29,12 +29,14 @@ export default function NotificationsPage() {
     if (n.type === "TICKET") return `${name} ${messages.social.notifTicket}`;
     if (n.type === "PAYMENT") return `${name} ${messages.social.notifPayment}`;
     if (n.type === "MESSAGE") return `${name} ${messages.social.notifMessage}`;
+    if (n.type === "REVIEW") return `${name} ${messages.social.notifReview}`;
     return `${name} ${messages.social.notifFollow}`;
   }
 
   function href(n: NotifItem) {
     if (n.type === "INVITE") return "/tickets";
     if (n.type === "MESSAGE" && n.entityId) return `/messages/${n.entityId}`;
+    if (n.type === "REVIEW" && n.entityId) return `/events/${n.entityId}`;
     if (n.type === "TICKET" && n.entityId) return `/tickets/${n.entityId}`;
     if (n.type === "PAYMENT" && n.entityType === "like_purchase") return "/likes";
     if (n.type === "TICKET" || n.type === "PAYMENT") return "/tickets";

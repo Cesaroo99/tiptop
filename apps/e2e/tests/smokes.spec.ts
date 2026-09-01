@@ -33,4 +33,11 @@ test.describe("Smokes parcours 3–5, 8, 12", () => {
     await expect(page.getByRole("heading", { name: "Notifications" })).toBeVisible();
     await expect(page.getByText("Tout marquer comme lu")).toBeVisible();
   });
+
+  test("Aide à jour (plus de « phases suivantes »)", async ({ page }) => {
+    await page.goto("/help");
+    await expect(page.getByRole("heading", { name: "Aide" })).toBeVisible();
+    await expect(page.getByText(/sortir, rencontrer et vivre/)).toBeVisible();
+    await expect(page.getByText(/phases suivantes/)).toHaveCount(0);
+  });
 });

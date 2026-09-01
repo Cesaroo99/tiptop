@@ -74,7 +74,7 @@ Navigation : IDs d’écrans alignés sur `TIPTOP_PRODUCT_AUDIT.md` (S01…). Le
 | G19 Résultat scan | GAP | OK / déjà consommé / invalide / expiré | G18 | G18 | 5 variantes | Ticket | unit + E2E |
 | G20 Event complet | GAP | Plus de places | S17 | Favori, notif | full | Event | capacity |
 | G21 Event annulé | GAP | Message + refund mock | Deep link | Home | cancelled | Event, payment | refund |
-| G22 Avis post-event | GAP | Feedback réel | Notif, ticket passé | Profil event | already reviewed | Review | E2E §77 |
+| G22 Avis post-event | FR / EN `reviews.*` | Feedback réel après ticket consommé + 24 h | Tickets, notif | Profil event | already reviewed | `EventReview` | E2E G22 |
 | G23 Confirm transfert like | GAP | Alice → Sarah | Cœur personne | Profil | — | Like allocation | E2E P9 |
 | G24 Historique likes | GAP | Audit user | Menu likes | Profils | empty | Like history | unit ratios |
 | G25 Achat de likes | GAP | Packs mock | Menu, G23 si solde 0 | Paiement | — | Like wallet | E2E P11 |

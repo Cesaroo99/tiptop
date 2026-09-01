@@ -17,6 +17,7 @@ import {
   likeAnomalyFlags,
   refundAllowed,
 } from "../src/admin";
+import { assertReviewBody, canLeaveReview, reviewOpensAt, eventEndedAt } from "../src/reviews";
 
 describe("parsePhone", () => {
   it("accepte un numéro camerounais national", () => {
@@ -368,5 +369,39 @@ describe("admin", () => {
         allocatedActive: 1,
       }),
     ).toEqual(["BURST", "HIGH_BALANCE"]);
+  });
+});
+
+describe("avis post-event", () => {
+  const ended = new Date("2026-01-01T20:00:00Z");
+  const opens = reviewOpensAt(ended);
+
+  it("ouvre 24 h après la fin", () => {
+    expect(opens.getTime() - ended.getTime()).toBe(24 * 3600_000);
+    expect(eventEndedAt(new Date("2026-01-01T18:00:00Z"), null).getTime()).toBe(
+      new Date("2026-01-01T22:00:00Z").getTime(),
+    );
+  });
+
+  it("refuse l’hôte, l’absent, le trop tôt et le doublon", () => {
+    const base = {
+      isHost: false,
+      attended: true,
+      alreadyReviewed: false,
+      eventStatus: "ENDED",
+      opensAt: opens,
+      now: opens,
+    };
+    expect(canLeaveReview(base)).toBe("OK");
+    expect(canLeaveReview({ ...base, isHost: true })).toBe("HOST");
+    expect(canLeaveReview({ ...base, attended: false })).toBe("NOT_ATTENDED");
+    expect(canLeaveReview({ ...base, alreadyReviewed: true })).toBe("ALREADY");
+    expect(canLeaveReview({ ...base, now: new Date(opens.getTime() - 1) })).toBe("TOO_EARLY");
+    expect(canLeaveReview({ ...base, eventStatus: "CANCELLED" })).toBe("EVENT_CANCELLED");
+  });
+
+  it("exige un texte", () => {
+    expect(() => assertReviewBody("  ")).toThrow("REVIEW_BODY_REQUIRED");
+    expect(assertReviewBody("  Super rooftop  ")).toBe("Super rooftop");
   });
 });

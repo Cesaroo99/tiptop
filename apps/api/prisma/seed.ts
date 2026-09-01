@@ -425,6 +425,73 @@ async function main() {
     }
   }
 
+  let past = await prisma.event.findFirst({ where: { title: "Rooftop Damas (passée)" } });
+  if (!past) {
+    const starts = new Date(Date.now() - 30 * 3600_000);
+    const ends = new Date(Date.now() - 26 * 3600_000);
+    past = await prisma.event.create({
+      data: {
+        hostId: mbelle.id,
+        title: "Rooftop Damas (passée)",
+        description: "Sortie déjà vécue — ticket validé, avis 24 h après la fin.",
+        city: "Yaoundé",
+        zone: "Carrefour Damas",
+        venue: "Rooftop Damas",
+        startsAt: starts,
+        endsAt: ends,
+        priceXaf: 0,
+        status: "ENDED",
+        requiresReservation: true,
+        participants: {
+          create: [
+            { userId: mbelle.id, status: "HOST" },
+            { userId: cesar.id, status: "PRESENT" },
+            { userId: erica.id, status: "PRESENT" },
+          ],
+        },
+      },
+    });
+    await prisma.reservation.create({
+      data: {
+        eventId: past.id,
+        bookerId: cesar.id,
+        status: "CONFIRMED",
+        seats: 1,
+        tickets: {
+          create: { eventId: past.id, holderId: cesar.id, status: "CONSUMED", consumedAt: ends },
+        },
+      },
+    });
+    await prisma.reservation.create({
+      data: {
+        eventId: past.id,
+        bookerId: erica.id,
+        status: "CONFIRMED",
+        seats: 1,
+        tickets: {
+          create: { eventId: past.id, holderId: erica.id, status: "CONSUMED", consumedAt: ends },
+        },
+      },
+    });
+    await prisma.eventReview.create({
+      data: {
+        eventId: past.id,
+        authorId: erica.id,
+        body: "Belle lumière, on a vraiment sorti. Merci Mbelle.",
+        rating: 5,
+      },
+    });
+    await prisma.notification.create({
+      data: {
+        userId: cesar.id,
+        actorId: mbelle.id,
+        type: "REVIEW",
+        entityType: "event",
+        entityId: past.id,
+      },
+    });
+  }
+
   console.log("Seed OK — OTP mock 1234, démo César admin +237 695 21 47 85");
 }
 

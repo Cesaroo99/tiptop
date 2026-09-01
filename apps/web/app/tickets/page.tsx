@@ -16,6 +16,7 @@ export default function Page() {
   const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [reservations, setReservations] = useState<ReservationItem[]>([]);
   const [note, setNote] = useState<string | null>(null);
+  const [pendingReviews, setPendingReviews] = useState<Array<{ eventId: string; title: string }>>([]);
 
   async function loadInvites(next = box) {
     const data = await api<{ items: InvitationItem[] }>(`/invitations?box=${next}`);
@@ -29,6 +30,9 @@ export default function Page() {
     api<{ items: ReservationItem[] }>("/reservations")
       .then((d) => setReservations(d.items))
       .catch(() => setReservations([]));
+    api<{ items: Array<{ eventId: string; title: string }> }>("/reviews/pending")
+      .then((d) => setPendingReviews(d.items))
+      .catch(() => setPendingReviews([]));
   }, []);
 
   useEffect(() => {
@@ -72,6 +76,16 @@ export default function Page() {
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-4 py-4">
       <ScreenHeader title={messages.menu.tickets} onBack={() => router.back()} />
+      {pendingReviews.length ? (
+        <div className="mb-4 rounded-card bg-surface p-4 shadow-card">
+          <p className="mb-2 text-sm font-semibold text-accent">{messages.reviews.pending}</p>
+          {pendingReviews.map((p) => (
+            <Link key={p.eventId} href={`/events/${p.eventId}`} className="block py-1 text-sm text-ink">
+              {p.title} — {messages.reviews.write}
+            </Link>
+          ))}
+        </div>
+      ) : null}
       <div className="mb-4 flex gap-3 text-sm">
         {(["tickets", "invites", "reservations"] as const).map((t) => (
           <button

@@ -19,7 +19,7 @@ Les serveurs `pnpm dev:api` (`:3001`) et `pnpm dev:web` (`:3000`) sont réutilis
 
 Audit final : `TIPTOP_QA_AUDIT.md`.
 
-## Couverture (Phase 8)
+## Couverture (Phase 9)
 
 | Zone | Type | Fichier |
 | --- | --- | --- |
@@ -38,6 +38,9 @@ Audit final : `TIPTOP_QA_AUDIT.md`.
 | Admin César / Erica 403 | E2E | `apps/e2e/tests/admin.spec.ts` |
 | Smokes P3–P5, P8, P12 | E2E | `apps/e2e/tests/smokes.spec.ts` |
 | Santé API | E2E | `apps/e2e/tests/health.spec.ts` |
+| Avis G22 (fenêtre, unicité) | unitaire + DB | `packages/domain/src/index.test.ts`, `apps/api/src/events/reviews.realworld.test.ts` |
+| P3 Message → DM | E2E | `apps/e2e/tests/p3-message.spec.ts` |
+| G22 avis UI | E2E | `apps/e2e/tests/g22-reviews.spec.ts` |
 
 ## Intégration auth (curl)
 

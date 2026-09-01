@@ -25,12 +25,13 @@ pnpm --filter @tiptop/e2e install:browsers   # une fois
 | --- | --- | --- | --- | --- |
 | **P1** Compte / OTP / accueil | `evaluateOtp` (valid, expired, locked), `parsePhone`, masquage | curl documenté ; cookie + Bearer | Login UI, téléphone invalide, OTP `0000`, OTP `1234` → feed | Splash natif / restauration session longue non E2E. OAuth = modal « bientôt ». Expo reporté. |
 | **P2** Publication / feed / like / commentaire | transfert like, unicité | `likes.transfer.test.ts` | Compose texte unique → visible à l’accueil | Like + commentaire : pas de clic cœur E2E (race déjà en DB). |
-| **P3** Dispo / découverte / invitation | TTL dispo, `evaluateInvite`, pas d’auto-invitation | `invitations.realworld.test.ts` | Smoke `/people` (liste ou vide réel) | Pas d’E2E accept/refus (destructif + places). |
+| **P3** Dispo / découverte / invitation | TTL dispo, `evaluateInvite`, pas d’auto-invitation | `invitations.realworld.test.ts` | Smoke `/people` + Message profil → DM | Pas d’E2E accept/refus (destructif + places). |
 | **P4** Résa / paiement mock / ticket | `reservationAmountXaf`, `mockCharge`, `applyWebhook` | `booking.realworld.test.ts` (double résa) | Smoke `/events` + `/tickets` | Pas de nouvelle résa payante en E2E (seed Afterwork). |
 | **P5** QR / conso | HMAC ticket, fenêtre d’entrée, `canConsumeTicket` | double conso atomique en DB | Smoke écran tickets | Pas de scan caméra. Deux onglets hôte/participant non simulés. |
 | **P6** Chat 1:1 | `directKey`, blocage, `canSendMessage` | unicité DM | Inbox Erica + envoi texte | Presence/typing WS : un seul navigateur. Push = no-op. |
 | **P7** Chat groupe event | domaine chat | seed groupe Soirée Black & White | Non dédié (inbox peut montrer le groupe) | Pas de 2e compte concurrent. |
 | **P8** Mood TTL | `moodExpiresAt` | seed mood Erica | Smoke `/mood` | Pas de création mood E2E (TTL déjà unitaire). |
+| **G22** Avis post-sortie | `canLeaveReview`, délai 24 h | unicité DB | Tickets → Rooftop Damas → publier | Note 1–5 interne non affichée. |
 | **P9** Transfert like | `planTransfer`, unicité allocation | `likes.transfer.test.ts` | Non | Race 2 profils : contrainte DB, pas Playwright multi-clic. |
 | **P10** Coup de cœur | `planHeartTransfer` | index unique actif | Non | Idem P9. |
 | **P11** Achat likes mock | packs, `likeCreditAllowed`, pas de crédit si fail | `likes.wallet.test.ts` | Portefeuille → échec mock → pack +1 crédité | Aucun vrai débit. |
@@ -62,7 +63,7 @@ Couvert en **DB / domain**, pas en double navigateur :
 ## Verdict
 
 Les règles métier critiques ont des tests unitaires + DB.  
-Les parcours **visibles** P1, P2, P6, P11 et le smoke admin passent par l’UI réelle (sélecteurs i18n FR, pas de faux boutons).  
+Les parcours **visibles** P1, P2, P6, P11, G22 et le smoke admin passent par l’UI réelle (sélecteurs i18n FR, pas de faux boutons).  
 Les parcours booking / QR / likes transfer restent volontairement hors E2E destructif : ils sont déjà couverts plus bas dans la pile.
 
 Phase 8 = cette matrice + `apps/e2e`, pas une promesse de couverture 100 % des 12 parcours en navigateur.

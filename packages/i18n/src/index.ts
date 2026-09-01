@@ -129,6 +129,7 @@ export type Messages = {
     notifTicket: string;
     notifPayment: string;
     notifMessage: string;
+    notifReview: string;
   };
   world: {
     available: string;
@@ -264,6 +265,26 @@ export type Messages = {
     labelHint: string;
     entryClosed: string;
     notHost: string;
+  };
+  reviews: {
+    title: string;
+    empty: string;
+    write: string;
+    bodyPlaceholder: string;
+    send: string;
+    sent: string;
+    already: string;
+    notYet: string;
+    pending: string;
+    ratingHint: string;
+  };
+  helpPage: {
+    lead: string;
+    otp: string;
+    live: string;
+    pay: string;
+    reviews: string;
+    contact: string;
   };
   chat: {
     inbox: string;
@@ -512,6 +533,7 @@ export const fr: Messages = {
     notifTicket: "ticket mis à jour",
     notifPayment: "paiement mis à jour",
     notifMessage: "t’a écrit",
+    notifReview: "a laissé un avis sur ta sortie",
   },
   world: {
     available: "Disponible",
@@ -647,6 +669,26 @@ export const fr: Messages = {
     labelHint: "Libellé (ex. Visa •• 4242)",
     entryClosed: "Hors fenêtre d’entrée",
     notHost: "Seul l’organisateur peut valider.",
+  },
+  reviews: {
+    title: "Avis",
+    empty: "Pas encore d’avis. On écrit après la sortie, pas pendant le scroll.",
+    write: "Laisser un avis",
+    bodyPlaceholder: "Comment s’est passée la sortie ?",
+    send: "Publier l’avis",
+    sent: "Merci. Ton avis aide les suivants à sortir.",
+    already: "Tu as déjà laissé un avis.",
+    notYet: "L’avis s’ouvre 24 h après la fin, si tu y étais (ticket validé).",
+    pending: "Avis à laisser",
+    ratingHint: "La note sur 5 est interne — elle n’est pas affichée.",
+  },
+  helpPage: {
+    lead: "TipTop sert à sortir, rencontrer et vivre des expériences réelles — pas à scroller.",
+    otp: "Connexion : numéro camerounais + OTP. En développement, le code mock est 1234.",
+    live: "Disponibilité, découverte, invitations, chat et tickets sont branchés. Le Message depuis Amies ouvre une vraie conversation.",
+    pay: "Paiements et packs de likes : mock (Card / Orange Money / MTN). Aucun vrai débit.",
+    reviews: "Après une sortie vécue (ticket validé), tu peux laisser un avis texte 24 h après la fin.",
+    contact: "Support démo : memolicesar1@gmail.com — aucun ticket inventé.",
   },
   chat: {
     inbox: "Messages",
@@ -895,6 +937,7 @@ export const en: Messages = {
     notifTicket: "ticket updated",
     notifPayment: "payment updated",
     notifMessage: "sent you a message",
+    notifReview: "left a review on your meetup",
   },
   world: {
     available: "Available",
@@ -1030,6 +1073,26 @@ export const en: Messages = {
     labelHint: "Label (e.g. Visa •• 4242)",
     entryClosed: "Outside entry window",
     notHost: "Only the host can validate.",
+  },
+  reviews: {
+    title: "Reviews",
+    empty: "No reviews yet. We write after the meetup, not while scrolling.",
+    write: "Leave a review",
+    bodyPlaceholder: "How was the meetup?",
+    send: "Publish review",
+    sent: "Thanks. Your review helps the next people go out.",
+    already: "You already left a review.",
+    notYet: "Reviews open 24h after the meetup ends, if you were there (validated ticket).",
+    pending: "Reviews to write",
+    ratingHint: "The 1–5 score is internal — it is not shown.",
+  },
+  helpPage: {
+    lead: "TipTop is for going out, meeting people, and living real experiences — not for scrolling.",
+    otp: "Sign-in: Cameroon number + OTP. In development the mock code is 1234.",
+    live: "Availability, discovery, invites, chat and tickets are wired. Message from People opens a real conversation.",
+    pay: "Payments and like packs are mock (Card / Orange Money / MTN). No real charge.",
+    reviews: "After a meetup you attended (validated ticket), you can leave a text review 24h after it ends.",
+    contact: "Demo support: memolicesar1@gmail.com — no invented tickets.",
   },
   chat: {
     inbox: "Messages",

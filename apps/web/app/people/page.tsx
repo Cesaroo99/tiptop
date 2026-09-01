@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
-import { EmptyState, ErrorBanner, Modal, PrimaryButton, Skeleton } from "@/components/ui";
-import { api, type PersonCard } from "@/lib/api";
+import { EmptyState, ErrorBanner, PrimaryButton, Skeleton } from "@/components/ui";
+import { api, ApiError, type PersonCard } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 
@@ -19,10 +20,11 @@ export default function Page() {
 function PeopleCarousel() {
   const { messages } = useI18n();
   const { user } = useSession();
+  const router = useRouter();
   const [items, setItems] = useState<PersonCard[] | null>(null);
   const [index, setIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [soon, setSoon] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   async function load() {
     try {
@@ -78,8 +80,22 @@ function PeopleCarousel() {
         <div className="mt-6 grid grid-cols-2 gap-2">
           <button
             type="button"
-            className="rounded-pill bg-[var(--border)] py-3"
-            onClick={() => setSoon(messages.social.chatLater)}
+            disabled={busy}
+            className="rounded-pill bg-[var(--border)] py-3 disabled:opacity-40"
+            onClick={async () => {
+              setBusy(true);
+              try {
+                const conv = await api<{ id: string }>("/conversations/direct", {
+                  method: "POST",
+                  body: JSON.stringify({ userId: person.id }),
+                });
+                router.push(`/messages/${conv.id}`);
+              } catch (e) {
+                setError(e instanceof ApiError && e.code === "BLOCKED" ? messages.chat.blockedPeer : messages.common.error);
+              } finally {
+                setBusy(false);
+              }
+            }}
           >
             {messages.world.message}
           </button>
@@ -97,9 +113,6 @@ function PeopleCarousel() {
       <PrimaryButton className="mt-4" onClick={() => setIndex((i) => i + 1)}>
         {messages.world.nextPerson}
       </PrimaryButton>
-      <Modal open={Boolean(soon)} title="TipTop" onClose={() => setSoon(null)}>
-        {soon}
-      </Modal>
     </div>
   );
 }

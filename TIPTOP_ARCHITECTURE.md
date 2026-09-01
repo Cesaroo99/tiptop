@@ -83,6 +83,13 @@ Invitations payantes : hôte paie à l’envoi ; invité paie à l’acceptation
 - `POST /api/reports` — signalement user/post/event ; revue staff
 - UI `/admin/*` ; 403 pour un compte non staff
 
+## Avis (Phase 9)
+
+- `GET /api/events/:id/reviews` + `GET /api/events/:id/reviews/gate` + `POST /api/events/:id/reviews`
+- `GET /api/reviews/pending` — sorties vécues dont la fenêtre 24 h est ouverte
+- Règles : `packages/domain/src/reviews.ts` (hôte exclu, ticket `CONSUMED` ou `PRESENT`)
+- Amies → Message ouvre `POST /api/conversations/direct` (plus de modal « plus tard »)
+
 ## Auth
 
 1. `POST /api/auth/otp/request` — crée un challenge, SMS mock (log + code `1234` hors prod).

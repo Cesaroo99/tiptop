@@ -103,6 +103,7 @@ model User {
   reportsReviewed    Report[]             @relation("ReportReviewer")
   adminAudits        AdminAudit[]
   pushPreference     PushPreference?
+  eventReviews       EventReview[]
 }
 
 model Profile {
@@ -260,6 +261,7 @@ enum NotificationType {
   TICKET
   PAYMENT
   MESSAGE
+  REVIEW
 }
 
 enum EventStatus {
@@ -400,6 +402,7 @@ model Event {
   tickets             Ticket[]
   conversation        Conversation?
   reports             Report[]
+  reviews             EventReview[]
 
   @@index([startsAt, status])
   @@index([city])
@@ -521,6 +524,20 @@ model Ticket {
 
   @@index([holderId, status])
   @@index([eventId, status])
+}
+
+model EventReview {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  body      String
+  rating    Int?
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, authorId])
+  @@index([eventId])
 }
 
 model Payment {

@@ -54,6 +54,11 @@ export default function Page() {
         <Link href={`/events/${ticket.event.id}`} className="mt-4 inline-block text-sm text-accent">
           {ticket.event.title}
         </Link>
+        {consumed ? (
+          <Link href={`/events/${ticket.event.id}`} className="mt-3 block text-sm font-semibold text-accent">
+            {messages.reviews.write}
+          </Link>
+        ) : null}
       </div>
     </main>
   );

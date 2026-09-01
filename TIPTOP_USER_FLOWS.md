@@ -185,6 +185,8 @@ Enchaînement unique de démo (seed) :
 | QR validé | P5 | Entrée physique |
 | Mood | P8 | Partage de l’instant |
 | Avis | G22 | Confiance pour les suivants |
+
+G22 (Phase 9) : ticket **consommé** + 24 h après `endsAt` ; texte public ; note 1–5 interne non affichée. Seed : « Rooftop Damas (passée) ».
 | Historique | G14, S24 | Mémoire des sorties, pas du scroll |
 
 Si une étape est un cul-de-sac, la phase correspondante n’est **pas** terminée.
