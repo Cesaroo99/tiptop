@@ -66,3 +66,5 @@ Les parcours **visibles** P1, P2, P6, P11 et le smoke admin passent par l’UI r
 Les parcours booking / QR / likes transfer restent volontairement hors E2E destructif : ils sont déjà couverts plus bas dans la pile.
 
 Phase 8 = cette matrice + `apps/e2e`, pas une promesse de couverture 100 % des 12 parcours en navigateur.
+
+Correctifs trouvés en E2E : cooldown OTP ignoré si le challenge est déjà consommé (reconnexion) ; le menu attend `loading` avant de renvoyer vers `/login`.
