@@ -109,7 +109,12 @@ export class AuthService {
       where: { phoneE164: parsed.e164 },
       orderBy: { createdAt: "desc" },
     });
-    if (latest && !canResendOtp({ lastSentAt: latest.createdAt, cooldownSeconds: 30 })) {
+    if (
+      latest &&
+      !latest.consumedAt &&
+      latest.expiresAt.getTime() > Date.now() &&
+      !canResendOtp({ lastSentAt: latest.createdAt, cooldownSeconds: 30 })
+    ) {
       throw new HttpException({ code: "OTP_COOLDOWN" }, HttpStatus.TOO_MANY_REQUESTS);
     }
 

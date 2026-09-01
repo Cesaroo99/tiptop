@@ -17,6 +17,6 @@ test.describe("P11 — portefeuille likes mock", () => {
     await expect(page.getByText("Paiement échoué. Aucun like n’a été crédité.")).toBeVisible();
     await page.getByLabel("Simuler un échec").uncheck();
     await page.getByRole("button", { name: "Payer" }).click();
-    await expect(page.getByRole("heading", { name: "Likes ajoutés" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Likes ajoutés" }).first()).toBeVisible();
   });
 });

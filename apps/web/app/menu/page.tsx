@@ -10,7 +10,7 @@ import { useSession } from "@/lib/session";
 
 export default function MenuPage() {
   const { messages } = useI18n();
-  const { user } = useSession();
+  const { user, loading } = useSession();
   const router = useRouter();
   const [stats, setStats] = useState({ perHour: 0, perDay: 0, perMonth: 0 });
   useEffect(() => {
@@ -20,6 +20,9 @@ export default function MenuPage() {
       .catch(() => undefined);
   }, [user]);
 
+  if (loading) {
+    return <p className="p-4 text-sm text-muted">{messages.common.loading}</p>;
+  }
   if (!user) {
     router.replace("/login");
     return null;

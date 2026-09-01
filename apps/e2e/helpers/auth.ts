@@ -2,28 +2,49 @@ import type { Page } from "@playwright/test";
 import { CESAR } from "./accounts";
 
 const apiBase = () => process.env.E2E_API_URL ?? "http://localhost:3001";
+const tokenCache = new Map<string, string>();
+
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 export async function fetchSessionToken(phone = CESAR.phone): Promise<string> {
+  const hit = tokenCache.get(phone);
+  if (hit) return hit;
+
   const headers = { "content-type": "application/json" };
-  const requested = await fetch(`${apiBase()}/api/auth/otp/request`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ phone, country: "CM" }),
-  });
-  if (!requested.ok && requested.status !== 429) {
-    throw new Error(`otp/request ${requested.status} ${await requested.text()}`);
+  let last = "";
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const requested = await fetch(`${apiBase()}/api/auth/otp/request`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ phone, country: "CM" }),
+    });
+    if (!requested.ok && requested.status !== 429) {
+      last = `otp/request ${requested.status} ${await requested.text()}`;
+      await sleep(400);
+      continue;
+    }
+    const verified = await fetch(`${apiBase()}/api/auth/otp/verify`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ phone, code: "1234", rememberMe: true, country: "CM" }),
+    });
+    if (verified.ok) {
+      const data = (await verified.json()) as { token?: string };
+      if (data.token) {
+        tokenCache.set(phone, data.token);
+        return data.token;
+      }
+    }
+    last = `otp/verify ${verified.status} ${await verified.text()}`;
+    if (/OTP_CONSUMED|OTP_EXPIRED|OTP_LOCKED/.test(last)) {
+      await sleep(500);
+      continue;
+    }
+    throw new Error(last);
   }
-  const verified = await fetch(`${apiBase()}/api/auth/otp/verify`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ phone, code: "1234", rememberMe: true, country: "CM" }),
-  });
-  if (!verified.ok) {
-    throw new Error(`otp/verify ${verified.status} ${await verified.text()}`);
-  }
-  const data = (await verified.json()) as { token?: string };
-  if (!data.token) throw new Error("otp/verify sans token");
-  return data.token;
+  throw new Error(last || "otp: trop de tentatives");
 }
 
 /** Injecte la session avant le premier `goto` de la page. */
