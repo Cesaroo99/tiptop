@@ -227,7 +227,7 @@ function ProfileView() {
         )}
       </div>
       <div className="mt-6 space-y-3 px-4">
-        <LikeMeter stats={profile.likeStats} />
+        <LikeMeter stats={profile.likeStats} forSelf={profile.isSelf} />
         <LikeFaces
           title={profile.isSelf ? messages.wallet.receivedTitle : messages.social.likeReceivedTitle}
           people={profile.likeStats.receivedFrom ?? []}

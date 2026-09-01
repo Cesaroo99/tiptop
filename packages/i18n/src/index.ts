@@ -121,6 +121,7 @@ export type Messages = {
     perMonthLong: string;
     perSecond: string;
     likeMeterHint: string;
+    likeMeterHintSelf: string;
     followers: string;
     followingCount: string;
     postsTab: string;
@@ -566,6 +567,7 @@ export const fr: Messages = {
     perMonthLong: "ce mois",
     perSecond: "/seconde",
     likeMeterHint: "Ce n’est pas un cœur Instagram : ce sont les likes que les autres lui donnent, et le rythme auquel ça arrive.",
+    likeMeterHintSelf: "Ce n’est pas un cœur Instagram : ce sont les likes que les autres te donnent, et le rythme auquel ça arrive.",
     followers: "abonnés",
     followingCount: "abonnements",
     postsTab: "Publications",
@@ -1011,6 +1013,7 @@ export const en: Messages = {
     perMonthLong: "this month",
     perSecond: "/second",
     likeMeterHint: "This is not an Instagram heart count: it is the likes other people give them, and how fast they arrive.",
+    likeMeterHintSelf: "This is not an Instagram heart count: it is the likes other people give you, and how fast they arrive.",
     followers: "followers",
     followingCount: "following",
     postsTab: "Posts",

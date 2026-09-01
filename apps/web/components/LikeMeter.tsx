@@ -13,9 +13,11 @@ export type LikeProductionView = {
 export function LikeMeter({
   stats,
   hint = true,
+  forSelf = false,
 }: {
   stats: LikeProductionView;
   hint?: boolean;
+  forSelf?: boolean;
 }) {
   const { messages } = useI18n();
   const influencer = stats.ratio?.unit === "second";
@@ -44,7 +46,11 @@ export function LikeMeter({
         </div>
       </div>
       {ratioLabel ? <p className="mt-2 text-center text-xs font-semibold text-yellow">{ratioLabel}</p> : null}
-      {hint ? <p className="mt-3 text-xs leading-5 text-muted">{messages.social.likeMeterHint}</p> : null}
+      {hint ? (
+        <p className="mt-3 text-xs leading-5 text-muted">
+          {forSelf ? messages.social.likeMeterHintSelf : messages.social.likeMeterHint}
+        </p>
+      ) : null}
     </section>
   );
 }

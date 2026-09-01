@@ -41,6 +41,7 @@ export default function Page() {
             idle={messages.social.likeIdle}
           />
           <LikeMeter
+            forSelf
             stats={
               wallet.production ?? {
                 active: wallet.receivedFrom?.length ?? 0,
