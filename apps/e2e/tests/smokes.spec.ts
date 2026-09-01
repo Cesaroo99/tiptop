@@ -14,7 +14,7 @@ test.describe("Smokes parcours 3–5, 8, 12", () => {
   test("P4 — liste des sorties", async ({ page }) => {
     await page.goto("/events");
     await expect(page.getByRole("button", { name: "Tous" })).toBeVisible();
-    await expect(page.getByText("Soirée Black & White").or(page.getByText("Afterwork Bastos"))).toBeVisible();
+    await expect(page.getByText("Soirée Black & White").first()).toBeVisible();
   });
 
   test("P4/P5 — écran tickets", async ({ page }) => {
@@ -25,7 +25,7 @@ test.describe("Smokes parcours 3–5, 8, 12", () => {
 
   test("P8 — rail mood", async ({ page }) => {
     await page.goto("/mood");
-    await expect(page.getByText("Créer un mood").or(page.getByText("Aucun mood actif"))).toBeVisible();
+    await expect(page.getByText("Créer un mood").first()).toBeVisible();
   });
 
   test("P12 — notifications in-app", async ({ page }) => {
