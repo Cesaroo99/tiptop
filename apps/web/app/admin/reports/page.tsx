@@ -37,7 +37,7 @@ export default function Page() {
   }
 
   function statusLabel(s: string) {
-    if (s === "DISMISSED") return messages.admin.dismiss;
+    if (s === "DISMISSED") return messages.admin.dismissed;
     if (s === "ACTIONED") return messages.admin.actioned;
     return messages.admin.open;
   }

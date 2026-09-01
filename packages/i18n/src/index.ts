@@ -369,6 +369,7 @@ export type Messages = {
     reasonOther: string;
     sendReport: string;
     dismiss: string;
+    dismissed: string;
     actioned: string;
     open: string;
     hidden: string;
@@ -751,6 +752,7 @@ export const fr: Messages = {
     reasonOther: "Autre",
     sendReport: "Envoyer",
     dismiss: "Classer",
+    dismissed: "Classé",
     actioned: "Traité",
     open: "Ouvert",
     hidden: "Masqué",
@@ -1133,6 +1135,7 @@ export const en: Messages = {
     reasonOther: "Other",
     sendReport: "Send",
     dismiss: "Dismiss",
+    dismissed: "Dismissed",
     actioned: "Actioned",
     open: "Open",
     hidden: "Hidden",
