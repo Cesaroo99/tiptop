@@ -119,15 +119,14 @@ Ne pas dupliquer deux algorithmes opaques en v1 : proximité + suivis + fraîche
 
 ## D15 — Unité de like et certifiés
 
-**Décision :**
+**Décision (fondateur, 2026-09) :**
 
-- Chaque compte a `N` `LikeUnit` (N=1 par défaut, N=2 si `certified`).
-- Achat = création d’unités supplémentaires (`source = purchased`).
-- Une unité a au plus une allocation active (`toUserId`).
-- Transfert = close allocation + open allocation, même transaction.
-- Like d’un certifié : **deux unités** peuvent être posées sur la même personne, ou le « double poids » compte 2 dans les totaux reçus lorsqu’une unité certifiée est allouée — **choix v1 : un compte certifié possède 2 unités indépendantes**, pas un multiplicateur magique sur une seule unité (plus auditable).
+- Chaque compte a **exactement 1 like personnel** (`LikeUnit` `FREE`), certifié ou non. Le badge certifié n’ajoute pas de jeton.
+- Ce like ne peut être posé que chez **une** personne à la fois. Liker quelqu’un d’autre = transfert avec confirmation.
+- Les packs mock (`PURCHASED`) restent un ledger séparé : ils **n’ajoutent pas** un second like à poser.
+- « Ce que chacun produit » = likes **reçus maintenant** (stock) + rythme `/heure` `/jour` `/mois` (flux). Public : qui a posé son like ici, et où est le like de cette personne.
 
-**Statut :** ouvert (double unité vs poids ×2).
+**Statut :** tranché — 1 like, pas double unité.
 
 ## D16 — Ratio likes et seuil influenceur
 
@@ -135,14 +134,15 @@ Ne pas dupliquer deux algorithmes opaques en v1 : proximité + suivis + fraîche
 
 - `influencerThresholdLikesPerHour` (défaut documenté, ex. 50 — **valeur arbitraire d’équipe**).
 - Au-delà : affichage `/seconde` (et conservation `/H` `/J` `/M` en détail).
-- Formule documentée et testée : likes **actifs reçus** sur fenêtre glissante, pas un simple `count++`.
+- Formule documentée et testée : likes **reçus** sur fenêtre glissante (création d’allocation), plus le stock actif.
 
 **Statut :** seuil ouvert.
 
 ## D17 — Achat de likes
 
-**Décision :** pack mock (ex. +1 / +5 / +20) payé via `PaymentProvider`. Ledger `LikeTransaction` séparé du ledger paiement. Pas de mélange solde XAF / likes.  
-**Statut :** packs ouverts.
+**Décision :** packs mock conservés pour le ledger paiement, **hors du jeton personnel**. L’écran principal est « Mon like » (posé / reçus / rythme), pas un portefeuille d’unités.
+
+**Statut :** monétisation du like personnel retirée du parcours utilisateur.
 
 ## D18 — Mood
 

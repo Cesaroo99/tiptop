@@ -34,7 +34,7 @@ async function main() {
         },
       },
       likeUnits: {
-        create: [{ source: LikeUnitSource.FREE }, { source: LikeUnitSource.CERTIFIED_BONUS }],
+        create: [{ source: LikeUnitSource.FREE }],
       },
     },
   });
@@ -62,7 +62,7 @@ async function main() {
           longitude: 11.512,
         },
       },
-      likeUnits: { create: [{ source: LikeUnitSource.FREE }, { source: LikeUnitSource.CERTIFIED_BONUS }] },
+      likeUnits: { create: [{ source: LikeUnitSource.FREE }] },
     },
   });
 
@@ -517,6 +517,55 @@ async function main() {
 
 type SeedUser = { id: string };
 
+async function ensureOnePersonalLike(db: PrismaClient, userId: string) {
+  const units = await db.likeUnit.findMany({
+    where: { ownerId: userId },
+    include: { allocations: { where: { releasedAt: null } } },
+    orderBy: { createdAt: "asc" },
+  });
+  const personal = units.filter((u) => u.source === "FREE" || u.source === "CERTIFIED_BONUS");
+  if (personal.length === 0) {
+    await db.likeUnit.create({ data: { ownerId: userId, source: LikeUnitSource.FREE } });
+    return;
+  }
+  const keeper = personal.find((u) => u.source === "FREE") ?? personal[0];
+  if (keeper.source !== "FREE") {
+    await db.likeUnit.update({ where: { id: keeper.id }, data: { source: LikeUnitSource.FREE } });
+  }
+  for (const extra of personal.filter((u) => u.id !== keeper.id)) {
+    await db.likeAllocation.updateMany({
+      where: { unitId: extra.id, releasedAt: null },
+      data: { releasedAt: new Date() },
+    });
+    await db.likeUnit.delete({ where: { id: extra.id } });
+  }
+}
+
+async function placePersonalLike(db: PrismaClient, ownerId: string, toUserId: string, allocatedAt: Date) {
+  await ensureOnePersonalLike(db, ownerId);
+  const unit = await db.likeUnit.findFirst({
+    where: { ownerId, source: LikeUnitSource.FREE },
+    orderBy: { createdAt: "asc" },
+  });
+  if (!unit) return;
+  const active = await db.likeAllocation.findFirst({
+    where: { unitId: unit.id, releasedAt: null },
+  });
+  if (active?.toUserId === toUserId) {
+    await db.likeAllocation.update({ where: { id: active.id }, data: { allocatedAt } });
+    return;
+  }
+  if (active) {
+    await db.likeAllocation.update({
+      where: { id: active.id },
+      data: { releasedAt: allocatedAt },
+    });
+  }
+  await db.likeAllocation.create({
+    data: { unitId: unit.id, toUserId, allocatedAt },
+  });
+}
+
 async function enrichLivingWorld(
   db: PrismaClient,
   ctx: { cesar: SeedUser; erica: SeedUser; mbelle: SeedUser; availableUntil: Date },
@@ -931,6 +980,31 @@ async function enrichLivingWorld(
         },
       },
     });
+  }
+
+  const everyone = [cesar, erica, mbelle, onguene, amina, fouda, nadege, koffi, sarah, alex, rachel, william, mireille];
+  for (const person of everyone) {
+    await ensureOnePersonalLike(db, person.id);
+  }
+
+  const now = Date.now();
+  const placements: Array<[string, string, number]> = [
+    [cesar.id, erica.id, 20 * 60_000],
+    [erica.id, mireille.id, 2 * 3600_000],
+    [mbelle.id, cesar.id, 45 * 60_000],
+    [onguene.id, cesar.id, 10 * 60_000],
+    [amina.id, erica.id, 8 * 60_000],
+    [fouda.id, koffi.id, 26 * 3600_000],
+    [nadege.id, erica.id, 3 * 3600_000],
+    [koffi.id, cesar.id, 15 * 60_000],
+    [sarah.id, amina.id, 6 * 3600_000],
+    [alex.id, mbelle.id, 12 * 60_000],
+    [rachel.id, cesar.id, 50 * 60_000],
+    [william.id, cesar.id, 5 * 60_000],
+    [mireille.id, erica.id, 90 * 60_000],
+  ];
+  for (const [fromId, toId, ago] of placements) {
+    await placePersonalLike(db, fromId, toId, new Date(now - ago));
   }
 }
 

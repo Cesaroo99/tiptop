@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { maskPhone, parsePhone } from "../src/phone";
 import { canResendOtp, evaluateOtp } from "../src/otp";
-import { availableBalance, displayLikeRatio, pickUnitForLike, planHeartTransfer, planTransfer } from "../src/likes";
+import { availableBalance, displayLikeRatio, likeProduction, pickUnitForLike, planHeartTransfer, planTransfer } from "../src/likes";
 import { getLikePack, likeCreditAllowed, LIKE_PACKS, needsLikePurchase } from "../src/wallet";
 import { availabilityUntil, isCurrentlyAvailable } from "../src/availability";
 import { displayLocation, roundDistanceKm } from "../src/location";
@@ -136,17 +136,17 @@ describe("likes", () => {
     expect(plan.toEventId).toBe("e2");
   });
 
-  it("préfère une unité libre avant de transférer", () => {
+  it("ignore les unités achetées : un seul like personnel se transfère", () => {
     const plan = pickUnitForLike(
       [
         { id: "busy", ownerId: "c", source: "free", activeAllocationUserId: "alice" },
-        { id: "free", ownerId: "c", source: "purchased", activeAllocationUserId: null },
+        { id: "bought", ownerId: "c", source: "purchased", activeAllocationUserId: null },
       ],
       "sarah",
       "c",
     );
-    expect(plan.unitId).toBe("free");
-    expect(plan.fromBeneficiaryId).toBeNull();
+    expect(plan.unitId).toBe("busy");
+    expect(plan.fromBeneficiaryId).toBe("alice");
   });
 
   it("transfère si plus d'unité libre", () => {
@@ -162,6 +162,9 @@ describe("likes", () => {
     const ratio = displayLikeRatio(120, 50);
     expect(ratio.unit).toBe("second");
     expect(ratio.value).toBeCloseTo(120 / 3600);
+    const prod = likeProduction({ active: 8, perHour: 120, perDay: 200, perMonth: 400 });
+    expect(prod.ratio.unit).toBe("second");
+    expect(prod.active).toBe(8);
   });
 
   it("expose les packs 1 / 5 / 20", () => {

@@ -5,12 +5,13 @@ import {
   Injectable,
 } from "@nestjs/common";
 import {
-  getLikePack,
-  likeCreditAllowed,
-  LIKE_PACKS,
-  mockCharge,
+  likeProduction,
   needsLikePurchase,
   pickUnitForLike,
+  LIKE_PACKS,
+  getLikePack,
+  likeCreditAllowed,
+  mockCharge,
   type PaymentProviderKind,
 } from "@tiptop/domain";
 import { Prisma } from "@prisma/client";
@@ -24,7 +25,31 @@ type LockedUnit = {
   toUserId: string | null;
 };
 
-const personSelect = { id: true, firstName: true, lastName: true, username: true } as const;
+const personSelect = {
+  id: true,
+  firstName: true,
+  lastName: true,
+  username: true,
+  profile: { select: { avatarUrl: true } },
+} as const;
+
+type PersonRow = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  profile?: { avatarUrl: string | null } | null;
+};
+
+function mapPerson(u: PersonRow) {
+  return {
+    id: u.id,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    username: u.username,
+    avatarUrl: u.profile?.avatarUrl ?? null,
+  };
+}
 
 @Injectable()
 export class LikesService {
@@ -39,21 +64,13 @@ export class LikesService {
 
   async preview(ownerId: string, toUserId: string) {
     if (ownerId === toUserId) throw new BadRequestException({ code: "LIKE_SELF" });
+    await this.ensurePersonalUnit(ownerId);
     const units = await this.loadUnits(ownerId);
-    const already = units.some((u) => u.toUserId === toUserId);
-    const free = units.filter((u) => u.toUserId === null).length;
+    const already = this.personalMapped(units).some((u) => u.toUserId === toUserId);
+    const placed = units.find((u) => this.isPersonal(u) && u.toUserId);
     let wouldTransferFrom: string | null = null;
     try {
-      const plan = pickUnitForLike(
-        units.map((u) => ({
-          id: u.id,
-          ownerId: u.ownerId,
-          source: "free",
-          activeAllocationUserId: u.toUserId,
-        })),
-        toUserId,
-        ownerId,
-      );
+      const plan = pickUnitForLike(this.toDomainUnits(units), toUserId, ownerId);
       wouldTransferFrom = plan.fromBeneficiaryId;
     } catch {
       /* already or no units */
@@ -64,12 +81,19 @@ export class LikesService {
           select: personSelect,
         })
       : null;
+    const placedUser = placed?.toUserId
+      ? await this.prisma.user.findUnique({
+          where: { id: placed.toUserId },
+          select: personSelect,
+        })
+      : null;
     return {
       alreadyLiked: already,
-      availableUnits: free,
-      totalUnits: units.length,
-      needsPurchase: needsLikePurchase(units.length),
-      wouldTransferFrom: fromUser,
+      availableUnits: placed ? 0 : 1,
+      totalUnits: 1,
+      needsPurchase: false,
+      wouldTransferFrom: fromUser ? mapPerson(fromUser) : null,
+      placedOn: placedUser ? mapPerson(placedUser) : null,
     };
   }
 
@@ -80,16 +104,12 @@ export class LikesService {
 
     const result = await this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "LikeUnit" WHERE "ownerId" = ${ownerId} FOR UPDATE`;
+      await this.ensurePersonalUnitTx(tx, ownerId);
       const units = await this.lockUnits(tx, ownerId);
-      if (needsLikePurchase(units.length)) {
+      const mapped = this.toDomainUnits(units);
+      if (needsLikePurchase(this.personalMapped(units).length)) {
         throw new BadRequestException({ code: "LIKE_NO_UNITS" });
       }
-      const mapped = units.map((u) => ({
-        id: u.id,
-        ownerId: u.ownerId,
-        source: "free" as const,
-        activeAllocationUserId: u.toUserId,
-      }));
       let plan;
       try {
         plan = pickUnitForLike(mapped, toUserId, ownerId);
@@ -177,8 +197,14 @@ export class LikesService {
     const hourAgo = new Date(now - 3600_000);
     const dayAgo = new Date(now - 86400_000);
     const monthAgo = new Date(now - 30 * 86400_000);
-    const [active, hour, day, month] = await Promise.all([
-      this.prisma.likeAllocation.count({ where: { toUserId: userId, releasedAt: null } }),
+    const [activeRows, hour, day, month, placed] = await Promise.all([
+      this.prisma.likeAllocation.findMany({
+        where: { toUserId: userId, releasedAt: null },
+        include: {
+          unit: { include: { owner: { select: personSelect } } },
+        },
+        orderBy: { allocatedAt: "desc" },
+      }),
       this.prisma.likeAllocation.count({
         where: { toUserId: userId, allocatedAt: { gte: hourAgo } },
       }),
@@ -188,32 +214,52 @@ export class LikesService {
       this.prisma.likeAllocation.count({
         where: { toUserId: userId, allocatedAt: { gte: monthAgo } },
       }),
+      this.prisma.likeAllocation.findFirst({
+        where: { releasedAt: null, unit: { ownerId: userId, source: { in: ["FREE", "CERTIFIED_BONUS"] } } },
+        include: { toUser: { select: personSelect } },
+        orderBy: { allocatedAt: "desc" },
+      }),
     ]);
-    return { active, perHour: hour, perDay: day, perMonth: month };
+    const production = likeProduction({
+      active: activeRows.length,
+      perHour: hour,
+      perDay: day,
+      perMonth: month,
+    });
+    return {
+      ...production,
+      receivedFrom: activeRows.map((row) => ({
+        ...mapPerson(row.unit.owner),
+        allocatedAt: row.allocatedAt.toISOString(),
+      })),
+      placedOn: placed?.toUser ? mapPerson(placed.toUser) : null,
+    };
   }
 
   async mine(ownerId: string) {
-    const units = await this.loadUnits(ownerId);
+    await this.ensurePersonalUnit(ownerId);
+    const stats = await this.statsFor(ownerId);
     return {
-      available: units.filter((u) => !u.toUserId).length,
-      total: units.length,
-      allocations: units
-        .filter((u) => u.toUserId)
-        .map((u) => ({ unitId: u.id, toUserId: u.toUserId })),
+      available: stats.placedOn ? 0 : 1,
+      total: 1,
+      placedOn: stats.placedOn,
+      receivedFrom: stats.receivedFrom,
+      production: {
+        active: stats.active,
+        perHour: stats.perHour,
+        perDay: stats.perDay,
+        perMonth: stats.perMonth,
+        ratio: stats.ratio,
+      },
+      allocations: stats.placedOn
+        ? [{ unitId: "personal", toUserId: stats.placedOn.id }]
+        : [],
     };
   }
 
   async wallet(ownerId: string) {
-    const units = await this.prisma.likeUnit.findMany({
-      where: { ownerId },
-      include: {
-        allocations: {
-          where: { releasedAt: null },
-          include: { toUser: { select: personSelect } },
-        },
-      },
-      orderBy: { createdAt: "asc" },
-    });
+    await this.ensurePersonalUnit(ownerId);
+    const stats = await this.statsFor(ownerId);
     const history = await this.prisma.likeTransaction.findMany({
       where: { userId: ownerId },
       orderBy: { createdAt: "desc" },
@@ -229,24 +275,28 @@ export class LikesService {
       take: 20,
       include: { payment: { select: { id: true, status: true, provider: true, amountXaf: true } } },
     });
-    const available = units.filter((u) => u.allocations.length === 0).length;
     return {
-      available,
-      total: units.length,
+      available: stats.placedOn ? 0 : 1,
+      total: 1,
       packs: [...LIKE_PACKS],
-      allocations: units
-        .filter((u) => u.allocations[0])
-        .map((u) => ({
-          unitId: u.id,
-          source: u.source,
-          toUser: u.allocations[0]!.toUser,
-        })),
+      placedOn: stats.placedOn,
+      receivedFrom: stats.receivedFrom,
+      production: {
+        active: stats.active,
+        perHour: stats.perHour,
+        perDay: stats.perDay,
+        perMonth: stats.perMonth,
+        ratio: stats.ratio,
+      },
+      allocations: stats.placedOn
+        ? [{ unitId: "personal", source: "FREE", toUser: stats.placedOn }]
+        : [],
       history: history.map((h) => ({
         id: h.id,
         kind: h.kind,
         delta: h.delta,
         createdAt: h.createdAt.toISOString(),
-        toUser: h.toUser,
+        toUser: h.toUser ? mapPerson(h.toUser) : null,
         packCode: h.purchase?.packCode ?? null,
         units: h.purchase?.units ?? h.delta,
       })),
@@ -405,6 +455,44 @@ export class LikesService {
           }
         : null,
     };
+  }
+
+  private isPersonal(u: LockedUnit) {
+    return u.source === "FREE" || u.source === "CERTIFIED_BONUS";
+  }
+
+  private personalMapped(units: LockedUnit[]) {
+    return units.filter((u) => this.isPersonal(u));
+  }
+
+  private toDomainUnits(units: LockedUnit[]) {
+    return units.map((u) => ({
+      id: u.id,
+      ownerId: u.ownerId,
+      source:
+        u.source === "PURCHASED"
+          ? ("purchased" as const)
+          : u.source === "CERTIFIED_BONUS"
+            ? ("certified_bonus" as const)
+            : ("free" as const),
+      activeAllocationUserId: u.toUserId,
+    }));
+  }
+
+  private async ensurePersonalUnit(ownerId: string) {
+    const free = await this.prisma.likeUnit.findFirst({
+      where: { ownerId, source: "FREE" },
+    });
+    if (free) return;
+    await this.prisma.likeUnit.create({ data: { ownerId, source: "FREE" } });
+  }
+
+  private async ensurePersonalUnitTx(tx: Prisma.TransactionClient, ownerId: string) {
+    const free = await tx.likeUnit.findFirst({
+      where: { ownerId, source: "FREE" },
+    });
+    if (free) return;
+    await tx.likeUnit.create({ data: { ownerId, source: "FREE" } });
   }
 
   private async loadUnits(ownerId: string): Promise<LockedUnit[]> {

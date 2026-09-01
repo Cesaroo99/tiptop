@@ -202,12 +202,26 @@ export type LikePerson = {
   firstName: string;
   lastName: string;
   username: string;
+  avatarUrl?: string | null;
+};
+
+export type LikeProduction = {
+  active: number;
+  perHour: number;
+  perDay: number;
+  perMonth: number;
+  ratio?: { value: number; unit: "hour" | "second" };
+  receivedFrom?: LikePerson[];
+  placedOn?: LikePerson | null;
 };
 
 export type LikeWallet = {
   available: number;
   total: number;
   packs: LikePack[];
+  placedOn?: LikePerson | null;
+  receivedFrom?: LikePerson[];
+  production?: LikeProduction;
   allocations: Array<{ unitId: string; source: string; toUser: LikePerson }>;
   history: Array<{
     id: string;

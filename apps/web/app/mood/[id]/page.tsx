@@ -116,14 +116,14 @@ function MoodViewer() {
             </Link>
           ) : null}
           <p className="mt-2 text-xs text-muted">
-            {mood.authorActiveLikes} likes · {messages.world.availableUntil.replace("{time}", new Date(mood.expiresAt).toLocaleTimeString())}
+            {messages.social.likesNow.replace("{n}", String(mood.authorActiveLikes))} · {messages.world.availableUntil.replace("{time}", new Date(mood.expiresAt).toLocaleTimeString())}
           </p>
           <button
             type="button"
             onClick={() => void like(false)}
             className={`mt-3 rounded-full px-4 py-2 ${mood.likedAuthor ? "bg-accent text-white" : "bg-[var(--border)]"}`}
           >
-            ♥ {messages.social.likePerson}
+            ♥ {mood.likedAuthor ? messages.social.likeHere : messages.social.likePlace}
           </button>
         </div>
       </div>

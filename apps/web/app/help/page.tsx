@@ -12,6 +12,7 @@ export default function HelpPage() {
     messages.helpPage.otp,
     messages.helpPage.live,
     messages.helpPage.pay,
+    messages.helpPage.likes,
     messages.helpPage.reviews,
     messages.helpPage.contact,
   ];

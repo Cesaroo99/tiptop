@@ -57,7 +57,7 @@ function MoodRail() {
             </p>
             <p className="mt-1 text-sm text-ink">{m.body || messages.world.typeMood}</p>
             <p className="mt-2 text-xs text-muted">
-              {m.commentsCount} {messages.social.comments} · {m.authorActiveLikes} likes
+              {m.commentsCount} {messages.social.comments} · {messages.social.likesNow.replace("{n}", String(m.authorActiveLikes))}
             </p>
           </div>
         </Link>

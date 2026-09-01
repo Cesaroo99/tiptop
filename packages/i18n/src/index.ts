@@ -106,6 +106,23 @@ export type Messages = {
     transferTitle: string;
     transferBody: string;
     likeSelf: string;
+    likePlace: string;
+    likeHere: string;
+    likePlacedOn: string;
+    likeIdle: string;
+    likeExplain: string;
+    likesNow: string;
+    likeReceivedTitle: string;
+    likeGivenTitle: string;
+    likeEmptyReceived: string;
+    likeProduction: string;
+    perHourLong: string;
+    perDayLong: string;
+    perMonthLong: string;
+    perSecond: string;
+    likeMeterHint: string;
+    followers: string;
+    followingCount: string;
     postsTab: string;
     emptyComments: string;
     emptySearch: string;
@@ -301,6 +318,7 @@ export type Messages = {
     otp: string;
     live: string;
     pay: string;
+    likes: string;
     reviews: string;
     contact: string;
   };
@@ -364,6 +382,11 @@ export type Messages = {
     sourcePurchased: string;
     sourceFree: string;
     sourceBonus: string;
+    oneLikeHint: string;
+    placedTitle: string;
+    receivedTitle: string;
+    productionTitle: string;
+    packsNote: string;
   };
   admin: {
     title: string;
@@ -463,11 +486,11 @@ export const fr: Messages = {
     payments: "Information de paiement",
     settings: "Paramètres",
     help: "Aide",
-    likes: "Mes likes",
-    wallet: "Portefeuille likes",
-    perHour: "/heure",
-    perDay: "/Jour",
-    perMonth: "/Mois",
+    likes: "Mon like",
+    wallet: "Mon like",
+    perHour: "cette heure",
+    perDay: "aujourd’hui",
+    perMonth: "ce mois",
     comingSoon: "Cette section arrive dans une prochaine phase — le bouton n’invente pas de données.",
     admin: "Back-office",
     newBadge: "NEW",
@@ -523,11 +546,28 @@ export const fr: Messages = {
     follow: "Suivre",
     following: "Abonné",
     unfollow: "Ne plus suivre",
-    likePerson: "Like (personne)",
-    unlike: "Retirer le like",
-    transferTitle: "Transférer ton like ?",
-    transferBody: "Ton like quittera {name} pour cette personne. Un like ne peut être que chez une personne à la fois.",
+    likePerson: "Poser mon like",
+    unlike: "Retirer mon like",
+    transferTitle: "Déplacer ton like ?",
+    transferBody: "Tu n’as qu’un like. Il quittera {name} pour aller chez cette personne.",
     likeSelf: "Tu ne peux pas te liker.",
+    likePlace: "Poser mon like",
+    likeHere: "Mon like est ici",
+    likePlacedOn: "Ton like est chez {name}",
+    likeIdle: "Ton like n’est posé sur personne pour l’instant.",
+    likeExplain: "Chacun n’a qu’un like. Tu le poses sur une personne. Si tu en likes une autre, il se déplace.",
+    likesNow: "{n} likes maintenant",
+    likeReceivedTitle: "Qui lui a posé son like",
+    likeGivenTitle: "Son like est chez",
+    likeEmptyReceived: "Personne n’a encore posé son like ici.",
+    likeProduction: "Rythme des likes reçus",
+    perHourLong: "cette heure",
+    perDayLong: "aujourd’hui",
+    perMonthLong: "ce mois",
+    perSecond: "/seconde",
+    likeMeterHint: "Ce n’est pas un cœur Instagram : ce sont les likes que les autres lui donnent, et le rythme auquel ça arrive.",
+    followers: "abonnés",
+    followingCount: "abonnements",
     postsTab: "Publications",
     emptyComments: "Aucun commentaire. Sois le premier.",
     emptySearch: "Aucun résultat dans ta recherche.",
@@ -722,7 +762,8 @@ export const fr: Messages = {
     lead: "TipTop sert à sortir, rencontrer et vivre des expériences réelles — pas à scroller.",
     otp: "Connexion : numéro camerounais + OTP. En développement, le code mock est 1234.",
     live: "Disponibilité, découverte, invitations, chat et tickets sont branchés. Le Message depuis Amies ouvre une vraie conversation.",
-    pay: "Paiements et packs de likes : mock (Card / Orange Money / MTN). Aucun vrai débit.",
+    pay: "Paiements (tickets, packs mock) : Card / Orange Money / MTN. Aucun vrai débit.",
+    likes: "Chacun n’a qu’un like, transférable. Sur un profil tu vois qui le lui a posé, où est le sien, et le rythme des likes reçus (cette heure / aujourd’hui / ce mois).",
     reviews: "Après une sortie vécue (ticket validé), tu peux laisser un avis texte 24 h après la fin.",
     contact: "Support démo : memolicesar1@gmail.com — aucun ticket inventé.",
   },
@@ -757,26 +798,26 @@ export const fr: Messages = {
     groupFromEvent: "Ouvrir le groupe",
   },
   wallet: {
-    title: "Portefeuille likes",
+    title: "Mon like",
     buyTitle: "Acheter des likes",
-    available: "Disponibles",
-    total: "Unités",
-    allocated: "Posés",
-    emptyAlloc: "Aucun like posé pour l’instant.",
+    available: "Libre",
+    total: "Ton like",
+    allocated: "Posé",
+    emptyAlloc: "Ton like n’est posé sur personne pour l’instant.",
     emptyHistory: "Pas encore d’historique.",
     history: "Historique",
-    packs: "Packs",
+    packs: "Packs mock",
     packLabel: "{units} likes",
     buy: "Acheter",
     buyCta: "Choisir un pack",
-    buyInstead: "Ou acheter plus de likes",
+    buyInstead: "Les packs n’ajoutent pas un second like personnel.",
     needPack: "Plus d’unité",
-    needPackBody: "Tu n’as plus d’unité de like. Achète un pack mock — aucun vrai débit, ledger likes séparé du paiement.",
+    needPackBody: "Chacun a un like. S’il est déjà posé, déplace-le — tu n’achètes pas un second jeton.",
     success: "Likes ajoutés",
-    successBody: "{units} like(s) ajouté(s) à ton portefeuille.",
-    seeWallet: "Voir le portefeuille",
+    successBody: "{units} like(s) ajouté(s) au ledger mock. Ton like personnel reste unique.",
+    seeWallet: "Voir mon like",
     mockHint: "Paiement mock : le ledger likes est séparé du XAF. Aucun argent réel.",
-    txPurchase: "+{units} likes achetés",
+    txPurchase: "+{units} likes achetés (ledger mock)",
     txAllocate: "Like posé sur {name}",
     txRelease: "Like retiré de {name}",
     paymentFailed: "Paiement échoué. Aucun like n’a été crédité.",
@@ -786,6 +827,11 @@ export const fr: Messages = {
     sourcePurchased: "Acheté",
     sourceFree: "Inclus",
     sourceBonus: "Bonus certifié",
+    oneLikeHint: "Tu n’as qu’un like. Tu le poses sur une personne. Si tu en likes une autre, il se déplace.",
+    placedTitle: "Ton like",
+    receivedTitle: "Qui t’a posé son like",
+    productionTitle: "Ce que tu produis",
+    packsNote: "Les packs mock ne donnent pas un second like à poser. Ton jeton personnel reste unique.",
   },
   admin: {
     title: "Back-office",
@@ -885,11 +931,11 @@ export const en: Messages = {
     payments: "Payment information",
     settings: "Settings",
     help: "Help",
-    likes: "My likes",
-    wallet: "Like wallet",
-    perHour: "/hour",
-    perDay: "/Day",
-    perMonth: "/Month",
+    likes: "My like",
+    wallet: "My like",
+    perHour: "this hour",
+    perDay: "today",
+    perMonth: "this month",
     comingSoon: "This section ships in a later phase — the button does not invent data.",
     admin: "Back office",
     newBadge: "NEW",
@@ -945,11 +991,28 @@ export const en: Messages = {
     follow: "Follow",
     following: "Following",
     unfollow: "Unfollow",
-    likePerson: "Like (person)",
-    unlike: "Remove like",
+    likePerson: "Place my like",
+    unlike: "Remove my like",
     transferTitle: "Move your like?",
-    transferBody: "Your like will leave {name} for this person. A like can only sit with one person at a time.",
+    transferBody: "You only have one like. It will leave {name} to sit with this person.",
     likeSelf: "You cannot like yourself.",
+    likePlace: "Place my like",
+    likeHere: "My like is here",
+    likePlacedOn: "Your like is with {name}",
+    likeIdle: "Your like is not placed on anyone yet.",
+    likeExplain: "Everyone has one like. You place it on a person. Like someone else and it moves.",
+    likesNow: "{n} likes now",
+    likeReceivedTitle: "Who placed their like here",
+    likeGivenTitle: "Their like is with",
+    likeEmptyReceived: "Nobody has placed their like here yet.",
+    likeProduction: "Received-like pace",
+    perHourLong: "this hour",
+    perDayLong: "today",
+    perMonthLong: "this month",
+    perSecond: "/second",
+    likeMeterHint: "This is not an Instagram heart count: it is the likes other people give them, and how fast they arrive.",
+    followers: "followers",
+    followingCount: "following",
     postsTab: "Posts",
     emptyComments: "No comments yet. Be the first.",
     emptySearch: "No results for this search.",
@@ -1144,7 +1207,8 @@ export const en: Messages = {
     lead: "TipTop is for going out, meeting people, and living real experiences — not for scrolling.",
     otp: "Sign-in: Cameroon number + OTP. In development the mock code is 1234.",
     live: "Availability, discovery, invites, chat and tickets are wired. Message from People opens a real conversation.",
-    pay: "Payments and like packs are mock (Card / Orange Money / MTN). No real charge.",
+    pay: "Payments (tickets, mock packs): Card / Orange Money / MTN. No real charge.",
+    likes: "Everyone has one transferable like. On a profile you see who placed theirs, where theirs sits, and the pace of likes received (this hour / today / this month).",
     reviews: "After a meetup you attended (validated ticket), you can leave a text review 24h after it ends.",
     contact: "Demo support: memolicesar1@gmail.com — no invented tickets.",
   },
@@ -1179,26 +1243,26 @@ export const en: Messages = {
     groupFromEvent: "Open group",
   },
   wallet: {
-    title: "Like wallet",
+    title: "My like",
     buyTitle: "Buy likes",
-    available: "Available",
-    total: "Units",
+    available: "Free",
+    total: "Your like",
     allocated: "Placed",
-    emptyAlloc: "No like placed yet.",
+    emptyAlloc: "Your like is not placed on anyone yet.",
     emptyHistory: "No history yet.",
     history: "History",
-    packs: "Packs",
+    packs: "Mock packs",
     packLabel: "{units} likes",
     buy: "Buy",
     buyCta: "Choose a pack",
-    buyInstead: "Or buy more likes",
+    buyInstead: "Packs do not give you a second personal like.",
     needPack: "No units left",
-    needPackBody: "You have no like units left. Buy a mock pack — no real charge, like ledger separate from payment.",
+    needPackBody: "Everyone has one like. If it is already placed, move it — you do not buy a second token.",
     success: "Likes added",
-    successBody: "{units} like(s) added to your wallet.",
-    seeWallet: "See wallet",
+    successBody: "{units} like(s) added to the mock ledger. Your personal like stays unique.",
+    seeWallet: "See my like",
     mockHint: "Mock payment: the like ledger is separate from XAF. No real money.",
-    txPurchase: "+{units} likes purchased",
+    txPurchase: "+{units} likes purchased (mock ledger)",
     txAllocate: "Like placed on {name}",
     txRelease: "Like removed from {name}",
     paymentFailed: "Payment failed. No like was credited.",
@@ -1208,6 +1272,11 @@ export const en: Messages = {
     sourcePurchased: "Purchased",
     sourceFree: "Included",
     sourceBonus: "Certified bonus",
+    oneLikeHint: "You only have one like. You place it on a person. Like someone else and it moves.",
+    placedTitle: "Your like",
+    receivedTitle: "Who placed their like on you",
+    productionTitle: "What you produce",
+    packsNote: "Mock packs do not give a second like to place. Your personal token stays unique.",
   },
   admin: {
     title: "Back office",

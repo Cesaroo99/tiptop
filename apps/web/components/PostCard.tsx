@@ -142,12 +142,12 @@ export function PostCard({
       ) : null}
       <p className="mt-3 text-xs text-muted">
         {post.commentsCount} {messages.social.comments}
-        {event ? ` · ${event.reservedCount} ${messages.world.reservationsCount} · ${event.interestedCount} ${messages.world.interestedCount}` : ` · ${post.authorActiveLikes} likes`}
+        {event ? ` · ${event.reservedCount} ${messages.world.reservationsCount} · ${event.interestedCount} ${messages.world.interestedCount}` : ` · ${messages.social.likesNow.replace("{n}", String(post.authorActiveLikes))}`}
       </p>
       <div className="mt-3 flex items-center gap-2">
         <button
           type="button"
-          aria-label={messages.social.likePerson}
+          aria-label={post.likedAuthor ? messages.social.likeHere : messages.social.likePlace}
           onClick={() => void like(false)}
           className={`grid h-10 w-10 place-items-center rounded-full ${post.likedAuthor ? "bg-accent text-white" : "bg-[var(--border)] text-muted"}`}
         >

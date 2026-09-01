@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
 import { CardButton, ScreenHeader } from "@/components/ui";
+import { LikeMeter } from "@/components/LikeMeter";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -13,10 +14,10 @@ export default function MenuPage() {
   const { messages } = useI18n();
   const { user, loading } = useSession();
   const router = useRouter();
-  const [stats, setStats] = useState({ perHour: 0, perDay: 0, perMonth: 0 });
+  const [stats, setStats] = useState({ active: 0, perHour: 0, perDay: 0, perMonth: 0 });
   useEffect(() => {
     if (!user) return;
-    api<{ perHour: number; perDay: number; perMonth: number }>(`/likes/stats/${user.id}`)
+    api<{ active: number; perHour: number; perDay: number; perMonth: number }>(`/likes/stats/${user.id}`)
       .then(setStats)
       .catch(() => undefined);
   }, [user]);
@@ -33,7 +34,6 @@ export default function MenuPage() {
     ...(user.role === "ADMIN" || user.role === "MODERATOR"
       ? [{ href: "/admin", label: messages.menu.admin }]
       : []),
-    { href: "/likes", label: messages.menu.wallet },
     { href: "/tickets", label: messages.menu.tickets, fresh: true },
     { href: "/favorites", label: messages.menu.favorites, fresh: true },
     { href: "/contacts", label: messages.menu.contacts },
@@ -56,22 +56,8 @@ export default function MenuPage() {
         </div>
         <span className="text-accent">›</span>
       </Link>
-      <Link href="/likes" className="mt-4 block rounded-card bg-surface p-4 shadow-card">
-        <p className="mb-3 text-sm text-accent">{messages.menu.likes}</p>
-        <div className="grid grid-cols-3 text-center">
-          <div>
-            <p className="text-xl font-semibold text-accent">{stats.perHour}</p>
-            <p className="text-xs text-muted">{messages.menu.perHour}</p>
-          </div>
-          <div>
-            <p className="text-xl font-semibold text-accent">{stats.perDay}</p>
-            <p className="text-xs text-muted">{messages.menu.perDay}</p>
-          </div>
-          <div>
-            <p className="text-xl font-semibold text-accent">{stats.perMonth}</p>
-            <p className="text-xs text-muted">{messages.menu.perMonth}</p>
-          </div>
-        </div>
+      <Link href="/likes" className="mt-4 block">
+        <LikeMeter stats={stats} hint={false} />
       </Link>
       <div className="mt-4 space-y-3">
         {items.map((item) => (

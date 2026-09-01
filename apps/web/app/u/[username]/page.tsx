@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
+import { LikeFaces, LikePlacedCard } from "@/components/LikeFaces";
+import { LikeMeter } from "@/components/LikeMeter";
 import { PostCard } from "@/components/PostCard";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
 import { EmptyState, ErrorBanner, Modal, PrimaryButton, Skeleton } from "@/components/ui";
@@ -43,7 +45,21 @@ type Profile = {
   followersCount: number;
   followingCount: number;
   likedByMe: boolean;
-  likeStats: { active: number; perHour: number; perDay: number; perMonth: number };
+  likeStats: {
+    active: number;
+    perHour: number;
+    perDay: number;
+    perMonth: number;
+    ratio?: { value: number; unit: "hour" | "second" };
+    receivedFrom?: Array<{
+      id: string;
+      username: string;
+      firstName: string;
+      lastName: string;
+      avatarUrl?: string | null;
+    }>;
+    placedOn?: { id: string; username: string; firstName: string; lastName: string; avatarUrl?: string | null } | null;
+  };
   posts: FeedItem[];
   eventsInterested?: EventPreview[];
   eventsLinked?: EventPreview[];
@@ -164,7 +180,7 @@ function ProfileView() {
           <p className="mt-1 text-xs font-semibold text-accent">{messages.world.available}</p>
         ) : null}
         <p className="mt-2 text-xs text-muted">
-          {profile.followersCount} · {profile.followingCount} · {profile.likeStats.active} likes
+          {profile.followersCount} {messages.social.followers} · {profile.followingCount} {messages.social.followingCount}
         </p>
         {!profile.isSelf ? (
           <div className="mt-4 flex flex-wrap justify-center gap-2">
@@ -176,7 +192,7 @@ function ProfileView() {
               onClick={() => void like(false)}
               className={`rounded-pill px-5 py-3 font-semibold ${profile.likedByMe ? "bg-accent text-white" : "bg-[var(--border)]"}`}
             >
-              ♥ {messages.social.likePerson}
+              ♥ {profile.likedByMe ? messages.social.likeHere : messages.social.likePlace}
             </button>
             <button
               type="button"
@@ -209,6 +225,18 @@ function ProfileView() {
             </Link>
           </div>
         )}
+      </div>
+      <div className="mt-6 space-y-3 px-4">
+        <LikeMeter stats={profile.likeStats} />
+        <LikeFaces
+          title={profile.isSelf ? messages.wallet.receivedTitle : messages.social.likeReceivedTitle}
+          people={profile.likeStats.receivedFrom ?? []}
+        />
+        <LikePlacedCard
+          title={profile.isSelf ? messages.wallet.placedTitle : messages.social.likeGivenTitle}
+          person={profile.likeStats.placedOn ?? null}
+          idle={messages.social.likeIdle}
+        />
       </div>
       <div className="mt-6 flex justify-center gap-2 px-4">
         {(
