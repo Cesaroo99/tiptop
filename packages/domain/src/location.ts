@@ -48,6 +48,20 @@ export function roundDistanceKm(km: number): number {
   return Math.max(1, Math.round(km));
 }
 
+/**
+ * Libellé approximatif : seaux de 100 m sous 1 km, puis km entiers.
+ * Ne jamais afficher une position GPS.
+ */
+export function formatApproxDistance(km: number): string {
+  if (!Number.isFinite(km) || km < 0) return "1 km";
+  if (km < 1) {
+    const meters = Math.max(100, Math.round((km * 1000) / 100) * 100);
+    if (meters >= 1000) return "1 km";
+    return `${meters} m`;
+  }
+  return `${Math.max(1, Math.round(km))} km`;
+}
+
 export function displayLocation(input: {
   precision: LocationPrecision;
   city: string | null;

@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { LikeCapital } from "@/components/LikeCapital";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { LikeFaces, LikePlacedCard } from "@/components/LikeFaces";
-import { LikeMeter } from "@/components/LikeMeter";
+import { WishList } from "@/components/WishList";
 import { PostCard } from "@/components/PostCard";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
 import { EmptyState, ErrorBanner, Modal, PrimaryButton, Skeleton } from "@/components/ui";
@@ -59,6 +60,13 @@ type Profile = {
       avatarUrl?: string | null;
     }>;
     placedOn?: { id: string; username: string; firstName: string; lastName: string; avatarUrl?: string | null } | null;
+    likeTime?: {
+      totalSeconds: number;
+      weekSeconds: number;
+      label: string;
+      weekLabel: string;
+      lastMilestone: { id: string; label: string; achievedAt: string | null } | null;
+    };
   };
   posts: FeedItem[];
   eventsInterested?: EventPreview[];
@@ -83,7 +91,7 @@ function ProfileView() {
   const [soon, setSoon] = useState<string | null>(null);
   const [transfer, setTransfer] = useState<string | null>(null);
   const [buy, setBuy] = useState(false);
-  const [tab, setTab] = useState<"posts" | "events" | "moods">("events");
+  const [tab, setTab] = useState<"posts" | "events" | "moods" | "wishes">("events");
   const [reportOpen, setReportOpen] = useState(false);
 
   async function load() {
@@ -227,7 +235,7 @@ function ProfileView() {
         )}
       </div>
       <div className="mt-6 space-y-3 px-4">
-        <LikeMeter stats={profile.likeStats} forSelf={profile.isSelf} />
+        <LikeCapital time={profile.likeStats.likeTime} forSelf={profile.isSelf} />
         <LikeFaces
           title={profile.isSelf ? messages.wallet.receivedTitle : messages.social.likeReceivedTitle}
           people={profile.likeStats.receivedFrom ?? []}
@@ -244,6 +252,7 @@ function ProfileView() {
             ["posts", messages.social.postsTab],
             ["events", messages.social.events],
             ["moods", messages.social.moodsTab],
+            ["wishes", messages.wishes.tab],
           ] as const
         ).map(([key, label]) => (
           <button
@@ -296,6 +305,7 @@ function ProfileView() {
             <EmptyState title={messages.social.moodsTab} body={messages.world.moodEmptyBody} />
           )
         ) : null}
+        {tab === "wishes" ? <WishList ownerId={profile.id} isSelf={profile.isSelf} /> : null}
       </div>
       <Modal open={Boolean(soon)} title="TipTop" onClose={() => setSoon(null)}>
         {soon}

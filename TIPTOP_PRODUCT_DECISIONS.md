@@ -119,30 +119,25 @@ Ne pas dupliquer deux algorithmes opaques en v1 : proximité + suivis + fraîche
 
 ## D15 — Unité de like et certifiés
 
-**Décision (fondateur, 2026-09) :**
+**Décision (mise à jour like-time) :**
 
-- Chaque compte a **exactement 1 like personnel** (`LikeUnit` `FREE`), certifié ou non. Le badge certifié n’ajoute pas de jeton.
-- Ce like ne peut être posé que chez **une** personne à la fois. Liker quelqu’un d’autre = transfert avec confirmation.
-- Les packs mock (`PURCHASED`) restent un ledger séparé : ils **n’ajoutent pas** un second like à poser.
-- « Ce que chacun produit » = likes **reçus maintenant** (stock) + rythme `/heure` `/jour` `/mois` (flux). Public : qui a posé son like ici, et où est le like de cette personne.
+- 1 like personnel (`FREE`) par compte. Certifié : **poids v1 = 1** (pas de double temps silencieux) — **à valider** si le fondateur veut ×2.
+- Une unité = une cible à la fois (personne, publication, commentaire, mood, envie). Transfert = clôture de période + historique conservé.
+- Packs mock (`PURCHASED`) = **unités d’attribution extra**. Elles ne créent pas de temps reçu tant qu’elles ne sont pas posées.
 
-**Statut :** tranché — 1 like, pas double unité.
+**Statut :** tranché pour v1 ; poids certifié ouvert.
 
-## D16 — Ratio likes et seuil influenceur
+## D16 — Rythme vs temps
 
-**Décision :** table `AppConfig` :
+**Décision :** la valeur sociale principale n’est plus `/H` `/J` `/M` comme compteur. C’est le **temps de likes accumulé** (secondes). Le rythme d’allocations reçues peut rester un détail, il ne classe plus les profils.
 
-- `influencerThresholdLikesPerHour` (défaut documenté, ex. 50 — **valeur arbitraire d’équipe**).
-- Au-delà : affichage `/seconde` (et conservation `/H` `/J` `/M` en détail).
-- Formule documentée et testée : likes **reçus** sur fenêtre glissante (création d’allocation), plus le stock actif.
-
-**Statut :** seuil ouvert.
+**Statut :** tranché (remplace l’usage principal de D16).
 
 ## D17 — Achat de likes
 
-**Décision :** packs mock conservés pour le ledger paiement, **hors du jeton personnel**. L’écran principal est « Mon like » (posé / reçus / rythme), pas un portefeuille d’unités.
+**Décision :** l’achat donne des **slots d’attribution**. Jamais de minutes magiques créditées à l’achat.
 
-**Statut :** monétisation du like personnel retirée du parcours utilisateur.
+**Statut :** tranché.
 
 ## D18 — Mood
 
@@ -263,16 +258,27 @@ Ne pas inventer une 4e nav tab.
 **Décision :** champ `post.kind = organic | sponsored` dans le schéma ; **pas d’UI pub en v1**.  
 **Statut :** retenu.
 
+## D36 — Temps de like
+
+Voir `TIPTOP_LIKE_TIME_SYSTEM.md`. Valeur sociale = durée d’attribution, agrégée au profil via `beneficiaryUserId` sans double comptage.
+
+## D37 — Envies
+
+Voir `TIPTOP_WISH_SYSTEM.md`. Social, pas marketplace.
+
+## D38 — Personnes autour de moi
+
+Voir `TIPTOP_NEARBY_DISCOVERY.md`. Découverte réelle, distance approximative, invitation contextuelle.
+
 ---
 
 ## Décisions encore bloquantes (besoin fondateur)
 
 Si le développement démarre avant réponse, les valeurs **Décision** ci-dessus s’appliquent.
 
-1. D14 — mapping Cœur / Like / Coup de cœur.
-2. D15 — double like = 2 unités ou poids ×2.
-3. D16 — seuil influenceur.
-4. D21 — sémantique `-18`.
-5. D05 — mot de passe oui/non.
-6. D04 — OAuth jour 1 ou plus tard.
-7. D09 — existe-t-il un vrai graphe d’amis ?
+1. D14 — mapping Cœur / Like / Coup de cœur (et temps sur coups de cœur : non tranché).
+2. D15 — poids certifié ×2 ou 2 unités (v1 = poids 1).
+3. D21 — sémantique `-18`.
+4. D05 — mot de passe oui/non.
+5. D04 — OAuth jour 1 ou plus tard.
+6. D09 — existe-t-il un vrai graphe d’amis ?

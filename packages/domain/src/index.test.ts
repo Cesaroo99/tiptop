@@ -4,7 +4,7 @@ import { canResendOtp, evaluateOtp } from "../src/otp";
 import { availableBalance, displayLikeRatio, likeProduction, pickUnitForLike, planHeartTransfer, planTransfer } from "../src/likes";
 import { getLikePack, likeCreditAllowed, LIKE_PACKS, needsLikePurchase } from "../src/wallet";
 import { availabilityUntil, isCurrentlyAvailable } from "../src/availability";
-import { displayLocation, roundDistanceKm } from "../src/location";
+import { displayLocation, formatApproxDistance, roundDistanceKm } from "../src/location";
 import { canAcceptInvitation, evaluateInvite, moodExpiresAt } from "../src/events";
 import { canConsumeTicket, canShowQr, isInEntryWindow, signTicketQr, verifyTicketQr } from "../src/tickets";
 import { applyWebhook, mockCharge, reservationAmountXaf } from "../src/payments";
@@ -136,7 +136,7 @@ describe("likes", () => {
     expect(plan.toEventId).toBe("e2");
   });
 
-  it("ignore les unités achetées : un seul like personnel se transfère", () => {
+  it("préfère une unité libre (achetée) avant de transférer", () => {
     const plan = pickUnitForLike(
       [
         { id: "busy", ownerId: "c", source: "free", activeAllocationUserId: "alice" },
@@ -145,8 +145,8 @@ describe("likes", () => {
       "sarah",
       "c",
     );
-    expect(plan.unitId).toBe("busy");
-    expect(plan.fromBeneficiaryId).toBe("alice");
+    expect(plan.unitId).toBe("bought");
+    expect(plan.fromBeneficiaryId).toBeNull();
   });
 
   it("transfère si plus d'unité libre", () => {
@@ -217,6 +217,11 @@ describe("localisation", () => {
   it("n’arrondit jamais au mètre", () => {
     expect(roundDistanceKm(0.14)).toBe(1);
     expect(roundDistanceKm(13.6)).toBe(14);
+  });
+
+  it("affiche une distance approximative en seaux (500 m / km)", () => {
+    expect(formatApproxDistance(0.48)).toBe("500 m");
+    expect(formatApproxDistance(2.2)).toBe("2 km");
   });
 
   it("masque la position au niveau HIDDEN", () => {

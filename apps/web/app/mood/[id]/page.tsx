@@ -8,7 +8,6 @@ import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { ErrorBanner, TextInput } from "@/components/ui";
 import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { useSession } from "@/lib/session";
 
 export default function Page() {
   return (
@@ -21,7 +20,6 @@ export default function Page() {
 function MoodViewer() {
   const { id } = useParams<{ id: string }>();
   const { messages } = useI18n();
-  const { user } = useSession();
   const [mood, setMood] = useState<MoodItem | null>(null);
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [body, setBody] = useState("");
@@ -48,18 +46,40 @@ function MoodViewer() {
   }, [id]);
 
   async function like(confirmTransfer = false) {
-    if (!mood || user?.id === mood.author.id) return;
+    if (!mood) return;
+    const liked = mood.likeTime?.likedByMe ?? mood.likedByMe ?? false;
     try {
-      if (mood.likedAuthor) {
-        await api(`/users/${mood.author.id}/like`, { method: "DELETE" });
-        setMood({ ...mood, likedAuthor: false });
+      if (liked) {
+        await api("/likes", {
+          method: "DELETE",
+          body: JSON.stringify({ targetType: "mood", targetId: mood.id }),
+        });
+        setMood({
+          ...mood,
+          likedByMe: false,
+          likeTime: {
+            totalSeconds: mood.likeTime?.totalSeconds ?? 0,
+            activeCount: Math.max(0, (mood.likeTime?.activeCount ?? 1) - 1),
+            likedByMe: false,
+            label: mood.likeTime?.label ?? "0 s",
+          },
+        });
         return;
       }
-      await api(`/users/${mood.author.id}/like`, {
+      await api("/likes", {
         method: "POST",
-        body: JSON.stringify({ confirmTransfer }),
+        body: JSON.stringify({ targetType: "mood", targetId: mood.id, confirmTransfer }),
       });
-      setMood({ ...mood, likedAuthor: true });
+      setMood({
+        ...mood,
+        likedByMe: true,
+        likeTime: {
+          totalSeconds: mood.likeTime?.totalSeconds ?? 0,
+          activeCount: (mood.likeTime?.activeCount ?? 0) + 1,
+          likedByMe: true,
+          label: mood.likeTime?.label ?? "0 s",
+        },
+      });
       setTransfer(null);
       setBuy(false);
     } catch (e) {
@@ -70,14 +90,7 @@ function MoodViewer() {
           return;
         }
         if (kind === "transfer") {
-          const preview = await api<{ wouldTransferFrom: { firstName: string; lastName: string } | null }>(
-            `/users/${mood.author.id}/like/preview`,
-          );
-          setTransfer(
-            preview.wouldTransferFrom
-              ? `${preview.wouldTransferFrom.firstName} ${preview.wouldTransferFrom.lastName}`
-              : "…",
-          );
+          setTransfer(messages.social.transferGeneric);
         }
       }
     }
@@ -116,14 +129,17 @@ function MoodViewer() {
             </Link>
           ) : null}
           <p className="mt-2 text-xs text-muted">
-            {messages.social.likesNow.replace("{n}", String(mood.authorActiveLikes))} · {messages.world.availableUntil.replace("{time}", new Date(mood.expiresAt).toLocaleTimeString())}
+            {mood.likeTime
+              ? messages.likeTime.ofDuration.replace("{duration}", mood.likeTime.label)
+              : messages.social.likesNow.replace("{n}", String(mood.authorActiveLikes))}{" "}
+            · {messages.world.availableUntil.replace("{time}", new Date(mood.expiresAt).toLocaleTimeString())}
           </p>
           <button
             type="button"
             onClick={() => void like(false)}
-            className={`mt-3 rounded-full px-4 py-2 ${mood.likedAuthor ? "bg-accent text-white" : "bg-[var(--border)]"}`}
+            className={`mt-3 rounded-full px-4 py-2 ${(mood.likeTime?.likedByMe ?? mood.likedByMe) ? "bg-accent text-white" : "bg-[var(--border)]"}`}
           >
-            ♥ {mood.likedAuthor ? messages.social.likeHere : messages.social.likePlace}
+            ♥ {(mood.likeTime?.likedByMe ?? mood.likedByMe) ? messages.social.likeHere : messages.social.likePlace}
           </button>
         </div>
       </div>

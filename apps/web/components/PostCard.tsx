@@ -8,6 +8,7 @@ import { useSession } from "@/lib/session";
 import { eventCountdown, formatRelative } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
 import { LikeDialogs, likeErrorKind } from "./LikeDialogs";
+import { LikeTimeBadge } from "./LikeTimeBadge";
 import { MapThumb } from "./MapThumb";
 import { Modal } from "./ui";
 
@@ -24,26 +25,46 @@ export function PostCard({
   const [soon, setSoon] = useState<string | null>(null);
   const [buy, setBuy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [loadedAt] = useState(() => Date.now());
   const mine = user?.id === post.author.id;
   const event = post.event;
   const countdown = event ? eventCountdown(event.startsAt) : null;
+  const liked = post.likeTime?.likedByMe ?? post.likedByMe ?? false;
 
   async function like(confirmTransfer = false) {
-    if (mine) {
-      setSoon(messages.social.likeSelf);
-      return;
-    }
     try {
-      if (post.likedAuthor) {
-        await api(`/users/${post.author.id}/like`, { method: "DELETE" });
-        onChanged?.({ ...post, likedAuthor: false, authorActiveLikes: Math.max(0, post.authorActiveLikes - 1) });
+      if (liked) {
+        await api("/likes", {
+          method: "DELETE",
+          body: JSON.stringify({ targetType: "post", targetId: post.id }),
+        });
+        const active = Math.max(0, (post.likeTime?.activeCount ?? 1) - 1);
+        onChanged?.({
+          ...post,
+          likedByMe: false,
+          likeTime: {
+            totalSeconds: post.likeTime?.totalSeconds ?? 0,
+            activeCount: active,
+            likedByMe: false,
+            label: post.likeTime?.label ?? "0 s",
+          },
+        });
         return;
       }
-      await api(`/users/${post.author.id}/like`, {
+      await api("/likes", {
         method: "POST",
-        body: JSON.stringify({ confirmTransfer }),
+        body: JSON.stringify({ targetType: "post", targetId: post.id, confirmTransfer }),
       });
-      onChanged?.({ ...post, likedAuthor: true, authorActiveLikes: post.authorActiveLikes + 1 });
+      onChanged?.({
+        ...post,
+        likedByMe: true,
+        likeTime: {
+          totalSeconds: post.likeTime?.totalSeconds ?? 0,
+          activeCount: (post.likeTime?.activeCount ?? 0) + 1,
+          likedByMe: true,
+          label: post.likeTime?.label ?? "0 s",
+        },
+      });
       setTransfer(null);
       setBuy(false);
     } catch (e) {
@@ -54,13 +75,7 @@ export function PostCard({
           return;
         }
         if (kind === "transfer") {
-          const preview = await api<{ wouldTransferFrom: { firstName: string; lastName: string } | null }>(
-            `/users/${post.author.id}/like/preview`,
-          );
-          const n = preview.wouldTransferFrom
-            ? `${preview.wouldTransferFrom.firstName} ${preview.wouldTransferFrom.lastName}`
-            : "…";
-          setTransfer({ name: n });
+          setTransfer({ name: messages.social.transferGeneric });
         }
       }
     }
@@ -142,14 +157,16 @@ export function PostCard({
       ) : null}
       <p className="mt-3 text-xs text-muted">
         {post.commentsCount} {messages.social.comments}
-        {event ? ` · ${event.reservedCount} ${messages.world.reservationsCount} · ${event.interestedCount} ${messages.world.interestedCount}` : ` · ${messages.social.likesNow.replace("{n}", String(post.authorActiveLikes))}`}
+        {event ? ` · ${event.reservedCount} ${messages.world.reservationsCount} · ${event.interestedCount} ${messages.world.interestedCount}` : null}
+        {" · "}
+        <LikeTimeBadge time={post.likeTime} loadedAt={loadedAt} />
       </p>
       <div className="mt-3 flex items-center gap-2">
         <button
           type="button"
-          aria-label={post.likedAuthor ? messages.social.likeHere : messages.social.likePlace}
+          aria-label={liked ? messages.social.likeHere : messages.social.likePlace}
           onClick={() => void like(false)}
-          className={`grid h-10 w-10 place-items-center rounded-full ${post.likedAuthor ? "bg-accent text-white" : "bg-[var(--border)] text-muted"}`}
+          className={`grid h-10 w-10 place-items-center rounded-full ${liked ? "bg-accent text-white" : "bg-[var(--border)] text-muted"}`}
         >
           ♥
         </button>

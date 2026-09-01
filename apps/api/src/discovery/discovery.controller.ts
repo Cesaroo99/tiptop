@@ -19,7 +19,22 @@ export class DiscoveryController {
     @Req() req: Request & { user: PublicUser },
     @Query("city") city?: string,
     @Query("zone") zone?: string,
+    @Query("maxKm") maxKm?: string,
+    @Query("minAge") minAge?: string,
+    @Query("maxAge") maxAge?: string,
+    @Query("available") available?: string,
+    @Query("profession") profession?: string,
+    @Query("wishCategory") wishCategory?: string,
   ) {
-    return this.discovery.people(req.user.id, city, zone);
+    return this.discovery.people(req.user.id, {
+      city,
+      zone,
+      maxKm: maxKm ? Number(maxKm) : undefined,
+      minAge: minAge ? Number(minAge) : undefined,
+      maxAge: maxAge ? Number(maxAge) : undefined,
+      availableOnly: available === "1" || available === "true",
+      profession,
+      wishCategory,
+    });
   }
 }

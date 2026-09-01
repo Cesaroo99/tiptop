@@ -1,5 +1,5 @@
 import { PrismaClient, LikeUnitSource, UserRole, ReportKind, ReportReason } from "@prisma/client";
-import { invitationExpiresAt, directKey } from "@tiptop/domain";
+import { invitationExpiresAt, directKey, crossedMilestones, DEFAULT_LIKE_MILESTONES, sumLikeSeconds } from "@tiptop/domain";
 
 const prisma = new PrismaClient();
 
@@ -553,6 +553,20 @@ async function placePersonalLike(db: PrismaClient, ownerId: string, toUserId: st
   });
   if (active?.toUserId === toUserId) {
     await db.likeAllocation.update({ where: { id: active.id }, data: { allocatedAt } });
+    const open = await db.likePeriod.findFirst({ where: { unitId: unit.id, endedAt: null } });
+    if (!open) {
+      await db.likePeriod.create({
+        data: {
+          unitId: unit.id,
+          actorId: ownerId,
+          targetType: "USER",
+          targetId: toUserId,
+          beneficiaryUserId: toUserId,
+          startedAt: allocatedAt,
+          weight: 1,
+        },
+      });
+    }
     return;
   }
   if (active) {
@@ -561,8 +575,23 @@ async function placePersonalLike(db: PrismaClient, ownerId: string, toUserId: st
       data: { releasedAt: allocatedAt },
     });
   }
+  await db.likePeriod.updateMany({
+    where: { unitId: unit.id, endedAt: null },
+    data: { endedAt: allocatedAt },
+  });
   await db.likeAllocation.create({
     data: { unitId: unit.id, toUserId, allocatedAt },
+  });
+  await db.likePeriod.create({
+    data: {
+      unitId: unit.id,
+      actorId: ownerId,
+      targetType: "USER",
+      targetId: toUserId,
+      beneficiaryUserId: toUserId,
+      startedAt: allocatedAt,
+      weight: 1,
+    },
   });
 }
 
@@ -1005,6 +1034,66 @@ async function enrichLivingWorld(
   ];
   for (const [fromId, toId, ago] of placements) {
     await placePersonalLike(db, fromId, toId, new Date(now - ago));
+  }
+
+  const cesarPost = await db.post.findFirst({ where: { authorId: cesar.id }, orderBy: { createdAt: "asc" } });
+  const ericaUnit = await db.likeUnit.findFirst({ where: { ownerId: erica.id, source: "FREE" } });
+  const mbelleUnit = await db.likeUnit.findFirst({ where: { ownerId: mbelle.id, source: "FREE" } });
+  if (cesarPost && ericaUnit && mbelleUnit) {
+    await db.likePeriod.deleteMany({ where: { targetType: "POST", targetId: cesarPost.id } });
+    const t0 = new Date(now - 3 * 3600_000);
+    await db.likePeriod.createMany({
+      data: [
+        {
+          unitId: ericaUnit.id,
+          actorId: erica.id,
+          targetType: "POST",
+          targetId: cesarPost.id,
+          beneficiaryUserId: cesar.id,
+          startedAt: t0,
+          endedAt: new Date(t0.getTime() + 40 * 60_000),
+          weight: 1,
+        },
+        {
+          unitId: mbelleUnit.id,
+          actorId: mbelle.id,
+          targetType: "POST",
+          targetId: cesarPost.id,
+          beneficiaryUserId: cesar.id,
+          startedAt: new Date(t0.getTime() + 30 * 60_000),
+          endedAt: new Date(t0.getTime() + 40 * 60_000),
+          weight: 1,
+        },
+      ],
+    });
+  }
+
+  await db.wish.deleteMany({ where: { ownerId: { in: [erica.id, cesar.id, amina.id] } } });
+  await db.wish.createMany({
+    data: [
+      { ownerId: erica.id, title: "Concert de musique", category: "EVENT", description: "Une soirée live à Yaoundé.", priority: "HIGH" },
+      { ownerId: erica.id, title: "Restaurant japonais", category: "RESTAURANT", city: "Yaoundé", zone: "Bastos" },
+      { ownerId: erica.id, title: "Casque audio", category: "GIFT", estimatedPriceXaf: 85000 },
+      { ownerId: erica.id, title: "Week-end à Kribi", category: "TRAVEL", priority: "HIGH" },
+      { ownerId: cesar.id, title: "Karting", category: "SPORT" },
+      { ownerId: amina.id, title: "Café à Bastos", category: "PLACE", city: "Yaoundé", zone: "Bastos" },
+    ],
+  });
+
+  const nowDate = new Date();
+  for (const person of everyone) {
+    const periods = await db.likePeriod.findMany({ where: { beneficiaryUserId: person.id } });
+    const total = sumLikeSeconds(
+      periods.map((p) => ({ startedAt: p.startedAt, endedAt: p.endedAt, weight: p.weight })),
+      nowDate,
+    ).totalSeconds;
+    for (const m of crossedMilestones(0, total, DEFAULT_LIKE_MILESTONES)) {
+      await db.userMilestone.upsert({
+        where: { userId_milestoneId: { userId: person.id, milestoneId: m.id } },
+        create: { userId: person.id, milestoneId: m.id, notifiedAt: nowDate },
+        update: { notifiedAt: nowDate },
+      });
+    }
   }
 }
 

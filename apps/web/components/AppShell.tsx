@@ -6,6 +6,7 @@ import { useSession } from "@/lib/session";
 import { BottomNav, SideNav } from "./Nav";
 import { AppHeader } from "./AppHeader";
 import { Skeleton } from "./ui";
+import { LikeMilestoneCelebration } from "./LikeMilestoneCelebration";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { user, loading } = useSession();
@@ -35,6 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col pb-24 md:pb-6">
         <AppHeader location={location} />
         <main className="flex-1">{children}</main>
+        <LikeMilestoneCelebration />
         <BottomNav />
       </div>
     </div>

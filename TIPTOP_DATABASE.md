@@ -65,17 +65,25 @@ pnpm db:reset      # destructif, local uniquement
 - `LikeAllocation` (transferts)
 - Enums disponibilité, précision de localisation, rôles
 
-## Concurrence likes (Phase 2)
+## Like temporel + envies
 
-Une allocation active par `LikeUnit` sera garantie par index unique partiel SQL :
+- `LikePeriod` (source de vérité : `startedAt` / `endedAt`, cible polymorphe, `beneficiaryUserId`)
+- Index unique partiel `like_period_one_active` : une période ouverte par `unitId`
+- `UserMilestone` (unique `userId + milestoneId`)
+- `UserLikeStats.closedSeconds` (cache des périodes closes)
+- `Wish`, `WishOffer`
+- `NotificationType.WISH_OFFER`, `LIKE_MILESTONE`
+- `AppConfig.likeMilestones` (optionnel)
+
+## Concurrence likes
+
+Une période active par `LikeUnit` :
 
 ```sql
-CREATE UNIQUE INDEX like_unit_one_active
-  ON "LikeAllocation" ("unitId")
-  WHERE "releasedAt" IS NULL;
+CREATE UNIQUE INDEX like_period_one_active
+  ON "LikePeriod" ("unitId")
+  WHERE "endedAt" IS NULL;
 ```
-
-Pas encore appliqué : pas d’API like en Phase 1.
 
 ## Seed
 

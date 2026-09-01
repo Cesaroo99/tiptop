@@ -68,6 +68,13 @@ export type EventCard = {
   }>;
 };
 
+export type LikeTimeSnap = {
+  totalSeconds: number;
+  activeCount: number;
+  likedByMe: boolean;
+  label: string;
+};
+
 export type MoodItem = {
   id: string;
   body: string;
@@ -76,7 +83,9 @@ export type MoodItem = {
   createdAt: string;
   commentsCount: number;
   likedAuthor: boolean;
+  likedByMe?: boolean;
   authorActiveLikes: number;
+  likeTime?: LikeTimeSnap;
   event: { id: string; title: string } | null;
   author: {
     id: string;
@@ -101,6 +110,11 @@ export type PersonCard = {
   locationLabel: string | null;
   approximate: boolean;
   distanceKm: number | null;
+  distanceLabel?: string | null;
+  available?: boolean;
+  availability?: string;
+  likeTime?: { totalSeconds: number; label: string };
+  wishes?: Array<{ id: string; title: string; category: string }>;
 };
 
 export type TicketItem = {
@@ -154,8 +168,10 @@ export type FeedItem = {
   createdAt: string;
   commentsCount: number;
   likedAuthor: boolean;
+  likedByMe?: boolean;
   viewerFollows: boolean;
   authorActiveLikes: number;
+  likeTime?: LikeTimeSnap;
   author: {
     id: string;
     username: string;
@@ -178,12 +194,14 @@ export type CommentItem = {
   id: string;
   body: string;
   createdAt: string;
+  likedByMe?: boolean;
+  likeTime?: LikeTimeSnap;
   author: { id: string; firstName: string; lastName: string; username: string; certified: boolean; avatarUrl?: string | null };
 };
 
 export type NotifItem = {
   id: string;
-  type: "LIKE" | "COMMENT" | "FOLLOW" | "INVITE" | "TICKET" | "PAYMENT" | "MESSAGE" | "REVIEW";
+  type: "LIKE" | "COMMENT" | "FOLLOW" | "INVITE" | "TICKET" | "PAYMENT" | "MESSAGE" | "REVIEW" | "WISH_OFFER" | "LIKE_MILESTONE";
   entityType: string | null;
   entityId: string | null;
   read: boolean;
@@ -222,6 +240,15 @@ export type LikeWallet = {
   placedOn?: LikePerson | null;
   receivedFrom?: LikePerson[];
   production?: LikeProduction;
+  likeTime?: {
+    totalSeconds: number;
+    historicalSeconds: number;
+    activeSeconds: number;
+    weekSeconds: number;
+    label: string;
+    weekLabel: string;
+    lastMilestone: { id: string; label: string; achievedAt: string | null } | null;
+  };
   allocations: Array<{ unitId: string; source: string; toUser: LikePerson }>;
   history: Array<{
     id: string;

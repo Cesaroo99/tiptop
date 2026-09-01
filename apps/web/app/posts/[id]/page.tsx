@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { LikeTimeBadge } from "@/components/LikeTimeBadge";
 import { PostCard } from "@/components/PostCard";
 import { EmptyState, ErrorBanner, Skeleton, TextInput } from "@/components/ui";
 import { api, type CommentItem, type FeedItem } from "@/lib/api";
@@ -23,6 +24,7 @@ function Thread() {
   const [comments, setComments] = useState<CommentItem[] | null>(null);
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [loadedAt] = useState(() => Date.now());
 
   async function load() {
     setError(null);
@@ -70,6 +72,29 @@ function Thread() {
             {c.author.firstName} {c.author.lastName}
           </p>
           <p className="text-sm text-ink">{c.body}</p>
+          <div className="mt-2 flex items-center justify-between">
+            <LikeTimeBadge time={c.likeTime} loadedAt={loadedAt} />
+            <button
+              type="button"
+              className={`rounded-full px-3 py-1 text-sm ${c.likeTime?.likedByMe ? "bg-accent text-white" : "bg-[var(--border)]"}`}
+              onClick={async () => {
+                if (c.likeTime?.likedByMe) {
+                  await api("/likes", {
+                    method: "DELETE",
+                    body: JSON.stringify({ targetType: "comment", targetId: c.id }),
+                  });
+                } else {
+                  await api("/likes", {
+                    method: "POST",
+                    body: JSON.stringify({ targetType: "comment", targetId: c.id, confirmTransfer: true }),
+                  });
+                }
+                await load();
+              }}
+            >
+              ♥
+            </button>
+          </div>
         </div>
       ))}
       <form onSubmit={send} className="flex gap-2 pb-4">

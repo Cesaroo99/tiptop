@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
-import { EmptyState, ErrorBanner, PrimaryButton, Skeleton } from "@/components/ui";
+import { EmptyState, ErrorBanner, PrimaryButton, Skeleton, TextInput } from "@/components/ui";
 import { api, ApiError, type PersonCard } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -26,12 +26,20 @@ function PeopleCarousel() {
   const [index, setIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [availableOnly, setAvailableOnly] = useState(false);
+  const [maxKm, setMaxKm] = useState("");
+  const [profession, setProfession] = useState("");
 
   async function load() {
     try {
-      const data = await api<{ items: PersonCard[] }>(
-        `/discovery/people?city=${encodeURIComponent(user?.city ?? "Yaoundé")}&zone=${encodeURIComponent(user?.zone ?? "")}`,
-      );
+      const params = new URLSearchParams();
+      params.set("city", user?.city ?? "Yaoundé");
+      if (user?.zone) params.set("zone", user.zone);
+      if (availableOnly) params.set("available", "1");
+      if (maxKm) params.set("maxKm", maxKm);
+      if (profession.trim()) params.set("profession", profession.trim());
+      const data = await api<{ items: PersonCard[] }>(`/discovery/people?${params.toString()}`);
       setItems(data.items);
       setIndex(0);
     } catch {
@@ -42,7 +50,7 @@ function PeopleCarousel() {
   useEffect(() => {
     if (user) void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.city, user?.zone]);
+  }, [user?.city, user?.zone, availableOnly]);
 
   if (error) return <ErrorBanner message={error} onRetry={() => void load()} />;
   if (!items) return <Skeleton className="mx-4 mt-6 h-96" />;
@@ -63,10 +71,35 @@ function PeopleCarousel() {
 
   const prev = items[index - 1];
   const next = items[index + 1];
+  const available = Boolean(person.available);
 
   return (
     <div className="px-4 py-4">
-      <h1 className="mb-4 text-xl font-bold text-accent">{messages.world.peopleTitle}</h1>
+      <h1 className="type-h1 mb-2 text-accent">{messages.world.peopleNearby}</h1>
+      <button type="button" className="mb-3 text-sm font-semibold text-accent" onClick={() => setFiltersOpen((v) => !v)}>
+        {messages.world.filters}
+      </button>
+      {filtersOpen ? (
+        <form
+          className="mb-4 space-y-2 rounded-card bg-surface p-3 shadow-card"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void load();
+          }}
+        >
+          <label className="flex items-center gap-2 type-body-sm">
+            <input type="checkbox" checked={availableOnly} onChange={(e) => setAvailableOnly(e.target.checked)} />
+            {messages.world.onlyAvailable}
+          </label>
+          <TextInput value={maxKm} onChange={(e) => setMaxKm(e.target.value)} placeholder={messages.world.maxDistance} />
+          <TextInput
+            value={profession}
+            onChange={(e) => setProfession(e.target.value)}
+            placeholder={messages.world.professionFilter}
+          />
+          <PrimaryButton type="submit">{messages.common.apply}</PrimaryButton>
+        </form>
+      ) : null}
       <div className="relative mx-auto max-w-sm">
         {prev ? (
           <div className="pointer-events-none absolute -left-10 top-8 h-72 w-16 overflow-hidden rounded-card opacity-40">
@@ -90,22 +123,41 @@ function PeopleCarousel() {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={person.avatarUrl} alt="" className="h-full w-full object-cover" />
             ) : (
-              <div className="grid h-full place-items-center text-4xl font-bold text-accent">
-                {person.firstName[0]}
-              </div>
+              <div className="grid h-full place-items-center type-display text-accent">{person.firstName[0]}</div>
             )}
+            <span
+              className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-semibold ${available ? "bg-success text-white" : "bg-white/90 text-muted"}`}
+            >
+              {available ? `🟢 ${messages.world.available}` : `⚪ ${messages.world.unavailable}`}
+            </span>
           </div>
           <div className="space-y-2 p-5">
-            <p className="text-center text-xl font-bold text-ink">
+            <p className="text-center type-h2 text-ink">
               {person.firstName} {person.lastName}{" "}
               {person.age != null ? messages.world.age.replace("{age}", String(person.age)) : ""}{" "}
               {person.certified ? <CertifiedMark /> : null}
             </p>
-            {person.profession ? <p className="text-center text-sm text-muted">💼 {person.profession}</p> : null}
-            <p className="text-center text-sm text-muted">
+            {person.profession ? <p className="text-center type-body-sm text-muted">💼 {person.profession}</p> : null}
+            <p className="text-center type-body-sm text-muted">
               📍 {person.locationLabel}
-              {person.distanceKm != null ? ` · ${messages.world.distance.replace("{km}", String(person.distanceKm))}` : ""}
+              {person.distanceLabel
+                ? ` · ${person.distanceLabel}`
+                : person.distanceKm != null
+                  ? ` · ${messages.world.distance.replace("{km}", String(person.distanceKm))}`
+                  : ""}
             </p>
+            {person.likeTime ? (
+              <p className="text-center type-meta text-accent">
+                ♥ {messages.likeTime.ofDuration.replace("{duration}", person.likeTime.label)}
+              </p>
+            ) : null}
+            {person.wishes?.length ? (
+              <ul className="type-caption text-muted">
+                {person.wishes.slice(0, 3).map((w) => (
+                  <li key={w.id}>· {w.title}</li>
+                ))}
+              </ul>
+            ) : null}
             <div className="mt-4 grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -128,22 +180,50 @@ function PeopleCarousel() {
               >
                 {messages.world.message}
               </button>
-              <Link
-                href={`/invite/${person.id}`}
-                className="rounded-pill bg-accent py-3 text-center font-semibold text-white"
-              >
-                {messages.world.inviteNamed.replace("{name}", person.firstName)}
-              </Link>
+              {available ? (
+                <Link
+                  href={`/invite/${person.id}`}
+                  className="rounded-pill bg-accent py-3 text-center font-semibold text-white"
+                >
+                  {messages.world.inviteJoin}
+                </Link>
+              ) : (
+                <span className="rounded-pill bg-[var(--border)] py-3 text-center text-sm text-muted">
+                  {messages.world.unavailable}
+                </span>
+              )}
             </div>
+            {person.wishes?.[0] ? (
+              <Link href={`/u/${person.username}`} className="mt-1 block text-center text-sm text-accent">
+                {messages.wishes.offer}
+              </Link>
+            ) : null}
             <Link href={`/u/${person.username}`} className="mt-1 block text-center text-sm text-accent">
               @{person.username}
             </Link>
           </div>
         </article>
       </div>
-      <PrimaryButton className="mt-4" onClick={() => setIndex((i) => Math.min(items.length - 1, i + 1))}>
-        {messages.world.nextPerson}
-      </PrimaryButton>
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        <button
+          type="button"
+          className="rounded-pill bg-[var(--border)] py-3 text-sm"
+          disabled={index === 0}
+          onClick={() => setIndex((i) => Math.max(0, i - 1))}
+        >
+          {messages.world.previousPerson}
+        </button>
+        <button
+          type="button"
+          className="rounded-pill bg-[var(--border)] py-3 text-sm"
+          onClick={() => setIndex((i) => Math.min(items.length - 1, i + 1))}
+        >
+          {messages.world.passPerson}
+        </button>
+        <PrimaryButton className="!w-auto" onClick={() => setIndex((i) => Math.min(items.length - 1, i + 1))}>
+          {messages.world.nextPerson}
+        </PrimaryButton>
+      </div>
     </div>
   );
 }

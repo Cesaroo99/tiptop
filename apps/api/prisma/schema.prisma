@@ -73,6 +73,12 @@ model User {
   posts              Post[]
   likeUnits          LikeUnit[]
   likeReceived       LikeAllocation[] @relation("LikeReceived")
+  likePeriodsMade    LikePeriod[]     @relation("LikePeriodActor")
+  likePeriodsReceived LikePeriod[]    @relation("LikePeriodBeneficiary")
+  likeMilestones     UserMilestone[]
+  likeStats          UserLikeStats?
+  wishes             Wish[]
+  wishOffersMade     WishOffer[]      @relation("WishOfferFrom")
   likePurchases      LikePurchase[]
   likeTransactions   LikeTransaction[] @relation("LikeTxOwner")
   likeTxReceived     LikeTransaction[] @relation("LikeTxTarget")
@@ -205,6 +211,7 @@ model LikeUnit {
   createdAt            DateTime       @default(now())
   allocations          LikeAllocation[]
   transactions         LikeTransaction[]
+  periods              LikePeriod[]
 
   @@index([ownerId])
   @@index([purchaseId])
@@ -262,6 +269,8 @@ enum NotificationType {
   PAYMENT
   MESSAGE
   REVIEW
+  WISH_OFFER
+  LIKE_MILESTONE
 }
 
 enum EventStatus {
@@ -371,6 +380,130 @@ model LikeAllocation {
 
   @@index([unitId, releasedAt])
   @@index([toUserId, releasedAt])
+}
+
+enum LikeTargetType {
+  USER
+  POST
+  COMMENT
+  MOOD
+  WISH
+}
+
+model LikePeriod {
+  id                 String         @id @default(cuid())
+  unitId             String
+  unit               LikeUnit       @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  actorId            String
+  actor              User           @relation("LikePeriodActor", fields: [actorId], references: [id], onDelete: Cascade)
+  targetType         LikeTargetType
+  targetId           String
+  beneficiaryUserId  String
+  beneficiary        User           @relation("LikePeriodBeneficiary", fields: [beneficiaryUserId], references: [id], onDelete: Cascade)
+  startedAt          DateTime
+  endedAt            DateTime?
+  weight             Int            @default(1)
+
+  @@index([targetType, targetId, endedAt])
+  @@index([beneficiaryUserId, endedAt])
+  @@index([actorId, endedAt])
+  @@index([unitId, endedAt])
+}
+
+model UserMilestone {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  milestoneId String
+  achievedAt  DateTime @default(now())
+  notifiedAt  DateTime?
+
+  @@unique([userId, milestoneId])
+  @@index([userId])
+}
+
+model UserLikeStats {
+  userId        String   @id
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  closedSeconds Int      @default(0)
+  updatedAt     DateTime @updatedAt
+}
+
+enum WishCategory {
+  EVENT
+  PRODUCT
+  RESTAURANT
+  ACTIVITY
+  TRAVEL
+  EXPERIENCE
+  GIFT
+  SERVICE
+  PLACE
+  SPORT
+  LEISURE
+  OTHER
+}
+
+enum WishVisibility {
+  PUBLIC
+  FOLLOWERS
+  PRIVATE
+}
+
+enum WishPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum WishOfferStatus {
+  SENT
+  PENDING
+  ACCEPTED
+  REFUSED
+  AWAITING_PAYMENT
+  PAID
+  DELIVERED
+  DONE
+  CANCELLED
+}
+
+model Wish {
+  id                 String         @id @default(cuid())
+  ownerId            String
+  owner              User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  title              String
+  category           WishCategory   @default(OTHER)
+  description        String         @default("")
+  imageUrl           String?
+  url                String?
+  estimatedPriceXaf  Int?
+  city               String?
+  zone               String?
+  desiredAt          DateTime?
+  eventId            String?
+  priority           WishPriority   @default(MEDIUM)
+  visibility         WishVisibility @default(PUBLIC)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  offers             WishOffer[]
+
+  @@index([ownerId, createdAt])
+}
+
+model WishOffer {
+  id        String          @id @default(cuid())
+  wishId    String
+  wish      Wish            @relation(fields: [wishId], references: [id], onDelete: Cascade)
+  fromUserId String
+  fromUser  User            @relation("WishOfferFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  message   String          @default("")
+  status    WishOfferStatus @default(SENT)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([wishId, createdAt])
+  @@index([fromUserId])
 }
 
 model Event {

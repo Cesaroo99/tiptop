@@ -40,8 +40,8 @@ export class PostsController {
   }
 
   @Get(":id/comments")
-  comments(@Param("id") id: string) {
-    return this.posts.comments(id);
+  comments(@Req() req: Request & { user: PublicUser }, @Param("id") id: string) {
+    return this.posts.comments(id, req.user.id);
   }
 
   @Post(":id/comments")

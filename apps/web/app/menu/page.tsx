@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
 import { CardButton, ScreenHeader } from "@/components/ui";
-import { LikeMeter } from "@/components/LikeMeter";
+import { LikeCapital } from "@/components/LikeCapital";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -14,10 +14,16 @@ export default function MenuPage() {
   const { messages } = useI18n();
   const { user, loading } = useSession();
   const router = useRouter();
-  const [stats, setStats] = useState({ active: 0, perHour: 0, perDay: 0, perMonth: 0 });
+  const [stats, setStats] = useState<{
+    active: number;
+    likeTime?: { totalSeconds: number; weekSeconds: number; label: string; weekLabel: string; lastMilestone: { id: string; label: string; achievedAt: string | null } | null };
+  }>({ active: 0 });
   useEffect(() => {
     if (!user) return;
-    api<{ active: number; perHour: number; perDay: number; perMonth: number }>(`/likes/stats/${user.id}`)
+    api<{
+      active: number;
+      likeTime?: { totalSeconds: number; weekSeconds: number; label: string; weekLabel: string; lastMilestone: { id: string; label: string; achievedAt: string | null } | null };
+    }>(`/likes/stats/${user.id}`)
       .then(setStats)
       .catch(() => undefined);
   }, [user]);
@@ -34,6 +40,8 @@ export default function MenuPage() {
     ...(user.role === "ADMIN" || user.role === "MODERATOR"
       ? [{ href: "/admin", label: messages.menu.admin }]
       : []),
+    { href: "/wishes", label: messages.menu.wishes },
+    { href: "/likes", label: messages.menu.likes },
     { href: "/tickets", label: messages.menu.tickets, fresh: true },
     { href: "/favorites", label: messages.menu.favorites, fresh: true },
     { href: "/contacts", label: messages.menu.contacts },
@@ -57,7 +65,7 @@ export default function MenuPage() {
         <span className="text-accent">›</span>
       </Link>
       <Link href="/likes" className="mt-4 block">
-        <LikeMeter stats={stats} hint={false} />
+        <LikeCapital time={stats.likeTime} forSelf />
       </Link>
       <div className="mt-4 space-y-3">
         {items.map((item) => (

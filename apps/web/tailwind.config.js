@@ -17,6 +17,11 @@ module.exports = {
       fontFamily: {
         sans: ["var(--font-inter)", "system-ui", "sans-serif"],
       },
+      fontSize: {
+        display: ["2.5rem", { lineHeight: "1.08", letterSpacing: "-0.04em", fontWeight: "700" }],
+        h1: ["1.75rem", { lineHeight: "1.2", letterSpacing: "-0.03em", fontWeight: "700" }],
+        stat: ["2.25rem", { lineHeight: "1.05", letterSpacing: "-0.045em", fontWeight: "700" }],
+      },
       borderRadius: {
         card: "20px",
         pill: "999px",

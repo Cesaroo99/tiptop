@@ -23,7 +23,11 @@ export function LikeDialogs({
       onConfirm={onConfirmTransfer}
       confirmLabel={messages.common.confirm}
     >
-      <p>{messages.social.transferBody.replace("{name}", transferName ?? "")}</p>
+      <p>
+        {transferName === messages.social.transferGeneric
+          ? transferName
+          : messages.social.transferBody.replace("{name}", transferName ?? "")}
+      </p>
       <p className="mt-2 text-xs text-muted">{messages.social.likeExplain}</p>
     </Modal>
   );

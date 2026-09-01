@@ -26,6 +26,8 @@ export default function NotificationsPage() {
   function label(n: NotifItem) {
     const name = n.actor ? `${n.actor.firstName} ${n.actor.lastName}` : messages.brand.name;
     if (n.type === "LIKE") return `${name} ${messages.social.notifLike}`;
+    if (n.type === "WISH_OFFER") return `${name} ${messages.social.notifWish}`;
+    if (n.type === "LIKE_MILESTONE") return messages.social.notifMilestone;
     if (n.type === "COMMENT") return `${name} ${messages.social.notifComment}`;
     if (n.type === "INVITE") return `${name} ${messages.social.notifInvite}`;
     if (n.type === "TICKET") return `${name} ${messages.social.notifTicket}`;
@@ -36,7 +38,8 @@ export default function NotificationsPage() {
   }
 
   function href(n: NotifItem) {
-    if (n.type === "INVITE") return "/tickets";
+    if (n.type === "WISH_OFFER") return "/wishes";
+    if (n.type === "LIKE_MILESTONE") return "/likes";
     if (n.type === "MESSAGE" && n.entityId) return `/messages/${n.entityId}`;
     if (n.type === "REVIEW" && n.entityId) return `/events/${n.entityId}`;
     if (n.type === "TICKET" && n.entityId) return `/tickets/${n.entityId}`;

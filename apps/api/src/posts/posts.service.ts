@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { LikesService } from "../likes/likes.service";
 
 const MAX_BODY = 2000;
 
@@ -15,6 +16,7 @@ export class PostsService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(NotificationsService) private readonly notifications: NotificationsService,
+    @Inject(LikesService) private readonly likes: LikesService,
   ) {}
 
   mapPost(
@@ -42,7 +44,18 @@ export class PostsService {
         participants: Array<{ status: string }>;
       } | null;
     },
-    extra: { likedAuthor: boolean; viewerFollows: boolean; authorLikes: number },
+    extra: {
+      likedAuthor: boolean;
+      viewerFollows: boolean;
+      authorLikes: number;
+      likedByMe: boolean;
+      likeTime: {
+        totalSeconds: number;
+        activeCount: number;
+        likedByMe: boolean;
+        label: string;
+      };
+    },
   ) {
     const event = p.event
       ? {
@@ -65,8 +78,10 @@ export class PostsService {
       createdAt: p.createdAt.toISOString(),
       commentsCount: p._count.comments,
       likedAuthor: extra.likedAuthor,
+      likedByMe: extra.likedByMe,
       viewerFollows: extra.viewerFollows,
       authorActiveLikes: extra.authorLikes,
+      likeTime: extra.likeTime,
       author: {
         id: p.author.id,
         username: p.author.username,
@@ -133,13 +148,29 @@ export class PostsService {
       viewerId,
       posts.map((p) => p.author.id),
     );
-    return posts.map((p) =>
-      this.mapPost(p, {
+    const likeTimes = await this.likes.snapshots(
+      viewerId,
+      "post",
+      posts.map((p) => p.id),
+    );
+    const empty = { totalSeconds: 0, activeCount: 0, likedByMe: false, label: "0 seconde" };
+    return posts.map((p) => {
+      const snap = likeTimes.get(p.id);
+      return this.mapPost(p, {
         likedAuthor: extras.liked.has(p.author.id),
         viewerFollows: extras.following.has(p.author.id),
         authorLikes: extras.counts.get(p.author.id) ?? 0,
-      }),
-    );
+        likedByMe: snap?.likedByMe ?? false,
+        likeTime: snap
+          ? {
+              totalSeconds: snap.totalSeconds,
+              activeCount: snap.activeCount,
+              likedByMe: snap.likedByMe,
+              label: snap.label,
+            }
+          : empty,
+      });
+    });
   }
 
   async create(authorId: string, input: { body: string; city?: string; zone?: string; imageUrl?: string }) {
@@ -188,7 +219,7 @@ export class PostsService {
     return this.decorate(viewerId, posts);
   }
 
-  async comments(postId: string) {
+  async comments(postId: string, viewerId: string) {
     const post = await this.prisma.post.findUnique({ where: { id: postId } });
     if (!post || post.hiddenAt) throw new NotFoundException({ code: "POST_NOT_FOUND" });
     const rows = await this.prisma.comment.findMany({
@@ -198,13 +229,30 @@ export class PostsService {
         author: { select: { id: true, firstName: true, lastName: true, username: true, certified: true, profile: { select: { avatarUrl: true } } } },
       },
     });
+    const likeTimes = await this.likes.snapshots(
+      viewerId,
+      "comment",
+      rows.map((c) => c.id),
+    );
     return {
-      items: rows.map((c) => ({
-        id: c.id,
-        body: c.body,
-        createdAt: c.createdAt.toISOString(),
-        author: { ...c.author, avatarUrl: c.author.profile?.avatarUrl ?? null },
-      })),
+      items: rows.map((c) => {
+        const snap = likeTimes.get(c.id);
+        return {
+          id: c.id,
+          body: c.body,
+          createdAt: c.createdAt.toISOString(),
+          author: { ...c.author, avatarUrl: c.author.profile?.avatarUrl ?? null },
+          likedByMe: snap?.likedByMe ?? false,
+          likeTime: snap
+            ? {
+                totalSeconds: snap.totalSeconds,
+                activeCount: snap.activeCount,
+                likedByMe: snap.likedByMe,
+                label: snap.label,
+              }
+            : { totalSeconds: 0, activeCount: 0, likedByMe: false, label: "0 seconde" },
+        };
+      }),
     };
   }
 

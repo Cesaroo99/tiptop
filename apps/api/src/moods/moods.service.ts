@@ -2,12 +2,14 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from "@nes
 import { isMoodActive, moodExpiresAt } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { LikesService } from "../likes/likes.service";
 
 @Injectable()
 export class MoodsService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(NotificationsService) private readonly notifications: NotificationsService,
+    @Inject(LikesService) private readonly likes: LikesService,
   ) {}
 
   async create(
@@ -73,8 +75,13 @@ export class MoodsService {
       viewerId,
       visible.map((m) => m.authorId),
     );
+    const likeTimes = await this.likes.snapshots(
+      viewerId,
+      "mood",
+      visible.map((m) => m.id),
+    );
     return {
-      items: visible.map((m) => this.map(m, extras)),
+      items: visible.map((m) => this.map(m, extras, likeTimes.get(m.id))),
     };
   }
 
@@ -90,7 +97,8 @@ export class MoodsService {
     if (!mood) throw new NotFoundException({ code: "MOOD_NOT_FOUND" });
     if (!isMoodActive(mood.expiresAt)) throw new NotFoundException({ code: "MOOD_EXPIRED" });
     const extras = await this.likeExtras(viewerId, [mood.authorId]);
-    return this.map(mood, extras);
+    const likeTimes = await this.likes.snapshots(viewerId, "mood", [mood.id]);
+    return this.map(mood, extras, likeTimes.get(mood.id));
   }
 
   async comments(moodId: string) {
@@ -178,6 +186,12 @@ export class MoodsService {
       _count: { comments: number };
     },
     extras: { liked: Set<string>; counts: Map<string, number> },
+    likeTime?: {
+      totalSeconds: number;
+      activeCount: number;
+      likedByMe: boolean;
+      label: string;
+    },
   ) {
     return {
       id: m.id,
@@ -188,7 +202,16 @@ export class MoodsService {
       createdAt: m.createdAt.toISOString(),
       commentsCount: m._count.comments,
       likedAuthor: extras.liked.has(m.author.id),
+      likedByMe: likeTime?.likedByMe ?? false,
       authorActiveLikes: extras.counts.get(m.author.id) ?? 0,
+      likeTime: likeTime
+        ? {
+            totalSeconds: likeTime.totalSeconds,
+            activeCount: likeTime.activeCount,
+            likedByMe: likeTime.likedByMe,
+            label: likeTime.label,
+          }
+        : { totalSeconds: 0, activeCount: 0, likedByMe: false, label: "0 seconde" },
       event: m.event,
       author: {
         id: m.author.id,

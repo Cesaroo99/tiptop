@@ -50,15 +50,39 @@ export function personalLikeUnits(units: LikeUnit[]): LikeUnit[] {
   return personal.length ? personal : [];
 }
 
-/** Choisit le like personnel : s’il est déjà posé ailleurs, c’est un transfert. */
 export function pickUnitForLike(units: LikeUnit[], toUserId: string, ownerId: string): LikeTransfer {
-  const personal = personalLikeUnits(units);
-  if (personal.length === 0) throw new Error("LIKE_NO_UNITS");
-  if (personal.some((u) => u.activeAllocationUserId === toUserId)) {
+  if (units.length === 0) throw new Error("LIKE_NO_UNITS");
+  if (units.some((u) => u.activeAllocationUserId === toUserId)) {
     throw new Error("LIKE_ALREADY_ON_TARGET");
   }
-  const placed = personal.find((u) => u.activeAllocationUserId !== null) ?? personal[0];
-  return planTransfer(placed, toUserId, ownerId);
+  const free = units.find((u) => u.activeAllocationUserId === null);
+  return planTransfer(free ?? units[0], toUserId, ownerId);
+}
+
+export type LikeUnitTarget = {
+  id: string;
+  ownerId: string;
+  activeTargetKey: string | null;
+};
+
+export type LikeTargetTransfer = {
+  unitId: string;
+  fromTargetKey: string | null;
+  toTargetKey: string;
+};
+
+export function pickUnitForTarget(
+  units: LikeUnitTarget[],
+  toTargetKey: string,
+  ownerId: string,
+): LikeTargetTransfer {
+  if (units.length === 0) throw new Error("LIKE_NO_UNITS");
+  if (units.some((u) => u.activeTargetKey === toTargetKey)) {
+    throw new Error("LIKE_ALREADY_ON_TARGET");
+  }
+  const free = units.find((u) => u.activeTargetKey === null) ?? units[0];
+  if (free.ownerId !== ownerId) throw new Error("LIKE_NOT_OWNED");
+  return { unitId: free.id, fromTargetKey: free.activeTargetKey, toTargetKey };
 }
 
 export type HeartAllocation = {

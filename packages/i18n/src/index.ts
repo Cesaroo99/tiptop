@@ -42,6 +42,8 @@ export type Messages = {
     settings: string;
     help: string;
     likes: string;
+    ranking: string;
+    wishes: string;
     wallet: string;
     perHour: string;
     perDay: string;
@@ -157,6 +159,64 @@ export type Messages = {
     hoursAgo: string;
     daysAgo: string;
     moodsTab: string;
+    ofLikes: string;
+    notifWish: string;
+    notifMilestone: string;
+    transferGeneric: string;
+  };
+  likeTime: {
+    capital: string;
+    weekPlus: string;
+    lastMilestone: string;
+    noMilestone: string;
+    ranking: string;
+    rankingAll: string;
+    rankingWeek: string;
+    rankingMonth: string;
+    close: string;
+    historyTitle: string;
+    activeNow: string;
+    ofDuration: string;
+  };
+  wishes: {
+    title: string;
+    tab: string;
+    add: string;
+    offer: string;
+    inviteOut: string;
+    empty: string;
+    emptyPublic: string;
+    titleField: string;
+    category: string;
+    description: string;
+    price: string;
+    city: string;
+    visibility: string;
+    priority: string;
+    save: string;
+    delete: string;
+    sent: string;
+    accept: string;
+    refuse: string;
+    url: string;
+    catEVENT: string;
+    catPRODUCT: string;
+    catRESTAURANT: string;
+    catACTIVITY: string;
+    catTRAVEL: string;
+    catEXPERIENCE: string;
+    catGIFT: string;
+    catSERVICE: string;
+    catPLACE: string;
+    catSPORT: string;
+    catLEISURE: string;
+    catOTHER: string;
+    visPUBLIC: string;
+    visFOLLOWERS: string;
+    visPRIVATE: string;
+    prioLOW: string;
+    prioMEDIUM: string;
+    prioHIGH: string;
   };
   world: {
     available: string;
@@ -174,9 +234,19 @@ export type Messages = {
     precisionHidden: string;
     approximate: string;
     peopleTitle: string;
+    peopleNearby: string;
     peopleEmpty: string;
     peopleEmptyBody: string;
     invite: string;
+    inviteJoin: string;
+    previousPerson: string;
+    passPerson: string;
+    filters: string;
+    onlyAvailable: string;
+    maxDistance: string;
+    minAge: string;
+    maxAge: string;
+    professionFilter: string;
     message: string;
     age: string;
     distance: string;
@@ -384,6 +454,7 @@ export type Messages = {
     sourceFree: string;
     sourceBonus: string;
     oneLikeHint: string;
+    extraUnits: string;
     placedTitle: string;
     receivedTitle: string;
     productionTitle: string;
@@ -488,6 +559,8 @@ export const fr: Messages = {
     settings: "Paramètres",
     help: "Aide",
     likes: "Mon like",
+    ranking: "Classement",
+    wishes: "Mes envies",
     wallet: "Mon like",
     perHour: "cette heure",
     perDay: "aujourd’hui",
@@ -561,13 +634,13 @@ export const fr: Messages = {
     likeReceivedTitle: "Qui lui a posé son like",
     likeGivenTitle: "Son like est chez",
     likeEmptyReceived: "Personne n’a encore posé son like ici.",
-    likeProduction: "Rythme des likes reçus",
+    likeProduction: "Capital de likes",
     perHourLong: "cette heure",
     perDayLong: "aujourd’hui",
     perMonthLong: "ce mois",
     perSecond: "/seconde",
-    likeMeterHint: "Ce n’est pas un cœur Instagram : ce sont les likes que les autres lui donnent, et le rythme auquel ça arrive.",
-    likeMeterHintSelf: "Ce n’est pas un cœur Instagram : ce sont les likes que les autres te donnent, et le rythme auquel ça arrive.",
+    likeMeterHint: "Le capital, c’est le temps de likes reçu sur les contenus et interactions éligibles — pas un compteur de cœurs.",
+    likeMeterHintSelf: "Ton capital, c’est le temps de likes reçu sur tes contenus éligibles. Il continue de grandir tant que des likes restent posés.",
     followers: "abonnés",
     followingCount: "abonnements",
     postsTab: "Publications",
@@ -603,6 +676,64 @@ export const fr: Messages = {
     hoursAgo: "Il y a {n} heures",
     daysAgo: "Il y a {n} j",
     moodsTab: "Moods",
+    ofLikes: "de likes",
+    notifWish: "propose de t’offrir une envie",
+    notifMilestone: "Nouveau palier de likes",
+    transferGeneric: "Ton like quittera sa cible actuelle pour aller ici.",
+  },
+  likeTime: {
+    capital: "Temps de likes",
+    weekPlus: "+ {duration} cette semaine",
+    lastMilestone: "{label} atteint le {date}",
+    noMilestone: "Aucun palier encore",
+    ranking: "Top temps de likes",
+    rankingAll: "Tout",
+    rankingWeek: "Cette semaine",
+    rankingMonth: "Ce mois",
+    close: "Fermer",
+    historyTitle: "Périodes reçues",
+    activeNow: "en cours",
+    ofDuration: "{duration} de likes",
+  },
+  wishes: {
+    title: "Mes envies",
+    tab: "Envies",
+    add: "Ajouter une envie",
+    offer: "Proposer de l’offrir",
+    inviteOut: "Je t’invite",
+    empty: "Pas encore d’envie. Ajoute ce qui te ferait plaisir.",
+    emptyPublic: "Aucune envie visible.",
+    titleField: "Titre",
+    category: "Catégorie",
+    description: "Description",
+    price: "Prix estimé (FCFA)",
+    city: "Lieu",
+    visibility: "Visibilité",
+    priority: "Priorité",
+    save: "Enregistrer",
+    delete: "Supprimer",
+    sent: "Proposition envoyée.",
+    accept: "Accepter",
+    refuse: "Refuser",
+    url: "Lien (facultatif)",
+    catEVENT: "Événement",
+    catPRODUCT: "Produit",
+    catRESTAURANT: "Restaurant",
+    catACTIVITY: "Activité",
+    catTRAVEL: "Voyage",
+    catEXPERIENCE: "Expérience",
+    catGIFT: "Cadeau",
+    catSERVICE: "Service",
+    catPLACE: "Lieu",
+    catSPORT: "Sport",
+    catLEISURE: "Loisir",
+    catOTHER: "Autre",
+    visPUBLIC: "Public",
+    visFOLLOWERS: "Abonnés",
+    visPRIVATE: "Privé",
+    prioLOW: "Basse",
+    prioMEDIUM: "Moyenne",
+    prioHIGH: "Haute",
   },
   world: {
     available: "Disponible",
@@ -619,10 +750,20 @@ export const fr: Messages = {
     precisionCity: "Ville",
     precisionHidden: "Masquée",
     approximate: "Zone approximative",
-    peopleTitle: "Amies disponibles",
-    peopleEmpty: "Personne dispo dans ta zone",
-    peopleEmptyBody: "Déclare-toi disponible ou élargis ta zone. TipTop ne remplit pas ce carousel avec le monde entier.",
+    peopleTitle: "Personnes autour de moi",
+    peopleNearby: "Personnes autour de moi",
+    peopleEmpty: "Personne dans ta zone",
+    peopleEmptyBody: "Élargis tes filtres ou déclare-toi disponible. TipTop ne remplit pas ce carousel avec le monde entier.",
     invite: "Inviter",
+    inviteJoin: "Inviter à me rejoindre",
+    previousPerson: "Précédent",
+    passPerson: "Passer",
+    filters: "Filtres",
+    onlyAvailable: "Disponibles seulement",
+    maxDistance: "Distance max (km)",
+    minAge: "Âge min",
+    maxAge: "Âge max",
+    professionFilter: "Profession",
     message: "Message",
     age: "{age} ans",
     distance: "{km} km",
@@ -765,7 +906,7 @@ export const fr: Messages = {
     otp: "Connexion : numéro camerounais + OTP. En développement, le code mock est 1234.",
     live: "Disponibilité, découverte, invitations, chat et tickets sont branchés. Le Message depuis Amies ouvre une vraie conversation.",
     pay: "Paiements (tickets, packs mock) : Card / Orange Money / MTN. Aucun vrai débit.",
-    likes: "Chacun n’a qu’un like, transférable. Sur un profil tu vois qui le lui a posé, où est le sien, et le rythme des likes reçus (cette heure / aujourd’hui / ce mois).",
+    likes: "Chacun a un like personnel transférable, plus des unités achetées. La valeur, c’est le temps pendant lequel un like reste posé — pas un compteur. Le profil agrège ce temps sans double comptage.",
     reviews: "Après une sortie vécue (ticket validé), tu peux laisser un avis texte 24 h après la fin.",
     contact: "Support démo : memolicesar1@gmail.com — aucun ticket inventé.",
   },
@@ -812,11 +953,11 @@ export const fr: Messages = {
     packLabel: "{units} likes",
     buy: "Acheter",
     buyCta: "Choisir un pack",
-    buyInstead: "Les packs n’ajoutent pas un second like personnel.",
-    needPack: "Plus d’unité",
-    needPackBody: "Chacun a un like. S’il est déjà posé, déplace-le — tu n’achètes pas un second jeton.",
+    buyInstead: "Un pack ajoute des unités à poser. Le temps de likes n’est créé que si elles restent attribuées.",
+    needPack: "Plus d’unité libre",
+    needPackBody: "Toutes tes unités sont posées. Déplace-en une, ou achète un pack pour en poser une de plus.",
     success: "Likes ajoutés",
-    successBody: "{units} like(s) ajouté(s) au ledger mock. Ton like personnel reste unique.",
+    successBody: "{units} unité(s) d’attribution ajoutée(s). Le temps de likes naîtra seulement quand tu les poseras.",
     seeWallet: "Voir mon like",
     mockHint: "Paiement mock : le ledger likes est séparé du XAF. Aucun argent réel.",
     txPurchase: "+{units} likes achetés (ledger mock)",
@@ -829,11 +970,12 @@ export const fr: Messages = {
     sourcePurchased: "Acheté",
     sourceFree: "Inclus",
     sourceBonus: "Bonus certifié",
-    oneLikeHint: "Tu n’as qu’un like. Tu le poses sur une personne. Si tu en likes une autre, il se déplace.",
+    oneLikeHint: "Tu as un like personnel, plus d’unités si tu en as acheté. Le temps de likes ne naît que lorsqu’une unité reste posée.",
+    extraUnits: "{n} unité(s) libre(s) sur {total}",
     placedTitle: "Ton like",
     receivedTitle: "Qui t’a posé son like",
     productionTitle: "Ce que tu produis",
-    packsNote: "Les packs mock ne donnent pas un second like à poser. Ton jeton personnel reste unique.",
+    packsNote: "Acheter un pack ajoute des unités d’attribution. Ça ne crée pas de temps de likes : le temps naît seulement quand une unité reste posée.",
   },
   admin: {
     title: "Back-office",
@@ -934,6 +1076,8 @@ export const en: Messages = {
     settings: "Settings",
     help: "Help",
     likes: "My like",
+    ranking: "Ranking",
+    wishes: "My wishes",
     wallet: "My like",
     perHour: "this hour",
     perDay: "today",
@@ -1007,13 +1151,13 @@ export const en: Messages = {
     likeReceivedTitle: "Who placed their like here",
     likeGivenTitle: "Their like is with",
     likeEmptyReceived: "Nobody has placed their like here yet.",
-    likeProduction: "Received-like pace",
+    likeProduction: "Like capital",
     perHourLong: "this hour",
     perDayLong: "today",
     perMonthLong: "this month",
     perSecond: "/second",
-    likeMeterHint: "This is not an Instagram heart count: it is the likes other people give them, and how fast they arrive.",
-    likeMeterHintSelf: "This is not an Instagram heart count: it is the likes other people give you, and how fast they arrive.",
+    likeMeterHint: "The capital is received like-time on eligible content — not a heart counter.",
+    likeMeterHintSelf: "Your capital is received like-time on your eligible content. It keeps growing while likes stay placed.",
     followers: "followers",
     followingCount: "following",
     postsTab: "Posts",
@@ -1049,6 +1193,64 @@ export const en: Messages = {
     hoursAgo: "{n} hours ago",
     daysAgo: "{n} d ago",
     moodsTab: "Moods",
+    ofLikes: "of likes",
+    notifWish: "offers to fulfill a wish",
+    notifMilestone: "New like-time milestone",
+    transferGeneric: "Your like will leave its current target to go here.",
+  },
+  likeTime: {
+    capital: "Like time",
+    weekPlus: "+ {duration} this week",
+    lastMilestone: "{label} reached on {date}",
+    noMilestone: "No milestone yet",
+    ranking: "Top like time",
+    rankingAll: "All time",
+    rankingWeek: "This week",
+    rankingMonth: "This month",
+    close: "Close",
+    historyTitle: "Received periods",
+    activeNow: "active",
+    ofDuration: "{duration} of likes",
+  },
+  wishes: {
+    title: "My wishes",
+    tab: "Wishes",
+    add: "Add a wish",
+    offer: "Offer this",
+    inviteOut: "I'll take you",
+    empty: "No wishes yet. Add something that would make you happy.",
+    emptyPublic: "No visible wishes.",
+    titleField: "Title",
+    category: "Category",
+    description: "Description",
+    price: "Estimated price (XAF)",
+    city: "Place",
+    visibility: "Visibility",
+    priority: "Priority",
+    save: "Save",
+    delete: "Delete",
+    sent: "Offer sent.",
+    accept: "Accept",
+    refuse: "Decline",
+    url: "Link (optional)",
+    catEVENT: "Event",
+    catPRODUCT: "Product",
+    catRESTAURANT: "Restaurant",
+    catACTIVITY: "Activity",
+    catTRAVEL: "Travel",
+    catEXPERIENCE: "Experience",
+    catGIFT: "Gift",
+    catSERVICE: "Service",
+    catPLACE: "Place",
+    catSPORT: "Sport",
+    catLEISURE: "Leisure",
+    catOTHER: "Other",
+    visPUBLIC: "Public",
+    visFOLLOWERS: "Followers",
+    visPRIVATE: "Private",
+    prioLOW: "Low",
+    prioMEDIUM: "Medium",
+    prioHIGH: "High",
   },
   world: {
     available: "Available",
@@ -1066,9 +1268,19 @@ export const en: Messages = {
     precisionHidden: "Hidden",
     approximate: "Approximate area",
     peopleTitle: "People nearby",
-    peopleEmpty: "Nobody available in your area",
-    peopleEmptyBody: "Go available or widen your area. TipTop will not fill this with the whole world.",
+    peopleNearby: "People nearby",
+    peopleEmpty: "Nobody in your area",
+    peopleEmptyBody: "Widen your filters or go available. TipTop will not fill this with the whole world.",
     invite: "Invite",
+    inviteJoin: "Invite to join me",
+    previousPerson: "Previous",
+    passPerson: "Skip",
+    filters: "Filters",
+    onlyAvailable: "Available only",
+    maxDistance: "Max distance (km)",
+    minAge: "Min age",
+    maxAge: "Max age",
+    professionFilter: "Profession",
     message: "Message",
     age: "{age} yrs",
     distance: "{km} km",
@@ -1211,7 +1423,7 @@ export const en: Messages = {
     otp: "Sign-in: Cameroon number + OTP. In development the mock code is 1234.",
     live: "Availability, discovery, invites, chat and tickets are wired. Message from People opens a real conversation.",
     pay: "Payments (tickets, mock packs): Card / Orange Money / MTN. No real charge.",
-    likes: "Everyone has one transferable like. On a profile you see who placed theirs, where theirs sits, and the pace of likes received (this hour / today / this month).",
+    likes: "Everyone has a transferable personal like, plus purchased units. Value is the time a like stays placed — not a counter. A profile aggregates that time without double-counting.",
     reviews: "After a meetup you attended (validated ticket), you can leave a text review 24h after it ends.",
     contact: "Demo support: memolicesar1@gmail.com — no invented tickets.",
   },
@@ -1258,11 +1470,11 @@ export const en: Messages = {
     packLabel: "{units} likes",
     buy: "Buy",
     buyCta: "Choose a pack",
-    buyInstead: "Packs do not give you a second personal like.",
-    needPack: "No units left",
-    needPackBody: "Everyone has one like. If it is already placed, move it — you do not buy a second token.",
+    buyInstead: "A pack adds units to place. Like-time is only created while they stay attributed.",
+    needPack: "No free unit",
+    needPackBody: "All your units are placed. Move one, or buy a pack to place an extra one.",
     success: "Likes added",
-    successBody: "{units} like(s) added to the mock ledger. Your personal like stays unique.",
+    successBody: "{units} attribution unit(s) added. Like-time starts only when you place them.",
     seeWallet: "See my like",
     mockHint: "Mock payment: the like ledger is separate from XAF. No real money.",
     txPurchase: "+{units} likes purchased (mock ledger)",
@@ -1275,11 +1487,12 @@ export const en: Messages = {
     sourcePurchased: "Purchased",
     sourceFree: "Included",
     sourceBonus: "Certified bonus",
-    oneLikeHint: "You only have one like. You place it on a person. Like someone else and it moves.",
+    oneLikeHint: "You have a personal like, plus extra units if you bought some. Like-time is only created while a unit stays placed.",
+    extraUnits: "{n} free unit(s) of {total}",
     placedTitle: "Your like",
     receivedTitle: "Who placed their like on you",
     productionTitle: "What you produce",
-    packsNote: "Mock packs do not give a second like to place. Your personal token stays unique.",
+    packsNote: "Buying a pack adds attribution units. It does not mint received like-time: time starts only when a unit stays placed.",
   },
   admin: {
     title: "Back office",
