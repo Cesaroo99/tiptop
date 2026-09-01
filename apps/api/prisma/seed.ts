@@ -1036,11 +1036,13 @@ async function enrichLivingWorld(
     await placePersonalLike(db, fromId, toId, new Date(now - ago));
   }
 
-  const cesarPost = await db.post.findFirst({ where: { authorId: cesar.id }, orderBy: { createdAt: "asc" } });
+  const cesarPost = await db.post.findFirst({ where: { authorId: cesar.id }, orderBy: { createdAt: "desc" } });
   const ericaUnit = await db.likeUnit.findFirst({ where: { ownerId: erica.id, source: "FREE" } });
   const mbelleUnit = await db.likeUnit.findFirst({ where: { ownerId: mbelle.id, source: "FREE" } });
   if (cesarPost && ericaUnit && mbelleUnit) {
-    await db.likePeriod.deleteMany({ where: { targetType: "POST", targetId: cesarPost.id } });
+    await db.likePeriod.deleteMany({
+      where: { targetType: "POST", beneficiaryUserId: cesar.id },
+    });
     const t0 = new Date(now - 3 * 3600_000);
     await db.likePeriod.createMany({
       data: [
