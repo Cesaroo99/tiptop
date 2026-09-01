@@ -52,3 +52,5 @@ curl -s -X POST http://localhost:3001/api/auth/otp/verify \
 ```
 
 P9 / P10 / courses concurrentes : domain + DB, pas de double navigateur (voir l’audit QA).
+
+Le cooldown OTP (30 s) ne s’applique qu’à un challenge **encore vivant** (non consommé, non expiré) : une reconnexion après succès peut demander un nouveau `1234` tout de suite.
