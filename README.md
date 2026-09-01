@@ -2,7 +2,7 @@
 
 Réseau social pour **reconnecter les gens au monde réel**.
 
-Phase actuelle : **cœur social (Phase 2)** — publications, commentaires, likes transférables, follow, recherche, notifications.
+Phase actuelle : **QA (Phase 8)** — unitaires domain/API, E2E Playwright, `TIPTOP_QA_AUDIT.md`.
 
 ## Démarrer
 
@@ -33,6 +33,7 @@ Ouvre `http://localhost:3000` — splash puis login.
 | [TIPTOP_ARCHITECTURE.md](./TIPTOP_ARCHITECTURE.md) | Architecture |
 | [TIPTOP_DATABASE.md](./TIPTOP_DATABASE.md) | Schéma |
 | [TIPTOP_TESTING.md](./TIPTOP_TESTING.md) | Tests |
+| [TIPTOP_QA_AUDIT.md](./TIPTOP_QA_AUDIT.md) | Audit QA Phase 8 |
 | [TIPTOP_ENVIRONMENT.md](./TIPTOP_ENVIRONMENT.md) | Env |
 | [docs/PHASES.md](./docs/PHASES.md) | Checklist |
 | [docs/mockups/](./docs/mockups/) | Maquettes (ne pas supprimer) |
@@ -42,4 +43,5 @@ Ouvre `http://localhost:3000` — splash puis login.
 ```bash
 pnpm --filter @tiptop/domain test
 pnpm --filter @tiptop/api test
+pnpm test:e2e
 ```

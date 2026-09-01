@@ -1,11 +1,12 @@
-# Architecture TipTop — Phase 1
+# Architecture TipTop
 
 ## Vue d’ensemble
 
 ```
 apps/web     Next.js 15 (App Router) — UI mobile-first + desktop
 apps/api     NestJS — REST /api, Prisma, sessions
-packages/domain   Règles pures (téléphone, OTP, likes)
+apps/e2e     Playwright Chromium (P1, P2, P6, P11, admin, smokes)
+packages/domain   Règles pures (téléphone, OTP, likes, tickets, admin…)
 packages/i18n     FR / EN
 ```
 
@@ -105,3 +106,10 @@ Non scaffoldé en Phase 1 (pas de simulateur fiable ici). Le web est le client m
 | Paiement | mock isolé Card / OM / MoMo — `fail: true` pour G15 |
 | Push | no-op : jeton stocké, log `[push:noop]`, aucun envoi |
 | Stockage | fichiers `public/` |
+
+## QA (Phase 8)
+
+- Unitaires : `packages/domain`, HMAC `apps/api`
+- DB : likes, booking, chat, invitations, admin (`*.realworld.test.ts`)
+- E2E : `apps/e2e` (Playwright Chromium, viewport Pixel 7)
+- Audit : `TIPTOP_QA_AUDIT.md` — mapping P1–P12 + gaps (Expo, push no-op, pas d’argent réel)

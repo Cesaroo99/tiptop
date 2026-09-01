@@ -21,6 +21,8 @@ pnpm dev:api   # :3001
 pnpm dev:web   # :3000
 ```
 
+Playwright (Phase 8) : `pnpm --filter @tiptop/e2e install:browsers` puis `pnpm test:e2e`. Réutilise les deux serveurs s’ils tournent.
+
 ## Variables
 
 Voir `.env.example`. Ne jamais committer de secrets de production.

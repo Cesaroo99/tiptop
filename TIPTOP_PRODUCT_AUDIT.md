@@ -344,7 +344,7 @@ Le détail tables / indexes / API sera dans `TIPTOP_ARCHITECTURE.md` et `TIPTOP_
 
 ## H. Matrice des tests (vue d’ensemble)
 
-Le détail opérationnel ira dans `TIPTOP_TESTING.md` (Phase 1+). Association fonctionnalité → tests :
+Le détail opérationnel est dans `TIPTOP_TESTING.md` et l’audit Phase 8 dans `TIPTOP_QA_AUDIT.md`. Association fonctionnalité → tests :
 
 | Fonctionnalité | Unitaire (domain) | Intégration (API/DB) | E2E |
 | --- | --- | --- | --- |

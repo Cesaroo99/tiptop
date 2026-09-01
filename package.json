@@ -9,6 +9,7 @@
     "dev:web": "pnpm --filter @tiptop/web dev",
     "build": "pnpm -r --if-present build",
     "test": "pnpm -r --if-present test",
+    "test:e2e": "pnpm --filter @tiptop/e2e test:e2e",
     "lint": "pnpm -r --if-present lint",
     "db:migrate": "pnpm --filter @tiptop/api prisma:migrate",
     "db:seed": "pnpm --filter @tiptop/api prisma:seed",

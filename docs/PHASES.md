@@ -46,4 +46,4 @@ Une phase n’est close que si UI, états, validation, tests et liaisons backend
 
 ## Phase 8 — QA
 
-- [ ] Tests unitaires, intégration, E2E, audit final
+- [x] Tests unitaires, intégration, E2E, audit final
