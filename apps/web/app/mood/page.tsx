@@ -55,7 +55,9 @@ function MoodRail() {
             <p className="font-semibold text-ink">
               {m.author.firstName} {m.author.lastName}
             </p>
+            {m.activity ? <p className="mt-1 type-body-sm font-semibold text-accent">{m.activity}</p> : null}
             <p className="mt-1 text-sm text-ink">{m.body || messages.world.typeMood}</p>
+            {m.zone ? <p className="mt-1 type-caption text-muted">📍 {m.city} - {m.zone}</p> : null}
             <p className="mt-2 text-xs text-muted">
               {m.commentsCount} {messages.social.comments}
               {m.likeTime ? ` · ${messages.likeTime.ofDuration.replace("{duration}", m.likeTime.label)}` : ` · ${messages.social.likesNow.replace("{n}", String(m.authorActiveLikes))}`}

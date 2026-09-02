@@ -41,6 +41,7 @@ function Composer() {
   const [requiresReservation, setRequiresReservation] = useState(false);
   const [hours, setHours] = useState("12");
   const [visibility, setVisibility] = useState("ZONE");
+  const [activity, setActivity] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,8 +84,11 @@ function Composer() {
           body: JSON.stringify({
             body,
             imageUrl: imageUrl || undefined,
+            activity: activity || undefined,
             hours: Number(hours) || 12,
             visibility,
+            city: withLoc ? city : undefined,
+            zone: withLoc ? zone : undefined,
           }),
         });
         router.replace("/mood");
@@ -97,7 +101,11 @@ function Composer() {
   }
 
   const canPublish =
-    kind === "post" ? Boolean(body.trim()) : kind === "event" ? Boolean(title.trim() && startsAt) : Boolean(body.trim() || imageUrl);
+    kind === "post"
+      ? Boolean(body.trim())
+      : kind === "event"
+        ? Boolean(title.trim() && startsAt)
+        : Boolean(body.trim() || imageUrl || activity.trim());
 
   return (
     <div className="px-4 py-4">
@@ -151,7 +159,13 @@ function Composer() {
         className="mt-3 min-h-32 w-full rounded-2xl border border-[var(--border)] bg-surface p-4 text-ink"
       />
       {kind === "mood" ? (
-        <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="mt-3 space-y-2">
+          <TextInput
+            value={activity}
+            onChange={(e) => setActivity(e.target.value)}
+            placeholder={messages.world.activityPlaceholder}
+          />
+        <div className="grid grid-cols-2 gap-2">
           <TextInput value={hours} onChange={(e) => setHours(e.target.value)} type="number" min={1} max={24} placeholder={messages.world.moodHours} />
           <select
             value={visibility}
@@ -161,6 +175,7 @@ function Composer() {
             <option value="ZONE">{messages.world.visZone}</option>
             <option value="FOLLOWERS">{messages.world.visFollowers}</option>
           </select>
+        </div>
         </div>
       ) : null}
       {kind !== "mood" || withLoc ? (

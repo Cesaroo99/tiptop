@@ -2,7 +2,7 @@
 
 export type ConversationKind = "DIRECT" | "GROUP" | "EVENT";
 export type MessageKind = "TEXT" | "IMAGE" | "AUDIO";
-export type PushCategory = "messages" | "social" | "events";
+export type PushCategory = "messages" | "social" | "events" | "invitations" | "mood";
 
 export const PRESENCE_WINDOW_MS = 90_000;
 

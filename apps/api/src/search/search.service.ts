@@ -6,13 +6,13 @@ import { PrismaService } from "../prisma.service";
 export class SearchService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  async search(q: string, type: "all" | "people" | "posts" | "events") {
+  async search(q: string, type: "all" | "people" | "posts" | "events" | "wishes" | "moods") {
     const query = q.trim();
     if (!query) {
-      return { people: [], posts: [], events: [] };
+      return { people: [], posts: [], events: [], wishes: [], moods: [] };
     }
     const people =
-      type === "posts" || type === "events"
+      type !== "all" && type !== "people"
         ? []
         : await this.prisma.user.findMany({
             where: {
@@ -29,7 +29,7 @@ export class SearchService {
             include: { profile: true },
           });
     const posts =
-      type === "people" || type === "events"
+      type !== "all" && type !== "posts"
         ? []
         : await this.prisma.post.findMany({
             where: { hiddenAt: null, body: { contains: query, mode: Prisma.QueryMode.insensitive } },
@@ -40,7 +40,7 @@ export class SearchService {
             },
           });
     const events =
-      type === "people" || type === "posts"
+      type !== "all" && type !== "events"
         ? []
         : await this.prisma.event.findMany({
             where: {
@@ -57,6 +57,37 @@ export class SearchService {
             include: {
               host: { select: { username: true, firstName: true, lastName: true } },
             },
+          });
+    const wishes =
+      type !== "all" && type !== "wishes"
+        ? []
+        : await this.prisma.wish.findMany({
+            where: {
+              visibility: "PUBLIC",
+              OR: [
+                { title: { contains: query, mode: Prisma.QueryMode.insensitive } },
+                { description: { contains: query, mode: Prisma.QueryMode.insensitive } },
+              ],
+            },
+            take: 20,
+            orderBy: { createdAt: "desc" },
+            include: { owner: { select: { username: true, firstName: true, lastName: true } } },
+          });
+    const moods =
+      type !== "all" && type !== "moods"
+        ? []
+        : await this.prisma.mood.findMany({
+            where: {
+              expiresAt: { gt: new Date() },
+              OR: [
+                { body: { contains: query, mode: Prisma.QueryMode.insensitive } },
+                { activity: { contains: query, mode: Prisma.QueryMode.insensitive } },
+                { city: { contains: query, mode: Prisma.QueryMode.insensitive } },
+              ],
+            },
+            take: 20,
+            orderBy: { createdAt: "desc" },
+            include: { author: { select: { username: true, firstName: true, lastName: true } } },
           });
     return {
       people: people.map((u) => ({
@@ -82,6 +113,19 @@ export class SearchService {
         zone: e.zone,
         priceXaf: e.priceXaf,
         host: e.host,
+      })),
+      wishes: wishes.map((w) => ({
+        id: w.id,
+        title: w.title,
+        category: w.category,
+        owner: w.owner,
+      })),
+      moods: moods.map((m) => ({
+        id: m.id,
+        body: m.body,
+        activity: m.activity,
+        city: m.city,
+        author: m.author,
       })),
     };
   }

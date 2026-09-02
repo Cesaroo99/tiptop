@@ -7,6 +7,8 @@ import { AppShell } from "@/components/AppShell";
 import { LikeCapital } from "@/components/LikeCapital";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { LikeFaces, LikePlacedCard } from "@/components/LikeFaces";
+import { ReportModal } from "@/components/ReportModal";
+import { SocialInviteModal } from "@/components/SocialInviteModal";
 import { WishList } from "@/components/WishList";
 import { PostCard } from "@/components/PostCard";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
@@ -93,6 +95,7 @@ function ProfileView() {
   const [buy, setBuy] = useState(false);
   const [tab, setTab] = useState<"posts" | "events" | "moods" | "wishes">("events");
   const [reportOpen, setReportOpen] = useState(false);
+  const [proposeOpen, setProposeOpen] = useState(false);
 
   async function load() {
     try {
@@ -222,6 +225,13 @@ function ProfileView() {
             <Link href={`/invite/${profile.id}`} className="rounded-pill bg-[var(--border)] px-5 py-3">
               + {messages.world.invite}
             </Link>
+            <button
+              type="button"
+              className="rounded-pill bg-[var(--border)] px-5 py-3"
+              onClick={() => setProposeOpen(true)}
+            >
+              {messages.socialInvite.proposeOuting}
+            </button>
             <button type="button" className="rounded-pill bg-[var(--border)] px-5 py-3" onClick={() => setReportOpen(true)}>
               {messages.admin.report}
             </button>
@@ -317,35 +327,19 @@ function ProfileView() {
         onConfirmTransfer={() => void like(true)}
         onCloseBuy={() => setBuy(false)}
       />
-      <Modal open={reportOpen} title={messages.admin.reportTitle} onClose={() => setReportOpen(false)}>
-        <p className="mb-3">{messages.admin.reportBody}</p>
-        <div className="flex flex-wrap gap-2">
-          {(
-            [
-              ["SPAM", messages.admin.reasonSpam],
-              ["ABUSE", messages.admin.reasonAbuse],
-              ["FAKE", messages.admin.reasonFake],
-              ["OTHER", messages.admin.reasonOther],
-            ] as const
-          ).map(([reason, label]) => (
-            <button
-              key={reason}
-              type="button"
-              className="rounded-pill bg-[var(--border)] px-3 py-2"
-              onClick={async () => {
-                await api("/reports", {
-                  method: "POST",
-                  body: JSON.stringify({ kind: "USER", reason, targetUserId: profile.id }),
-                });
-                setReportOpen(false);
-                setSoon(messages.admin.reportSent);
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </Modal>
+      <ReportModal
+        open={reportOpen}
+        kind="USER"
+        targetUserId={profile.id}
+        onClose={() => setReportOpen(false)}
+        onSent={() => setTimeout(() => setReportOpen(false), 1200)}
+      />
+      <SocialInviteModal
+        open={proposeOpen}
+        inviteeId={profile.id}
+        defaultContext="MEETUP"
+        onClose={() => setProposeOpen(false)}
+      />
     </div>
   );
 }

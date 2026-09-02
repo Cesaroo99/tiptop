@@ -41,6 +41,7 @@ export default function MenuPage() {
       ? [{ href: "/admin", label: messages.menu.admin }]
       : []),
     { href: "/wishes", label: messages.menu.wishes },
+    { href: "/invitations", label: messages.menu.invitations, fresh: true },
     { href: "/likes", label: messages.menu.likes },
     { href: "/tickets", label: messages.menu.tickets, fresh: true },
     { href: "/favorites", label: messages.menu.favorites, fresh: true },

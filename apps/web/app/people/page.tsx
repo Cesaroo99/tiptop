@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { AvailabilityBadge } from "@/components/AvailabilityBadge";
+import { SocialInviteModal } from "@/components/SocialInviteModal";
 import { EmptyState, ErrorBanner, PrimaryButton, Skeleton, TextInput } from "@/components/ui";
 import { api, ApiError, type PersonCard } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -30,6 +32,7 @@ function PeopleCarousel() {
   const [availableOnly, setAvailableOnly] = useState(false);
   const [maxKm, setMaxKm] = useState("");
   const [profession, setProfession] = useState("");
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   async function load() {
     try {
@@ -125,10 +128,8 @@ function PeopleCarousel() {
             ) : (
               <div className="grid h-full place-items-center type-display text-accent">{person.firstName[0]}</div>
             )}
-            <span
-              className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-semibold ${available ? "bg-success text-white" : "bg-white/90 text-muted"}`}
-            >
-              {available ? `🟢 ${messages.world.available}` : `⚪ ${messages.world.unavailable}`}
+            <span className="absolute left-3 top-3">
+              <AvailabilityBadge available={available} compact />
             </span>
           </div>
           <div className="space-y-2 p-5">
@@ -149,6 +150,11 @@ function PeopleCarousel() {
             {person.likeTime ? (
               <p className="text-center type-meta text-accent">
                 ♥ {messages.likeTime.ofDuration.replace("{duration}", person.likeTime.label)}
+              </p>
+            ) : null}
+            {person.activeMood ? (
+              <p className="text-center type-body-sm text-ink">
+                {person.activeMood.activity || person.activeMood.body}
               </p>
             ) : null}
             {person.wishes?.length ? (
@@ -181,12 +187,13 @@ function PeopleCarousel() {
                 {messages.world.message}
               </button>
               {available ? (
-                <Link
-                  href={`/invite/${person.id}`}
+                <button
+                  type="button"
+                  onClick={() => setInviteOpen(true)}
                   className="rounded-pill bg-accent py-3 text-center font-semibold text-white"
                 >
-                  {messages.world.inviteJoin}
-                </Link>
+                  {person.activeMood ? messages.socialInvite.joinNow : messages.world.inviteJoin}
+                </button>
               ) : (
                 <span className="rounded-pill bg-[var(--border)] py-3 text-center text-sm text-muted">
                   {messages.world.unavailable}
@@ -224,6 +231,13 @@ function PeopleCarousel() {
           {messages.world.nextPerson}
         </PrimaryButton>
       </div>
+      <SocialInviteModal
+        open={inviteOpen}
+        inviteeId={person.id}
+        defaultContext="MEETUP"
+        defaultLabel={person.activeMood?.activity ?? ""}
+        onClose={() => setInviteOpen(false)}
+      />
     </div>
   );
 }

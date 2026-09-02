@@ -12,10 +12,19 @@ export class PushService {
       update: {},
       create: { userId },
     });
-    return { messages: row.messages, social: row.social, events: row.events };
+    return {
+      messages: row.messages,
+      social: row.social,
+      events: row.events,
+      invitations: row.invitations,
+      mood: row.mood,
+    };
   }
 
-  async updatePrefs(userId: string, patch: { messages?: boolean; social?: boolean; events?: boolean }) {
+  async updatePrefs(
+    userId: string,
+    patch: { messages?: boolean; social?: boolean; events?: boolean; invitations?: boolean; mood?: boolean },
+  ) {
     const row = await this.prisma.pushPreference.upsert({
       where: { userId },
       update: patch,
@@ -24,9 +33,17 @@ export class PushService {
         messages: patch.messages ?? true,
         social: patch.social ?? true,
         events: patch.events ?? true,
+        invitations: patch.invitations ?? true,
+        mood: patch.mood ?? true,
       },
     });
-    return { messages: row.messages, social: row.social, events: row.events };
+    return {
+      messages: row.messages,
+      social: row.social,
+      events: row.events,
+      invitations: row.invitations,
+      mood: row.mood,
+    };
   }
 
   async registerDevice(userId: string, platform: string, pushToken?: string | null) {

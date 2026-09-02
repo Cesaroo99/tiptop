@@ -79,6 +79,8 @@ model User {
   likeStats          UserLikeStats?
   wishes             Wish[]
   wishOffersMade     WishOffer[]      @relation("WishOfferFrom")
+  socialInvitesSent     SocialInvite[]   @relation("SocialInviteFrom")
+  socialInvitesReceived SocialInvite[]   @relation("SocialInviteTo")
   likePurchases      LikePurchase[]
   likeTransactions   LikeTransaction[] @relation("LikeTxOwner")
   likeTxReceived     LikeTransaction[] @relation("LikeTxTarget")
@@ -271,6 +273,7 @@ enum NotificationType {
   REVIEW
   WISH_OFFER
   LIKE_MILESTONE
+  SOCIAL_INVITE
 }
 
 enum EventStatus {
@@ -487,8 +490,45 @@ model Wish {
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
   offers             WishOffer[]
+  socialInvites      SocialInvite[]
 
   @@index([ownerId, createdAt])
+}
+
+enum SocialInviteContext {
+  RESTAURANT
+  CAFE
+  ACTIVITY
+  MEETUP
+  WISH
+}
+
+enum SocialInviteStatus {
+  SENT
+  ACCEPTED
+  REFUSED
+  EXPIRED
+  CANCELLED
+}
+
+model SocialInvite {
+  id          String              @id @default(cuid())
+  inviterId   String
+  inviter     User                @relation("SocialInviteFrom", fields: [inviterId], references: [id], onDelete: Cascade)
+  inviteeId   String
+  invitee     User                @relation("SocialInviteTo", fields: [inviteeId], references: [id], onDelete: Cascade)
+  context     SocialInviteContext
+  label       String              @default("")
+  message     String              @default("")
+  wishId      String?
+  wish        Wish?               @relation(fields: [wishId], references: [id], onDelete: SetNull)
+  status      SocialInviteStatus  @default(SENT)
+  createdAt   DateTime            @default(now())
+  respondedAt DateTime?
+  expiresAt   DateTime
+
+  @@index([inviteeId, status])
+  @@index([inviterId, createdAt])
 }
 
 model WishOffer {
@@ -591,12 +631,16 @@ model Mood {
   author     User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   body       String         @default("")
   imageUrl   String?
+  activity   String?
+  city       String?
+  zone       String?
   eventId    String?
   event      Event?         @relation(fields: [eventId], references: [id], onDelete: SetNull)
   visibility MoodVisibility @default(ZONE)
   expiresAt  DateTime
   createdAt  DateTime       @default(now())
   comments   MoodComment[]
+  reports    Report[]
 
   @@index([expiresAt])
 }
@@ -751,6 +795,7 @@ model Message {
   body           String       @default("")
   imageUrl       String?
   createdAt      DateTime     @default(now())
+  reports        Report[]
 
   @@index([conversationId, createdAt])
 }
@@ -767,18 +812,22 @@ model UserBlock {
 }
 
 model PushPreference {
-  userId    String  @id
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages  Boolean @default(true)
-  social    Boolean @default(true)
-  events    Boolean @default(true)
-  updatedAt DateTime @updatedAt
+  userId      String   @id
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    Boolean  @default(true)
+  social      Boolean  @default(true)
+  events      Boolean  @default(true)
+  invitations Boolean  @default(true)
+  mood        Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
 }
 
 enum ReportKind {
   USER
   POST
   EVENT
+  MESSAGE
+  MOOD
 }
 
 enum ReportReason {
@@ -820,6 +869,10 @@ model Report {
   post         Post?        @relation(fields: [postId], references: [id], onDelete: SetNull)
   eventId      String?
   event        Event?       @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  messageId    String?
+  message      Message?     @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  moodId       String?
+  mood         Mood?        @relation(fields: [moodId], references: [id], onDelete: SetNull)
   reviewedById String?
   reviewedBy   User?        @relation("ReportReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
   reviewedAt   DateTime?

@@ -4,6 +4,18 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { EmptyState, PrimaryButton, TextInput } from "./ui";
+import { SocialInviteModal } from "./SocialInviteModal";
+
+const EXPERIENCE_CATS = new Set([
+  "EVENT",
+  "RESTAURANT",
+  "ACTIVITY",
+  "TRAVEL",
+  "EXPERIENCE",
+  "SPORT",
+  "LEISURE",
+  "PLACE",
+]);
 
 export type WishItem = {
   id: string;
@@ -38,6 +50,7 @@ export function WishList({ ownerId, isSelf }: { ownerId: string; isSelf: boolean
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("OTHER");
   const [note, setNote] = useState<string | null>(null);
+  const [inviteWish, setInviteWish] = useState<WishItem | null>(null);
 
   function catLabel(cat: string) {
     const key = `cat${cat}` as keyof typeof messages.wishes;
@@ -107,7 +120,7 @@ export function WishList({ ownerId, isSelf }: { ownerId: string; isSelf: boolean
             {w.description ? <p className="type-body-sm mt-1 text-muted">{w.description}</p> : null}
             {w.estimatedPriceXaf ? <p className="type-caption mt-1 text-muted">{w.estimatedPriceXaf} XAF</p> : null}
             {!isSelf ? (
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   type="button"
                   className="rounded-pill bg-accent px-4 py-2 text-sm font-semibold text-white"
@@ -115,6 +128,15 @@ export function WishList({ ownerId, isSelf }: { ownerId: string; isSelf: boolean
                 >
                   {messages.wishes.offer}
                 </button>
+                {EXPERIENCE_CATS.has(w.category) ? (
+                  <button
+                    type="button"
+                    className="rounded-pill bg-[var(--border)] px-4 py-2 text-sm font-semibold text-ink"
+                    onClick={() => setInviteWish(w)}
+                  >
+                    {messages.wishes.inviteOut}
+                  </button>
+                ) : null}
               </div>
             ) : (
               <button
@@ -132,6 +154,14 @@ export function WishList({ ownerId, isSelf }: { ownerId: string; isSelf: boolean
         ))
       )}
       {note ? <p className="type-caption text-accent">{note}</p> : null}
+      <SocialInviteModal
+        open={Boolean(inviteWish)}
+        inviteeId={ownerId}
+        defaultContext="WISH"
+        defaultLabel={inviteWish?.title ?? ""}
+        wishId={inviteWish?.id}
+        onClose={() => setInviteWish(null)}
+      />
     </div>
   );
 }

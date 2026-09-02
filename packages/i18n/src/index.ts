@@ -44,6 +44,7 @@ export type Messages = {
     likes: string;
     ranking: string;
     wishes: string;
+    invitations: string;
     wallet: string;
     perHour: string;
     perDay: string;
@@ -162,7 +163,11 @@ export type Messages = {
     ofLikes: string;
     notifWish: string;
     notifMilestone: string;
+    notifSocialInvite: string;
+    notifSocialInviteAccepted: string;
     transferGeneric: string;
+    wishesLabel: string;
+    moodsLabel: string;
   };
   likeTime: {
     capital: string;
@@ -177,6 +182,34 @@ export type Messages = {
     historyTitle: string;
     activeNow: string;
     ofDuration: string;
+  };
+  socialInvite: {
+    modalTitle: string;
+    contextRestaurant: string;
+    contextCafe: string;
+    contextActivity: string;
+    contextMeetup: string;
+    contextWish: string;
+    labelPlaceholder: string;
+    messagePlaceholder: string;
+    send: string;
+    sent: string;
+    pageTitle: string;
+    receivedTab: string;
+    sentTab: string;
+    empty: string;
+    emptySent: string;
+    accept: string;
+    refuse: string;
+    accepted: string;
+    refused: string;
+    expired: string;
+    statusSent: string;
+    openChat: string;
+    rateLimited: string;
+    alreadyPending: string;
+    proposeOuting: string;
+    joinNow: string;
   };
   wishes: {
     title: string;
@@ -284,6 +317,8 @@ export type Messages = {
     visFollowers: string;
     visEvent: string;
     moodExpired: string;
+    activityPlaceholder: string;
+    moodAvailableFor: string;
     composeType: string;
     typePost: string;
     typeEvent: string;
@@ -323,6 +358,8 @@ export type Messages = {
     reservationsCount: string;
     interestedCount: string;
     livesAt: string;
+    ongoingBadge: string;
+    endedBadge: string;
   };
   booking: {
     reserve: string;
@@ -419,6 +456,8 @@ export type Messages = {
     pushMessages: string;
     pushSocial: string;
     pushEvents: string;
+    pushInvitations: string;
+    pushMood: string;
     messageCta: string;
     livesIn: string;
     groupFromEvent: string;
@@ -561,6 +600,7 @@ export const fr: Messages = {
     likes: "Mon like",
     ranking: "Classement",
     wishes: "Mes envies",
+    invitations: "Mes rencontres",
     wallet: "Mon like",
     perHour: "cette heure",
     perDay: "aujourd’hui",
@@ -679,7 +719,11 @@ export const fr: Messages = {
     ofLikes: "de likes",
     notifWish: "propose de t’offrir une envie",
     notifMilestone: "Nouveau palier de likes",
+    notifSocialInvite: "t’a proposé une sortie",
+    notifSocialInviteAccepted: "a accepté ta sortie",
     transferGeneric: "Ton like quittera sa cible actuelle pour aller ici.",
+    wishesLabel: "Envies",
+    moodsLabel: "Mood",
   },
   likeTime: {
     capital: "Temps de likes",
@@ -694,6 +738,34 @@ export const fr: Messages = {
     historyTitle: "Périodes reçues",
     activeNow: "en cours",
     ofDuration: "{duration} de likes",
+  },
+  socialInvite: {
+    modalTitle: "Proposer une sortie",
+    contextRestaurant: "Restaurant",
+    contextCafe: "Café",
+    contextActivity: "Activité",
+    contextMeetup: "Me rejoindre",
+    contextWish: "Envie",
+    labelPlaceholder: "Où, quoi ? (ex. Sushi House)",
+    messagePlaceholder: "Ajouter un message (facultatif)",
+    send: "Envoyer l’invitation",
+    sent: "Invitation envoyée.",
+    pageTitle: "Mes rencontres",
+    receivedTab: "Reçues",
+    sentTab: "Envoyées",
+    empty: "Aucune invitation reçue pour l’instant.",
+    emptySent: "Tu n’as encore proposé aucune sortie.",
+    accept: "Accepter",
+    refuse: "Refuser",
+    accepted: "Acceptée",
+    refused: "Refusée",
+    expired: "Expirée",
+    statusSent: "En attente",
+    openChat: "Ouvrir la conversation",
+    rateLimited: "Trop d’invitations envoyées aujourd’hui. Réessaie demain.",
+    alreadyPending: "Une invitation est déjà en attente avec cette personne.",
+    proposeOuting: "Proposer une sortie",
+    joinNow: "Rejoindre",
   },
   wishes: {
     title: "Mes envies",
@@ -801,6 +873,8 @@ export const fr: Messages = {
     visFollowers: "Abonnés",
     visEvent: "Participants d’un event",
     moodExpired: "Ce mood est terminé.",
+    activityPlaceholder: "Que fais-tu en ce moment ? (ex. 🍣 Restaurant japonais)",
+    moodAvailableFor: "Disponible {duration}",
     composeType: "Type",
     typePost: "Publication",
     typeEvent: "Événement",
@@ -840,6 +914,8 @@ export const fr: Messages = {
     reservationsCount: "Réservations",
     interestedCount: "Intéressés",
     livesAt: "Vie à {place}",
+    ongoingBadge: "En cours",
+    endedBadge: "Terminé",
   },
   booking: {
     reserve: "Réserver",
@@ -936,6 +1012,8 @@ export const fr: Messages = {
     pushMessages: "Messages",
     pushSocial: "Social",
     pushEvents: "Sorties",
+    pushInvitations: "Invitations",
+    pushMood: "Mood",
     messageCta: "Message",
     livesIn: "Vie à {place}",
     groupFromEvent: "Ouvrir le groupe",
@@ -1078,6 +1156,7 @@ export const en: Messages = {
     likes: "My like",
     ranking: "Ranking",
     wishes: "My wishes",
+    invitations: "My meetups",
     wallet: "My like",
     perHour: "this hour",
     perDay: "today",
@@ -1196,7 +1275,11 @@ export const en: Messages = {
     ofLikes: "of likes",
     notifWish: "offers to fulfill a wish",
     notifMilestone: "New like-time milestone",
+    notifSocialInvite: "proposed an outing",
+    notifSocialInviteAccepted: "accepted your outing",
     transferGeneric: "Your like will leave its current target to go here.",
+    wishesLabel: "Wishes",
+    moodsLabel: "Mood",
   },
   likeTime: {
     capital: "Like time",
@@ -1211,6 +1294,34 @@ export const en: Messages = {
     historyTitle: "Received periods",
     activeNow: "active",
     ofDuration: "{duration} of likes",
+  },
+  socialInvite: {
+    modalTitle: "Propose an outing",
+    contextRestaurant: "Restaurant",
+    contextCafe: "Coffee",
+    contextActivity: "Activity",
+    contextMeetup: "Join me",
+    contextWish: "Wish",
+    labelPlaceholder: "Where, what? (e.g. Sushi House)",
+    messagePlaceholder: "Add a message (optional)",
+    send: "Send invitation",
+    sent: "Invitation sent.",
+    pageTitle: "My meetups",
+    receivedTab: "Received",
+    sentTab: "Sent",
+    empty: "No invitations received yet.",
+    emptySent: "You haven't proposed an outing yet.",
+    accept: "Accept",
+    refuse: "Decline",
+    accepted: "Accepted",
+    refused: "Declined",
+    expired: "Expired",
+    statusSent: "Pending",
+    openChat: "Open the conversation",
+    rateLimited: "Too many invitations sent today. Try again tomorrow.",
+    alreadyPending: "An invitation is already pending with this person.",
+    proposeOuting: "Propose an outing",
+    joinNow: "Join",
   },
   wishes: {
     title: "My wishes",
@@ -1318,6 +1429,8 @@ export const en: Messages = {
     visFollowers: "Followers",
     visEvent: "Event guests",
     moodExpired: "This mood ended.",
+    activityPlaceholder: "What are you up to right now? (e.g. 🍣 Sushi place)",
+    moodAvailableFor: "Available {duration}",
     composeType: "Type",
     typePost: "Post",
     typeEvent: "Event",
@@ -1357,6 +1470,8 @@ export const en: Messages = {
     reservationsCount: "Bookings",
     interestedCount: "Interested",
     livesAt: "Lives in {place}",
+    ongoingBadge: "Ongoing",
+    endedBadge: "Ended",
   },
   booking: {
     reserve: "Book",
@@ -1453,6 +1568,8 @@ export const en: Messages = {
     pushMessages: "Messages",
     pushSocial: "Social",
     pushEvents: "Meetups",
+    pushInvitations: "Invitations",
+    pushMood: "Mood",
     messageCta: "Message",
     livesIn: "Lives in {place}",
     groupFromEvent: "Open group",

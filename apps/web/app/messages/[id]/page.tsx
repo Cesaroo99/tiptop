@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { ReportModal } from "@/components/ReportModal";
 import { ScreenHeader, TextInput } from "@/components/ui";
 import { api, ApiError, type ChatMessage, type ConversationItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -21,6 +22,7 @@ export default function Page() {
   const [text, setText] = useState("");
   const [typing, setTyping] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reportMessageId, setReportMessageId] = useState<string | null>(null);
   const bottom = useRef<HTMLDivElement>(null);
 
   async function load() {
@@ -130,7 +132,18 @@ export default function Page() {
                 {m.kind === "AUDIO" ? <p>{messages.chat.voiceMock}</p> : null}
                 {m.body ? <p>{m.body}</p> : null}
               </div>
-              <p className="mt-0.5 text-[10px] text-muted">{new Date(m.createdAt).toLocaleTimeString()}</p>
+              <div className="mt-0.5 flex items-center gap-2">
+                <p className="text-[10px] text-muted">{new Date(m.createdAt).toLocaleTimeString()}</p>
+                {!mine ? (
+                  <button
+                    type="button"
+                    className="text-[10px] text-muted underline"
+                    onClick={() => setReportMessageId(m.id)}
+                  >
+                    {messages.admin.report}
+                  </button>
+                ) : null}
+              </div>
             </div>
           );
         })}
@@ -161,6 +174,12 @@ export default function Page() {
           {messages.chat.send}
         </button>
       </form>
+      <ReportModal
+        open={Boolean(reportMessageId)}
+        kind="MESSAGE"
+        messageId={reportMessageId ?? undefined}
+        onClose={() => setReportMessageId(null)}
+      />
     </main>
   );
 }

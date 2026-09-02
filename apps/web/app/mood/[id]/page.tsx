@@ -5,9 +5,12 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
+import { ReportModal } from "@/components/ReportModal";
+import { SocialInviteModal } from "@/components/SocialInviteModal";
 import { ErrorBanner, TextInput } from "@/components/ui";
 import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useSession } from "@/lib/session";
 
 export default function Page() {
   return (
@@ -20,12 +23,15 @@ export default function Page() {
 function MoodViewer() {
   const { id } = useParams<{ id: string }>();
   const { messages } = useI18n();
+  const { user } = useSession();
   const [mood, setMood] = useState<MoodItem | null>(null);
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [transfer, setTransfer] = useState<string | null>(null);
   const [buy, setBuy] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   async function load() {
     try {
@@ -122,7 +128,13 @@ function MoodViewer() {
           <Link href={`/u/${mood.author.username}`} className="font-semibold text-accent">
             {mood.author.firstName} {mood.author.lastName} {mood.author.certified ? "✓" : ""}
           </Link>
+          {mood.activity ? <p className="mt-1 type-body-sm font-semibold text-accent">{mood.activity}</p> : null}
           <p className="mt-2 text-ink">{mood.body}</p>
+          {mood.zone ? (
+            <p className="mt-1 type-caption text-muted">
+              📍 {mood.city} - {mood.zone}
+            </p>
+          ) : null}
           {mood.event ? (
             <Link href={`/events/${mood.event.id}`} className="mt-2 block text-sm text-accent">
               {mood.event.title}
@@ -134,13 +146,33 @@ function MoodViewer() {
               : messages.social.likesNow.replace("{n}", String(mood.authorActiveLikes))}{" "}
             · {messages.world.availableUntil.replace("{time}", new Date(mood.expiresAt).toLocaleTimeString())}
           </p>
-          <button
-            type="button"
-            onClick={() => void like(false)}
-            className={`mt-3 rounded-full px-4 py-2 ${(mood.likeTime?.likedByMe ?? mood.likedByMe) ? "bg-accent text-white" : "bg-[var(--border)]"}`}
-          >
-            ♥ {(mood.likeTime?.likedByMe ?? mood.likedByMe) ? messages.social.likeHere : messages.social.likePlace}
-          </button>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void like(false)}
+              className={`rounded-full px-4 py-2 ${(mood.likeTime?.likedByMe ?? mood.likedByMe) ? "bg-accent text-white" : "bg-[var(--border)]"}`}
+            >
+              ♥ {(mood.likeTime?.likedByMe ?? mood.likedByMe) ? messages.social.likeHere : messages.social.likePlace}
+            </button>
+            {user && user.id !== mood.author.id ? (
+              <button
+                type="button"
+                onClick={() => setJoinOpen(true)}
+                className="rounded-full bg-accent px-4 py-2 font-semibold text-white"
+              >
+                {messages.socialInvite.joinNow}
+              </button>
+            ) : null}
+            {user && user.id !== mood.author.id ? (
+              <button
+                type="button"
+                onClick={() => setReportOpen(true)}
+                className="rounded-full bg-[var(--border)] px-4 py-2 text-sm"
+              >
+                {messages.admin.report}
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
       <div className="mt-4 space-y-2">
@@ -163,6 +195,16 @@ function MoodViewer() {
         onConfirmTransfer={() => void like(true)}
         onCloseBuy={() => setBuy(false)}
       />
+      {mood ? (
+        <SocialInviteModal
+          open={joinOpen}
+          inviteeId={mood.author.id}
+          defaultContext="MEETUP"
+          defaultLabel={mood.activity ?? ""}
+          onClose={() => setJoinOpen(false)}
+        />
+      ) : null}
+      <ReportModal open={reportOpen} kind="MOOD" moodId={id} onClose={() => setReportOpen(false)} />
     </div>
   );
 }

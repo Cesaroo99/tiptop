@@ -27,8 +27,8 @@ class ReviewDto {
 }
 
 class CreateReportDto {
-  @IsIn(["USER", "POST", "EVENT"])
-  kind!: "USER" | "POST" | "EVENT";
+  @IsIn(["USER", "POST", "EVENT", "MESSAGE", "MOOD"])
+  kind!: "USER" | "POST" | "EVENT" | "MESSAGE" | "MOOD";
 
   @IsString()
   reason!: string;
@@ -48,6 +48,14 @@ class CreateReportDto {
   @IsOptional()
   @IsString()
   eventId?: string;
+
+  @IsOptional()
+  @IsString()
+  messageId?: string;
+
+  @IsOptional()
+  @IsString()
+  moodId?: string;
 }
 
 @Controller()

@@ -52,6 +52,14 @@ class PrefsDto {
   @IsOptional()
   @IsBoolean()
   events?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  invitations?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  mood?: boolean;
 }
 
 @Controller()

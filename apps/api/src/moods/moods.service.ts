@@ -14,14 +14,24 @@ export class MoodsService {
 
   async create(
     authorId: string,
-    input: { body?: string; imageUrl?: string; eventId?: string; visibility?: string; hours?: number },
+    input: {
+      body?: string;
+      imageUrl?: string;
+      activity?: string;
+      city?: string;
+      zone?: string;
+      eventId?: string;
+      visibility?: string;
+      hours?: number;
+    },
   ) {
     const body = (input.body ?? "").trim();
+    const activity = (input.activity ?? "").trim().slice(0, 80) || null;
     let imageUrl = input.imageUrl?.trim() || null;
     if (imageUrl && !imageUrl.startsWith("/seed/")) {
       throw new BadRequestException({ code: "IMAGE_NOT_ALLOWED" });
     }
-    if (!body && !imageUrl) throw new BadRequestException({ code: "MOOD_EMPTY" });
+    if (!body && !imageUrl && !activity) throw new BadRequestException({ code: "MOOD_EMPTY" });
     if (input.eventId) {
       const ev = await this.prisma.event.findUnique({ where: { id: input.eventId } });
       if (!ev) throw new BadRequestException({ code: "EVENT_NOT_FOUND" });
@@ -34,11 +44,15 @@ export class MoodsService {
     }
     const visibility =
       input.visibility === "FOLLOWERS" || input.visibility === "EVENT" ? input.visibility : "ZONE";
+    const author = await this.prisma.user.findUnique({ where: { id: authorId }, include: { profile: true } });
     const mood = await this.prisma.mood.create({
       data: {
         authorId,
         body,
         imageUrl,
+        activity,
+        city: input.city ?? author?.profile?.city ?? null,
+        zone: input.zone ?? author?.profile?.zone ?? null,
         eventId: input.eventId || null,
         visibility,
         expiresAt,
@@ -171,6 +185,9 @@ export class MoodsService {
       id: string;
       body: string;
       imageUrl: string | null;
+      activity: string | null;
+      city: string | null;
+      zone: string | null;
       expiresAt: Date;
       createdAt: Date;
       visibility: string;
@@ -197,6 +214,9 @@ export class MoodsService {
       id: m.id,
       body: m.body,
       imageUrl: m.imageUrl,
+      activity: m.activity,
+      city: m.city,
+      zone: m.zone,
       visibility: m.visibility,
       expiresAt: m.expiresAt.toISOString(),
       createdAt: m.createdAt.toISOString(),

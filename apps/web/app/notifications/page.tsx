@@ -29,6 +29,9 @@ export default function NotificationsPage() {
     if (n.type === "WISH_OFFER") return `${name} ${messages.social.notifWish}`;
     if (n.type === "LIKE_MILESTONE") return messages.social.notifMilestone;
     if (n.type === "COMMENT") return `${name} ${messages.social.notifComment}`;
+    if (n.type === "SOCIAL_INVITE") {
+      return `${name} ${n.entityType === "social_invite_accepted" ? messages.social.notifSocialInviteAccepted : messages.social.notifSocialInvite}`;
+    }
     if (n.type === "INVITE") return `${name} ${messages.social.notifInvite}`;
     if (n.type === "TICKET") return `${name} ${messages.social.notifTicket}`;
     if (n.type === "PAYMENT") return `${name} ${messages.social.notifPayment}`;
@@ -40,6 +43,7 @@ export default function NotificationsPage() {
   function href(n: NotifItem) {
     if (n.type === "WISH_OFFER") return "/wishes";
     if (n.type === "LIKE_MILESTONE") return "/likes";
+    if (n.type === "SOCIAL_INVITE") return "/invitations";
     if (n.type === "MESSAGE" && n.entityId) return `/messages/${n.entityId}`;
     if (n.type === "REVIEW" && n.entityId) return `/events/${n.entityId}`;
     if (n.type === "TICKET" && n.entityId) return `/tickets/${n.entityId}`;
