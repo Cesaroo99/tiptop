@@ -39,6 +39,10 @@ class CreateMoodDto {
 
   @IsOptional()
   @IsString()
+  companionId?: string;
+
+  @IsOptional()
+  @IsString()
   visibility?: string;
 
   @IsOptional()

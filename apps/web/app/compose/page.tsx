@@ -54,6 +54,8 @@ function uploadVideo(file: File, onProgress: (pct: number) => void): Promise<str
   });
 }
 
+type ContactItem = { id: string; firstName: string; lastName: string; avatarUrl?: string | null };
+
 const MOOD_VIDEOS = [
   { id: "concert", label: "Concert", src: "/seed/moods/video-concert.mp4" },
   { id: "piscine", label: "Piscine", src: "/seed/moods/video-piscine.mp4" },
@@ -104,6 +106,8 @@ function Composer() {
   const [activity, setActivity] = useState("");
   const [eventId, setEventId] = useState("");
   const [myEvents, setMyEvents] = useState<EventCardType[]>([]);
+  const [companionId, setCompanionId] = useState("");
+  const [contacts, setContacts] = useState<ContactItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -112,6 +116,9 @@ function Composer() {
     api<{ items: EventCardType[] }>("/events?tab=mine")
       .then((d) => setMyEvents(d.items.filter((e) => e.status !== "CANCELLED")))
       .catch(() => setMyEvents([]));
+    api<{ items: ContactItem[] }>("/contacts")
+      .then((d) => setContacts(d.items))
+      .catch(() => setContacts([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind]);
 
@@ -217,6 +224,7 @@ function Composer() {
             city: withLoc ? city : undefined,
             zone: withLoc ? zone : undefined,
             eventId: eventId || undefined,
+            companionId: companionId || undefined,
           }),
         });
         router.replace("/mood");
@@ -314,6 +322,20 @@ function Composer() {
             {myEvents.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.title}
+              </option>
+            ))}
+          </select>
+        ) : null}
+        {contacts.length > 0 ? (
+          <select
+            value={companionId}
+            onChange={(e) => setCompanionId(e.target.value)}
+            className="w-full rounded-2xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-ink"
+          >
+            <option value="">{messages.world.moodCompanionNone}</option>
+            {contacts.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.firstName} {c.lastName}
               </option>
             ))}
           </select>

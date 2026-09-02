@@ -321,6 +321,8 @@ export type Messages = {
     visZone: string;
     visFollowers: string;
     moodLinkEventNone: string;
+    moodCompanionNone: string;
+    moodWith: string;
     moodPickVideo: string;
     moodAddVideo: string;
     videoRecord: string;
@@ -913,6 +915,8 @@ export const fr: Messages = {
     visZone: "Ma zone",
     visFollowers: "Abonnés",
     moodLinkEventNone: "Associer à un événement (optionnel)",
+    moodCompanionNone: "Avec qui es-tu ? (optionnel)",
+    moodWith: "Avec {name}",
     moodPickVideo: "Ou choisis un modèle",
     moodAddVideo: "Vidéo (optionnel)",
     videoRecord: "Filmer",
@@ -1505,6 +1509,8 @@ export const en: Messages = {
     visZone: "My area",
     visFollowers: "Followers",
     moodLinkEventNone: "Link to an event (optional)",
+    moodCompanionNone: "Who are you with? (optional)",
+    moodWith: "With {name}",
     moodPickVideo: "Or pick a template",
     moodAddVideo: "Video (optional)",
     videoRecord: "Record",

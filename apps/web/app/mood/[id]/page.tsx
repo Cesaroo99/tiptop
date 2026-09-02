@@ -133,13 +133,20 @@ function MoodViewer() {
           </div>
         )}
         <div className="p-4">
-          <Link href={`/u/${mood.author.username}`} className="flex items-center gap-2.5">
-            <Avatar src={mood.author.avatarUrl} firstName={mood.author.firstName} lastName={mood.author.lastName} size="sm" ring="accent" />
-            <span className="type-body-sm flex items-center gap-1 font-semibold text-ink">
-              {mood.author.firstName} {mood.author.lastName}
-              {mood.author.certified ? <CertifiedMark /> : null}
-            </span>
-          </Link>
+          <div className="flex items-center gap-2.5">
+            <Link href={`/u/${mood.author.username}`} className="flex items-center gap-2.5">
+              <Avatar src={mood.author.avatarUrl} firstName={mood.author.firstName} lastName={mood.author.lastName} size="sm" ring="accent" />
+              <span className="type-body-sm flex items-center gap-1 font-semibold text-ink">
+                {mood.author.firstName} {mood.author.lastName}
+                {mood.author.certified ? <CertifiedMark /> : null}
+              </span>
+            </Link>
+            {mood.companion ? (
+              <Link href={`/u/${mood.companion.username}`} className="type-body-sm font-semibold text-muted">
+                · {messages.world.moodWith.replace("{name}", mood.companion.firstName)}
+              </Link>
+            ) : null}
+          </div>
           {mood.activity ? (
             <p className="type-body-sm mt-3 inline-flex rounded-lg bg-accent-soft px-2.5 py-1.5 font-semibold text-accent">
               {mood.activity}

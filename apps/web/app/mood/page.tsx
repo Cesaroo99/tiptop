@@ -254,13 +254,23 @@ function MoodSlide({
       </div>
 
       <div className="absolute inset-x-0 bottom-[max(5.5rem,calc(5.5rem+env(safe-area-inset-bottom)))] px-4 pr-20 text-white md:bottom-6">
-        <Link href={`/u/${mood.author.username}`} className="flex items-center gap-2.5">
-          <Avatar src={mood.author.avatarUrl} firstName={mood.author.firstName} lastName={mood.author.lastName} size="sm" ring="accent" />
-          <span className="type-body-sm flex items-center gap-1 font-semibold drop-shadow">
-            {mood.author.firstName} {mood.author.lastName}
-            {mood.author.certified ? <CertifiedMark /> : null}
-          </span>
-        </Link>
+        <div className="flex items-center gap-2.5">
+          <Link href={`/u/${mood.author.username}`} className="flex items-center gap-2.5">
+            <Avatar src={mood.author.avatarUrl} firstName={mood.author.firstName} lastName={mood.author.lastName} size="sm" ring="accent" />
+            <span className="type-body-sm flex items-center gap-1 font-semibold drop-shadow">
+              {mood.author.firstName} {mood.author.lastName}
+              {mood.author.certified ? <CertifiedMark /> : null}
+            </span>
+          </Link>
+          {mood.companion ? (
+            <>
+              <span className="type-body-sm opacity-80">·</span>
+              <Link href={`/u/${mood.companion.username}`} className="type-body-sm font-semibold opacity-90 drop-shadow">
+                {messages.world.moodWith.replace("{name}", mood.companion.firstName)}
+              </Link>
+            </>
+          ) : null}
+        </div>
         {mood.activity ? (
           <p className="type-body-sm mt-2 inline-flex rounded-lg bg-white/20 px-2.5 py-1 font-semibold backdrop-blur-sm">
             {mood.activity}

@@ -92,6 +92,14 @@ export type MoodItem = {
   city: string | null;
   zone: string | null;
   event: { id: string; title: string } | null;
+  companion: {
+    id: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+    certified: boolean;
+    avatarUrl: string | null;
+  } | null;
   author: {
     id: string;
     username: string;

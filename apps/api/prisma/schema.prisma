@@ -96,6 +96,7 @@ model User {
   receivedInvitations Invitation[]        @relation("Invitee")
   eventHearts        EventHeart[]
   moods              Mood[]
+  moodCompanionOf    Mood[]               @relation("MoodCompanion")
   moodComments       MoodComment[]
   contactsOwned      Contact[]            @relation("ContactOwner")
   contactsOf         Contact[]            @relation("ContactPerson")
@@ -638,6 +639,8 @@ model Mood {
   zone       String?
   eventId    String?
   event      Event?         @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  companionId String?
+  companion   User?         @relation("MoodCompanion", fields: [companionId], references: [id], onDelete: SetNull)
   visibility MoodVisibility @default(ZONE)
   expiresAt  DateTime
   createdAt  DateTime       @default(now())

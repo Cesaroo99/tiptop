@@ -22,6 +22,7 @@ export class MoodsService {
       city?: string;
       zone?: string;
       eventId?: string;
+      companionId?: string;
       visibility?: string;
       hours?: number;
     },
@@ -42,6 +43,13 @@ export class MoodsService {
       const ev = await this.prisma.event.findUnique({ where: { id: input.eventId } });
       if (!ev) throw new BadRequestException({ code: "EVENT_NOT_FOUND" });
     }
+    let companionId: string | null = null;
+    if (input.companionId) {
+      if (input.companionId === authorId) throw new BadRequestException({ code: "COMPANION_SELF" });
+      const companion = await this.prisma.user.findUnique({ where: { id: input.companionId } });
+      if (!companion) throw new BadRequestException({ code: "COMPANION_NOT_FOUND" });
+      companionId = companion.id;
+    }
     let expiresAt: Date;
     try {
       expiresAt = moodExpiresAt(new Date(), input.hours);
@@ -61,6 +69,7 @@ export class MoodsService {
         city: input.city ?? author?.profile?.city ?? null,
         zone: input.zone ?? author?.profile?.zone ?? null,
         eventId: input.eventId || null,
+        companionId,
         visibility,
         expiresAt,
       },
@@ -82,6 +91,9 @@ export class MoodsService {
       include: {
         author: { include: { profile: true } },
         event: { select: { id: true, title: true } },
+        companion: {
+          select: { id: true, username: true, firstName: true, lastName: true, certified: true, profile: { select: { avatarUrl: true } } },
+        },
         _count: { select: { comments: true } },
       },
     });
@@ -112,6 +124,9 @@ export class MoodsService {
       include: {
         author: { include: { profile: true } },
         event: { select: { id: true, title: true } },
+        companion: {
+          select: { id: true, username: true, firstName: true, lastName: true, certified: true, profile: { select: { avatarUrl: true } } },
+        },
         _count: { select: { comments: true } },
       },
     });
@@ -200,6 +215,14 @@ export class MoodsService {
       createdAt: Date;
       visibility: string;
       event: { id: string; title: string } | null;
+      companion: {
+        id: string;
+        username: string;
+        firstName: string;
+        lastName: string;
+        certified: boolean;
+        profile: { avatarUrl: string | null } | null;
+      } | null;
       author: {
         id: string;
         username: string;
@@ -242,6 +265,16 @@ export class MoodsService {
           }
         : { totalSeconds: 0, activeCount: 0, likedByMe: false, label: "0 seconde" },
       event: m.event,
+      companion: m.companion
+        ? {
+            id: m.companion.id,
+            username: m.companion.username,
+            firstName: m.companion.firstName,
+            lastName: m.companion.lastName,
+            certified: m.companion.certified,
+            avatarUrl: m.companion.profile?.avatarUrl ?? null,
+          }
+        : null,
       author: {
         id: m.author.id,
         username: m.author.username,
