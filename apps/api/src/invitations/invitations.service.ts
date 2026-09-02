@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import {
   canAcceptInvitation,
+  canSendEventInvite,
   evaluateInvite,
   invitationExpiresAt,
   resolveInvitationPayer,
@@ -112,10 +113,16 @@ export class InvitationsService {
     });
     if (reason !== "OK") throw new BadRequestException({ code: reason });
 
-    const pending = await this.prisma.invitation.findFirst({
-      where: { eventId, inviteeId, status: "PENDING" },
-    });
+    const [pending, sentTodayCount] = await Promise.all([
+      this.prisma.invitation.findFirst({ where: { eventId, inviteeId, status: "PENDING" } }),
+      this.prisma.invitation.count({
+        where: { inviterId, createdAt: { gte: new Date(Date.now() - 24 * 3600_000) } },
+      }),
+    ]);
     if (pending) throw new ConflictException({ code: "INVITE_ALREADY_PENDING" });
+    if (canSendEventInvite(sentTodayCount) !== "OK") {
+      throw new ConflictException({ code: "INVITE_RATE_LIMITED" });
+    }
 
     const invitation = await this.prisma.invitation.create({
       data: {

@@ -7,6 +7,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import {
+  canOpenNewDirectConversation,
   canSendMessage,
   canStartDirect,
   directKey,
@@ -107,6 +108,13 @@ export class ChatService {
       include: { members: { include: { user: PERSON } }, messages: { orderBy: { createdAt: "desc" }, take: 1 }, event: true },
     });
     if (!conv) {
+      const dayAgo = new Date(Date.now() - 24 * 3600_000);
+      const recentNew = await this.prisma.conversation.count({
+        where: { kind: "DIRECT", createdAt: { gte: dayAgo }, members: { some: { userId: actorId } } },
+      });
+      if (canOpenNewDirectConversation(recentNew) !== "OK") {
+        throw new ConflictException({ code: "CONVERSATION_RATE_LIMITED" });
+      }
       conv = await this.prisma.conversation.create({
         data: {
           kind: "DIRECT",
@@ -165,15 +173,21 @@ export class ChatService {
     this.assertMember(conv, actorId);
     const kind: MessageKind = input.kind ?? "TEXT";
     const blocked = await this.directBlocked(conv, actorId);
+    const minuteAgo = new Date(Date.now() - 60_000);
+    const recentMessageCount = await this.prisma.message.count({
+      where: { senderId: actorId, createdAt: { gte: minuteAgo } },
+    });
     const gate = canSendMessage({
       isMember: true,
       blocked,
       kind,
       body: input.body,
       imageUrl: input.imageUrl,
+      recentMessageCount,
     });
     if (gate !== "OK") {
       if (gate === "BLOCKED") throw new ForbiddenException({ code: "BLOCKED" });
+      if (gate === "RATE_LIMITED") throw new ConflictException({ code: "MESSAGE_RATE_LIMITED" });
       throw new BadRequestException({ code: gate });
     }
     const message = await this.prisma.message.create({

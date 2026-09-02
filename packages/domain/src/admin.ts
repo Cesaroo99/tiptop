@@ -33,6 +33,14 @@ export function isValidReportReason(reason: string): reason is ReportReason {
   return (REPORT_REASONS as readonly string[]).includes(reason);
 }
 
+/** Anti-abus signalements (#56) : un signalement légitime reste rare ; au-delà,
+ * c'est soit un abus du système de signalement, soit du harcèlement ciblé. */
+export const REPORT_DAILY_LIMIT = 20;
+
+export function canSubmitReport(sentTodayCount: number): "OK" | "RATE_LIMITED" {
+  return sentTodayCount >= REPORT_DAILY_LIMIT ? "RATE_LIMITED" : "OK";
+}
+
 export type LikeAnomalyFlag = "BURST" | "HIGH_BALANCE" | "UNUSED_PACK";
 
 export function likeAnomalyFlags(input: {

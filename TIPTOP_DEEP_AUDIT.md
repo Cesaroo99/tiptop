@@ -126,6 +126,28 @@ carte, ex. `3.4k Commentaires · 46 Partages`), tag de compagnon « avec X » su
 attribution « Audio · Original ». Ces éléments sont documentés ici pour une itération dédiée
 plutôt que d'être improvisés.
 
+## 7ter. Troisième passe — anti-abus, swipe, catégories d'âge, correctifs d'audit
+
+**Corrections apportées à cet audit lui-même** : deux points listés précédemment comme
+« manquants » étaient en réalité déjà correctement implémentés (erreur de recherche par
+mot-clé trop étroit lors de l'audit initial) :
+- Le **poids du like certifié** (`CERTIFIED_LIKE_WEIGHT`) existe depuis une itération
+  précédente, avec un champ `LikePeriod.weight` dédié et une documentation explicite dans
+  `TIPTOP_LIKE_TIME_SYSTEM.md` : valeur `1` en v1 (« à valider », décision produit ouverte
+  volontairement non tranchée pour éviter un doublement silencieux non demandé).
+- Les **invitations sociales** avaient déjà une limite anti-spam quotidienne
+  (`SOCIAL_INVITE_DAILY_LIMIT = 20`, code `INVITE_RATE_LIMITED`).
+
+**Nouveautés livrées cette passe** :
+
+| Élément | État avant | État après |
+|---|---|---|
+| Swipe tactile sur `/people` | Carrousel à flèches uniquement | → Geste de swipe réel (pointer events, tactile + souris), retour visuel, seuil 90px, drag natif du navigateur neutralisé |
+| Catégories d'âge événement | Champ numérique libre | → Catégories standardisées (Tout âge/-13/-16/18+/21+) via `EVENT_AGE_CATEGORIES`, badges corrigés (« 21+ » et non « -21 ») |
+| Anti-abus invitations événement | Aucune limite | → `EVENT_INVITE_DAILY_LIMIT = 30`, même mécanique que les invitations sociales |
+| Anti-abus messagerie | Aucune limite | → `MESSAGE_RATE_LIMIT_PER_MINUTE = 30` par expéditeur, `NEW_DIRECT_CONVERSATION_DAILY_LIMIT = 30` pour limiter le démarchage de nouveaux contacts |
+| Anti-abus signalements | Aucune limite | → `REPORT_DAILY_LIMIT = 20`, empêche l'utilisation du signalement comme outil de harcèlement |
+
 ## 7. Suivi recommandé (prochaines itérations, non bloquant)
 
 1. Notifications proactives planifiées (bientôt / a commencé) via un scheduler dédié.

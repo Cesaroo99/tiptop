@@ -10,20 +10,32 @@ import {
   ageCategoryLabel,
   canAcceptInvitation,
   canInteractWithEvent,
+  canSendEventInvite,
   eventLifecycle,
+  EVENT_INVITE_DAILY_LIMIT,
   evaluateInvite,
   moodExpiresAt,
 } from "../src/events";
 import { canConsumeTicket, canShowQr, isInEntryWindow, signTicketQr, verifyTicketQr } from "../src/tickets";
 import { applyWebhook, mockCharge, reservationAmountXaf } from "../src/payments";
-import { canSendMessage, canStartDirect, directKey, pairIsBlocked, shouldNotifyOffline } from "../src/chat";
+import {
+  canOpenNewDirectConversation,
+  canSendMessage,
+  canStartDirect,
+  directKey,
+  NEW_DIRECT_CONVERSATION_DAILY_LIMIT,
+  pairIsBlocked,
+  shouldNotifyOffline,
+} from "../src/chat";
 import {
   assertNotSelf,
   canAccessAdmin,
   canRefundPayments,
+  canSubmitReport,
   isValidReportReason,
   likeAnomalyFlags,
   refundAllowed,
+  REPORT_DAILY_LIMIT,
 } from "../src/admin";
 import { assertReviewBody, canLeaveReview, reviewOpensAt, eventEndedAt } from "../src/reviews";
 
@@ -337,6 +349,11 @@ describe("invitations & moods", () => {
       "2026-08-31T12:00:00.000Z",
     );
   });
+
+  it("anti-spam (#56) : limite le nombre d’invitations événement par jour", () => {
+    expect(canSendEventInvite(EVENT_INVITE_DAILY_LIMIT - 1)).toBe("OK");
+    expect(canSendEventInvite(EVENT_INVITE_DAILY_LIMIT)).toBe("RATE_LIMITED");
+  });
 });
 
 describe("tickets & paiement", () => {
@@ -399,6 +416,17 @@ describe("chat", () => {
     expect(shouldNotifyOffline({ viewingThread: false, pushEnabled: true })).toBe(true);
     expect(shouldNotifyOffline({ viewingThread: false, pushEnabled: false })).toBe(false);
   });
+
+  it("anti-spam (#56) : débit de messages limité, prospection de nouvelles conversations limitée", () => {
+    expect(
+      canSendMessage({ isMember: true, blocked: false, kind: "TEXT", body: "salut", recentMessageCount: 29 }),
+    ).toBe("OK");
+    expect(
+      canSendMessage({ isMember: true, blocked: false, kind: "TEXT", body: "salut", recentMessageCount: 30 }),
+    ).toBe("RATE_LIMITED");
+    expect(canOpenNewDirectConversation(NEW_DIRECT_CONVERSATION_DAILY_LIMIT - 1)).toBe("OK");
+    expect(canOpenNewDirectConversation(NEW_DIRECT_CONVERSATION_DAILY_LIMIT)).toBe("RATE_LIMITED");
+  });
 });
 
 describe("admin", () => {
@@ -417,6 +445,11 @@ describe("admin", () => {
     refundAllowed("SUCCEEDED");
     expect(isValidReportReason("SPAM")).toBe(true);
     expect(isValidReportReason("xyz")).toBe(false);
+  });
+
+  it("anti-spam (#56) : limite le nombre de signalements par jour", () => {
+    expect(canSubmitReport(REPORT_DAILY_LIMIT - 1)).toBe("OK");
+    expect(canSubmitReport(REPORT_DAILY_LIMIT)).toBe("RATE_LIMITED");
   });
 
   it("signale un pack acheté non utilisé", () => {

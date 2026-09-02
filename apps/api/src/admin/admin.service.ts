@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Inject,
   Injectable,
@@ -9,6 +10,7 @@ import {
   assertNotSelf,
   canCertifyUsers,
   canRefundPayments,
+  canSubmitReport,
   isValidReportReason,
   likeAnomalyFlags,
   refundAllowed,
@@ -330,6 +332,12 @@ export class AdminService {
     },
   ) {
     if (!isValidReportReason(input.reason)) throw new BadRequestException({ code: "REPORT_REASON_INVALID" });
+    const sentTodayCount = await this.prisma.report.count({
+      where: { reporterId, createdAt: { gte: new Date(Date.now() - 24 * 3600_000) } },
+    });
+    if (canSubmitReport(sentTodayCount) !== "OK") {
+      throw new ConflictException({ code: "REPORT_RATE_LIMITED" });
+    }
     if (input.kind === "USER") {
       if (!input.targetUserId) throw new BadRequestException({ code: "REPORT_TARGET_REQUIRED" });
       assertNotSelfSafe(reporterId, input.targetUserId);

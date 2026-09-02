@@ -133,6 +133,13 @@ export type InviteEligibilityReason =
   | "AGE_RESTRICTED"
   | "ALREADY_IN";
 
+/** Anti-spam invitations événement (#56) : même palier que les invitations sociales. */
+export const EVENT_INVITE_DAILY_LIMIT = 30;
+
+export function canSendEventInvite(sentTodayCount: number): "OK" | "RATE_LIMITED" {
+  return sentTodayCount >= EVENT_INVITE_DAILY_LIMIT ? "RATE_LIMITED" : "OK";
+}
+
 export function evaluateInvite(input: {
   inviterId: string;
   inviteeId: string;

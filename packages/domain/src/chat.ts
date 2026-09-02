@@ -26,18 +26,31 @@ export function pairIsBlocked(
   );
 }
 
+/** Anti-spam messagerie (#56) : débit raisonnable par minute, pas de blocage
+ * pour un usage normal (conversation rapide) mais empêche un flux automatisé. */
+export const MESSAGE_RATE_LIMIT_PER_MINUTE = 30;
+/** Anti-spam prospection (#56) : limite le nombre de NOUVELLES conversations
+ * privées ouvertes par jour, pour éviter le démarchage massif d'inconnus. */
+export const NEW_DIRECT_CONVERSATION_DAILY_LIMIT = 30;
+
 export function canSendMessage(input: {
   isMember: boolean;
   blocked: boolean;
   kind: MessageKind;
   body?: string | null;
   imageUrl?: string | null;
-}): "OK" | "NOT_MEMBER" | "BLOCKED" | "EMPTY" {
+  recentMessageCount?: number;
+}): "OK" | "NOT_MEMBER" | "BLOCKED" | "EMPTY" | "RATE_LIMITED" {
   if (!input.isMember) return "NOT_MEMBER";
   if (input.blocked) return "BLOCKED";
   if (input.kind === "TEXT" && !(input.body ?? "").trim()) return "EMPTY";
   if (input.kind === "IMAGE" && !input.imageUrl) return "EMPTY";
+  if ((input.recentMessageCount ?? 0) >= MESSAGE_RATE_LIMIT_PER_MINUTE) return "RATE_LIMITED";
   return "OK";
+}
+
+export function canOpenNewDirectConversation(recentNewConversationCount: number): "OK" | "RATE_LIMITED" {
+  return recentNewConversationCount >= NEW_DIRECT_CONVERSATION_DAILY_LIMIT ? "RATE_LIMITED" : "OK";
 }
 
 export function isRecentlyOnline(lastSeenAt: Date | null | undefined, now = new Date(), windowMs = PRESENCE_WINDOW_MS): boolean {
