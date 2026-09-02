@@ -137,6 +137,10 @@ mot-clé trop étroit lors de l'audit initial) :
   volontairement non tranchée pour éviter un doublement silencieux non demandé).
 - Les **invitations sociales** avaient déjà une limite anti-spam quotidienne
   (`SOCIAL_INVITE_DAILY_LIMIT = 20`, code `INVITE_RATE_LIMITED`).
+- L'**évolution hebdomadaire du temps de likes** et le **dernier palier atteint avec date**
+  étaient déjà affichés sur `/likes` (`LikeCapital`, champs `weekSeconds`/`weekLabel`/
+  `lastMilestone` déjà câblés côté API) — vérifié en direct au navigateur, aucune correction
+  nécessaire.
 
 **Nouveautés livrées cette passe** :
 
