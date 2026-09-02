@@ -10,21 +10,23 @@
   --surface-sunken: #eef1f8;
 
   /* Texte — hiérarchie à 4 niveaux (#16) */
-  --text: #16213f;
-  --text-secondary: #5c6a89;
-  --text-muted: #8b97ad;
-  --text-disabled: #c3cade;
+  --text: #0d0d0d;
+  --text-secondary: #4a4f57;
+  --text-muted: #828890;
+  --text-disabled: #c3c6cb;
   --text-on-primary: #ffffff;
 
-  /* Marque — cyan TipTop, jamais le bleu Facebook / rose Instagram */
-  --primary: #00baf2;
-  --primary-hover: #00a8db;
-  --primary-active: #0092bd;
-  --primary-soft: #e6f7fd;
+  /* Marque — charte graphique TipTop (logo fourni) : cyan #05C7F2, jaune #F2E205,
+     noir #0D0D0D. Jamais le bleu Facebook / rose Instagram, jamais une teinte
+     approchée « à l'œil » — ce sont les valeurs exactes de la charte. */
+  --primary: #05c7f2;
+  --primary-hover: #04a9d0;
+  --primary-active: #0390b3;
+  --primary-soft: #e1f8fe;
   --accent: var(--primary);
   --accent-soft: var(--primary-soft);
-  --yellow: #d4de4a;
-  --yellow-soft: #f6f8dc;
+  --yellow: #f2e205;
+  --yellow-soft: #fdf9d6;
 
   /* États sémantiques */
   --success: #1fa971;
@@ -78,25 +80,26 @@
 }
 
 [data-theme="dark"] {
-  --bg: #0a0c11;
-  --surface: #151922;
-  --surface-elevated: #1c212c;
-  --surface-sunken: #0e1117;
+  --bg: #0d0d0d;
+  --surface: #17181a;
+  --surface-elevated: #1f2022;
+  --surface-sunken: #0a0a0b;
 
-  --text: #f2f5fa;
-  --text-secondary: #aab2c5;
-  --text-muted: #7c8497;
-  --text-disabled: #4a5164;
+  --text: #f5f6f7;
+  --text-secondary: #b3b6ba;
+  --text-muted: #85898e;
+  --text-disabled: #4c4f53;
   --text-on-primary: #071018;
 
-  --primary: #22c5f7;
-  --primary-hover: #4ed0f8;
-  --primary-active: #0fb3e6;
-  --primary-soft: #0f2a36;
+  /* Même cyan/jaune de charte, ajustés uniquement en luminosité pour le contraste nuit. */
+  --primary: #29d1fb;
+  --primary-hover: #5adcfc;
+  --primary-active: #05c7f2;
+  --primary-soft: #0c2c36;
   --accent: var(--primary);
   --accent-soft: var(--primary-soft);
-  --yellow: #d9e35c;
-  --yellow-soft: #2b2e15;
+  --yellow: #f2e205;
+  --yellow-soft: #2e2b06;
 
   --success: #3ecf8e;
   --success-soft: #123324;
