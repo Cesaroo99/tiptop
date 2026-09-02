@@ -18,6 +18,19 @@ class CreateMoodDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(80)
+  activity?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  zone?: string;
+
+  @IsOptional()
+  @IsString()
   eventId?: string;
 
   @IsOptional()

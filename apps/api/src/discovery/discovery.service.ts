@@ -79,6 +79,17 @@ export class DiscoveryService {
       periodsByUser.set(p.beneficiaryUserId, list);
     }
 
+    const activeMoods = ids.length
+      ? await this.prisma.mood.findMany({
+          where: { authorId: { in: ids }, expiresAt: { gt: now } },
+          orderBy: { createdAt: "desc" },
+        })
+      : [];
+    const moodByUser = new Map<string, (typeof activeMoods)[number]>();
+    for (const m of activeMoods) {
+      if (!moodByUser.has(m.authorId)) moodByUser.set(m.authorId, m);
+    }
+
     const items = rows
       .map((u) => {
         const available = isCurrentlyAvailable({
@@ -107,6 +118,8 @@ export class DiscoveryService {
           now,
         );
         const wishCategory = filters.wishCategory?.toUpperCase();
+        const mood = moodByUser.get(u.id);
+        const canReveal = mood && (mood.visibility === "ZONE" ? mood.city === filterCity : true);
         return {
           id: u.id,
           username: u.username,
@@ -135,6 +148,15 @@ export class DiscoveryService {
             title: w.title,
             category: w.category,
           })),
+          activeMood:
+            mood && canReveal
+              ? {
+                  id: mood.id,
+                  activity: mood.activity,
+                  body: mood.body,
+                  expiresAt: mood.expiresAt.toISOString(),
+                }
+              : null,
           _wishMatch: wishCategory ? u.wishes.some((w) => w.category === wishCategory) : true,
         };
       })

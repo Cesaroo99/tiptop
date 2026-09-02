@@ -5,7 +5,7 @@ import { availableBalance, displayLikeRatio, likeProduction, pickUnitForLike, pl
 import { getLikePack, likeCreditAllowed, LIKE_PACKS, needsLikePurchase } from "../src/wallet";
 import { availabilityUntil, isCurrentlyAvailable } from "../src/availability";
 import { displayLocation, formatApproxDistance, roundDistanceKm } from "../src/location";
-import { canAcceptInvitation, evaluateInvite, moodExpiresAt } from "../src/events";
+import { canAcceptInvitation, eventLifecycle, evaluateInvite, moodExpiresAt } from "../src/events";
 import { canConsumeTicket, canShowQr, isInEntryWindow, signTicketQr, verifyTicketQr } from "../src/tickets";
 import { applyWebhook, mockCharge, reservationAmountXaf } from "../src/payments";
 import { canSendMessage, canStartDirect, directKey, pairIsBlocked, shouldNotifyOffline } from "../src/chat";
@@ -210,6 +210,21 @@ describe("disponibilité", () => {
         availabilityUntil: new Date(Date.now() + 3600_000),
       }),
     ).toBe(false);
+  });
+});
+
+describe("cycle de vie événement", () => {
+  it("compte à rebours avant, en cours pendant, terminé après", () => {
+    const starts = new Date("2026-09-02T18:00:00Z");
+    expect(eventLifecycle(starts, null, new Date("2026-09-02T17:45:00Z")).phase).toBe("upcoming");
+    expect(eventLifecycle(starts, null, new Date("2026-09-02T18:30:00Z")).phase).toBe("ongoing");
+    expect(eventLifecycle(starts, null, new Date("2026-09-02T22:00:00Z")).phase).toBe("ended");
+  });
+
+  it("respecte endsAt explicite", () => {
+    const starts = new Date("2026-09-02T18:00:00Z");
+    const ends = new Date("2026-09-02T19:00:00Z");
+    expect(eventLifecycle(starts, ends, new Date("2026-09-02T19:30:00Z")).phase).toBe("ended");
   });
 });
 

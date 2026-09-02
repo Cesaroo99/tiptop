@@ -123,6 +123,35 @@ export class WishesService {
     return row;
   }
 
+  /** « Mes propositions » : offres reçues sur mes envies + offres que j'ai envoyées. */
+  async myOffers(userId: string) {
+    const include = {
+      wish: { select: { id: true, title: true, category: true, ownerId: true } },
+      fromUser: { select: { id: true, firstName: true, lastName: true, username: true, certified: true } },
+    } as const;
+    const [received, sent] = await Promise.all([
+      this.prisma.wishOffer.findMany({
+        where: { wish: { ownerId: userId } },
+        orderBy: { createdAt: "desc" },
+        include,
+      }),
+      this.prisma.wishOffer.findMany({
+        where: { fromUserId: userId },
+        orderBy: { createdAt: "desc" },
+        include,
+      }),
+    ]);
+    const map = (o: (typeof received)[number]) => ({
+      id: o.id,
+      status: o.status,
+      message: o.message,
+      createdAt: o.createdAt.toISOString(),
+      wish: o.wish,
+      fromUser: o.fromUser,
+    });
+    return { received: received.map(map), sent: sent.map(map) };
+  }
+
   async decide(ownerId: string, offerId: string, accept: boolean) {
     const offer = await this.prisma.wishOffer.findUnique({
       where: { id: offerId },

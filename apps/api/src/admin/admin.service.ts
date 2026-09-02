@@ -264,7 +264,16 @@ export class AdminService {
 
   async createReport(
     reporterId: string,
-    input: { kind: "USER" | "POST" | "EVENT"; reason: string; body?: string; targetUserId?: string; postId?: string; eventId?: string },
+    input: {
+      kind: "USER" | "POST" | "EVENT" | "MESSAGE" | "MOOD";
+      reason: string;
+      body?: string;
+      targetUserId?: string;
+      postId?: string;
+      eventId?: string;
+      messageId?: string;
+      moodId?: string;
+    },
   ) {
     if (!isValidReportReason(input.reason)) throw new BadRequestException({ code: "REPORT_REASON_INVALID" });
     if (input.kind === "USER") {
@@ -273,6 +282,8 @@ export class AdminService {
     }
     if (input.kind === "POST" && !input.postId) throw new BadRequestException({ code: "REPORT_TARGET_REQUIRED" });
     if (input.kind === "EVENT" && !input.eventId) throw new BadRequestException({ code: "REPORT_TARGET_REQUIRED" });
+    if (input.kind === "MESSAGE" && !input.messageId) throw new BadRequestException({ code: "REPORT_TARGET_REQUIRED" });
+    if (input.kind === "MOOD" && !input.moodId) throw new BadRequestException({ code: "REPORT_TARGET_REQUIRED" });
     const row = await this.prisma.report.create({
       data: {
         reporterId,
@@ -282,6 +293,8 @@ export class AdminService {
         targetUserId: input.targetUserId ?? null,
         postId: input.postId ?? null,
         eventId: input.eventId ?? null,
+        messageId: input.messageId ?? null,
+        moodId: input.moodId ?? null,
       },
     });
     return { ok: true, id: row.id };

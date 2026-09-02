@@ -9,7 +9,8 @@ export class SearchController {
 
   @Get()
   run(@Query("q") q = "", @Query("type") type = "all") {
-    const t = type === "people" || type === "posts" || type === "events" ? type : "all";
+    const valid = ["people", "posts", "events", "wishes", "moods"] as const;
+    const t = (valid as readonly string[]).includes(type) ? (type as (typeof valid)[number]) : "all";
     return this.search.search(q, t);
   }
 }

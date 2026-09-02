@@ -35,6 +35,11 @@ export class WishesController {
     return this.wishes.listMine(req.user.id);
   }
 
+  @Get("wishes/offers/mine")
+  myOffers(@Req() req: Request & { user: PublicUser }) {
+    return this.wishes.myOffers(req.user.id);
+  }
+
   @Get("users/:id/wishes")
   ofUser(@Req() req: Request & { user: PublicUser }, @Param("id") id: string) {
     return this.wishes.listPublic(req.user.id, id);

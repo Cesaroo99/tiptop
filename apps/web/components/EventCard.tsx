@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { eventLifecycle } from "@tiptop/domain";
 import { api, ApiError, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { eventCountdown, formatEventWhen, formatRelative } from "@/lib/time";
@@ -70,6 +71,7 @@ export function EventCard({
   const price = event.priceXaf > 0 ? messages.world.paid.replace("{amount}", String(event.priceXaf)) : messages.world.free;
   const countdown = eventCountdown(event.startsAt);
   const relative = formatRelative(event.createdAt ?? event.startsAt, messages.social);
+  const lifecycle = eventLifecycle(new Date(event.startsAt), event.endsAt ? new Date(event.endsAt) : null);
 
   return (
     <article className="overflow-hidden rounded-card bg-surface shadow-card">
@@ -145,12 +147,22 @@ export function EventCard({
               {messages.booking.manageEvent}
             </Link>
           ) : null}
-          {countdown ? (
+          {countdown && lifecycle.phase === "upcoming" ? (
             <span className="ml-auto rounded-full bg-yellow px-3 py-1.5 text-[11px] font-bold text-ink">
               {messages.world.eventIn.replace(
                 "{when}",
                 countdown.unit === "min" ? `${countdown.value}min` : countdown.unit === "h" ? `${countdown.value}h` : `${countdown.value}j`,
               )}
+            </span>
+          ) : null}
+          {lifecycle.phase === "ongoing" ? (
+            <span className="ml-auto rounded-full bg-success px-3 py-1.5 text-[11px] font-bold text-white">
+              {messages.world.ongoingBadge}
+            </span>
+          ) : null}
+          {lifecycle.phase === "ended" ? (
+            <span className="ml-auto rounded-full bg-[var(--border)] px-3 py-1.5 text-[11px] font-bold text-muted">
+              {messages.world.endedBadge}
             </span>
           ) : null}
         </div>

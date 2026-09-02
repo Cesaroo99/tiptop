@@ -86,6 +86,9 @@ export type MoodItem = {
   likedByMe?: boolean;
   authorActiveLikes: number;
   likeTime?: LikeTimeSnap;
+  activity: string | null;
+  city: string | null;
+  zone: string | null;
   event: { id: string; title: string } | null;
   author: {
     id: string;
@@ -115,6 +118,7 @@ export type PersonCard = {
   availability?: string;
   likeTime?: { totalSeconds: number; label: string };
   wishes?: Array<{ id: string; title: string; category: string }>;
+  activeMood?: { id: string; activity: string | null; body: string; expiresAt: string } | null;
 };
 
 export type TicketItem = {
@@ -201,12 +205,48 @@ export type CommentItem = {
 
 export type NotifItem = {
   id: string;
-  type: "LIKE" | "COMMENT" | "FOLLOW" | "INVITE" | "TICKET" | "PAYMENT" | "MESSAGE" | "REVIEW" | "WISH_OFFER" | "LIKE_MILESTONE";
+  type:
+    | "LIKE"
+    | "COMMENT"
+    | "FOLLOW"
+    | "INVITE"
+    | "TICKET"
+    | "PAYMENT"
+    | "MESSAGE"
+    | "REVIEW"
+    | "WISH_OFFER"
+    | "LIKE_MILESTONE"
+    | "SOCIAL_INVITE";
   entityType: string | null;
   entityId: string | null;
   read: boolean;
   createdAt: string;
   actor: { id: string; firstName: string; lastName: string; username: string; certified: boolean; avatarUrl?: string | null } | null;
+};
+
+export type SocialInviteContext = "RESTAURANT" | "CAFE" | "ACTIVITY" | "MEETUP" | "WISH";
+
+export type SocialInvitePerson = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  certified: boolean;
+  avatarUrl: string | null;
+};
+
+export type SocialInviteItem = {
+  id: string;
+  context: SocialInviteContext;
+  label: string;
+  message: string;
+  status: "SENT" | "ACCEPTED" | "REFUSED" | "EXPIRED" | "CANCELLED";
+  createdAt: string;
+  respondedAt: string | null;
+  expiresAt: string;
+  inviter: SocialInvitePerson;
+  invitee: SocialInvitePerson;
+  wish: { id: string; title: string; category: string } | null;
 };
 
 export type LikePack = {

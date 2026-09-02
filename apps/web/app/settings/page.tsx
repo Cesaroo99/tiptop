@@ -16,10 +16,12 @@ export default function SettingsPage() {
   const [securityOpen, setSecurityOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [pushOpen, setPushOpen] = useState(false);
-  const [prefs, setPrefs] = useState({ messages: true, social: true, events: true });
+  const [prefs, setPrefs] = useState({ messages: true, social: true, events: true, invitations: true, mood: true });
 
   useEffect(() => {
-    api<{ messages: boolean; social: boolean; events: boolean }>("/push/preferences")
+    api<{ messages: boolean; social: boolean; events: boolean; invitations: boolean; mood: boolean }>(
+      "/push/preferences",
+    )
       .then(setPrefs)
       .catch(() => undefined);
   }, []);
@@ -92,10 +94,18 @@ export default function SettingsPage() {
         {pushOpen ? (
           <div className="rounded-card bg-surface p-4 text-sm shadow-card">
             <p className="mb-3 text-muted">{messages.chat.pushHint}</p>
-            {(["messages", "social", "events"] as const).map((k) => (
+            {(["messages", "social", "events", "invitations", "mood"] as const).map((k) => (
               <label key={k} className="mb-2 flex items-center justify-between gap-3">
                 <span>
-                  {k === "messages" ? messages.chat.pushMessages : k === "social" ? messages.chat.pushSocial : messages.chat.pushEvents}
+                  {k === "messages"
+                    ? messages.chat.pushMessages
+                    : k === "social"
+                      ? messages.chat.pushSocial
+                      : k === "events"
+                        ? messages.chat.pushEvents
+                        : k === "invitations"
+                          ? messages.chat.pushInvitations
+                          : messages.chat.pushMood}
                 </span>
                 <input
                   type="checkbox"

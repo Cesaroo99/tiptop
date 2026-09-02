@@ -30,6 +30,25 @@ export function eventIsFuture(startsAt: Date, now = new Date()): boolean {
   return startsAt.getTime() > now.getTime();
 }
 
+export type EventPhase = "upcoming" | "ongoing" | "ended";
+
+/**
+ * Cycle de vie d'un événement pour l'affichage (#9) : compte à rebours avant,
+ * "en cours" pendant, "terminé" après. `endsAt` absent → estimé à +3 h.
+ */
+export function eventLifecycle(
+  startsAt: Date,
+  endsAt: Date | null | undefined,
+  now = new Date(),
+): { phase: EventPhase; secondsToStart: number | null; secondsToEnd: number | null } {
+  const estimatedEnd = endsAt ?? new Date(startsAt.getTime() + 3 * 3600_000);
+  const toStart = Math.floor((startsAt.getTime() - now.getTime()) / 1000);
+  const toEnd = Math.floor((estimatedEnd.getTime() - now.getTime()) / 1000);
+  if (toStart > 0) return { phase: "upcoming", secondsToStart: toStart, secondsToEnd: null };
+  if (toEnd > 0) return { phase: "ongoing", secondsToStart: null, secondsToEnd: toEnd };
+  return { phase: "ended", secondsToStart: null, secondsToEnd: null };
+}
+
 export function invitationExpiresAt(from: Date, hours = DEFAULT_INVITATION_TTL_HOURS): Date {
   return new Date(from.getTime() + hours * 3600_000);
 }

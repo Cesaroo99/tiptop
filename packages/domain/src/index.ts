@@ -2,6 +2,7 @@ export * from "./phone";
 export * from "./otp";
 export * from "./likes";
 export * from "./like-time";
+export * from "./social-invite";
 export * from "./wallet";
 export * from "./availability";
 export * from "./location";

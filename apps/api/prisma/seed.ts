@@ -942,10 +942,46 @@ async function enrichLivingWorld(
   }
 
   const moodsWanted = [
-    { authorId: koffi.id, body: "Soundcheck Melen — venez maintenant.", imageUrl: "/seed/moods/concert.jpg" },
-    { authorId: amina.id, body: "Golden hour Bastos. Table dehors.", imageUrl: "/seed/moods/bastos.jpg" },
-    { authorId: onguene.id, body: "Je suis dispo 4 h autour de Nlongkak.", imageUrl: "/seed/moods/street.jpg" },
-    { authorId: alex.id, body: "Test lumière piscine Odza.", imageUrl: "/seed/events/piscine.jpg" },
+    {
+      authorId: koffi.id,
+      body: "Soundcheck Melen — venez maintenant.",
+      imageUrl: "/seed/moods/concert.jpg",
+      activity: "🎵 Concert",
+      city: "Yaoundé",
+      zone: "Melen",
+    },
+    {
+      authorId: amina.id,
+      body: "Golden hour Bastos. Table dehors.",
+      imageUrl: "/seed/moods/bastos.jpg",
+      activity: "🍽️ Restaurant",
+      city: "Yaoundé",
+      zone: "Bastos",
+    },
+    {
+      authorId: onguene.id,
+      body: "Je suis dispo 4 h autour de Nlongkak.",
+      imageUrl: "/seed/moods/street.jpg",
+      activity: "☕ Café",
+      city: "Yaoundé",
+      zone: "Nlongkak",
+    },
+    {
+      authorId: alex.id,
+      body: "Test lumière piscine Odza.",
+      imageUrl: "/seed/events/piscine.jpg",
+      activity: "🏖️ Piscine",
+      city: "Yaoundé",
+      zone: "Odza",
+    },
+    {
+      authorId: erica.id,
+      body: "Sushi bar Bastos avant l’expo.",
+      imageUrl: "/seed/moods/bastos.jpg",
+      activity: "🍣 Restaurant japonais",
+      city: "Yaoundé",
+      zone: "Bastos",
+    },
   ];
   for (const m of moodsWanted) {
     const exists = await db.mood.findFirst({ where: { authorId: m.authorId, body: m.body } });
@@ -956,6 +992,11 @@ async function enrichLivingWorld(
           visibility: "ZONE",
           expiresAt: new Date(Date.now() + 18 * 3600_000),
         },
+      });
+    } else if (!exists.activity) {
+      await db.mood.update({
+        where: { id: exists.id },
+        data: { activity: m.activity, city: m.city, zone: m.zone, expiresAt: new Date(Date.now() + 18 * 3600_000) },
       });
     }
   }
