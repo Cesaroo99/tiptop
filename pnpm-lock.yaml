@@ -89,6 +89,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@tiptop/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@tiptop/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
