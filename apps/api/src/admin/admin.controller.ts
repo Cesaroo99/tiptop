@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Inject, Param, Patch, Post, Query, Req, UseGuards } from "@nestjs/common";
-import { IsBoolean, IsIn, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Min } from "class-validator";
+import { Type } from "class-transformer";
 import type { Request } from "express";
 import { SessionGuard } from "../auth/session.guard";
 import { AdminGuard } from "../auth/admin.guard";
@@ -24,6 +25,14 @@ class HideDto {
 class ReviewDto {
   @IsIn(["DISMISSED", "ACTIONED"])
   status!: "DISMISSED" | "ACTIONED";
+}
+
+class RefundDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  amountXaf?: number;
 }
 
 class CreateReportDto {
@@ -119,8 +128,8 @@ export class AdminController {
   }
 
   @Post("payments/:id/refund")
-  refund(@Req() req: Request & { user: PublicUser }, @Param("id") id: string) {
-    return this.admin.refund({ id: req.user.id, role: req.user.role }, id);
+  refund(@Req() req: Request & { user: PublicUser }, @Param("id") id: string, @Body() body: RefundDto) {
+    return this.admin.refund({ id: req.user.id, role: req.user.role }, id, body?.amountXaf);
   }
 
   @Get("likes/anomalies")

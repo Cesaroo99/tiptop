@@ -162,6 +162,7 @@ export type Messages = {
     notifTicket: string;
     notifPayment: string;
     notifPaymentRefund: string;
+    notifPaymentRefundPartial: string;
     notifMessage: string;
     notifReview: string;
     notifEventUpdate: string;
@@ -587,6 +588,7 @@ export type Messages = {
     cancelEvent: string;
     refund: string;
     refunded: string;
+    refundedPartial: string;
     mockRefundHint: string;
     anomalyBurst: string;
     anomalyBalance: string;
@@ -778,6 +780,7 @@ export const fr: Messages = {
     notifTicket: "ticket mis à jour",
     notifPayment: "paiement mis à jour",
     notifPaymentRefund: "Ton paiement a été remboursé.",
+    notifPaymentRefundPartial: "Ton paiement a été remboursé partiellement.",
     notifMessage: "t’a écrit",
     notifReview: "a laissé un avis sur ta sortie",
     notifEventUpdate: "Un événement auquel tu participes a été mis à jour.",
@@ -1203,6 +1206,7 @@ export const fr: Messages = {
     cancelEvent: "Annuler la sortie",
     refund: "Rembourser (mock)",
     refunded: "Remboursé",
+    refundedPartial: "Remboursé partiellement",
     mockRefundHint: "Remboursement mock du ledger XAF. Les likes déjà crédités restent.",
     anomalyBurst: "Rafale d’allocations",
     anomalyBalance: "Solde élevé",
@@ -1394,6 +1398,7 @@ export const en: Messages = {
     notifTicket: "ticket updated",
     notifPayment: "payment updated",
     notifPaymentRefund: "Your payment was refunded.",
+    notifPaymentRefundPartial: "Your payment was partially refunded.",
     notifMessage: "sent you a message",
     notifReview: "left a review on your meetup",
     notifEventUpdate: "An event you're part of was updated.",
@@ -1819,6 +1824,7 @@ export const en: Messages = {
     cancelEvent: "Cancel meetup",
     refund: "Refund (mock)",
     refunded: "Refunded",
+    refundedPartial: "Partially refunded",
     mockRefundHint: "Mock XAF ledger refund. Already credited likes stay.",
     anomalyBurst: "Allocation burst",
     anomalyBalance: "High balance",

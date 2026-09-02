@@ -196,6 +196,7 @@ export class AdminService {
         kind: p.kind,
         status: p.status,
         amountXaf: p.amountXaf,
+        refundedAmountXaf: p.refundedAmountXaf,
         provider: p.provider,
         createdAt: p.createdAt.toISOString(),
         user: p.user,
@@ -205,7 +206,9 @@ export class AdminService {
     };
   }
 
-  async refund(actor: { id: string; role: string }, paymentId: string) {
+  /** Remboursement total ou partiel (#32-33), toujours traçable : le montant réellement
+   * remboursé est conservé séparément du montant original, jamais seulement le statut. */
+  async refund(actor: { id: string; role: string }, paymentId: string, amountXaf?: number) {
     if (!canRefundPayments(actor.role)) throw new ForbiddenException({ code: "ADMIN_ONLY" });
     const payment = await this.prisma.payment.findUnique({ where: { id: paymentId } });
     if (!payment) throw new NotFoundException({ code: "PAYMENT_NOT_FOUND" });
@@ -214,16 +217,32 @@ export class AdminService {
     } catch (e) {
       throw new BadRequestException({ code: e instanceof Error ? e.message : "PAYMENT_NOT_REFUNDABLE" });
     }
-    await this.prisma.payment.update({ where: { id: paymentId }, data: { status: "REFUNDED" } });
-    await this.audit(actor.id, "PAYMENT_REFUND", "payment", paymentId, { likesKept: payment.kind === "LIKE_PACK" });
+    const requested = amountXaf != null ? Math.round(amountXaf) : payment.amountXaf;
+    if (requested <= 0 || requested > payment.amountXaf) {
+      throw new BadRequestException({ code: "REFUND_AMOUNT_INVALID" });
+    }
+    const partial = requested < payment.amountXaf;
+    await this.prisma.payment.update({
+      where: { id: paymentId },
+      data: {
+        status: partial ? "PARTIALLY_REFUNDED" : "REFUNDED",
+        refundedAmountXaf: requested,
+        refundedAt: new Date(),
+      },
+    });
+    await this.audit(actor.id, "PAYMENT_REFUND", "payment", paymentId, {
+      likesKept: payment.kind === "LIKE_PACK",
+      amountXaf: requested,
+      partial,
+    });
     await this.notifications.create({
       userId: payment.userId,
       actorId: actor.id,
       type: "PAYMENT",
-      entityType: "refund",
+      entityType: partial ? "refund_partial" : "refund",
       entityId: paymentId,
     });
-    return { ok: true, likesKept: payment.kind === "LIKE_PACK" };
+    return { ok: true, likesKept: payment.kind === "LIKE_PACK", partial, refundedAmountXaf: requested };
   }
 
   async likeAnomalies() {

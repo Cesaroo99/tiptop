@@ -60,6 +60,7 @@ export default function NotificationsPage() {
     if (n.type === "INVITE") return `${name} ${messages.social.notifInvite}`;
     if (n.type === "TICKET") return `${name} ${messages.social.notifTicket}`;
     if (n.type === "PAYMENT") {
+      if (n.entityType === "refund_partial") return messages.social.notifPaymentRefundPartial;
       return n.entityType === "refund" ? messages.social.notifPaymentRefund : `${name} ${messages.social.notifPayment}`;
     }
     if (n.type === "MESSAGE") return `${name} ${messages.social.notifMessage}`;
@@ -82,7 +83,7 @@ export default function NotificationsPage() {
     if (n.type === "EVENT_UPDATE" && n.entityId) return `/events/${n.entityId}`;
     if (n.type === "TICKET" && n.entityId) return `/tickets/${n.entityId}`;
     if (n.type === "PAYMENT" && n.entityType === "like_purchase") return "/likes";
-    if (n.type === "PAYMENT" && n.entityType === "refund") return "/tickets";
+    if (n.type === "PAYMENT" && (n.entityType === "refund" || n.entityType === "refund_partial")) return "/tickets";
     if (n.type === "TICKET" || n.type === "PAYMENT") return "/tickets";
     if (n.type === "COMMENT" && n.entityType === "mood" && n.entityId) return `/mood?start=${n.entityId}`;
     if (n.type === "COMMENT" && n.entityId) return `/posts/${n.entityId}`;

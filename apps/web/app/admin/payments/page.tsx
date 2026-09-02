@@ -10,6 +10,7 @@ type Row = {
   kind: string;
   status: string;
   amountXaf: number;
+  refundedAmountXaf?: number | null;
   provider: string;
   createdAt: string;
   user: { username: string; firstName: string; lastName: string };
@@ -19,6 +20,7 @@ type Row = {
 export default function Page() {
   const { messages } = useI18n();
   const [items, setItems] = useState<Row[]>([]);
+  const [amounts, setAmounts] = useState<Record<string, string>>({});
 
   async function load() {
     const data = await api<{ items: Row[] }>("/admin/payments");
@@ -29,8 +31,10 @@ export default function Page() {
     void load().catch(() => setItems([]));
   }, []);
 
-  async function refund(id: string) {
-    await api(`/admin/payments/${id}/refund`, { method: "POST" });
+  async function refund(id: string, fullAmount: number) {
+    const raw = amounts[id];
+    const amountXaf = raw ? Number(raw) : fullAmount;
+    await api(`/admin/payments/${id}/refund`, { method: "POST", body: JSON.stringify({ amountXaf }) });
     await load();
   }
 
@@ -45,17 +49,33 @@ export default function Page() {
               {messages.booking.amount.replace("{amount}", String(p.amountXaf))} · {p.kind}
             </p>
             <p className="text-xs text-muted">
-              {p.status === "REFUNDED" ? messages.admin.refunded : p.status} · @{p.user.username}
+              {p.status === "REFUNDED"
+                ? messages.admin.refunded
+                : p.status === "PARTIALLY_REFUNDED"
+                  ? `${messages.admin.refundedPartial} (${p.refundedAmountXaf ?? 0}/${p.amountXaf})`
+                  : p.status}
+              {" · "}@{p.user.username}
               {p.packCode ? ` · ${p.packCode}` : ""}
             </p>
             {p.status === "SUCCEEDED" ? (
-              <button
-                type="button"
-                className="mt-3 rounded-pill bg-[var(--border)] px-3 py-2 text-sm"
-                onClick={() => void refund(p.id)}
-              >
-                {messages.admin.refund}
-              </button>
+              <div className="mt-3 flex items-center gap-2">
+                <input
+                  type="number"
+                  min={1}
+                  max={p.amountXaf}
+                  placeholder={String(p.amountXaf)}
+                  value={amounts[p.id] ?? ""}
+                  onChange={(e) => setAmounts((cur) => ({ ...cur, [p.id]: e.target.value }))}
+                  className="w-28 rounded-pill border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm"
+                />
+                <button
+                  type="button"
+                  className="rounded-pill bg-[var(--border)] px-3 py-2 text-sm"
+                  onClick={() => void refund(p.id, p.amountXaf)}
+                >
+                  {messages.admin.refund}
+                </button>
+              </div>
             ) : null}
           </article>
         ))}

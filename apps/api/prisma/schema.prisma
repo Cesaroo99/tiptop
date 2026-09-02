@@ -337,6 +337,7 @@ enum PaymentStatus {
   FAILED
   CANCELLED
   REFUNDED
+  PARTIALLY_REFUNDED
 }
 
 enum ReservationStatus {
@@ -737,6 +738,8 @@ model Payment {
   currency        String          @default("XAF")
   idempotencyKey  String          @unique
   providerRef     String?
+  refundedAmountXaf Int?
+  refundedAt      DateTime?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
