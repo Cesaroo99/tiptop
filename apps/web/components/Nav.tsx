@@ -12,35 +12,30 @@ const items = [
   { href: "/events", key: "events" as const, icon: EventsIcon },
 ];
 
+/**
+ * Barre de navigation basse — 5 entrées identiques (Home / Mood / Ajouter /
+ * Amies / Events), fidèle à la maquette fournie : même gabarit pour chaque
+ * icône, pas de bouton flottant surélevé pour « Ajouter » (ce n'était pas
+ * dans le design d'origine et cassait la cohérence visuelle de la barre).
+ */
 export function BottomNav() {
   const pathname = usePathname();
   const { messages } = useI18n();
   return (
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
-      <div className="pointer-events-auto flex w-full max-w-md items-center justify-between rounded-[28px] bg-[var(--nav)] px-2 py-2 shadow-elevated">
+      <div className="pointer-events-auto flex w-full max-w-md items-center justify-between rounded-[28px] bg-[var(--nav)] px-1 py-2.5 shadow-elevated">
         {items.map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
-          if (item.key === "add") {
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-label={messages.nav.add}
-                className="tap-scale -mt-6 grid h-14 w-14 place-items-center rounded-full bg-accent text-on-primary shadow-elevated transition hover:bg-accent-hover"
-              >
-                <Icon active={active} />
-              </Link>
-            );
-          }
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`type-nav tap-scale flex min-w-[56px] flex-col items-center gap-1 rounded-2xl px-2 py-1.5 transition ${active ? "bg-accent-soft text-accent" : "text-muted"}`}
+              aria-label={messages.nav[item.key]}
+              className={`type-nav tap-scale flex min-w-[56px] flex-1 flex-col items-center gap-1 rounded-2xl py-1 transition ${active ? "text-accent" : "text-muted"}`}
             >
               <Icon active={active} />
-              {messages.nav[item.key]}
+              <span className="text-[10px]">{messages.nav[item.key]}</span>
             </Link>
           );
         })}
