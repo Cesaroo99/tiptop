@@ -150,8 +150,13 @@ export type Messages = {
     notifInvite: string;
     notifTicket: string;
     notifPayment: string;
+    notifPaymentRefund: string;
     notifMessage: string;
     notifReview: string;
+    notifEventUpdate: string;
+    notifEventCancelled: string;
+    notifEventTimeChanged: string;
+    notifEventPlaceChanged: string;
     share: string;
     copied: string;
     copyLink: string;
@@ -315,6 +320,7 @@ export type Messages = {
     moodVisibility: string;
     visZone: string;
     visFollowers: string;
+    moodLinkEventNone: string;
     visEvent: string;
     moodExpired: string;
     activityPlaceholder: string;
@@ -360,6 +366,24 @@ export type Messages = {
     livesAt: string;
     ongoingBadge: string;
     endedBadge: string;
+    startingSoonBadge: string;
+    cancelledBadge: string;
+    cancelledBody: string;
+    manageOverview: string;
+    manageEdit: string;
+    manageCancel: string;
+    manageCancelConfirm: string;
+    manageDuplicate: string;
+    manageDuplicatePrompt: string;
+    manageStats: string;
+    myEventsInterested: string;
+    myEventsSaved: string;
+    myEventsReserved: string;
+    myEventsPast: string;
+    myEventsCreated: string;
+    eventMoodsTitle: string;
+    eventMoodsEmpty: string;
+    seeEventFromMood: string;
   };
   booking: {
     reserve: string;
@@ -408,6 +432,8 @@ export type Messages = {
     labelHint: string;
     entryClosed: string;
     notHost: string;
+    ageRestrictedNotice: string;
+    ageRestrictedError: string;
   };
   reviews: {
     title: string;
@@ -706,8 +732,13 @@ export const fr: Messages = {
     notifInvite: "t’a invité à une sortie",
     notifTicket: "ticket mis à jour",
     notifPayment: "paiement mis à jour",
+    notifPaymentRefund: "Ton paiement a été remboursé.",
     notifMessage: "t’a écrit",
     notifReview: "a laissé un avis sur ta sortie",
+    notifEventUpdate: "Un événement auquel tu participes a été mis à jour.",
+    notifEventCancelled: "Un événement auquel tu participes a été annulé.",
+    notifEventTimeChanged: "L'heure d'un événement auquel tu participes a changé.",
+    notifEventPlaceChanged: "Le lieu d'un événement auquel tu participes a changé.",
     share: "Partager",
     copied: "Lien copié",
     copyLink: "Copier le lien",
@@ -871,6 +902,7 @@ export const fr: Messages = {
     moodVisibility: "Visibilité",
     visZone: "Ma zone",
     visFollowers: "Abonnés",
+    moodLinkEventNone: "Associer à un événement (optionnel)",
     visEvent: "Participants d’un event",
     moodExpired: "Ce mood est terminé.",
     activityPlaceholder: "Que fais-tu en ce moment ? (ex. 🍣 Restaurant japonais)",
@@ -916,6 +948,24 @@ export const fr: Messages = {
     livesAt: "Vie à {place}",
     ongoingBadge: "En cours",
     endedBadge: "Terminé",
+    startingSoonBadge: "Commence bientôt",
+    cancelledBadge: "Annulé",
+    cancelledBody: "Cet événement a été annulé par l’organisateur. Les personnes intéressées ont été prévenues.",
+    manageOverview: "Vue générale",
+    manageEdit: "Modifier",
+    manageCancel: "Annuler l’événement",
+    manageCancelConfirm: "Toutes les personnes intéressées et les porteurs de billet seront prévenus. Cette action est irréversible.",
+    manageDuplicate: "Dupliquer",
+    manageDuplicatePrompt: "Choisis une nouvelle date pour la copie de cet événement.",
+    manageStats: "Statistiques",
+    myEventsInterested: "Intéressé(e)",
+    myEventsSaved: "Coups de cœur",
+    myEventsReserved: "Réservés",
+    myEventsPast: "Passés",
+    myEventsCreated: "Créés",
+    eventMoodsTitle: "Moods de cet événement",
+    eventMoodsEmpty: "Aucun mood pour cet événement pour l’instant.",
+    seeEventFromMood: "Voir l’événement",
   },
   booking: {
     reserve: "Réserver",
@@ -964,6 +1014,8 @@ export const fr: Messages = {
     labelHint: "Libellé (ex. Visa •• 4242)",
     entryClosed: "Hors fenêtre d’entrée",
     notHost: "Seul l’organisateur peut valider.",
+    ageRestrictedNotice: "Cet événement est réservé aux personnes de {age} ans et plus. Ta date de naissance renseignée sera vérifiée.",
+    ageRestrictedError: "Tu ne remplis pas la condition d’âge minimum pour cet événement.",
   },
   reviews: {
     title: "Avis",
@@ -1262,8 +1314,13 @@ export const en: Messages = {
     notifInvite: "invited you to a meetup",
     notifTicket: "ticket updated",
     notifPayment: "payment updated",
+    notifPaymentRefund: "Your payment was refunded.",
     notifMessage: "sent you a message",
     notifReview: "left a review on your meetup",
+    notifEventUpdate: "An event you're part of was updated.",
+    notifEventCancelled: "An event you're part of was cancelled.",
+    notifEventTimeChanged: "The time of an event you're part of changed.",
+    notifEventPlaceChanged: "The place of an event you're part of changed.",
     share: "Share",
     copied: "Link copied",
     copyLink: "Copy link",
@@ -1427,6 +1484,7 @@ export const en: Messages = {
     moodVisibility: "Visibility",
     visZone: "My area",
     visFollowers: "Followers",
+    moodLinkEventNone: "Link to an event (optional)",
     visEvent: "Event guests",
     moodExpired: "This mood ended.",
     activityPlaceholder: "What are you up to right now? (e.g. 🍣 Sushi place)",
@@ -1472,6 +1530,24 @@ export const en: Messages = {
     livesAt: "Lives in {place}",
     ongoingBadge: "Ongoing",
     endedBadge: "Ended",
+    startingSoonBadge: "Starting soon",
+    cancelledBadge: "Cancelled",
+    cancelledBody: "This event was cancelled by the organizer. Interested people have been notified.",
+    manageOverview: "Overview",
+    manageEdit: "Edit",
+    manageCancel: "Cancel event",
+    manageCancelConfirm: "All interested people and ticket holders will be notified. This action cannot be undone.",
+    manageDuplicate: "Duplicate",
+    manageDuplicatePrompt: "Pick a new date for the copy of this event.",
+    manageStats: "Stats",
+    myEventsInterested: "Interested",
+    myEventsSaved: "Favorites",
+    myEventsReserved: "Reserved",
+    myEventsPast: "Past",
+    myEventsCreated: "Created",
+    eventMoodsTitle: "Moods from this event",
+    eventMoodsEmpty: "No mood for this event yet.",
+    seeEventFromMood: "See the event",
   },
   booking: {
     reserve: "Book",
@@ -1520,6 +1596,8 @@ export const en: Messages = {
     labelHint: "Label (e.g. Visa •• 4242)",
     entryClosed: "Outside entry window",
     notHost: "Only the host can validate.",
+    ageRestrictedNotice: "This event is restricted to people aged {age} and over. Your registered birth date will be checked.",
+    ageRestrictedError: "You don't meet the minimum age requirement for this event.",
   },
   reviews: {
     title: "Reviews",
