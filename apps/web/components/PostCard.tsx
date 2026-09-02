@@ -7,10 +7,11 @@ import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { eventCountdown, formatRelative } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
+import { CalendarIcon, CommentIcon, HeartIcon, ShareIcon } from "./Icons";
 import { LikeDialogs, likeErrorKind } from "./LikeDialogs";
 import { LikeTimeBadge } from "./LikeTimeBadge";
 import { MapThumb } from "./MapThumb";
-import { Modal } from "./ui";
+import { IconButton, Modal } from "./ui";
 
 export function PostCard({
   post,
@@ -111,43 +112,43 @@ export function PostCard({
   const relative = formatRelative(post.createdAt, messages.social);
 
   return (
-    <article className="overflow-hidden rounded-card bg-surface p-4 shadow-card">
+    <article className="overflow-hidden rounded-card bg-surface p-4 shadow-card transition hover:shadow-sm">
       <div className="flex items-start gap-3">
         <Link href={`/u/${post.author.username}`}>
           <Avatar
             src={post.author.avatarUrl}
             firstName={post.author.firstName}
             lastName={post.author.lastName}
-            size={44}
+            size="md"
           />
         </Link>
         <div className="min-w-0 flex-1">
-          <Link href={`/u/${post.author.username}`} className="flex items-center gap-1 font-semibold text-ink">
+          <Link href={`/u/${post.author.username}`} className="type-body-sm flex items-center gap-1 font-semibold text-ink">
             {post.author.firstName} {post.author.lastName}
             {post.author.certified ? <CertifiedMark /> : null}
           </Link>
-          <p className="text-xs text-muted">
+          <p className="type-caption text-muted">
             {relative} · {post.city}
             {post.zone ? ` - ${post.zone}` : ""}
           </p>
         </div>
         {event?.minAge ? (
-          <span className="rounded-full bg-[#f3b6c8] px-2 py-0.5 text-[11px] font-bold text-ink">-{event.minAge}</span>
+          <span className="type-caption rounded-full bg-danger-soft px-2 py-0.5 font-bold text-danger">-{event.minAge}</span>
         ) : null}
-        <button type="button" onClick={() => void share()} className="grid h-9 w-9 place-items-center rounded-full bg-[var(--border)] text-accent" aria-label={messages.social.share}>
-          <ShareIcon />
-        </button>
         {!mine ? (
-          <button type="button" onClick={() => void follow()} className="text-xs font-semibold text-accent">
+          <button type="button" onClick={() => void follow()} className="type-caption font-semibold text-accent">
             {post.viewerFollows ? messages.social.following : messages.social.follow}
           </button>
         ) : null}
+        <IconButton label={messages.social.share} onClick={() => void share()} size={36}>
+          <ShareIcon size={15} />
+        </IconButton>
       </div>
-      <p className="mt-3 text-sm leading-6 text-ink">{post.body}</p>
+      <p className="type-body mt-3 text-ink">{post.body}</p>
       {post.imageUrl ? (
         <div className="relative mt-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={post.imageUrl} alt="" className="h-52 w-full rounded-2xl object-cover" />
+          <img src={post.imageUrl} alt="" className="h-52 w-full rounded-lg object-cover" />
           {event ? (
             <Link href={`/events/${event.id}`} className="absolute bottom-2 right-2 h-16 w-24">
               <MapThumb city={post.city} zone={post.zone} className="h-full w-full" />
@@ -155,40 +156,43 @@ export function PostCard({
           ) : null}
         </div>
       ) : null}
-      <p className="mt-3 text-xs text-muted">
+      <p className="type-caption mt-3 text-muted">
         {post.commentsCount} {messages.social.comments}
         {event ? ` · ${event.reservedCount} ${messages.world.reservationsCount} · ${event.interestedCount} ${messages.world.interestedCount}` : null}
         {" · "}
         <LikeTimeBadge time={post.likeTime} loadedAt={loadedAt} />
       </p>
       <div className="mt-3 flex items-center gap-2">
-        <button
-          type="button"
-          aria-label={liked ? messages.social.likeHere : messages.social.likePlace}
+        <IconButton
+          label={liked ? messages.social.likeHere : messages.social.likePlace}
+          tone={liked ? "accent" : "neutral"}
           onClick={() => void like(false)}
-          className={`grid h-10 w-10 place-items-center rounded-full ${liked ? "bg-accent text-white" : "bg-[var(--border)] text-muted"}`}
         >
-          ♥
-        </button>
+          <HeartIcon size={17} filled={liked} />
+        </IconButton>
         <Link
           href={`/posts/${post.id}`}
-          className="grid h-10 w-10 place-items-center rounded-full bg-[var(--border)] text-muted"
+          className="tap-scale grid h-10 w-10 place-items-center rounded-full bg-surface-sunken text-muted transition hover:brightness-95"
           aria-label={messages.social.comments}
         >
-          💬
+          <CommentIcon size={17} />
         </Link>
         {event ? (
-          <Link href={`/events/${event.id}`} className="grid h-10 w-10 place-items-center rounded-full bg-[var(--border)] text-muted" aria-label={messages.nav.events}>
-            📅
+          <Link
+            href={`/events/${event.id}`}
+            className="tap-scale grid h-10 w-10 place-items-center rounded-full bg-surface-sunken text-muted transition hover:brightness-95"
+            aria-label={messages.nav.events}
+          >
+            <CalendarIcon size={17} />
           </Link>
         ) : null}
         {countdown ? (
-          <span className="ml-auto rounded-full bg-yellow px-3 py-1.5 text-[11px] font-bold text-ink">
+          <span className="type-caption ml-auto rounded-full bg-yellow px-3 py-1.5 font-bold text-ink">
             {messages.world.eventIn.replace("{when}", countdown.unit === "min" ? `${countdown.value}min` : countdown.unit === "h" ? `${countdown.value}h` : `${countdown.value}j`)}
           </span>
         ) : null}
       </div>
-      {copied ? <p className="mt-2 text-xs text-accent">{messages.social.copied}</p> : null}
+      {copied ? <p className="type-caption mt-2 text-accent">{messages.social.copied}</p> : null}
       <LikeDialogs
         transferName={transfer?.name ?? null}
         buyOpen={buy}
@@ -200,14 +204,5 @@ export function PostCard({
         {soon}
       </Modal>
     </article>
-  );
-}
-
-function ShareIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
-      <path d="M12 16V4M8 8l4-4 4 4" />
-    </svg>
   );
 }

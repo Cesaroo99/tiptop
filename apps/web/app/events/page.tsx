@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { EventCard } from "@/components/EventCard";
-import { EmptyState, ErrorBanner, Skeleton } from "@/components/ui";
+import { PlusIcon } from "@/components/Icons";
+import { CardSkeleton, Chip, EmptyState, ErrorBanner } from "@/components/ui";
 import { api, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -42,27 +43,31 @@ function EventsFeed() {
 
   return (
     <div className="px-4 py-4">
-      <div className="mb-4 flex gap-4 text-sm">
-        <button
-          type="button"
-          onClick={() => setTab("all")}
-          className={tab === "all" ? "border-b-2 border-accent font-semibold text-accent" : "text-muted"}
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="type-h1 text-ink">{messages.nav.events}</h1>
+        <Link
+          href="/compose?type=event"
+          className="tap-scale type-button flex items-center gap-1.5 rounded-pill bg-accent px-4 py-2.5 text-on-primary shadow-sm transition hover:bg-accent-hover"
         >
-          {messages.world.eventsAll}
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("mine")}
-          className={tab === "mine" ? "border-b-2 border-accent font-semibold text-accent" : "text-muted"}
-        >
-          {messages.world.eventsMine}
-        </button>
-        <Link href="/compose?type=event" className="ml-auto text-sm font-semibold text-accent">
-          + {messages.world.createEvent}
+          <PlusIcon size={15} />
+          {messages.world.createEvent}
         </Link>
       </div>
+      <div className="mb-4 flex gap-2">
+        <Chip active={tab === "all"} onClick={() => setTab("all")}>
+          {messages.world.eventsAll}
+        </Chip>
+        <Chip active={tab === "mine"} onClick={() => setTab("mine")}>
+          {messages.world.eventsMine}
+        </Chip>
+      </div>
       {error ? <ErrorBanner message={error} onRetry={() => void load()} /> : null}
-      {items === null && !error ? <Skeleton className="h-64" /> : null}
+      {items === null && !error ? (
+        <div className="space-y-4">
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+      ) : null}
       {items && items.length === 0 ? (
         <EmptyState title={messages.world.eventsEmpty} body={messages.world.eventsEmptyBody} />
       ) : null}

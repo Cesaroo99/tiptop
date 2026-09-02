@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
+import { BellIcon, ChevronDownIcon, MessageIcon, PinIcon, SearchIcon } from "./Icons";
 import { Logo } from "./Logo";
 
 export function AppHeader({
@@ -47,15 +48,15 @@ export function AppHeader({
   }
 
   return (
-    <header className="space-y-3 px-4 pt-2">
+    <header className="space-y-3 px-4 pb-1 pt-3">
       <div className="flex items-center justify-between">
-        <Logo size={36} />
-        <div className="flex items-center gap-2">
+        <Logo size={34} />
+        <div className="flex items-center gap-1.5">
           <HeaderIcon href="/notifications" label="Notifications" badge={unread > 0 ? String(unread) : undefined}>
-            <Bell />
+            <BellIcon size={18} />
           </HeaderIcon>
           <HeaderIcon href="/messages" label="Messages" badge={chatUnread > 0 ? String(chatUnread) : undefined}>
-            <Chat />
+            <MessageIcon size={18} />
           </HeaderIcon>
           <HeaderIcon href="/menu" label="Menu">
             <Hamburger />
@@ -65,25 +66,26 @@ export function AppHeader({
       <div className="flex gap-2">
         <Link
           href="/zone"
-          className="flex flex-1 items-center gap-2 rounded-2xl bg-[var(--border)]/60 px-3 py-3 text-left text-sm text-muted"
+          className="tap-scale type-body-sm flex flex-1 items-center gap-2 rounded-xl bg-surface-sunken px-3.5 py-3 text-left text-muted transition hover:brightness-95"
         >
-          <Pin />
+          <PinIcon size={16} />
           <span className="flex-1 truncate">{location || messages.home.locationFallback}</span>
-          <span>▾</span>
+          <ChevronDownIcon size={14} />
         </Link>
         <Link
           href="/search"
           aria-label="Recherche"
-          className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--border)]/60 text-muted"
+          className="tap-scale grid h-12 w-12 place-items-center rounded-xl bg-surface-sunken text-muted transition hover:brightness-95"
         >
-          <Search />
+          <SearchIcon size={18} />
         </Link>
       </div>
       <button
         type="button"
         onClick={() => void toggleAvail()}
-        className={`rounded-pill px-3 py-1.5 text-xs font-semibold ${available ? "bg-accent text-white" : "bg-[var(--border)] text-muted"}`}
+        className={`type-caption tap-scale inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 font-semibold transition ${available ? "bg-success-soft text-success" : "bg-surface-sunken text-muted"}`}
       >
+        <span className={`h-1.5 w-1.5 rounded-full ${available ? "bg-success" : "bg-disabled"}`} aria-hidden />
         {available ? messages.world.available : messages.world.goAvailable}
       </button>
     </header>
@@ -105,11 +107,11 @@ function HeaderIcon({
     <Link
       href={href}
       aria-label={label}
-      className="relative grid h-10 w-10 place-items-center rounded-full bg-[var(--border)]/50 text-muted"
+      className="tap-scale relative grid h-10 w-10 place-items-center rounded-full bg-surface-sunken text-muted transition hover:brightness-95"
     >
       {children}
       {badge ? (
-        <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-yellow px-1 text-[10px] font-bold text-white">
+        <span className="type-caption absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-yellow px-1 font-bold text-ink">
           {badge}
         </span>
       ) : null}
@@ -117,41 +119,10 @@ function HeaderIcon({
   );
 }
 
-function Bell() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M6 9a6 6 0 1 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9Z" />
-      <path d="M10 20a2 2 0 0 0 4 0" />
-    </svg>
-  );
-}
-function Chat() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M5 16.5 4 20l3.8-1.4A8 8 0 1 0 5 16.5Z" />
-    </svg>
-  );
-}
 function Hamburger() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M5 7h14M5 12h14M5 17h14" />
-    </svg>
-  );
-}
-function Pin() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z" />
-      <circle cx="12" cy="10" r="2" />
-    </svg>
-  );
-}
-function Search() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <circle cx="11" cy="11" r="6" />
-      <path d="m20 20-3.5-3.5" />
     </svg>
   );
 }

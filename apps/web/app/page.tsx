@@ -5,7 +5,8 @@ import { AppShell } from "@/components/AppShell";
 import { EventCard } from "@/components/EventCard";
 import { PostCard } from "@/components/PostCard";
 import { Avatar } from "@/components/Avatar";
-import { EmptyState, ErrorBanner, Skeleton } from "@/components/ui";
+import { PlusIcon } from "@/components/Icons";
+import { CardSkeleton, EmptyState, ErrorBanner } from "@/components/ui";
 import { api, type EventCard as EventCardType, type FeedItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -51,28 +52,28 @@ function HomeFeed() {
   return (
     <div className="space-y-4 px-4 py-4">
       <div className="no-scrollbar flex gap-3 overflow-x-auto pb-2">
-        <Link href="/compose?type=mood" className="flex w-16 shrink-0 flex-col items-center gap-1">
-          <div className="grid h-16 w-16 place-items-center rounded-full border-2 border-dashed border-accent bg-accent text-2xl text-white">
-            +
+        <Link href="/compose?type=mood" className="tap-scale flex w-16 shrink-0 flex-col items-center gap-1.5">
+          <div className="grid h-16 w-16 place-items-center rounded-full bg-accent text-on-primary shadow-sm">
+            <PlusIcon size={22} />
           </div>
-          <span className="text-center text-[11px] text-muted">{messages.home.yourMood}</span>
+          <span className="type-caption w-16 truncate text-center text-muted">{messages.home.yourMood}</span>
         </Link>
         {user ? (
-          <Link href={`/u/${user.username}`} className="flex w-16 shrink-0 flex-col items-center gap-1">
-            <Avatar src={user.avatarUrl} firstName={user.firstName} lastName={user.lastName} size={64} ring="accent" />
-            <span className="w-16 truncate text-center text-[11px] text-muted">{user.firstName}</span>
+          <Link href={`/u/${user.username}`} className="tap-scale flex w-16 shrink-0 flex-col items-center gap-1.5">
+            <Avatar src={user.avatarUrl} firstName={user.firstName} lastName={user.lastName} size="lg" ring="accent" />
+            <span className="type-caption w-16 truncate text-center text-muted">{user.firstName}</span>
           </Link>
         ) : null}
         {moods.map((m) => (
-          <Link key={m.id} href={`/mood/${m.id}`} className="flex w-16 shrink-0 flex-col items-center gap-1">
+          <Link key={m.id} href={`/mood/${m.id}`} className="tap-scale flex w-16 shrink-0 flex-col items-center gap-1.5">
             <Avatar
               src={m.imageUrl || m.author.avatarUrl}
               firstName={m.author.firstName}
               lastName={m.author.lastName}
-              size={64}
+              size="lg"
               ring="yellow"
             />
-            <span className="w-16 truncate text-center text-[11px] text-muted">{m.author.firstName}</span>
+            <span className="type-caption w-16 truncate text-center text-muted">{m.author.firstName}</span>
           </Link>
         ))}
       </div>
@@ -80,8 +81,8 @@ function HomeFeed() {
       {error ? <ErrorBanner message={error} onRetry={() => void load()} /> : null}
       {items === null && !error ? (
         <div className="space-y-3">
-          <Skeleton className="h-64" />
-          <Skeleton className="h-40" />
+          <CardSkeleton />
+          <CardSkeleton />
         </div>
       ) : null}
       {items && items.length === 0 && events.length === 0 && !error ? (

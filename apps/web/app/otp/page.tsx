@@ -59,7 +59,7 @@ export default function OtpPage() {
   return (
     <main className="mx-auto min-h-dvh max-w-md px-4 py-6">
       <ScreenHeader title={messages.auth.otpTitle} onBack={() => router.push("/login")} />
-      <p className="px-2 text-sm text-muted">{messages.auth.otpSent.replace("{phone}", masked || phone)}</p>
+      <p className="type-body-sm px-2 text-muted">{messages.auth.otpSent.replace("{phone}", masked || phone)}</p>
       <form onSubmit={verify} className="mt-8 space-y-8 px-2">
         <div className="flex justify-between gap-3">
           {digits.map((d, i) => (
@@ -77,20 +77,20 @@ export default function OtpPage() {
                 const el = e.target.parentElement?.children[i + 1] as HTMLInputElement | undefined;
                 if (v && el) el.focus();
               }}
-              className={`h-16 w-16 rounded-2xl bg-[var(--bg)] text-center text-2xl font-semibold text-ink ${i === digits.findIndex((x) => x === "") || (i === 3 && code.length === 4) ? "ring-2 ring-accent" : ""}`}
+              className={`h-16 w-16 rounded-xl border-2 bg-surface-sunken text-center type-h2 text-ink transition ${i === digits.findIndex((x) => x === "") || (i === 3 && code.length === 4) ? "border-accent" : "border-transparent"}`}
             />
           ))}
         </div>
         {seconds > 0 ? (
-          <p className="text-sm text-muted">
+          <p className="type-body-sm text-muted">
             {messages.auth.resendIn.replace("{seconds}", String(seconds))}
           </p>
         ) : (
-          <button type="button" className="text-sm font-semibold text-accent" onClick={() => void resend()}>
+          <button type="button" className="type-body-sm font-semibold text-accent" onClick={() => void resend()}>
             {messages.auth.resend}
           </button>
         )}
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
+        {error ? <p className="type-body-sm text-danger">{error}</p> : null}
         <PrimaryButton type="submit" loading={loading} disabled={code.length !== 4}>
           {messages.auth.verify}
         </PrimaryButton>

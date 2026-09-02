@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { AvailabilityBadge } from "@/components/AvailabilityBadge";
+import { CalendarIcon, ChevronRightIcon, FlagIcon, HeartIcon, MessageIcon, PinIcon, SparklesIcon } from "@/components/Icons";
 import { LikeCapital } from "@/components/LikeCapital";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { LikeFaces, LikePlacedCard } from "@/components/LikeFaces";
@@ -12,7 +14,7 @@ import { SocialInviteModal } from "@/components/SocialInviteModal";
 import { WishList } from "@/components/WishList";
 import { PostCard } from "@/components/PostCard";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
-import { EmptyState, ErrorBanner, Modal, PrimaryButton, Skeleton } from "@/components/ui";
+import { Chip, EmptyState, ErrorBanner, IconButton, Modal, Skeleton } from "@/components/ui";
 import { api, ApiError, type FeedItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { formatEventWhen } from "@/lib/time";
@@ -160,85 +162,108 @@ function ProfileView() {
   if (error) return <ErrorBanner message={error} onRetry={() => void load()} />;
   if (!profile) return <Skeleton className="mx-4 mt-4 h-80" />;
 
+  const available = profile.availability === "AVAILABLE";
+
   return (
     <div className="pb-8">
-      <div className="relative h-36 bg-gradient-to-r from-accent/30 to-yellow/20">
+      <div className="relative h-40 bg-gradient-to-br from-accent/25 via-yellow/15 to-transparent">
         {profile.coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={profile.coverUrl} alt="" className="h-full w-full object-cover" />
         ) : null}
       </div>
-      <div className="-mt-12 px-4 text-center">
+      <div className="-mt-14 px-4 text-center">
         <Avatar
           src={profile.avatarUrl}
           firstName={profile.firstName}
           lastName={profile.lastName}
-          size={88}
-          online={profile.availability === "AVAILABLE"}
+          size="xl"
           className="mx-auto ring-4 ring-[var(--bg)]"
         />
-        <h1 className="mt-3 flex items-center justify-center gap-1 text-xl font-bold text-ink">
+        <h1 className="type-h2 mt-3 flex items-center justify-center gap-1.5 text-ink">
           {profile.firstName} {profile.lastName}
           {profile.certified ? <CertifiedMark /> : null}
         </h1>
-        <p className="text-sm text-muted">@{profile.username}</p>
-        {profile.profession ? <p className="mt-1 text-sm text-muted">{profile.profession}</p> : null}
-        {profile.city ? (
-          <p className="mt-2 text-sm text-muted">🏠 {messages.world.livesAt.replace("{place}", `${profile.city}${profile.zone ? `, ${profile.zone}` : ""}`)}</p>
-        ) : null}
-        {profile.website ? <p className="text-sm text-accent">🔗 {profile.website}</p> : null}
-        {profile.availability === "AVAILABLE" ? (
-          <p className="mt-1 text-xs font-semibold text-accent">{messages.world.available}</p>
-        ) : null}
-        <p className="mt-2 text-xs text-muted">
-          {profile.followersCount} {messages.social.followers} · {profile.followingCount} {messages.social.followingCount}
+        <p className="type-body-sm text-muted">@{profile.username}</p>
+
+        <div className="mt-3 flex justify-center">
+          <AvailabilityBadge available={available} compact />
+        </div>
+
+        {profile.profession ? <p className="type-body-sm mt-2 text-ink">{profile.profession}</p> : null}
+        {profile.bio ? <p className="type-body-sm mx-auto mt-2 max-w-sm leading-6 text-muted">{profile.bio}</p> : null}
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+          {profile.city ? (
+            <span className="type-caption inline-flex items-center gap-1 text-muted">
+              <PinIcon size={13} />
+              {messages.world.livesAt.replace("{place}", `${profile.city}${profile.zone ? `, ${profile.zone}` : ""}`)}
+            </span>
+          ) : null}
+          {profile.website ? (
+            <span className="type-caption text-accent">{profile.website}</span>
+          ) : null}
+        </div>
+        <p className="type-body-sm mt-3 text-muted">
+          <span className="font-semibold text-ink">{profile.followersCount}</span> {messages.social.followers}
+          {"  ·  "}
+          <span className="font-semibold text-ink">{profile.followingCount}</span> {messages.social.followingCount}
         </p>
+
         {!profile.isSelf ? (
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <PrimaryButton className="!w-auto px-5" onClick={() => void toggleFollow()}>
-              {profile.following ? messages.social.unfollow : messages.social.follow}
-            </PrimaryButton>
-            <button
-              type="button"
-              onClick={() => void like(false)}
-              className={`rounded-pill px-5 py-3 font-semibold ${profile.likedByMe ? "bg-accent text-white" : "bg-[var(--border)]"}`}
-            >
-              ♥ {profile.likedByMe ? messages.social.likeHere : messages.social.likePlace}
-            </button>
-            <button
-              type="button"
-              className="rounded-pill bg-accent px-5 py-3 font-semibold text-white"
-              onClick={async () => {
-                try {
-                  const conv = await api<{ id: string }>("/conversations/direct", {
-                    method: "POST",
-                    body: JSON.stringify({ userId: profile.id }),
-                  });
-                  router.push(`/messages/${conv.id}`);
-                } catch {
-                  setSoon(messages.chat.blockedPeer);
-                }
-              }}
-            >
-              {messages.chat.messageCta}
-            </button>
-            <Link href={`/invite/${profile.id}`} className="rounded-pill bg-[var(--border)] px-5 py-3">
-              + {messages.world.invite}
-            </Link>
-            <button
-              type="button"
-              className="rounded-pill bg-[var(--border)] px-5 py-3"
-              onClick={() => setProposeOpen(true)}
-            >
-              {messages.socialInvite.proposeOuting}
-            </button>
-            <button type="button" className="rounded-pill bg-[var(--border)] px-5 py-3" onClick={() => setReportOpen(true)}>
-              {messages.admin.report}
-            </button>
+          <div className="mt-5 flex flex-col items-center gap-3">
+            <div className="flex w-full max-w-xs gap-2">
+              <button
+                type="button"
+                className="tap-scale type-button flex flex-1 items-center justify-center gap-2 rounded-pill bg-accent px-5 py-3.5 text-on-primary shadow-sm transition hover:bg-accent-hover"
+                onClick={async () => {
+                  try {
+                    const conv = await api<{ id: string }>("/conversations/direct", {
+                      method: "POST",
+                      body: JSON.stringify({ userId: profile.id }),
+                    });
+                    router.push(`/messages/${conv.id}`);
+                  } catch {
+                    setSoon(messages.chat.blockedPeer);
+                  }
+                }}
+              >
+                <MessageIcon size={16} />
+                {messages.chat.messageCta}
+              </button>
+              <button
+                type="button"
+                className={`tap-scale type-button flex-1 rounded-pill border px-5 py-3.5 transition ${profile.following ? "border-border bg-surface text-ink hover:bg-surface-sunken" : "border-accent bg-accent-soft text-accent hover:bg-accent/15"}`}
+                onClick={() => void toggleFollow()}
+              >
+                {profile.following ? messages.social.unfollow : messages.social.follow}
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <IconButton
+                label={profile.likedByMe ? messages.social.likeHere : messages.social.likePlace}
+                tone={profile.likedByMe ? "accent" : "neutral"}
+                onClick={() => void like(false)}
+              >
+                <HeartIcon size={17} filled={profile.likedByMe} />
+              </IconButton>
+              <Link
+                href={`/invite/${profile.id}`}
+                aria-label={messages.world.invite}
+                className="tap-scale grid h-10 w-10 place-items-center rounded-full bg-surface-sunken text-muted transition hover:brightness-95"
+              >
+                <CalendarIcon size={17} />
+              </Link>
+              <IconButton label={messages.socialInvite.proposeOuting} onClick={() => setProposeOpen(true)}>
+                <SparklesIcon size={17} />
+              </IconButton>
+              <IconButton label={messages.admin.report} tone="danger" onClick={() => setReportOpen(true)}>
+                <FlagIcon size={15} />
+              </IconButton>
+            </div>
           </div>
         ) : (
-          <div className="mt-3 space-y-2">
-            <Link href="/account" className="text-sm font-semibold text-accent">
+          <div className="mt-4 space-y-2">
+            <Link href="/account" className="type-body-sm font-semibold text-accent">
               {messages.account.title}
             </Link>
           </div>
@@ -256,23 +281,18 @@ function ProfileView() {
           idle={messages.social.likeIdle}
         />
       </div>
-      <div className="mt-6 flex justify-center gap-2 px-4">
+      <div className="no-scrollbar mt-6 flex justify-center gap-2 overflow-x-auto px-4">
         {(
           [
-            ["posts", messages.social.postsTab],
             ["events", messages.social.events],
+            ["posts", messages.social.postsTab],
             ["moods", messages.social.moodsTab],
             ["wishes", messages.wishes.tab],
           ] as const
         ).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setTab(key)}
-            className={`rounded-pill px-4 py-2 text-sm font-semibold ${tab === key ? "bg-accent text-white" : "bg-accent/15 text-accent"}`}
-          >
+          <Chip key={key} active={tab === key} onClick={() => setTab(key)}>
             {label}
-          </button>
+          </Chip>
         ))}
       </div>
       <div className="mt-6 px-4">
@@ -349,13 +369,20 @@ function EventRail({ title, items }: { title: string; items: EventPreview[] }) {
   if (!items.length) return null;
   return (
     <section>
-      <div className="mb-2 flex items-center justify-between">
-        <p className="text-sm font-semibold text-ink">{title}</p>
-        <span className="text-xs text-accent">{messages.world.seeAll} ›</span>
+      <div className="mb-3 flex items-center justify-between">
+        <p className="type-heading text-ink">{title}</p>
+        <span className="type-caption inline-flex items-center gap-0.5 font-semibold text-accent">
+          {messages.world.seeAll}
+          <ChevronRightIcon size={14} />
+        </span>
       </div>
       <div className="no-scrollbar flex gap-3 overflow-x-auto pb-2">
         {items.map((e) => (
-          <Link key={e.id} href={`/events/${e.id}`} className="w-64 shrink-0 overflow-hidden rounded-card bg-surface shadow-card">
+          <Link
+            key={e.id}
+            href={`/events/${e.id}`}
+            className="tap-scale w-64 shrink-0 overflow-hidden rounded-card bg-surface shadow-card transition hover:shadow-elevated"
+          >
             <div className="relative h-36">
               {e.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -363,16 +390,16 @@ function EventRail({ title, items }: { title: string; items: EventPreview[] }) {
               ) : (
                 <div className="h-full bg-accent/10" />
               )}
-              <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-ink">
+              <span className="type-caption absolute left-2 top-2 rounded-full bg-surface/90 px-2 py-0.5 font-semibold text-ink backdrop-blur-sm">
                 {e.taken} {messages.world.peopleLinked}
               </span>
             </div>
             <div className="p-3">
-              <p className="truncate text-sm font-semibold text-ink">{e.title}</p>
-              <p className="text-xs text-muted">
+              <p className="type-body-sm truncate font-semibold text-ink">{e.title}</p>
+              <p className="type-caption text-muted">
                 {e.host.firstName} {e.host.lastName}
               </p>
-              <p className="text-xs text-yellow">{formatEventWhen(e.startsAt, locale)}</p>
+              <p className="type-caption font-medium text-yellow">{formatEventWhen(e.startsAt, locale)}</p>
             </div>
           </Link>
         ))}

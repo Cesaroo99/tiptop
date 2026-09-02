@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { EmptyState, ScreenHeader } from "@/components/ui";
+import { CalendarIcon } from "@/components/Icons";
+import { Chip, EmptyState, ScreenHeader } from "@/components/ui";
 import { api, ApiError, type InvitationItem, type ReservationItem, type TicketItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import Link from "next/link";
@@ -77,41 +78,34 @@ export default function Page() {
     <main className="mx-auto min-h-dvh max-w-lg px-4 py-4">
       <ScreenHeader title={messages.menu.tickets} onBack={() => router.back()} />
       {pendingReviews.length ? (
-        <div className="mb-4 rounded-card bg-surface p-4 shadow-card">
-          <p className="mb-2 text-sm font-semibold text-accent">{messages.reviews.pending}</p>
+        <div className="mb-4 rounded-card bg-warning-soft p-4 shadow-xs">
+          <p className="type-body-sm mb-2 font-semibold text-warning">{messages.reviews.pending}</p>
           {pendingReviews.map((p) => (
-            <Link key={p.eventId} href={`/events/${p.eventId}`} className="block py-1 text-sm text-ink">
+            <Link key={p.eventId} href={`/events/${p.eventId}`} className="type-body-sm block py-1 text-ink">
               {p.title} — {messages.reviews.write}
             </Link>
           ))}
         </div>
       ) : null}
-      <div className="mb-4 flex gap-3 text-sm">
+      <div className="mb-4 flex gap-2">
         {(["tickets", "invites", "reservations"] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            className={tab === t ? "border-b-2 border-accent font-semibold text-accent" : "text-muted"}
-          >
+          <Chip key={t} active={tab === t} onClick={() => setTab(t)}>
             {t === "tickets" ? messages.world.tabTickets : t === "invites" ? messages.world.tabInvites : messages.world.tabReservations}
-          </button>
+          </Chip>
         ))}
       </div>
       {tab === "tickets" ? (
         <div className="space-y-3">
-          {tickets.length === 0 ? <EmptyState title={messages.world.tabTickets} body={messages.booking.ticketsEmpty} /> : null}
+          {tickets.length === 0 ? <EmptyState title={messages.world.tabTickets} body={messages.booking.ticketsEmpty} icon={<CalendarIcon size={22} />} /> : null}
           {tickets.map((t) => (
-            <Link key={t.id} href={`/tickets/${t.id}`} className="ticket-stub block rounded-card bg-surface p-4 shadow-card">
-              <p className="font-semibold text-ink">{t.event.title}</p>
-              <p className="mt-1 text-xs text-muted">
+            <Link key={t.id} href={`/tickets/${t.id}`} className="ticket-stub tap-scale block overflow-hidden rounded-card bg-surface p-4 shadow-card transition hover:shadow-elevated">
+              <p className="type-heading text-ink">{t.event.title}</p>
+              <p className="type-caption mt-1 text-muted">
                 {t.holder.firstName === "César" ? "Moi" : `${t.holder.firstName} ${t.holder.lastName}`}
               </p>
               <div className="mt-3 flex items-center justify-between">
-                <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${t.status === "CONSUMED" ? "bg-[var(--border)] text-muted" : "bg-success/15 text-success"}`}>
-                  {statusLabel[t.status] ?? t.status}
-                </span>
-                <span className="text-xs text-muted">{new Date(t.event.startsAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}</span>
+                <Chip tone={t.status === "CONSUMED" ? "neutral" : "success"}>{statusLabel[t.status] ?? t.status}</Chip>
+                <span className="type-caption text-muted">{new Date(t.event.startsAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}</span>
               </div>
             </Link>
           ))}
@@ -124,16 +118,16 @@ export default function Page() {
           ) : null}
           {reservations.map((r) => (
             <article key={r.id} className="rounded-card bg-surface p-4 shadow-card">
-              <p className="font-semibold text-accent">{r.event?.title ?? r.eventId}</p>
-              <p className="text-xs text-muted">
+              <p className="type-heading text-ink">{r.event?.title ?? r.eventId}</p>
+              <p className="type-caption mt-1 text-muted">
                 {statusLabel[r.status] ?? r.status} · {r.seats} · {r.amountXaf} FCFA
               </p>
               {r.needsPayment ? (
-                <Link href={`/events/${r.eventId}/pay?reservationId=${r.id}`} className="mt-2 inline-block text-sm font-semibold text-accent">
+                <Link href={`/events/${r.eventId}/pay?reservationId=${r.id}`} className="type-body-sm mt-2 inline-block font-semibold text-accent">
                   {messages.booking.pay}
                 </Link>
               ) : r.tickets[0] ? (
-                <Link href={`/tickets/${r.tickets[0].id}`} className="mt-2 inline-block text-sm text-accent">
+                <Link href={`/tickets/${r.tickets[0].id}`} className="type-body-sm mt-2 inline-block font-semibold text-accent">
                   {messages.booking.seeTicket}
                 </Link>
               ) : null}
@@ -143,29 +137,29 @@ export default function Page() {
       ) : null}
       {tab === "invites" ? (
         <div>
-          <div className="mb-3 flex gap-2 text-xs">
-            <button type="button" onClick={() => setBox("received")} className={`rounded-pill px-3 py-1 ${box === "received" ? "bg-accent text-white" : "bg-[var(--border)]"}`}>
+          <div className="mb-3 flex gap-2">
+            <Chip active={box === "received"} onClick={() => setBox("received")}>
               {messages.world.inviteReceived}
-            </button>
-            <button type="button" onClick={() => setBox("sent")} className={`rounded-pill px-3 py-1 ${box === "sent" ? "bg-accent text-white" : "bg-[var(--border)]"}`}>
+            </Chip>
+            <Chip active={box === "sent"} onClick={() => setBox("sent")}>
               {messages.world.inviteSentBox}
-            </button>
+            </Chip>
           </div>
-          {note ? <p className="mb-3 text-sm text-muted">{note}</p> : null}
+          {note ? <p className="type-body-sm mb-3 font-semibold text-accent">{note}</p> : null}
           {invites.length === 0 ? <EmptyState title={messages.world.tabInvites} body={messages.world.invitationsEmpty} /> : null}
           <div className="space-y-3">
             {invites.map((inv) => (
               <article key={inv.id} className="rounded-card bg-surface p-4 shadow-card">
-                <p className="font-semibold text-accent">{inv.event.title}</p>
-                <p className="text-xs text-muted">
+                <p className="type-heading text-ink">{inv.event.title}</p>
+                <p className="type-caption mt-1 text-muted">
                   {inv.inviter.firstName} → {inv.invitee.firstName} · {statusLabel[inv.status] ?? inv.status}
                 </p>
                 {box === "received" && inv.status === "PENDING" ? (
                   <div className="mt-3 flex gap-2">
-                    <button type="button" className="flex-1 rounded-pill bg-accent py-2 text-white" onClick={() => void act(inv.id, "accept")}>
+                    <button type="button" className="tap-scale type-button flex-1 rounded-pill bg-accent py-2.5 text-on-primary transition hover:bg-accent-hover" onClick={() => void act(inv.id, "accept")}>
                       {messages.world.accept}
                     </button>
-                    <button type="button" className="flex-1 rounded-pill bg-[var(--border)] py-2" onClick={() => void act(inv.id, "refuse")}>
+                    <button type="button" className="tap-scale type-button flex-1 rounded-pill border border-border bg-surface py-2.5 text-ink transition hover:bg-surface-sunken" onClick={() => void act(inv.id, "refuse")}>
                       {messages.world.refuse}
                     </button>
                   </div>

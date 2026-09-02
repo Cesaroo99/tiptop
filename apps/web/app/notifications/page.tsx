@@ -4,10 +4,34 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Avatar } from "@/components/Avatar";
-import { EmptyState, ScreenHeader } from "@/components/ui";
+import {
+  BellIcon,
+  CalendarIcon,
+  CheckIcon,
+  CommentIcon,
+  HeartIcon,
+  MessageIcon,
+  SparklesIcon,
+  UsersIcon,
+} from "@/components/Icons";
+import { CardSkeleton, EmptyState, ScreenHeader } from "@/components/ui";
 import { api, type NotifItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { formatDateTime } from "@/lib/time";
+
+const TYPE_ICON: Record<NotifItem["type"], React.ComponentType<{ size?: number; className?: string }>> = {
+  LIKE: HeartIcon,
+  LIKE_MILESTONE: HeartIcon,
+  COMMENT: CommentIcon,
+  FOLLOW: UsersIcon,
+  INVITE: CalendarIcon,
+  SOCIAL_INVITE: SparklesIcon,
+  WISH_OFFER: SparklesIcon,
+  TICKET: CheckIcon,
+  PAYMENT: CheckIcon,
+  MESSAGE: MessageIcon,
+  REVIEW: CommentIcon,
+};
 
 export default function NotificationsPage() {
   const { messages } = useI18n();
@@ -76,14 +100,20 @@ export default function NotificationsPage() {
           </button>
         }
       />
-      {items && items.length === 0 ? (
-        <EmptyState title={messages.common.notifications} body={messages.social.emptyNotifs} />
+      {items === null ? (
+        <div className="mt-2 space-y-2">
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
       ) : null}
-      {unread.length ? <p className="mb-2 mt-4 text-sm text-muted">{messages.social.notifNew}</p> : null}
+      {items && items.length === 0 ? (
+        <EmptyState title={messages.common.notifications} body={messages.social.emptyNotifs} icon={<BellIcon size={22} />} />
+      ) : null}
+      {unread.length ? <p className="type-label mb-2 mt-4 text-subtle">{messages.social.notifNew}</p> : null}
       {unread.map((n) => (
         <NotifCard key={n.id} n={n} label={label(n)} href={href(n)} unread />
       ))}
-      {read.length ? <p className="mb-2 mt-6 text-sm text-muted">{messages.social.notifEarlier}</p> : null}
+      {read.length ? <p className="type-label mb-2 mt-6 text-subtle">{messages.social.notifEarlier}</p> : null}
       {read.map((n) => (
         <NotifCard key={n.id} n={n} label={label(n)} href={href(n)} />
       ))}
@@ -103,20 +133,26 @@ function NotifCard({
   unread?: boolean;
 }) {
   const { locale } = useI18n();
+  const TypeIcon = TYPE_ICON[n.type] ?? BellIcon;
   return (
     <Link
       href={href}
       onClick={() => {
         if (unread) void api(`/notifications/${n.id}/read`, { method: "POST" });
       }}
-      className="mb-2 flex items-start gap-3 rounded-card bg-surface p-4 shadow-card"
+      className={`tap-scale mb-2 flex items-start gap-3 rounded-card p-4 shadow-xs transition hover:shadow-sm ${unread ? "bg-accent-soft" : "bg-surface"}`}
     >
-      <Avatar src={n.actor?.avatarUrl} firstName={n.actor?.firstName} lastName={n.actor?.lastName} size={40} />
-      <div className="flex-1">
-        <p className="text-sm text-ink">{label}</p>
-        <p className="text-xs text-muted">{formatDateTime(n.createdAt, locale)}</p>
+      <div className="relative shrink-0">
+        <Avatar src={n.actor?.avatarUrl} firstName={n.actor?.firstName} lastName={n.actor?.lastName} size="md" />
+        <span className="absolute -bottom-1 -right-1 grid h-5 w-5 place-items-center rounded-full bg-surface text-accent shadow-xs ring-2 ring-[var(--bg)]">
+          <TypeIcon size={11} />
+        </span>
       </div>
-      {unread ? <span className="mt-1 h-2 w-2 rounded-full bg-yellow" /> : null}
+      <div className="min-w-0 flex-1">
+        <p className="type-body-sm text-ink">{label}</p>
+        <p className="type-caption mt-0.5 text-muted">{formatDateTime(n.createdAt, locale)}</p>
+      </div>
+      {unread ? <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-accent" /> : null}
     </Link>
   );
 }
