@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { canInteractWithEvent, eventLifecycle } from "@tiptop/domain";
+import { ageCategoryLabel, canInteractWithEvent, eventLifecycle } from "@tiptop/domain";
 import { api, ApiError, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { eventCountdown, formatEventWhen, formatRelative } from "@/lib/time";
@@ -151,8 +151,10 @@ export function EventCard({
               {event.host.certified ? <CertifiedMark /> : null} · {relative}
             </p>
           </div>
-          {event.minAge ? (
-            <span className="type-caption shrink-0 rounded-full bg-danger-soft px-2 py-0.5 font-bold text-danger">-{event.minAge}</span>
+          {ageCategoryLabel(event.minAge) ? (
+            <span className="type-caption shrink-0 rounded-full bg-danger-soft px-2 py-0.5 font-bold text-danger">
+              {ageCategoryLabel(event.minAge)}
+            </span>
           ) : null}
           <IconButton label={messages.social.moreOptions} onClick={() => setOptionsOpen(true)} size={32}>
             <MoreIcon size={15} />

@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { AgeCategoryPicker } from "@/components/AgeCategoryPicker";
 import { CameraIcon, ImageIcon, PlayIcon } from "@/components/Icons";
 import { PrimaryButton, TextInput } from "@/components/ui";
 import { api, type EventCard as EventCardType } from "@/lib/api";
@@ -99,7 +100,7 @@ function Composer() {
   const [startsAt, setStartsAt] = useState("");
   const [priceXaf, setPriceXaf] = useState("0");
   const [capacity, setCapacity] = useState("");
-  const [minAge, setMinAge] = useState("");
+  const [minAge, setMinAge] = useState(0);
   const [requiresReservation, setRequiresReservation] = useState(false);
   const [hours, setHours] = useState("12");
   const [visibility, setVisibility] = useState("ZONE");
@@ -192,7 +193,7 @@ function Composer() {
             startsAt: new Date(startsAt).toISOString(),
             priceXaf: Number(priceXaf) || 0,
             capacity: capacity ? Number(capacity) : undefined,
-            minAge: minAge ? Number(minAge) : undefined,
+            minAge: minAge > 0 ? minAge : undefined,
             requiresReservation,
             imageUrl: imageUrl || undefined,
           }),
@@ -281,7 +282,10 @@ function Composer() {
           <TextInput value={priceXaf} onChange={(e) => setPriceXaf(e.target.value)} type="number" min={0} placeholder={messages.world.eventPrice} />
           <p className="text-xs text-muted">{messages.world.eventPriceHint}</p>
           <TextInput value={capacity} onChange={(e) => setCapacity(e.target.value)} type="number" min={1} placeholder={messages.world.eventCapacity} />
-          <TextInput value={minAge} onChange={(e) => setMinAge(e.target.value)} type="number" min={1} placeholder={messages.world.eventMinAge} />
+          <div>
+            <p className="type-label mb-2 text-subtle">{messages.world.eventMinAge}</p>
+            <AgeCategoryPicker minAge={minAge} onChange={setMinAge} />
+          </div>
           <label className="flex items-center gap-2 text-sm text-ink">
             <input type="checkbox" checked={requiresReservation} onChange={(e) => setRequiresReservation(e.target.checked)} />
             {messages.world.eventReserve}

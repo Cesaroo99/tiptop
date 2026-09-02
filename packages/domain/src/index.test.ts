@@ -5,7 +5,15 @@ import { availableBalance, displayLikeRatio, likeProduction, pickUnitForLike, pl
 import { getLikePack, likeCreditAllowed, LIKE_PACKS, needsLikePurchase } from "../src/wallet";
 import { availabilityUntil, isCurrentlyAvailable } from "../src/availability";
 import { displayLocation, formatApproxDistance, roundDistanceKm } from "../src/location";
-import { canAcceptInvitation, canInteractWithEvent, eventLifecycle, evaluateInvite, moodExpiresAt } from "../src/events";
+import {
+  ageCategoryFromMinAge,
+  ageCategoryLabel,
+  canAcceptInvitation,
+  canInteractWithEvent,
+  eventLifecycle,
+  evaluateInvite,
+  moodExpiresAt,
+} from "../src/events";
 import { canConsumeTicket, canShowQr, isInEntryWindow, signTicketQr, verifyTicketQr } from "../src/tickets";
 import { applyWebhook, mockCharge, reservationAmountXaf } from "../src/payments";
 import { canSendMessage, canStartDirect, directKey, pairIsBlocked, shouldNotifyOffline } from "../src/chat";
@@ -210,6 +218,27 @@ describe("disponibilité", () => {
         availabilityUntil: new Date(Date.now() + 3600_000),
       }),
     ).toBe(false);
+  });
+});
+
+describe("catégories d'âge (#16)", () => {
+  it("associe le seuil le plus proche sans dépasser", () => {
+    expect(ageCategoryFromMinAge(null)).toBe("ALL");
+    expect(ageCategoryFromMinAge(0)).toBe("ALL");
+    expect(ageCategoryFromMinAge(13)).toBe("U13");
+    expect(ageCategoryFromMinAge(15)).toBe("U13");
+    expect(ageCategoryFromMinAge(16)).toBe("U16");
+    expect(ageCategoryFromMinAge(18)).toBe("U18");
+    expect(ageCategoryFromMinAge(21)).toBe("U21");
+    expect(ageCategoryFromMinAge(25)).toBe("U21");
+  });
+
+  it("n’affiche pas de badge pour « tout âge »", () => {
+    expect(ageCategoryLabel(null)).toBeNull();
+    expect(ageCategoryLabel(0)).toBeNull();
+    expect(ageCategoryLabel(13)).toBe("-13");
+    expect(ageCategoryLabel(18)).toBe("18+");
+    expect(ageCategoryLabel(21)).toBe("21+");
   });
 });
 

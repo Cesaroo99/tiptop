@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AgeCategoryPicker } from "@/components/AgeCategoryPicker";
 import { AppShell } from "@/components/AppShell";
 import { ErrorBanner, Field, PrimaryButton, ScreenHeader, TextInput } from "@/components/ui";
 import { api, type EventCard as EventCardType } from "@/lib/api";
@@ -33,7 +34,7 @@ function EditEventView() {
   const [zone, setZone] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [capacity, setCapacity] = useState("");
-  const [minAge, setMinAge] = useState("");
+  const [minAge, setMinAge] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -49,7 +50,7 @@ function EditEventView() {
         setZone(e.zone ?? "");
         setStartsAt(toLocalInputValue(e.startsAt));
         setCapacity(e.capacity ? String(e.capacity) : "");
-        setMinAge(e.minAge ? String(e.minAge) : "");
+        setMinAge(e.minAge ?? 0);
       })
       .catch(() => setError(messages.common.error));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,7 +71,7 @@ function EditEventView() {
           zone,
           startsAt: new Date(startsAt).toISOString(),
           capacity: capacity ? Number(capacity) : undefined,
-          minAge: minAge ? Number(minAge) : undefined,
+          minAge,
         }),
       });
       setSaved(true);
@@ -112,14 +113,12 @@ function EditEventView() {
             <TextInput value={zone} onChange={(e) => setZone(e.target.value)} />
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label={messages.world.eventCapacity}>
-            <TextInput type="number" min={1} value={capacity} onChange={(e) => setCapacity(e.target.value)} />
-          </Field>
-          <Field label={messages.world.eventMinAge}>
-            <TextInput type="number" min={1} value={minAge} onChange={(e) => setMinAge(e.target.value)} />
-          </Field>
-        </div>
+        <Field label={messages.world.eventCapacity}>
+          <TextInput type="number" min={1} value={capacity} onChange={(e) => setCapacity(e.target.value)} />
+        </Field>
+        <Field label={messages.world.eventMinAge}>
+          <AgeCategoryPicker minAge={minAge} onChange={setMinAge} />
+        </Field>
         {error ? <p className="type-body-sm text-danger">{error}</p> : null}
         {saved ? <p className="type-body-sm font-semibold text-success">{messages.account.saved}</p> : null}
         <PrimaryButton loading={saving} onClick={() => void save()}>

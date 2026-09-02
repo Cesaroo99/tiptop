@@ -6,6 +6,7 @@ import { api, ApiError, type FeedItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { eventCountdown, formatRelative } from "@/lib/time";
+import { ageCategoryLabel } from "@tiptop/domain";
 import { Avatar, CertifiedMark } from "./Avatar";
 import { CalendarIcon, CommentIcon, FlagIcon, HeartIcon, LinkIcon, MoreIcon, ShareIcon, SlashIcon, TrashIcon } from "./Icons";
 import { LikeDialogs, likeErrorKind } from "./LikeDialogs";
@@ -167,8 +168,10 @@ export function PostCard({
             {post.zone ? ` - ${post.zone}` : ""}
           </p>
         </div>
-        {event?.minAge ? (
-          <span className="type-caption rounded-full bg-danger-soft px-2 py-0.5 font-bold text-danger">-{event.minAge}</span>
+        {ageCategoryLabel(event?.minAge) ? (
+          <span className="type-caption rounded-full bg-danger-soft px-2 py-0.5 font-bold text-danger">
+            {ageCategoryLabel(event?.minAge)}
+          </span>
         ) : null}
         {!mine ? (
           <button type="button" onClick={() => void follow()} className="type-caption font-semibold text-accent">

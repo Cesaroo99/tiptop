@@ -6,6 +6,39 @@ export const DEFAULT_MOOD_HOURS = 12;
 
 export type InvitationPayer = "HOST" | "GUEST" | "FREE";
 
+/**
+ * Catégories d'âge standardisées pour un événement (#16) : plutôt qu'un champ
+ * numérique libre, l'organisateur choisit parmi des seuils reconnaissables.
+ * La donnée stockée reste un entier simple (`minAge`) — ces catégories ne
+ * sont qu'une présentation cohérente au-dessus, pas un nouveau modèle de
+ * données. « -13 »/« -16 »/« -18 » et « 18+ »/« 21+ » désignent le même
+ * concept (âge minimum requis) ; les seuils dupliqués ont été fusionnés.
+ */
+export const EVENT_AGE_CATEGORIES = [
+  { id: "ALL", minAge: 0, label: "Tout âge" },
+  { id: "U13", minAge: 13, label: "-13" },
+  { id: "U16", minAge: 16, label: "-16" },
+  { id: "U18", minAge: 18, label: "18+" },
+  { id: "U21", minAge: 21, label: "21+" },
+] as const;
+
+export type EventAgeCategoryId = (typeof EVENT_AGE_CATEGORIES)[number]["id"];
+
+export function ageCategoryFromMinAge(minAge: number | null | undefined): EventAgeCategoryId {
+  const value = minAge ?? 0;
+  let best: EventAgeCategoryId = "ALL";
+  for (const c of EVENT_AGE_CATEGORIES) {
+    if (value >= c.minAge) best = c.id;
+  }
+  return best;
+}
+
+export function ageCategoryLabel(minAge: number | null | undefined): string | null {
+  if (!minAge) return null;
+  const cat = EVENT_AGE_CATEGORIES.find((c) => c.id === ageCategoryFromMinAge(minAge));
+  return cat && cat.minAge > 0 ? cat.label : null;
+}
+
 export function ageFromBirthDate(birthDate: Date | null | undefined, now = new Date()): number | null {
   if (!birthDate) return null;
   let age = now.getFullYear() - birthDate.getFullYear();
