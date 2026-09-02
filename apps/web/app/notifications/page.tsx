@@ -31,6 +31,7 @@ const TYPE_ICON: Record<NotifItem["type"], React.ComponentType<{ size?: number; 
   PAYMENT: CheckIcon,
   MESSAGE: MessageIcon,
   REVIEW: CommentIcon,
+  EVENT_UPDATE: CalendarIcon,
 };
 
 export default function NotificationsPage() {
@@ -58,9 +59,17 @@ export default function NotificationsPage() {
     }
     if (n.type === "INVITE") return `${name} ${messages.social.notifInvite}`;
     if (n.type === "TICKET") return `${name} ${messages.social.notifTicket}`;
-    if (n.type === "PAYMENT") return `${name} ${messages.social.notifPayment}`;
+    if (n.type === "PAYMENT") {
+      return n.entityType === "refund" ? messages.social.notifPaymentRefund : `${name} ${messages.social.notifPayment}`;
+    }
     if (n.type === "MESSAGE") return `${name} ${messages.social.notifMessage}`;
     if (n.type === "REVIEW") return `${name} ${messages.social.notifReview}`;
+    if (n.type === "EVENT_UPDATE") {
+      if (n.entityType === "event_cancelled") return messages.social.notifEventCancelled;
+      if (n.entityType === "event_time_changed") return messages.social.notifEventTimeChanged;
+      if (n.entityType === "event_place_changed") return messages.social.notifEventPlaceChanged;
+      return messages.social.notifEventUpdate;
+    }
     return `${name} ${messages.social.notifFollow}`;
   }
 
@@ -70,8 +79,10 @@ export default function NotificationsPage() {
     if (n.type === "SOCIAL_INVITE") return "/invitations";
     if (n.type === "MESSAGE" && n.entityId) return `/messages/${n.entityId}`;
     if (n.type === "REVIEW" && n.entityId) return `/events/${n.entityId}`;
+    if (n.type === "EVENT_UPDATE" && n.entityId) return `/events/${n.entityId}`;
     if (n.type === "TICKET" && n.entityId) return `/tickets/${n.entityId}`;
     if (n.type === "PAYMENT" && n.entityType === "like_purchase") return "/likes";
+    if (n.type === "PAYMENT" && n.entityType === "refund") return "/tickets";
     if (n.type === "TICKET" || n.type === "PAYMENT") return "/tickets";
     if (n.type === "COMMENT" && n.entityType === "mood" && n.entityId) return `/mood/${n.entityId}`;
     if (n.type === "COMMENT" && n.entityId) return `/posts/${n.entityId}`;
