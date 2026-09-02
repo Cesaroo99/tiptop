@@ -55,6 +55,7 @@ function EventDetail() {
         </p>
       </div>
       {event.description ? <p className="type-body leading-6 text-ink">{event.description}</p> : null}
+      <EventMoods eventId={event.id} />
       {event.people?.length ? (
         <section className="rounded-card bg-surface p-4 shadow-card">
           <p className="type-heading text-ink">{messages.world.peopleLinked}</p>
@@ -94,6 +95,58 @@ function EventDetail() {
         </SecondaryButton>
       ) : null}
     </div>
+  );
+}
+
+type EventMood = {
+  id: string;
+  body: string;
+  imageUrl: string | null;
+  activity: string | null;
+  active: boolean;
+  author: { id: string; firstName: string; lastName: string; avatarUrl: string | null };
+};
+
+/** Boucle contenu social ↔ monde réel (#4-6, #46) : ce que les gens vivent/ont vécu ici. */
+function EventMoods({ eventId }: { eventId: string }) {
+  const { messages } = useI18n();
+  const [items, setItems] = useState<EventMood[] | null>(null);
+
+  useEffect(() => {
+    api<{ items: EventMood[] }>(`/events/${eventId}/moods`)
+      .then((d) => setItems(d.items))
+      .catch(() => setItems([]));
+  }, [eventId]);
+
+  if (items === null) return null;
+  if (items.length === 0) return null;
+
+  return (
+    <section>
+      <p className="type-heading mb-2 text-ink">{messages.world.eventMoodsTitle}</p>
+      <div className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
+        {items.map((m) => (
+          <Link
+            key={m.id}
+            href={`/mood/${m.id}`}
+            className="tap-scale w-32 shrink-0 overflow-hidden rounded-card bg-surface shadow-xs transition hover:shadow-sm"
+          >
+            <div className="relative h-40 bg-gradient-to-br from-accent/15 to-yellow/15">
+              {m.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={m.imageUrl} alt="" className="h-full w-full object-cover" />
+              ) : null}
+              {!m.active ? (
+                <span className="type-caption absolute left-1.5 top-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-white">
+                  {messages.world.endedBadge}
+                </span>
+              ) : null}
+            </div>
+            <p className="type-caption truncate p-1.5 text-ink">{m.author.firstName}</p>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 
