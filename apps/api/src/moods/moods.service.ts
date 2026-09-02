@@ -33,7 +33,7 @@ export class MoodsService {
       throw new BadRequestException({ code: "IMAGE_NOT_ALLOWED" });
     }
     let videoUrl = input.videoUrl?.trim() || null;
-    if (videoUrl && !videoUrl.startsWith("/seed/")) {
+    if (videoUrl && !videoUrl.startsWith("/seed/") && !videoUrl.startsWith("/uploads/")) {
       throw new BadRequestException({ code: "VIDEO_NOT_ALLOWED" });
     }
     if (videoUrl) imageUrl = null;

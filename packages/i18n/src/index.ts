@@ -322,6 +322,15 @@ export type Messages = {
     visFollowers: string;
     moodLinkEventNone: string;
     moodPickVideo: string;
+    moodAddVideo: string;
+    videoRecord: string;
+    videoImport: string;
+    videoHint: string;
+    videoTypeError: string;
+    videoTooLarge: string;
+    videoTooLong: string;
+    videoUploading: string;
+    videoUploadError: string;
     visEvent: string;
     moodExpired: string;
     activityPlaceholder: string;
@@ -904,7 +913,16 @@ export const fr: Messages = {
     visZone: "Ma zone",
     visFollowers: "Abonnés",
     moodLinkEventNone: "Associer à un événement (optionnel)",
-    moodPickVideo: "Ou choisis une vidéo courte (optionnel)",
+    moodPickVideo: "Ou choisis un modèle",
+    moodAddVideo: "Vidéo (optionnel)",
+    videoRecord: "Filmer",
+    videoImport: "Importer",
+    videoHint: "Vidéo courte, {seconds} secondes maximum.",
+    videoTypeError: "Ce fichier n'est pas une vidéo.",
+    videoTooLarge: "Cette vidéo est trop volumineuse (60 Mo maximum).",
+    videoTooLong: "Cette vidéo dépasse {seconds} secondes. Choisis un extrait plus court.",
+    videoUploading: "Envoi en cours… {pct}%",
+    videoUploadError: "L'envoi de la vidéo a échoué. Réessaie.",
     visEvent: "Participants d’un event",
     moodExpired: "Ce mood est terminé.",
     activityPlaceholder: "Que fais-tu en ce moment ? (ex. 🍣 Restaurant japonais)",
@@ -1487,7 +1505,16 @@ export const en: Messages = {
     visZone: "My area",
     visFollowers: "Followers",
     moodLinkEventNone: "Link to an event (optional)",
-    moodPickVideo: "Or pick a short video (optional)",
+    moodPickVideo: "Or pick a template",
+    moodAddVideo: "Video (optional)",
+    videoRecord: "Record",
+    videoImport: "Import",
+    videoHint: "Short video, {seconds} seconds max.",
+    videoTypeError: "This file is not a video.",
+    videoTooLarge: "This video is too large (60 MB max).",
+    videoTooLong: "This video is longer than {seconds} seconds. Pick a shorter clip.",
+    videoUploading: "Uploading… {pct}%",
+    videoUploadError: "The video upload failed. Please try again.",
     visEvent: "Event guests",
     moodExpired: "This mood ended.",
     activityPlaceholder: "What are you up to right now? (e.g. 🍣 Sushi place)",

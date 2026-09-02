@@ -154,6 +154,24 @@ export function SparklesIcon({ size = 17, className }: IconProps) {
   );
 }
 
+export function CameraIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h1.6l1-1.6A1.5 1.5 0 0 1 9.4 4.6h5.2a1.5 1.5 0 0 1 1.3.8l1 1.6h1.6A1.5 1.5 0 0 1 20 8.5V18a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18Z" />
+      <circle cx="12" cy="13" r="3.4" />
+    </svg>
+  );
+}
+
+export function VideoIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <rect x="3" y="6" width="13" height="12" rx="2.2" />
+      <path d="M16 10.5 21 7.5v9L16 13.5Z" />
+    </svg>
+  );
+}
+
 export function PlayIcon({ size = 14, className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>

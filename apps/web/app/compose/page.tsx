@@ -1,12 +1,58 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { CameraIcon, ImageIcon, PlayIcon } from "@/components/Icons";
 import { PrimaryButton, TextInput } from "@/components/ui";
 import { api, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
+
+const MAX_VIDEO_SECONDS = 90;
+const MAX_VIDEO_BYTES = 60 * 1024 * 1024;
+
+function readVideoDuration(file: File): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      URL.revokeObjectURL(video.src);
+      resolve(video.duration);
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(video.src);
+      reject(new Error("VIDEO_READ_ERROR"));
+    };
+    video.src = URL.createObjectURL(file);
+  });
+}
+
+function uploadVideo(file: File, onProgress: (pct: number) => void): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/upload/video");
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          resolve(data.url as string);
+        } catch {
+          reject(new Error("UPLOAD_PARSE_ERROR"));
+        }
+      } else {
+        reject(new Error("UPLOAD_FAILED"));
+      }
+    };
+    xhr.onerror = () => reject(new Error("UPLOAD_FAILED"));
+    const form = new FormData();
+    form.append("file", file);
+    xhr.send(form);
+  });
+}
 
 const MOOD_VIDEOS = [
   { id: "concert", label: "Concert", src: "/seed/moods/video-concert.mp4" },
@@ -40,6 +86,12 @@ function Composer() {
   const [zone, setZone] = useState(user?.zone ?? "Carrefour Damas");
   const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState("");
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const captureInputRef = useRef<HTMLInputElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [venue, setVenue] = useState("");
   const [startsAt, setStartsAt] = useState("");
@@ -62,6 +114,49 @@ function Composer() {
       .catch(() => setMyEvents([]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind]);
+
+  useEffect(() => {
+    // Libère l'URL locale de prévisualisation dès qu'elle n'est plus utilisée.
+    return () => {
+      if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+    };
+  }, [videoPreviewUrl]);
+
+  function clearVideoSelection() {
+    if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+    setVideoFile(null);
+    setVideoPreviewUrl("");
+    setVideoUrl("");
+    setVideoError(null);
+  }
+
+  async function onVideoFileSelected(file: File | undefined) {
+    if (!file) return;
+    setVideoError(null);
+    if (!file.type.startsWith("video/")) {
+      setVideoError(messages.world.videoTypeError);
+      return;
+    }
+    if (file.size > MAX_VIDEO_BYTES) {
+      setVideoError(messages.world.videoTooLarge);
+      return;
+    }
+    try {
+      const duration = await readVideoDuration(file);
+      if (duration > MAX_VIDEO_SECONDS) {
+        setVideoError(messages.world.videoTooLong.replace("{seconds}", String(MAX_VIDEO_SECONDS)));
+        return;
+      }
+    } catch {
+      // Certains navigateurs ne fournissent pas toujours la durée exacte — on n'empêche pas
+      // la publication pour autant, la limite de taille reste le garde-fou principal.
+    }
+    if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+    setImageUrl("");
+    setVideoUrl("");
+    setVideoFile(file);
+    setVideoPreviewUrl(URL.createObjectURL(file));
+  }
 
   async function publish() {
     setLoading(true);
@@ -97,12 +192,25 @@ function Composer() {
         });
         router.replace("/events");
       } else {
+        let finalVideoUrl = videoUrl;
+        if (videoFile) {
+          setUploadProgress(0);
+          try {
+            finalVideoUrl = await uploadVideo(videoFile, setUploadProgress);
+          } catch {
+            setError(messages.world.videoUploadError);
+            setUploadProgress(null);
+            setLoading(false);
+            return;
+          }
+          setUploadProgress(null);
+        }
         await api("/moods", {
           method: "POST",
           body: JSON.stringify({
             body,
-            imageUrl: videoUrl ? undefined : imageUrl || undefined,
-            videoUrl: videoUrl || undefined,
+            imageUrl: finalVideoUrl ? undefined : imageUrl || undefined,
+            videoUrl: finalVideoUrl || undefined,
             activity: activity || undefined,
             hours: Number(hours) || 12,
             visibility,
@@ -125,7 +233,7 @@ function Composer() {
       ? Boolean(body.trim())
       : kind === "event"
         ? Boolean(title.trim() && startsAt)
-        : Boolean(body.trim() || imageUrl || videoUrl || activity.trim());
+        : Boolean(body.trim() || imageUrl || videoUrl || videoFile || activity.trim());
 
   return (
     <div className="px-4 py-4">
@@ -210,25 +318,103 @@ function Composer() {
             ))}
           </select>
         ) : null}
-        <div>
-          <p className="type-label mb-2 text-subtle">{messages.world.moodPickVideo}</p>
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {MOOD_VIDEOS.map((v) => (
+        <div className="rounded-2xl border border-dashed border-[var(--border)] p-3">
+          <p className="type-label mb-2 text-subtle">{messages.world.moodAddVideo}</p>
+          {videoPreviewUrl || videoUrl ? (
+            <div className="relative overflow-hidden rounded-xl">
+              <video
+                key={videoPreviewUrl || videoUrl}
+                src={videoPreviewUrl || videoUrl}
+                controls
+                muted
+                playsInline
+                className="h-56 w-full bg-black object-contain"
+              />
               <button
-                key={v.id}
                 type="button"
-                onClick={() => {
-                  setVideoUrl((cur) => (cur === v.src ? "" : v.src));
-                  setImageUrl("");
-                }}
-                className={`relative h-24 w-16 shrink-0 overflow-hidden rounded-xl ring-2 transition ${videoUrl === v.src ? "ring-accent" : "ring-transparent"}`}
+                onClick={clearVideoSelection}
+                className="tap-scale absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/55 text-white"
+                aria-label={messages.common.close}
               >
-                <video src={v.src} muted playsInline preload="metadata" className="h-full w-full object-cover" />
-                <span className="absolute inset-0 bg-black/25" />
-                <span className="type-caption absolute inset-x-0 bottom-1 text-center font-semibold text-white drop-shadow">{v.label}</span>
+                ×
               </button>
-            ))}
-          </div>
+              {uploadProgress != null ? (
+                <div className="absolute inset-x-0 bottom-0 bg-black/60 px-3 py-2">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/25">
+                    <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${uploadProgress}%` }} />
+                  </div>
+                  <p className="type-caption mt-1 text-white">{messages.world.videoUploading.replace("{pct}", String(uploadProgress))}</p>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => captureInputRef.current?.click()}
+                className="tap-scale flex flex-1 flex-col items-center gap-1.5 rounded-xl bg-surface-sunken py-4 text-ink"
+              >
+                <CameraIcon size={20} />
+                <span className="type-caption font-semibold">{messages.world.videoRecord}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => importInputRef.current?.click()}
+                className="tap-scale flex flex-1 flex-col items-center gap-1.5 rounded-xl bg-surface-sunken py-4 text-ink"
+              >
+                <ImageIcon size={20} />
+                <span className="type-caption font-semibold">{messages.world.videoImport}</span>
+              </button>
+            </div>
+          )}
+          <input
+            ref={captureInputRef}
+            type="file"
+            accept="video/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => {
+              void onVideoFileSelected(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+          <input
+            ref={importInputRef}
+            type="file"
+            accept="video/*"
+            className="hidden"
+            onChange={(e) => {
+              void onVideoFileSelected(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+          {videoError ? <p className="type-caption mt-2 text-danger">{videoError}</p> : null}
+          <p className="type-caption mt-2 text-subtle">{messages.world.videoHint.replace("{seconds}", String(MAX_VIDEO_SECONDS))}</p>
+
+          {!videoPreviewUrl && !videoFile ? (
+            <div className="mt-3">
+              <p className="type-caption mb-2 text-subtle">{messages.world.moodPickVideo}</p>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {MOOD_VIDEOS.map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => {
+                      setVideoUrl((cur) => (cur === v.src ? "" : v.src));
+                      setImageUrl("");
+                    }}
+                    className={`relative h-20 w-14 shrink-0 overflow-hidden rounded-lg ring-2 transition ${videoUrl === v.src ? "ring-accent" : "ring-transparent"}`}
+                  >
+                    <video src={v.src} muted playsInline preload="metadata" className="h-full w-full object-cover" />
+                    <span className="absolute inset-0 bg-black/25" />
+                    <span className="type-caption absolute inset-x-0 bottom-0.5 flex items-center justify-center gap-0.5 text-center font-semibold text-white drop-shadow">
+                      <PlayIcon size={8} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
         </div>
       ) : null}
@@ -239,7 +425,7 @@ function Composer() {
         </div>
       ) : null}
       <div className="mt-4 space-y-3 border-t border-[var(--border)] pt-3">
-        {kind !== "mood" || !videoUrl ? (
+        {kind !== "mood" || (!videoUrl && !videoFile) ? (
           <button
             type="button"
             className="flex w-full items-center gap-2 py-2 text-left text-ink"
