@@ -106,6 +106,26 @@ non implémentés** dans cette itération, avec justification :
   commentaires, lien vers événement), écran de gestion (titre/date/statut, modifier,
   dupliquer, annuler avec confirmation), boucle Mood ↔ Événement dans les deux sens.
 
+## 7bis. Deuxième passe — fidélité à la charte graphique et à la maquette réelle
+
+Une charte graphique (logo + couleurs) et un dossier de maquettes réelles (`docs/mockups/*.pdf`,
+captures d'écran de l'app cible) ont été fournis/retrouvés. Comparaison avec l'état livré :
+
+| Élément | Constat | Correction |
+|---|---|---|
+| Couleurs de marque | Les tokens `--primary`/`--yellow` étaient des **approximations** (`#00baf2`, `#d4de4a`) assez éloignées des valeurs exactes de la charte (`#05C7F2`, `#F2E205`, `#0D0D0D`) | → Tokens réalignés exactement sur la charte, light et dark mode |
+| Logo | `Logo.tsx` dessinait une **reconstruction SVG à la main** du logo (formes/dégradé approximatifs), jamais le vrai visuel | → Extraction du logo réel depuis la charte (icône seule + lockup avec wordmark), transparisé, utilisé partout via `<img>` |
+| Barre de navigation basse | Le bouton « Ajouter » était un **FAB circulaire surélevé** au-dessus de la barre — absent de la maquette, qui montre 5 icônes de même gabarit alignées | → FAB retiré, 5 items identiques (Home / Mood / Add post / Amies / Events), fidèle à la maquette |
+| Mood → aperçus dans le reste de l'app | Les avatars de mood du carrousel d'accueil, la grille de moods du profil, les résultats de recherche, les notifications et le rail « Moods de cet événement » ouvraient chacun une **page isolée** (`/mood/:id`) | → Toutes ces entrées ouvrent désormais le flux vertical continu (`/mood?start=:id`), avec défilement automatique jusqu'au mood visé — cohérent avec l'expérience « vidéos en continu » demandée |
+| Pipeline de création vidéo | Le Mood vidéo ne proposait que 4 clips pré-enregistrés (pas de vraie capture/upload) | → Vrai pipeline façon TikTok : `POST /upload/video` (Next.js Route Handler, stockage `public/uploads/moods/`), boutons **Filmer** (caméra device) et **Importer** (galerie), aperçu instantané, contrôle de durée/taille côté client, barre de progression d'envoi réelle. Les 4 clips modèles restent une alternative rapide, pas la seule option. |
+
+Points de la maquette **non repris pixel-pour-pixel** dans cette passe (périmètre trop large
+pour un seul cycle sans casser l'existant) : structure exacte des cartes du fil (icônes
+« coup de cœur / commentaire / réserver / voix » alignées horizontalement avec compteurs par
+carte, ex. `3.4k Commentaires · 46 Partages`), tag de compagnon « avec X » sur un Mood,
+attribution « Audio · Original ». Ces éléments sont documentés ici pour une itération dédiée
+plutôt que d'être improvisés.
+
 ## 7. Suivi recommandé (prochaines itérations, non bloquant)
 
 1. Notifications proactives planifiées (bientôt / a commencé) via un scheduler dédié.
