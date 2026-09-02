@@ -9,7 +9,14 @@ import { DesktopRail } from "./DesktopRail";
 import { Skeleton } from "./ui";
 import { LikeMilestoneCelebration } from "./LikeMilestoneCelebration";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  fullBleed = false,
+}: {
+  children: React.ReactNode;
+  /** Écran plein cadre sans header (ex. flux Mood vertical immersif, #4). Nav reste accessible en overlay. */
+  fullBleed?: boolean;
+}) {
   const { user, loading } = useSession();
   const router = useRouter();
 
@@ -30,6 +37,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const location = [user.city, user.zone].filter(Boolean).join(" - ");
+
+  if (fullBleed) {
+    return (
+      <div className="mx-auto flex h-dvh max-w-6xl xl:max-w-7xl">
+        <SideNav />
+        <div className="relative mx-auto h-dvh w-full max-w-lg overflow-hidden md:border-x md:border-divider">
+          <main className="h-full">{children}</main>
+          <LikeMilestoneCelebration />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/70 to-transparent pt-10">
+            <div className="pointer-events-auto">
+              <BottomNav />
+            </div>
+          </div>
+        </div>
+        <DesktopRail />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-6xl xl:max-w-7xl">

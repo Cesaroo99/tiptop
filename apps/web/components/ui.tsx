@@ -1,6 +1,8 @@
 "use client";
 
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { ArrowLeftIcon, ChevronRightIcon, CloseIcon } from "./Icons";
 
 /** Bouton d'action principale — un seul par écran/carte (#18, #56). */
@@ -323,8 +325,14 @@ export function Modal({
   confirmLabel?: string;
   danger?: boolean;
 }) {
-  if (!open) return null;
-  return (
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!open || !mounted) return null;
+  // Portail vers document.body : une modale ne doit jamais rester piégée par un
+  // ancêtre positionné/avec filtre (ex. flux Mood plein cadre, #4) qui casserait
+  // son overlay plein écran.
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-[var(--scrim)] p-0 sm:items-center sm:p-4"
       role="dialog"
@@ -367,6 +375,7 @@ export function Modal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

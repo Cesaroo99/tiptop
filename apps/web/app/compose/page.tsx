@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PrimaryButton, TextInput } from "@/components/ui";
-import { api } from "@/lib/api";
+import { api, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 
@@ -42,8 +42,18 @@ function Composer() {
   const [hours, setHours] = useState("12");
   const [visibility, setVisibility] = useState("ZONE");
   const [activity, setActivity] = useState("");
+  const [eventId, setEventId] = useState("");
+  const [myEvents, setMyEvents] = useState<EventCardType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (kind !== "mood") return;
+    api<{ items: EventCardType[] }>("/events?tab=mine")
+      .then((d) => setMyEvents(d.items.filter((e) => e.status !== "CANCELLED")))
+      .catch(() => setMyEvents([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kind]);
 
   async function publish() {
     setLoading(true);
@@ -89,6 +99,7 @@ function Composer() {
             visibility,
             city: withLoc ? city : undefined,
             zone: withLoc ? zone : undefined,
+            eventId: eventId || undefined,
           }),
         });
         router.replace("/mood");
@@ -176,6 +187,20 @@ function Composer() {
             <option value="FOLLOWERS">{messages.world.visFollowers}</option>
           </select>
         </div>
+        {myEvents.length > 0 ? (
+          <select
+            value={eventId}
+            onChange={(e) => setEventId(e.target.value)}
+            className="w-full rounded-2xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-ink"
+          >
+            <option value="">{messages.world.moodLinkEventNone}</option>
+            {myEvents.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.title}
+              </option>
+            ))}
+          </select>
+        ) : null}
         </div>
       ) : null}
       {kind !== "mood" || withLoc ? (
