@@ -38,6 +38,7 @@ export type EventCard = {
   minAge: number | null;
   requiresReservation: boolean;
   status: string;
+  phase?: "upcoming" | "startingSoon" | "ongoing" | "ended" | "cancelled";
   hearts: number;
   viewerHearted: boolean;
   viewerInterested: boolean;
@@ -216,7 +217,8 @@ export type NotifItem = {
     | "REVIEW"
     | "WISH_OFFER"
     | "LIKE_MILESTONE"
-    | "SOCIAL_INVITE";
+    | "SOCIAL_INVITE"
+    | "EVENT_UPDATE";
   entityType: string | null;
   entityId: string | null;
   read: boolean;

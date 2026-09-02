@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { eventLifecycle } from "@tiptop/domain";
+import { canInteractWithEvent, eventLifecycle } from "@tiptop/domain";
 import { api, ApiError, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { eventCountdown, formatEventWhen, formatRelative } from "@/lib/time";
@@ -72,16 +72,30 @@ export function EventCard({
   const price = event.priceXaf > 0 ? messages.world.paid.replace("{amount}", String(event.priceXaf)) : messages.world.free;
   const countdown = eventCountdown(event.startsAt);
   const relative = formatRelative(event.createdAt ?? event.startsAt, messages.social);
-  const lifecycle = eventLifecycle(new Date(event.startsAt), event.endsAt ? new Date(event.endsAt) : null);
+  const lifecycle = eventLifecycle(
+    new Date(event.startsAt),
+    event.endsAt ? new Date(event.endsAt) : null,
+    new Date(),
+    event.status,
+  );
+  const interactive = canInteractWithEvent(lifecycle.phase);
 
   const phaseBadge =
-    lifecycle.phase === "ongoing" ? (
+    lifecycle.phase === "cancelled" ? (
+      <span className="type-caption rounded-pill bg-danger px-3 py-1.5 font-bold text-white shadow-sm">
+        {messages.world.cancelledBadge}
+      </span>
+    ) : lifecycle.phase === "ongoing" ? (
       <span className="type-caption inline-flex items-center gap-1 rounded-pill bg-success px-3 py-1.5 font-bold text-white shadow-sm">
         <span className="h-1.5 w-1.5 rounded-full bg-white" /> {messages.world.ongoingBadge}
       </span>
     ) : lifecycle.phase === "ended" ? (
       <span className="type-caption rounded-pill bg-black/55 px-3 py-1.5 font-bold text-white backdrop-blur-sm">
         {messages.world.endedBadge}
+      </span>
+    ) : lifecycle.phase === "startingSoon" ? (
+      <span className="type-caption inline-flex items-center gap-1 rounded-pill bg-yellow px-3 py-1.5 font-bold text-ink shadow-sm">
+        {messages.world.startingSoonBadge}
       </span>
     ) : countdown ? (
       <span className="type-caption rounded-pill bg-yellow px-3 py-1.5 font-bold text-ink shadow-sm">
@@ -145,12 +159,19 @@ export function EventCard({
         <p className="type-caption mt-2 text-muted">
           {event.reservedCount ?? event.taken} {messages.world.reservationsCount} · {event.interestedCount ?? 0} {messages.world.interestedCount} · {event.hearts} {messages.world.heartEvent.toLowerCase()}
         </p>
+        {lifecycle.phase === "cancelled" ? (
+          <p className="type-body-sm mt-3 rounded-lg bg-danger-soft px-3 py-2.5 font-semibold text-danger">
+            {messages.world.cancelledBody}
+          </p>
+        ) : null}
 
         <div className="mt-4 flex items-center gap-2">
           <IconButton
             label={messages.world.heartEvent}
             tone={event.viewerHearted ? "accent" : "neutral"}
-            onClick={() => void heart(false)}
+            disabled={!interactive}
+            onClick={() => interactive && void heart(false)}
+            className={!interactive ? "opacity-40" : undefined}
           >
             <HeartIcon size={17} filled={event.viewerHearted} />
           </IconButton>
@@ -158,7 +179,7 @@ export function EventCard({
             <ShareIcon size={15} />
           </IconButton>
           <div className="ml-auto flex items-center gap-2">
-            {!event.isHost && !event.canBook ? (
+            {!event.isHost && !event.canBook && interactive ? (
               <button
                 type="button"
                 onClick={() => void interested()}

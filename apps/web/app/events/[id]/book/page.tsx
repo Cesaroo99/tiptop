@@ -46,6 +46,7 @@ function BookSheet() {
     } catch (e) {
       if (e instanceof ApiError && e.code === "EVENT_FULL") setError(messages.booking.full);
       else if (e instanceof ApiError && e.code === "ALREADY_IN") router.replace("/tickets");
+      else if (e instanceof ApiError && e.code === "AGE_RESTRICTED") setError(messages.booking.ageRestrictedError);
       else setError(messages.common.error);
     } finally {
       setLoading(false);
@@ -67,6 +68,11 @@ function BookSheet() {
           {amount > 0 ? messages.booking.amount.replace("{amount}", String(amount)) : messages.world.free}
         </p>
       </div>
+      {event?.minAge ? (
+        <p className="mt-3 rounded-lg bg-danger-soft px-3 py-2.5 text-sm font-semibold text-danger">
+          {messages.booking.ageRestrictedNotice.replace("{age}", String(event.minAge))}
+        </p>
+      ) : null}
       {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
       <div className="mt-6">
         <PrimaryButton loading={loading} onClick={() => void book()}>

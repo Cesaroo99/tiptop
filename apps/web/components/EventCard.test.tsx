@@ -80,4 +80,27 @@ describe("EventCard (#23-25)", () => {
     );
     expect(screen.getByText("Terminé")).toBeInTheDocument();
   });
+
+  it("annulé : aucun CTA de réservation/intérêt, message explicite (#8, #14)", () => {
+    const cancelled = { ...baseEvent, status: "CANCELLED" };
+    render(
+      <TestI18nProvider>
+        <EventCard event={cancelled} />
+      </TestI18nProvider>,
+    );
+    expect(screen.getByText("Annulé")).toBeInTheDocument();
+    expect(screen.queryByText("Intéressé")).not.toBeInTheDocument();
+    expect(screen.queryByText("Réserver")).not.toBeInTheDocument();
+    expect(screen.getByText(/a été annulé par l’organisateur/)).toBeInTheDocument();
+  });
+
+  it("bientôt : badge « Commence bientôt » dans les 30 dernières minutes (#7-8)", () => {
+    const soon = { ...baseEvent, startsAt: new Date(Date.now() + 10 * 60_000).toISOString() };
+    render(
+      <TestI18nProvider>
+        <EventCard event={soon} />
+      </TestI18nProvider>,
+    );
+    expect(screen.getByText("Commence bientôt")).toBeInTheDocument();
+  });
 });
