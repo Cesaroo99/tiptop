@@ -7,8 +7,10 @@ import { api, ApiError, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { eventCountdown, formatEventWhen, formatRelative } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
-import { HeartIcon, PinIcon, ShareIcon } from "./Icons";
+import { FlagIcon, HeartIcon, LinkIcon, MoreIcon, PinIcon, ShareIcon } from "./Icons";
 import { MapThumb } from "./MapThumb";
+import { OptionsSheet } from "./OptionsSheet";
+import { ReportModal } from "./ReportModal";
 import { IconButton, Modal } from "./ui";
 
 export function EventCard({
@@ -21,6 +23,8 @@ export function EventCard({
   const { locale, messages } = useI18n();
   const [transfer, setTransfer] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   async function heart(confirmTransfer = false) {
     try {
@@ -67,6 +71,12 @@ export function EventCard({
       await navigator.clipboard.writeText(url);
       setCopied(true);
     }
+  }
+
+  async function copyLink() {
+    await navigator.clipboard.writeText(`${window.location.origin}/events/${event.id}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
   }
 
   const price = event.priceXaf > 0 ? messages.world.paid.replace("{amount}", String(event.priceXaf)) : messages.world.free;
@@ -144,6 +154,9 @@ export function EventCard({
           {event.minAge ? (
             <span className="type-caption shrink-0 rounded-full bg-danger-soft px-2 py-0.5 font-bold text-danger">-{event.minAge}</span>
           ) : null}
+          <IconButton label={messages.social.moreOptions} onClick={() => setOptionsOpen(true)} size={32}>
+            <MoreIcon size={15} />
+          </IconButton>
         </div>
         <p className="type-body-sm mt-3 inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 text-ink">
           <span className="font-semibold">{formatEventWhen(event.startsAt, locale)}</span>
@@ -216,6 +229,17 @@ export function EventCard({
       >
         {messages.world.heartTransferBody.replace("{title}", transfer ?? "")}
       </Modal>
+      <OptionsSheet
+        open={optionsOpen}
+        onClose={() => setOptionsOpen(false)}
+        actions={[
+          { key: "copy", label: messages.social.copyLink, icon: <LinkIcon size={17} />, onClick: () => void copyLink() },
+          ...(event.isHost
+            ? []
+            : [{ key: "report", label: messages.admin.report, icon: <FlagIcon size={15} />, onClick: () => setReportOpen(true) }]),
+        ]}
+      />
+      <ReportModal open={reportOpen} kind="EVENT" eventId={event.id} onClose={() => setReportOpen(false)} />
     </article>
   );
 }

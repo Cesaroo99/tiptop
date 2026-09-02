@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { LikesService } from "../likes/likes.service";
@@ -217,6 +217,17 @@ export class PostsService {
       include: POST_INCLUDE,
     });
     return this.decorate(viewerId, posts);
+  }
+
+  /** Suppression par l'auteur (#20). Une publication liée à un événement se gère
+   * depuis l'événement (modifier/annuler), pas via une suppression directe du post. */
+  async delete(authorId: string, postId: string) {
+    const post = await this.prisma.post.findUnique({ where: { id: postId } });
+    if (!post) throw new NotFoundException({ code: "POST_NOT_FOUND" });
+    if (post.authorId !== authorId) throw new ForbiddenException({ code: "NOT_AUTHOR" });
+    if (post.eventId) throw new BadRequestException({ code: "POST_LINKED_TO_EVENT" });
+    await this.prisma.post.delete({ where: { id: postId } });
+    return { ok: true };
   }
 
   async comments(postId: string, viewerId: string) {

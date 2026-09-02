@@ -7,10 +7,12 @@ import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { eventCountdown, formatRelative } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
-import { CalendarIcon, CommentIcon, HeartIcon, ShareIcon } from "./Icons";
+import { CalendarIcon, CommentIcon, FlagIcon, HeartIcon, LinkIcon, MoreIcon, ShareIcon, SlashIcon, TrashIcon } from "./Icons";
 import { LikeDialogs, likeErrorKind } from "./LikeDialogs";
 import { LikeTimeBadge } from "./LikeTimeBadge";
 import { MapThumb } from "./MapThumb";
+import { OptionsSheet } from "./OptionsSheet";
+import { ReportModal } from "./ReportModal";
 import { IconButton, Modal } from "./ui";
 
 export function PostCard({
@@ -27,6 +29,11 @@ export function PostCard({
   const [buy, setBuy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [loadedAt] = useState(() => Date.now());
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleted, setDeleted] = useState(false);
   const mine = user?.id === post.author.id;
   const event = post.event;
   const countdown = event ? eventCountdown(event.startsAt) : null;
@@ -93,8 +100,12 @@ export function PostCard({
     }
   }
 
+  function postUrl() {
+    return `${window.location.origin}${event ? `/events/${event.id}` : `/posts/${post.id}`}`;
+  }
+
   async function share() {
-    const url = `${window.location.origin}${event ? `/events/${event.id}` : `/posts/${post.id}`}`;
+    const url = postUrl();
     try {
       if (navigator.share) await navigator.share({ title: "TipTop", url });
       else {
@@ -106,6 +117,30 @@ export function PostCard({
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 1600);
+    }
+  }
+
+  async function copyLink() {
+    await navigator.clipboard.writeText(postUrl());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
+  }
+
+  async function blockAuthor() {
+    await api(`/users/${post.author.id}/block`, { method: "POST" });
+  }
+
+  async function deletePost() {
+    try {
+      await api(`/posts/${post.id}`, { method: "DELETE" });
+      setDeleted(true);
+      setDeleteOpen(false);
+    } catch (e) {
+      setDeleteError(
+        e instanceof ApiError && e.code === "POST_LINKED_TO_EVENT"
+          ? messages.social.deletePostLinkedToEvent
+          : messages.common.error,
+      );
     }
   }
 
@@ -143,7 +178,14 @@ export function PostCard({
         <IconButton label={messages.social.share} onClick={() => void share()} size={36}>
           <ShareIcon size={15} />
         </IconButton>
+        <IconButton label={messages.social.moreOptions} onClick={() => setOptionsOpen(true)} size={36}>
+          <MoreIcon size={16} />
+        </IconButton>
       </div>
+      {deleted ? (
+        <p className="type-body-sm mt-3 text-muted">{messages.social.postDeleted}</p>
+      ) : (
+        <>
       <p className="type-body mt-3 text-ink">{post.body}</p>
       {post.imageUrl ? (
         <div className="relative mt-3">
@@ -193,6 +235,8 @@ export function PostCard({
         ) : null}
       </div>
       {copied ? <p className="type-caption mt-2 text-accent">{messages.social.copied}</p> : null}
+      </>
+      )}
       <LikeDialogs
         transferName={transfer?.name ?? null}
         buyOpen={buy}
@@ -202,6 +246,30 @@ export function PostCard({
       />
       <Modal open={Boolean(soon)} title={messages.social.likePerson} onClose={() => setSoon(null)}>
         {soon}
+      </Modal>
+      <OptionsSheet
+        open={optionsOpen}
+        onClose={() => setOptionsOpen(false)}
+        actions={
+          mine
+            ? [{ key: "delete", label: messages.social.deletePost, icon: <TrashIcon size={17} />, onClick: () => setDeleteOpen(true), danger: true }]
+            : [
+                { key: "copy", label: messages.social.copyLink, icon: <LinkIcon size={17} />, onClick: () => void copyLink() },
+                { key: "report", label: messages.admin.report, icon: <FlagIcon size={15} />, onClick: () => setReportOpen(true) },
+                { key: "block", label: messages.social.blockUser, icon: <SlashIcon size={16} />, onClick: () => void blockAuthor(), danger: true },
+              ]
+        }
+      />
+      <ReportModal open={reportOpen} kind="POST" postId={post.id} onClose={() => setReportOpen(false)} />
+      <Modal
+        open={deleteOpen}
+        title={messages.social.deletePost}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={() => void deletePost()}
+        confirmLabel={messages.common.confirm}
+        danger
+      >
+        {deleteError ?? messages.social.deletePostConfirm}
       </Modal>
     </article>
   );

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Post, Req, UseGuards } from "@nestjs/common";
 import { IsOptional, IsString, MaxLength } from "class-validator";
 import type { Request } from "express";
 import { SessionGuard } from "../auth/session.guard";
@@ -56,5 +56,10 @@ export class PostsController {
   @Get(":id")
   get(@Req() req: Request & { user: PublicUser }, @Param("id") id: string) {
     return this.posts.get(req.user.id, id);
+  }
+
+  @Delete(":id")
+  remove(@Req() req: Request & { user: PublicUser }, @Param("id") id: string) {
+    return this.posts.delete(req.user.id, id);
   }
 }

@@ -160,6 +160,12 @@ export type Messages = {
     share: string;
     copied: string;
     copyLink: string;
+    moreOptions: string;
+    blockUser: string;
+    deletePost: string;
+    deletePostConfirm: string;
+    deletePostLinkedToEvent: string;
+    postDeleted: string;
     justNow: string;
     minutesAgo: string;
     hoursAgo: string;
@@ -759,6 +765,12 @@ export const fr: Messages = {
     share: "Partager",
     copied: "Lien copié",
     copyLink: "Copier le lien",
+    moreOptions: "Plus d'options",
+    blockUser: "Bloquer cette personne",
+    deletePost: "Supprimer la publication",
+    deletePostConfirm: "Cette publication sera définitivement supprimée. Cette action est irréversible.",
+    deletePostLinkedToEvent: "Cette publication est liée à un événement — gère-la depuis l'écran de gestion de l'événement.",
+    postDeleted: "Cette publication a été supprimée.",
     justNow: "À l’instant",
     minutesAgo: "Il y a {n} min",
     hoursAgo: "Il y a {n} heures",
@@ -1358,6 +1370,12 @@ export const en: Messages = {
     share: "Share",
     copied: "Link copied",
     copyLink: "Copy link",
+    moreOptions: "More options",
+    blockUser: "Block this person",
+    deletePost: "Delete post",
+    deletePostConfirm: "This post will be permanently deleted. This action cannot be undone.",
+    deletePostLinkedToEvent: "This post is linked to an event — manage it from the event's management screen.",
+    postDeleted: "This post has been deleted.",
     justNow: "Just now",
     minutesAgo: "{n} min ago",
     hoursAgo: "{n} hours ago",
