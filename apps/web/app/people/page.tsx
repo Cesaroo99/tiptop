@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
@@ -34,6 +34,10 @@ function PeopleCarousel() {
   const [maxKm, setMaxKm] = useState("");
   const [profession, setProfession] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [dragX, setDragX] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragStart = useRef<{ x: number; id: number } | null>(null);
+  const SWIPE_THRESHOLD = 90;
 
   async function load() {
     try {
@@ -76,6 +80,34 @@ function PeopleCarousel() {
   const prev = items[index - 1];
   const next = items[index + 1];
   const available = Boolean(person.available);
+
+  const count = items.length;
+  function goNext() {
+    setIndex((i) => Math.min(count - 1, i + 1));
+  }
+  function goPrev() {
+    setIndex((i) => Math.max(0, i - 1));
+  }
+
+  function onPointerDown(e: React.PointerEvent<HTMLElement>) {
+    e.preventDefault();
+    dragStart.current = { x: e.clientX, id: e.pointerId };
+    setDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+  function onPointerMove(e: React.PointerEvent<HTMLElement>) {
+    if (!dragStart.current || dragStart.current.id !== e.pointerId) return;
+    setDragX(e.clientX - dragStart.current.x);
+  }
+  function onPointerEnd(e: React.PointerEvent<HTMLElement>) {
+    if (!dragStart.current || dragStart.current.id !== e.pointerId) return;
+    const dx = e.clientX - dragStart.current.x;
+    dragStart.current = null;
+    setDragging(false);
+    if (dx <= -SWIPE_THRESHOLD && index < count - 1) goNext();
+    else if (dx >= SWIPE_THRESHOLD && index > 0) goPrev();
+    setDragX(0);
+  }
 
   return (
     <div className="px-4 py-4">
@@ -123,11 +155,31 @@ function PeopleCarousel() {
             ) : null}
           </div>
         ) : null}
-        <article className="fade-in overflow-hidden rounded-[28px] bg-surface shadow-elevated">
+        <article
+          className="fade-in touch-pan-y select-none overflow-hidden rounded-[28px] bg-surface shadow-elevated"
+          style={{
+            transform: `translateX(${dragX}px) rotate(${dragX / 24}deg)`,
+            transition: dragging ? "none" : "transform 220ms var(--ease-standard)",
+          }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerEnd}
+          onPointerCancel={onPointerEnd}
+          onDragStart={(e) => e.preventDefault()}
+        >
+          {dragX <= -40 ? (
+            <span className="type-label absolute left-1/2 top-6 z-10 -translate-x-1/2 rounded-pill bg-ink/70 px-3 py-1.5 text-white">
+              {messages.world.passPerson}
+            </span>
+          ) : dragX >= 40 && prev ? (
+            <span className="type-label absolute left-1/2 top-6 z-10 -translate-x-1/2 rounded-pill bg-accent/80 px-3 py-1.5 text-white">
+              {messages.world.previousPerson}
+            </span>
+          ) : null}
           <div className="relative h-80 bg-gradient-to-br from-accent/15 to-yellow/15">
             {person.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={person.avatarUrl} alt="" className="h-full w-full object-cover" />
+              <img src={person.avatarUrl} alt="" draggable={false} className="h-full w-full object-cover" />
             ) : (
               <div className="grid h-full place-items-center type-display text-accent">{person.firstName[0]}</div>
             )}
@@ -223,14 +275,14 @@ function PeopleCarousel() {
           aria-label={messages.world.previousPerson}
           className="tap-scale grid h-12 w-12 place-items-center rounded-full bg-surface-sunken text-ink shadow-xs disabled:opacity-30"
           disabled={index === 0}
-          onClick={() => setIndex((i) => Math.max(0, i - 1))}
+          onClick={goPrev}
         >
           <ChevronLeftIcon size={20} />
         </button>
         <button
           type="button"
           className="type-button tap-scale rounded-pill bg-surface-sunken px-6 py-3 text-ink shadow-xs"
-          onClick={() => setIndex((i) => Math.min(items.length - 1, i + 1))}
+          onClick={goNext}
         >
           {messages.world.passPerson}
         </button>
@@ -238,7 +290,7 @@ function PeopleCarousel() {
           type="button"
           aria-label={messages.world.nextPerson}
           className="tap-scale grid h-12 w-12 place-items-center rounded-full bg-accent text-on-primary shadow-sm"
-          onClick={() => setIndex((i) => Math.min(items.length - 1, i + 1))}
+          onClick={goNext}
         >
           <ChevronRightIcon size={20} />
         </button>
