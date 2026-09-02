@@ -5,7 +5,7 @@ import { availableBalance, displayLikeRatio, likeProduction, pickUnitForLike, pl
 import { getLikePack, likeCreditAllowed, LIKE_PACKS, needsLikePurchase } from "../src/wallet";
 import { availabilityUntil, isCurrentlyAvailable } from "../src/availability";
 import { displayLocation, formatApproxDistance, roundDistanceKm } from "../src/location";
-import { canAcceptInvitation, eventLifecycle, evaluateInvite, moodExpiresAt } from "../src/events";
+import { canAcceptInvitation, canInteractWithEvent, eventLifecycle, evaluateInvite, moodExpiresAt } from "../src/events";
 import { canConsumeTicket, canShowQr, isInEntryWindow, signTicketQr, verifyTicketQr } from "../src/tickets";
 import { applyWebhook, mockCharge, reservationAmountXaf } from "../src/payments";
 import { canSendMessage, canStartDirect, directKey, pairIsBlocked, shouldNotifyOffline } from "../src/chat";
@@ -214,9 +214,10 @@ describe("disponibilité", () => {
 });
 
 describe("cycle de vie événement", () => {
-  it("compte à rebours avant, en cours pendant, terminé après", () => {
+  it("compte à rebours avant, bientôt dans la dernière demi-heure, en cours pendant, terminé après", () => {
     const starts = new Date("2026-09-02T18:00:00Z");
-    expect(eventLifecycle(starts, null, new Date("2026-09-02T17:45:00Z")).phase).toBe("upcoming");
+    expect(eventLifecycle(starts, null, new Date("2026-09-02T17:00:00Z")).phase).toBe("upcoming");
+    expect(eventLifecycle(starts, null, new Date("2026-09-02T17:45:00Z")).phase).toBe("startingSoon");
     expect(eventLifecycle(starts, null, new Date("2026-09-02T18:30:00Z")).phase).toBe("ongoing");
     expect(eventLifecycle(starts, null, new Date("2026-09-02T22:00:00Z")).phase).toBe("ended");
   });
@@ -225,6 +226,20 @@ describe("cycle de vie événement", () => {
     const starts = new Date("2026-09-02T18:00:00Z");
     const ends = new Date("2026-09-02T19:00:00Z");
     expect(eventLifecycle(starts, ends, new Date("2026-09-02T19:30:00Z")).phase).toBe("ended");
+  });
+
+  it("un événement annulé prime sur toute autre phase (#8, #14)", () => {
+    const starts = new Date("2026-09-02T18:00:00Z");
+    expect(eventLifecycle(starts, null, new Date("2026-09-02T10:00:00Z"), "CANCELLED").phase).toBe("cancelled");
+    expect(eventLifecycle(starts, null, new Date("2026-09-02T20:00:00Z"), "CANCELLED").phase).toBe("cancelled");
+  });
+
+  it("seules les phases annulé/terminé bloquent l’interaction", () => {
+    expect(canInteractWithEvent("upcoming")).toBe(true);
+    expect(canInteractWithEvent("startingSoon")).toBe(true);
+    expect(canInteractWithEvent("ongoing")).toBe(true);
+    expect(canInteractWithEvent("ended")).toBe(false);
+    expect(canInteractWithEvent("cancelled")).toBe(false);
   });
 });
 

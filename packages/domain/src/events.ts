@@ -30,23 +30,43 @@ export function eventIsFuture(startsAt: Date, now = new Date()): boolean {
   return startsAt.getTime() > now.getTime();
 }
 
-export type EventPhase = "upcoming" | "ongoing" | "ended";
+export type EventPhase = "upcoming" | "startingSoon" | "ongoing" | "ended" | "cancelled";
+
+export const STARTING_SOON_WINDOW_SECONDS = 30 * 60;
 
 /**
- * Cycle de vie d'un événement pour l'affichage (#9) : compte à rebours avant,
- * "en cours" pendant, "terminé" après. `endsAt` absent → estimé à +3 h.
+ * Cycle de vie d'un événement pour l'affichage (#7-8) : compte à rebours avant,
+ * "bientôt" dans la dernière demi-heure, "en cours" pendant, "terminé" après,
+ * "annulé" prioritaire sur tout le reste. `endsAt` absent → estimé à +3 h.
+ *
+ * Détermine aussi les actions pertinentes par phase (#14) — la liste exacte
+ * des CTA reste décidée côté UI (canBook/isHost/etc.), mais la phase seule
+ * doit déjà exclure les actions de réservation une fois l'événement annulé,
+ * en cours ou terminé.
  */
 export function eventLifecycle(
   startsAt: Date,
   endsAt: Date | null | undefined,
   now = new Date(),
+  status: string = "PUBLISHED",
 ): { phase: EventPhase; secondsToStart: number | null; secondsToEnd: number | null } {
+  if (status === "CANCELLED") {
+    return { phase: "cancelled", secondsToStart: null, secondsToEnd: null };
+  }
   const estimatedEnd = endsAt ?? new Date(startsAt.getTime() + 3 * 3600_000);
   const toStart = Math.floor((startsAt.getTime() - now.getTime()) / 1000);
   const toEnd = Math.floor((estimatedEnd.getTime() - now.getTime()) / 1000);
-  if (toStart > 0) return { phase: "upcoming", secondsToStart: toStart, secondsToEnd: null };
+  if (toStart > 0) {
+    const phase: EventPhase = toStart <= STARTING_SOON_WINDOW_SECONDS ? "startingSoon" : "upcoming";
+    return { phase, secondsToStart: toStart, secondsToEnd: null };
+  }
   if (toEnd > 0) return { phase: "ongoing", secondsToStart: null, secondsToEnd: toEnd };
   return { phase: "ended", secondsToStart: null, secondsToEnd: null };
+}
+
+/** Une interaction de réservation/intérêt n'a de sens que sur un événement ni annulé ni terminé. */
+export function canInteractWithEvent(phase: EventPhase): boolean {
+  return phase !== "cancelled" && phase !== "ended";
 }
 
 export function invitationExpiresAt(from: Date, hours = DEFAULT_INVITATION_TTL_HOURS): Date {
