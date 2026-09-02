@@ -7,7 +7,8 @@ import { AppShell } from "@/components/AppShell";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
 import { EventCard } from "@/components/EventCard";
 import { MapThumb } from "@/components/MapThumb";
-import { ErrorBanner, Skeleton } from "@/components/ui";
+import { MessageIcon } from "@/components/Icons";
+import { CardSkeleton, ErrorBanner, PrimaryButton, SecondaryButton } from "@/components/ui";
 import { api, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 
@@ -40,44 +41,44 @@ function EventDetail() {
   }, [id]);
 
   if (error) return <ErrorBanner message={error} onRetry={() => void load()} />;
-  if (!event) return <Skeleton className="mx-4 mt-4 h-80" />;
+  if (!event) return <CardSkeleton />;
 
   return (
     <div className="space-y-4 px-4 py-4">
       <EventCard event={event} onChanged={setEvent} />
-      <div className="overflow-hidden rounded-2xl">
+      <div className="overflow-hidden rounded-card shadow-xs">
         <MapThumb city={event.city} zone={event.zone} className="h-40 w-full border-0" />
-        <p className="bg-surface px-3 py-2 text-xs text-muted">
+        <p className="type-caption bg-surface px-4 py-2.5 text-muted">
           {messages.world.approximate} · {event.city}
           {event.zone ? ` - ${event.zone}` : ""}
           {event.venue ? ` · ${event.venue}` : ""}
         </p>
       </div>
-      <section className="rounded-card bg-surface p-4 shadow-card">
-        <p className="font-semibold">{messages.world.peopleLinked}</p>
-        <div className="mt-3 space-y-2">
-          {event.people?.map((p) => (
-            <Link key={p.id} href={`/u/${p.username}`} className="flex items-center gap-3 text-sm">
-              <Avatar src={p.avatarUrl} firstName={p.firstName} lastName={p.lastName} size={36} />
-              <span className="flex-1 text-ink">
-                {p.firstName} {p.lastName} {p.certified ? <CertifiedMark /> : null}
-              </span>
-              <span className="text-xs text-muted">{p.status}</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-      {event.description ? <p className="text-sm leading-6 text-ink">{event.description}</p> : null}
+      {event.description ? <p className="type-body leading-6 text-ink">{event.description}</p> : null}
+      {event.people?.length ? (
+        <section className="rounded-card bg-surface p-4 shadow-card">
+          <p className="type-heading text-ink">{messages.world.peopleLinked}</p>
+          <div className="mt-3 space-y-2.5">
+            {event.people.map((p) => (
+              <Link key={p.id} href={`/u/${p.username}`} className="flex items-center gap-3">
+                <Avatar src={p.avatarUrl} firstName={p.firstName} lastName={p.lastName} size="sm" />
+                <span className="type-body-sm flex-1 text-ink">
+                  {p.firstName} {p.lastName} {p.certified ? <CertifiedMark /> : null}
+                </span>
+                <span className="type-caption text-muted">{p.status}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
       <EventReviews eventId={event.id} />
       {event.isHost ? (
-        <Link href={`/events/${event.id}/manage`} className="block w-full rounded-pill bg-accent py-3 text-center text-sm font-semibold text-white">
+        <PrimaryButton onClick={() => router.push(`/events/${event.id}/manage`)}>
           {messages.booking.manageEvent}
-        </Link>
+        </PrimaryButton>
       ) : null}
       {event.canChatGroup ? (
-        <button
-          type="button"
-          className="w-full rounded-pill bg-[var(--border)] py-3 text-sm font-semibold"
+        <SecondaryButton
           onClick={async () => {
             const conv = await api<{ id: string }>("/conversations/event", {
               method: "POST",
@@ -86,8 +87,11 @@ function EventDetail() {
             router.push(`/messages/${conv.id}`);
           }}
         >
-          {messages.chat.groupFromEvent}
-        </button>
+          <span className="inline-flex items-center justify-center gap-2">
+            <MessageIcon size={15} />
+            {messages.chat.groupFromEvent}
+          </span>
+        </SecondaryButton>
       ) : null}
     </div>
   );
@@ -141,40 +145,35 @@ function EventReviews({ eventId }: { eventId: string }) {
 
   return (
     <section className="rounded-card bg-surface p-4 shadow-card">
-      <p className="font-semibold">{messages.reviews.title}</p>
-      {items && items.length === 0 ? <p className="mt-2 text-sm text-muted">{messages.reviews.empty}</p> : null}
+      <p className="type-heading text-ink">{messages.reviews.title}</p>
+      {items && items.length === 0 ? <p className="type-body-sm mt-2 text-muted">{messages.reviews.empty}</p> : null}
       <div className="mt-3 space-y-3">
         {items?.map((r) => (
           <article key={r.id}>
-            <p className="text-sm font-semibold text-accent">
-              {r.author.firstName} {r.author.lastName} {r.author.certified ? "✓" : ""}
+            <p className="type-body-sm flex items-center gap-1 font-semibold text-accent">
+              {r.author.firstName} {r.author.lastName} {r.author.certified ? <CertifiedMark /> : null}
             </p>
-            <p className="text-sm text-ink">{r.body}</p>
+            <p className="type-body-sm text-ink">{r.body}</p>
           </article>
         ))}
       </div>
       {canReview ? (
-        <div className="mt-4 space-y-2">
-          <p className="text-xs text-muted">{messages.reviews.ratingHint}</p>
+        <div className="mt-4 space-y-3">
+          <p className="type-caption text-muted">{messages.reviews.ratingHint}</p>
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             placeholder={messages.reviews.bodyPlaceholder}
-            className="min-h-24 w-full rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-3 text-sm text-ink"
+            className="type-body min-h-24 w-full rounded-xl border border-border bg-surface p-3.5 text-ink transition placeholder:text-subtle focus:border-accent"
           />
-          <button
-            type="button"
-            disabled={busy || !body.trim()}
-            onClick={() => void submit()}
-            className="w-full rounded-pill bg-accent py-3 text-sm font-semibold text-white disabled:opacity-40"
-          >
+          <PrimaryButton disabled={busy || !body.trim()} onClick={() => void submit()}>
             {messages.reviews.send}
-          </button>
+          </PrimaryButton>
         </div>
       ) : reason === "TOO_EARLY" ? (
-        <p className="mt-3 text-sm text-muted">{messages.reviews.notYet}</p>
+        <p className="type-body-sm mt-3 text-muted">{messages.reviews.notYet}</p>
       ) : reason === "ALREADY" || sent ? (
-        <p className="mt-3 text-sm text-muted">{sent ? messages.reviews.sent : messages.reviews.already}</p>
+        <p className="type-body-sm mt-3 text-muted">{sent ? messages.reviews.sent : messages.reviews.already}</p>
       ) : null}
     </section>
   );

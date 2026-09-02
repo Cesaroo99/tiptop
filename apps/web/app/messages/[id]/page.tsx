@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { ImageIcon, MicIcon, SendIcon } from "@/components/Icons";
 import { ReportModal } from "@/components/ReportModal";
-import { ScreenHeader, TextInput } from "@/components/ui";
+import { IconButton, ScreenHeader, TextInput } from "@/components/ui";
 import { api, ApiError, type ChatMessage, type ConversationItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -109,35 +110,46 @@ export default function Page() {
         }
       />
       {conv?.kind === "EVENT" ? (
-        <p className="px-4 text-xs text-muted">
+        <p className="type-caption bg-info-soft px-4 py-2 text-info">
           {messages.chat.channel} · {conv.members.length} {messages.chat.members}
         </p>
       ) : null}
-      {conv?.peer && conv.online ? <p className="px-4 text-xs text-success">{messages.chat.online}</p> : null}
+      {conv?.peer && conv.online ? (
+        <p className="type-caption inline-flex items-center gap-1.5 px-4 pb-1 text-success">
+          <span className="h-1.5 w-1.5 rounded-full bg-success" /> {messages.chat.online}
+        </p>
+      ) : null}
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
         {items.map((m) => {
           const mine = m.sender.id === user?.id;
           return (
             <div key={m.id} className={`max-w-[80%] ${mine ? "ml-auto" : ""}`}>
               {!mine ? (
-                <Link href={`/u/${m.sender.username}`} className="text-[11px] text-muted">
+                <Link href={`/u/${m.sender.username}`} className="type-caption text-muted">
                   {m.sender.firstName}
                 </Link>
               ) : null}
-              <div className={`rounded-2xl px-3 py-2 text-sm ${mine ? "bg-accent text-white" : "bg-surface shadow-card"}`}>
+              <div
+                className={`type-body-sm rounded-2xl px-3.5 py-2.5 ${mine ? "rounded-br-md bg-accent text-on-primary" : "rounded-bl-md bg-surface shadow-xs"}`}
+              >
                 {m.kind === "IMAGE" && m.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={m.imageUrl} alt="" className="max-h-40 rounded-xl" />
+                  <img src={m.imageUrl} alt="" className="max-h-40 rounded-lg" />
                 ) : null}
-                {m.kind === "AUDIO" ? <p>{messages.chat.voiceMock}</p> : null}
+                {m.kind === "AUDIO" ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <MicIcon size={14} />
+                    {messages.chat.voiceMock}
+                  </span>
+                ) : null}
                 {m.body ? <p>{m.body}</p> : null}
               </div>
-              <div className="mt-0.5 flex items-center gap-2">
-                <p className="text-[10px] text-muted">{new Date(m.createdAt).toLocaleTimeString()}</p>
+              <div className="mt-0.5 flex items-center gap-2 px-0.5">
+                <p className="type-caption text-muted">{new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
                 {!mine ? (
                   <button
                     type="button"
-                    className="text-[10px] text-muted underline"
+                    className="type-caption text-muted underline"
                     onClick={() => setReportMessageId(m.id)}
                   >
                     {messages.admin.report}
@@ -147,32 +159,37 @@ export default function Page() {
             </div>
           );
         })}
-        {typing ? <p className="text-xs text-muted">{typing} {messages.chat.typing}</p> : null}
+        {typing ? <p className="type-caption text-muted">{typing} {messages.chat.typing}</p> : null}
         <div ref={bottom} />
       </div>
-      {error ? <p className="px-4 text-sm text-danger">{error}</p> : null}
+      {error ? <p className="type-body-sm px-4 text-danger">{error}</p> : null}
       <form
-        className="flex gap-2 border-t border-[var(--border)] p-3"
+        className="flex items-center gap-2 border-t border-divider p-3"
         onSubmit={(e) => {
           e.preventDefault();
           if (text.trim()) void send("TEXT");
         }}
       >
-        <button type="button" className="text-xs text-muted" onClick={() => void send("IMAGE")}>
-          {messages.chat.image}
-        </button>
-        <button type="button" className="text-xs text-muted" onClick={() => void send("AUDIO")}>
-          {messages.chat.voice}
-        </button>
+        <IconButton label={messages.chat.image} size={38} onClick={() => void send("IMAGE")}>
+          <ImageIcon size={16} />
+        </IconButton>
+        <IconButton label={messages.chat.voice} size={38} onClick={() => void send("AUDIO")}>
+          <MicIcon size={16} />
+        </IconButton>
         <TextInput
           value={text}
           onChange={(e) => onType(e.target.value)}
           placeholder={messages.chat.placeholder}
-          className="flex-1"
+          className="!rounded-pill flex-1"
         />
-        <button type="submit" className="font-semibold text-accent" disabled={!text.trim()}>
-          {messages.chat.send}
-        </button>
+        <IconButton
+          label={messages.chat.send}
+          tone={text.trim() ? "accent" : "neutral"}
+          type="submit"
+          disabled={!text.trim()}
+        >
+          <SendIcon size={16} />
+        </IconButton>
       </form>
       <ReportModal
         open={Boolean(reportMessageId)}

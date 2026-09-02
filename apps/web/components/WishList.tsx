@@ -3,8 +3,24 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { EmptyState, PrimaryButton, TextInput } from "./ui";
+import { Chip, EmptyState, PrimaryButton, SecondaryButton, TextInput } from "./ui";
 import { SocialInviteModal } from "./SocialInviteModal";
+import { PlusIcon } from "./Icons";
+
+const CATEGORY_EMOJI: Record<string, string> = {
+  EVENT: "🎵",
+  PRODUCT: "🎁",
+  RESTAURANT: "🍽️",
+  ACTIVITY: "🎯",
+  TRAVEL: "🏖️",
+  EXPERIENCE: "✨",
+  GIFT: "🎁",
+  SERVICE: "🛎️",
+  PLACE: "📍",
+  SPORT: "🏎️",
+  LEISURE: "🎬",
+  OTHER: "💫",
+};
 
 const EXPERIENCE_CATS = new Set([
   "EVENT",
@@ -91,39 +107,65 @@ export function WishList({ ownerId, isSelf }: { ownerId: string; isSelf: boolean
     <div className="space-y-3">
       {isSelf ? (
         adding ? (
-          <form onSubmit={create} className="space-y-2 rounded-card bg-surface p-4 shadow-card">
+          <form onSubmit={create} className="space-y-3 rounded-card bg-surface p-4 shadow-card">
             <TextInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder={messages.wishes.titleField} />
             <select
-              className="w-full rounded-2xl bg-[var(--border)] px-3 py-3"
+              className="type-body w-full rounded-xl border border-border bg-surface px-4 py-3.5 text-ink"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             >
               {CATS.map((c) => (
                 <option key={c} value={c}>
-                  {catLabel(c)}
+                  {CATEGORY_EMOJI[c]} {catLabel(c)}
                 </option>
               ))}
             </select>
-            <PrimaryButton type="submit">{messages.wishes.save}</PrimaryButton>
+            <div className="flex gap-2">
+              <SecondaryButton type="button" onClick={() => setAdding(false)}>
+                {messages.common.cancel}
+              </SecondaryButton>
+              <PrimaryButton type="submit">{messages.wishes.save}</PrimaryButton>
+            </div>
           </form>
         ) : (
-          <PrimaryButton onClick={() => setAdding(true)}>{messages.wishes.add}</PrimaryButton>
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="tap-scale type-button flex w-full items-center justify-center gap-2 rounded-pill border-2 border-dashed border-accent/40 bg-accent-soft py-3.5 text-accent transition hover:bg-accent/15"
+          >
+            <PlusIcon size={16} />
+            {messages.wishes.add}
+          </button>
         )
       ) : null}
       {items.length === 0 ? (
-        <EmptyState title={messages.wishes.title} body={isSelf ? messages.wishes.empty : messages.wishes.emptyPublic} />
+        <EmptyState
+          title={messages.wishes.title}
+          body={isSelf ? messages.wishes.empty : messages.wishes.emptyPublic}
+          icon={<span className="text-2xl">✨</span>}
+        />
       ) : (
         items.map((w) => (
-          <article key={w.id} className="rounded-card bg-surface p-4 shadow-card">
-            <p className="type-caption text-accent">{catLabel(w.category)}</p>
-            <p className="type-heading mt-1 text-ink">{w.title}</p>
-            {w.description ? <p className="type-body-sm mt-1 text-muted">{w.description}</p> : null}
-            {w.estimatedPriceXaf ? <p className="type-caption mt-1 text-muted">{w.estimatedPriceXaf} XAF</p> : null}
+          <article key={w.id} className="rounded-card bg-surface p-4 shadow-card transition hover:shadow-sm">
+            <div className="flex items-start gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-xl" aria-hidden>
+                {CATEGORY_EMOJI[w.category] ?? "💫"}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="type-caption font-semibold text-accent">{catLabel(w.category)}</p>
+                <p className="type-heading mt-0.5 text-ink">{w.title}</p>
+                {w.description ? <p className="type-body-sm mt-1 text-muted">{w.description}</p> : null}
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {w.estimatedPriceXaf ? <Chip>{w.estimatedPriceXaf.toLocaleString()} XAF</Chip> : null}
+                  {w.city ? <Chip>{w.city}</Chip> : null}
+                </div>
+              </div>
+            </div>
             {!isSelf ? (
               <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  className="rounded-pill bg-accent px-4 py-2 text-sm font-semibold text-white"
+                  className="tap-scale type-button rounded-pill bg-accent px-4 py-2.5 text-on-primary transition hover:bg-accent-hover"
                   onClick={() => void offer(w.id)}
                 >
                   {messages.wishes.offer}
@@ -131,7 +173,7 @@ export function WishList({ ownerId, isSelf }: { ownerId: string; isSelf: boolean
                 {EXPERIENCE_CATS.has(w.category) ? (
                   <button
                     type="button"
-                    className="rounded-pill bg-[var(--border)] px-4 py-2 text-sm font-semibold text-ink"
+                    className="tap-scale type-button rounded-pill border border-border bg-surface px-4 py-2.5 text-ink transition hover:bg-surface-sunken"
                     onClick={() => setInviteWish(w)}
                   >
                     {messages.wishes.inviteOut}
@@ -141,7 +183,7 @@ export function WishList({ ownerId, isSelf }: { ownerId: string; isSelf: boolean
             ) : (
               <button
                 type="button"
-                className="mt-3 text-sm text-danger"
+                className="type-caption mt-3 font-semibold text-danger"
                 onClick={async () => {
                   await api(`/wishes/${w.id}`, { method: "DELETE" });
                   await load();
@@ -153,7 +195,7 @@ export function WishList({ ownerId, isSelf }: { ownerId: string; isSelf: boolean
           </article>
         ))
       )}
-      {note ? <p className="type-caption text-accent">{note}</p> : null}
+      {note ? <p className="type-caption font-semibold text-accent">{note}</p> : null}
       <SocialInviteModal
         open={Boolean(inviteWish)}
         inviteeId={ownerId}

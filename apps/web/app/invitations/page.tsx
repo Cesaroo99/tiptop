@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
-import { EmptyState, ScreenHeader, Skeleton } from "@/components/ui";
+import { Chip, EmptyState, ScreenHeader, CardSkeleton } from "@/components/ui";
 import { api, type SocialInviteItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { formatDateTime } from "@/lib/time";
@@ -66,41 +66,41 @@ function SocialInvitesScreen() {
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-4 py-4">
       <ScreenHeader title={messages.socialInvite.pageTitle} onBack={() => router.back()} />
-      <div className="mb-4 flex gap-2 text-xs">
-        <button
-          type="button"
-          onClick={() => setBox("received")}
-          className={`rounded-pill px-3 py-1 ${box === "received" ? "bg-accent text-white" : "bg-[var(--border)]"}`}
-        >
+      <div className="mb-4 flex gap-2">
+        <Chip active={box === "received"} onClick={() => setBox("received")}>
           {messages.socialInvite.receivedTab}
-        </button>
-        <button
-          type="button"
-          onClick={() => setBox("sent")}
-          className={`rounded-pill px-3 py-1 ${box === "sent" ? "bg-accent text-white" : "bg-[var(--border)]"}`}
-        >
+        </Chip>
+        <Chip active={box === "sent"} onClick={() => setBox("sent")}>
           {messages.socialInvite.sentTab}
-        </button>
+        </Chip>
       </div>
-      {note ? <p className="mb-3 type-body-sm text-muted">{note}</p> : null}
-      {!items ? <Skeleton className="h-40" /> : null}
+      {note ? <p className="mb-3 type-body-sm font-semibold text-accent">{note}</p> : null}
+      {!items ? (
+        <div className="space-y-3">
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+      ) : null}
       {items && items.length === 0 ? (
         <EmptyState
           title={messages.socialInvite.pageTitle}
           body={box === "received" ? messages.socialInvite.empty : messages.socialInvite.emptySent}
+          icon={<span className="text-2xl">💌</span>}
         />
       ) : null}
       <div className="space-y-3">
         {items?.map((inv) => {
           const peer = box === "received" ? inv.inviter : inv.invitee;
+          const statusTone =
+            inv.status === "ACCEPTED" ? "success" : inv.status === "REFUSED" || inv.status === "EXPIRED" ? "danger" : "info";
           return (
             <article key={inv.id} className="rounded-card bg-surface p-4 shadow-card">
               <div className="flex items-center gap-3">
                 <Link href={`/u/${peer.username}`}>
-                  <Avatar src={peer.avatarUrl} firstName={peer.firstName} lastName={peer.lastName} size={40} />
+                  <Avatar src={peer.avatarUrl} firstName={peer.firstName} lastName={peer.lastName} size="md" />
                 </Link>
                 <div className="min-w-0 flex-1">
-                  <Link href={`/u/${peer.username}`} className="flex items-center gap-1 font-semibold text-ink">
+                  <Link href={`/u/${peer.username}`} className="type-body-sm flex items-center gap-1 font-semibold text-ink">
                     {peer.firstName} {peer.lastName}
                     {peer.certified ? <CertifiedMark /> : null}
                   </Link>
@@ -109,22 +109,22 @@ function SocialInvitesScreen() {
                     {inv.label ? ` · ${inv.label}` : ""}
                   </p>
                 </div>
-                <span className="type-caption font-semibold text-accent">{statusLabel[inv.status] ?? inv.status}</span>
+                <Chip tone={statusTone}>{statusLabel[inv.status] ?? inv.status}</Chip>
               </div>
-              {inv.message ? <p className="mt-2 type-body-sm text-ink">{inv.message}</p> : null}
-              <p className="mt-1 type-caption text-muted">{formatDateTime(inv.createdAt, locale)}</p>
+              {inv.message ? <p className="type-body-sm mt-2.5 rounded-lg bg-surface-sunken p-3 text-ink">{inv.message}</p> : null}
+              <p className="type-caption mt-2 text-muted">{formatDateTime(inv.createdAt, locale)}</p>
               {box === "received" && inv.status === "SENT" ? (
                 <div className="mt-3 flex gap-2">
                   <button
                     type="button"
-                    className="flex-1 rounded-pill bg-accent py-2 text-white"
+                    className="tap-scale type-button flex-1 rounded-pill bg-accent py-2.5 text-on-primary transition hover:bg-accent-hover"
                     onClick={() => void act(inv.id, "accept")}
                   >
                     {messages.socialInvite.accept}
                   </button>
                   <button
                     type="button"
-                    className="flex-1 rounded-pill bg-[var(--border)] py-2"
+                    className="tap-scale type-button flex-1 rounded-pill border border-border bg-surface py-2.5 text-ink transition hover:bg-surface-sunken"
                     onClick={() => void act(inv.id, "refuse")}
                   >
                     {messages.socialInvite.refuse}

@@ -16,16 +16,28 @@ export function BottomNav() {
   const pathname = usePathname();
   const { messages } = useI18n();
   return (
-    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center p-3 md:hidden">
-      <div className="pointer-events-auto flex w-full max-w-md items-stretch justify-between rounded-[28px] bg-[var(--nav)] px-1.5 py-2 shadow-card">
+    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
+      <div className="pointer-events-auto flex w-full max-w-md items-center justify-between rounded-[28px] bg-[var(--nav)] px-2 py-2 shadow-elevated">
         {items.map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
+          if (item.key === "add") {
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-label={messages.nav.add}
+                className="tap-scale -mt-6 grid h-14 w-14 place-items-center rounded-full bg-accent text-on-primary shadow-elevated transition hover:bg-accent-hover"
+              >
+                <Icon active={active} />
+              </Link>
+            );
+          }
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex min-w-[56px] flex-col items-center gap-0.5 rounded-2xl px-1 py-1 text-[10px] font-medium ${active ? "text-accent" : "text-muted"}`}
+              className={`type-nav tap-scale flex min-w-[56px] flex-col items-center gap-1 rounded-2xl px-2 py-1.5 transition ${active ? "bg-accent-soft text-accent" : "text-muted"}`}
             >
               <Icon active={active} />
               {messages.nav[item.key]}
@@ -41,15 +53,27 @@ export function SideNav() {
   const pathname = usePathname();
   const { messages } = useI18n();
   return (
-    <nav className="hidden w-56 shrink-0 flex-col gap-1 border-r border-[var(--border)] p-4 md:flex">
+    <nav className="hidden w-56 shrink-0 flex-col gap-1 border-r border-divider p-4 md:flex">
       {items.map((item) => {
         const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
         const Icon = item.icon;
+        if (item.key === "add") {
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="tap-scale type-button mt-1 flex items-center justify-center gap-2 rounded-pill bg-accent px-3 py-2.5 text-on-primary shadow-sm transition hover:bg-accent-hover"
+            >
+              <Icon active={active} />
+              {messages.nav[item.key]}
+            </Link>
+          );
+        }
         return (
           <Link
             key={item.href}
             href={item.href}
-            className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium ${active ? "bg-accent/10 text-accent" : "text-muted hover:bg-surface"}`}
+            className={`type-body-sm tap-scale flex items-center gap-3 rounded-2xl px-3 py-2.5 font-medium transition ${active ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface"}`}
           >
             <Icon active={active} />
             {messages.nav[item.key]}

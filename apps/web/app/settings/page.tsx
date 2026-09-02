@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CardButton, ScreenHeader } from "@/components/ui";
+import { CardButton, Modal, NavChevron, ScreenHeader } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -47,109 +47,125 @@ export default function SettingsPage() {
     }
   }
 
+  const pushCategories = [
+    ["messages", messages.chat.pushMessages],
+    ["social", messages.chat.pushSocial],
+    ["events", messages.chat.pushEvents],
+    ["invitations", messages.chat.pushInvitations],
+    ["mood", messages.chat.pushMood],
+  ] as const;
+
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-4 py-4">
       <ScreenHeader title={messages.settings.title} onBack={() => router.back()} />
-      <div className="mt-4 space-y-3">
+      <p className="type-label mb-2 mt-2 px-1 text-subtle">{messages.settings.title}</p>
+      <div className="space-y-2">
         <CardButton onClick={() => void toggleTheme()}>
           <span>{messages.settings.darkMode}</span>
-          <span
-            className={`relative h-7 w-12 rounded-full ${theme === "dark" ? "bg-accent" : "bg-[var(--border)]"}`}
-            aria-hidden
-          >
-            <span
-              className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${theme === "dark" ? "left-6" : "left-1"}`}
-            />
-          </span>
+          <ThemeSwitch on={theme === "dark"} />
         </CardButton>
         <CardButton onClick={() => router.push("/zone")}>
           <span>{messages.world.precision}</span>
-          <span>›</span>
+          <NavChevron />
         </CardButton>
         <CardButton onClick={() => setLangOpen((v) => !v)}>
           <span>{messages.settings.language}</span>
-          <span>›</span>
+          <NavChevron />
         </CardButton>
         {langOpen ? (
-          <div className="rounded-card bg-surface p-2 shadow-card">
-            <button type="button" className="block w-full rounded-xl px-3 py-2 text-left" onClick={() => void pickLocale("fr")}>
+          <div className="space-y-1 rounded-card bg-surface p-2 shadow-card">
+            <button
+              type="button"
+              className={`type-body-sm block w-full rounded-lg px-3 py-2.5 text-left transition ${locale === "fr" ? "bg-accent-soft text-accent" : "hover:bg-surface-sunken"}`}
+              onClick={() => void pickLocale("fr")}
+            >
               {messages.common.french}
             </button>
-            <button type="button" className="block w-full rounded-xl px-3 py-2 text-left" onClick={() => void pickLocale("en")}>
+            <button
+              type="button"
+              className={`type-body-sm block w-full rounded-lg px-3 py-2.5 text-left transition ${locale === "en" ? "bg-accent-soft text-accent" : "hover:bg-surface-sunken"}`}
+              onClick={() => void pickLocale("en")}
+            >
               {messages.common.english}
             </button>
           </div>
         ) : null}
+
+        <p className="type-label mb-1 mt-6 px-1 text-subtle">{messages.chat.pushTitle}</p>
         <CardButton onClick={() => setSecurityOpen((v) => !v)}>
           <span>{messages.settings.password}</span>
-          <span>›</span>
+          <NavChevron />
         </CardButton>
         {securityOpen ? (
-          <p className="rounded-card bg-surface p-4 text-sm text-muted shadow-card">{messages.settings.securityNote}</p>
+          <p className="type-body-sm rounded-card bg-surface p-4 text-muted shadow-xs">{messages.settings.securityNote}</p>
         ) : null}
         <CardButton onClick={() => setPushOpen((v) => !v)}>
           <span>{messages.chat.pushTitle}</span>
-          <span>›</span>
+          <NavChevron />
         </CardButton>
         {pushOpen ? (
-          <div className="rounded-card bg-surface p-4 text-sm shadow-card">
-            <p className="mb-3 text-muted">{messages.chat.pushHint}</p>
-            {(["messages", "social", "events", "invitations", "mood"] as const).map((k) => (
-              <label key={k} className="mb-2 flex items-center justify-between gap-3">
-                <span>
-                  {k === "messages"
-                    ? messages.chat.pushMessages
-                    : k === "social"
-                      ? messages.chat.pushSocial
-                      : k === "events"
-                        ? messages.chat.pushEvents
-                        : k === "invitations"
-                          ? messages.chat.pushInvitations
-                          : messages.chat.pushMood}
-                </span>
-                <input
-                  type="checkbox"
-                  checked={prefs[k]}
-                  onChange={async (e) => {
-                    const next = { ...prefs, [k]: e.target.checked };
+          <div className="space-y-1 rounded-card bg-surface p-4 shadow-xs">
+            <p className="type-caption mb-3 text-muted">{messages.chat.pushHint}</p>
+            {pushCategories.map(([k, label]) => (
+              <label key={k} className="flex items-center justify-between gap-3 py-2">
+                <span className="type-body-sm text-ink">{label}</span>
+                <Toggle
+                  on={prefs[k]}
+                  onChange={async (checked) => {
+                    const next = { ...prefs, [k]: checked };
                     setPrefs(next);
-                    await api("/push/preferences", { method: "PATCH", body: JSON.stringify({ [k]: e.target.checked }) });
+                    await api("/push/preferences", { method: "PATCH", body: JSON.stringify({ [k]: checked }) });
                   }}
                 />
               </label>
             ))}
           </div>
         ) : null}
+
+        <p className="type-label mb-1 mt-6 px-1 text-subtle">{messages.brand.name}</p>
         <CardButton onClick={() => router.push("/terms")}>
           <span>{messages.settings.terms}</span>
-          <span>›</span>
+          <NavChevron />
         </CardButton>
         <CardButton danger onClick={() => setConfirm(true)}>
           <span>{messages.settings.logout}</span>
         </CardButton>
       </div>
-      {confirm ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-6">
-          <div className="w-full max-w-sm rounded-card bg-surface p-6">
-            <p className="font-semibold">{messages.settings.logoutConfirm}</p>
-            <div className="mt-4 flex gap-2">
-              <button type="button" className="flex-1 rounded-pill bg-[var(--border)] py-3" onClick={() => setConfirm(false)}>
-                {messages.common.cancel}
-              </button>
-              <button
-                type="button"
-                className="flex-1 rounded-pill bg-danger py-3 text-white"
-                onClick={async () => {
-                  await logout();
-                  router.replace("/login");
-                }}
-              >
-                {messages.settings.logout}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <Modal
+        open={confirm}
+        title={messages.settings.logoutConfirm}
+        onClose={() => setConfirm(false)}
+        onConfirm={async () => {
+          await logout();
+          router.replace("/login");
+        }}
+        confirmLabel={messages.settings.logout}
+        danger
+      >
+        {""}
+      </Modal>
     </main>
+  );
+}
+
+function ThemeSwitch({ on }: { on: boolean }) {
+  return (
+    <span className={`relative h-7 w-12 rounded-full transition ${on ? "bg-accent" : "bg-border"}`} aria-hidden>
+      <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-xs transition ${on ? "left-6" : "left-1"}`} />
+    </span>
+  );
+}
+
+function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      onClick={() => onChange(!on)}
+      className={`tap-scale relative h-6 w-10 rounded-full transition ${on ? "bg-accent" : "bg-border"}`}
+    >
+      <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-xs transition ${on ? "left-[18px]" : "left-0.5"}`} />
+    </button>
   );
 }

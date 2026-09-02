@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { CalendarIcon, PinIcon } from "@/components/Icons";
+import { Logo } from "@/components/Logo";
 import { ErrorBanner, ScreenHeader } from "@/components/ui";
 import { api, type TicketItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -36,31 +38,52 @@ export default function Page() {
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-4 py-4">
       <ScreenHeader title={consumed ? messages.booking.ticketConsumed : messages.booking.ticketActive} onBack={() => router.back()} />
-      <div className="rounded-card bg-surface p-5 text-center shadow-card">
-        <p className="font-semibold text-accent">{ticket.event.title}</p>
-        <p className="mt-1 text-xs text-muted">
-          {formatEventWhen(ticket.event.startsAt, locale)} · {ticket.event.city}
-        </p>
-        {consumed ? (
-          <div className="mt-6 rounded-2xl bg-[var(--border)] px-4 py-10 text-sm text-muted">{messages.booking.ticketQrInactive}</div>
-        ) : ticket.qrActive && ticket.qr ? (
-          <QrPattern value={ticket.qr} />
-        ) : (
-          <p className="mt-6 text-sm text-muted">{messages.booking.ticketQrLater}</p>
-        )}
-        {ticket.qr ? (
-          <p className="mt-4 break-all font-mono text-[11px] text-muted">{ticket.qr}</p>
-        ) : null}
-        <p className="mt-3 text-xs text-muted">{messages.booking.ticketQrHint}</p>
-        <Link href={`/events/${ticket.event.id}`} className="mt-4 inline-block text-sm text-accent">
-          {ticket.event.title}
-        </Link>
-        {consumed ? (
-          <Link href={`/events/${ticket.event.id}`} className="mt-3 block text-sm font-semibold text-accent">
-            {messages.reviews.write}
-          </Link>
-        ) : null}
+      <div className={`overflow-hidden rounded-card bg-surface shadow-elevated ${consumed ? "opacity-70 grayscale" : ""}`}>
+        <div className="bg-gradient-to-br from-accent to-accent-active px-6 py-5 text-center">
+          <div className="flex items-center justify-center gap-2">
+            <Logo size={26} withWordmark={false} />
+            <span className="type-h4 text-white">TipTop</span>
+          </div>
+          <span className="type-label mt-2 inline-block text-white/80">
+            {consumed ? messages.booking.ticketConsumed : messages.booking.ticketActive}
+          </span>
+        </div>
+        <div className="px-6 py-6 text-center">
+          <p className="type-h3 text-ink">{ticket.event.title}</p>
+          <p className="type-body-sm mt-2 inline-flex items-center gap-1.5 text-muted">
+            <CalendarIcon size={14} />
+            {formatEventWhen(ticket.event.startsAt, locale)}
+          </p>
+          <p className="type-body-sm mt-1 inline-flex items-center gap-1.5 text-muted">
+            <PinIcon size={14} />
+            {ticket.event.city}
+            {ticket.event.zone ? ` - ${ticket.event.zone}` : ""}
+          </p>
+          <p className="type-caption mt-2 text-muted">
+            {ticket.holder.firstName} {ticket.holder.lastName}
+          </p>
+
+          <div className="ticket-divider" />
+
+          {consumed ? (
+            <div className="rounded-lg bg-surface-sunken px-4 py-10 type-body-sm text-muted">{messages.booking.ticketQrInactive}</div>
+          ) : ticket.qrActive && ticket.qr ? (
+            <QrPattern value={ticket.qr} />
+          ) : (
+            <p className="type-body-sm text-muted">{messages.booking.ticketQrLater}</p>
+          )}
+          {ticket.qr ? <p className="mt-4 break-all font-mono text-[11px] text-muted">{ticket.qr}</p> : null}
+          <p className="type-caption mt-3 text-muted">{messages.booking.ticketQrHint}</p>
+        </div>
       </div>
+      <Link href={`/events/${ticket.event.id}`} className="type-body-sm mt-4 block text-center font-semibold text-accent">
+        {ticket.event.title}
+      </Link>
+      {consumed ? (
+        <Link href={`/events/${ticket.event.id}`} className="type-body-sm mt-2 block text-center font-semibold text-accent">
+          {messages.reviews.write}
+        </Link>
+      ) : null}
     </main>
   );
 }
