@@ -143,7 +143,7 @@ export default function SearchPage() {
           </Link>
         ))}
         {result?.moods.map((m) => (
-          <Link key={m.id} href={`/mood/${m.id}`} className="block rounded-card bg-surface p-4 shadow-card">
+          <Link key={m.id} href={`/mood?start=${m.id}`} className="block rounded-card bg-surface p-4 shadow-card">
             <p className="text-sm font-semibold text-accent">{m.activity || m.body}</p>
             <p className="text-xs text-muted">
               {m.author.firstName} {m.author.lastName} {m.city ? `· ${m.city}` : ""}

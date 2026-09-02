@@ -84,7 +84,7 @@ export default function NotificationsPage() {
     if (n.type === "PAYMENT" && n.entityType === "like_purchase") return "/likes";
     if (n.type === "PAYMENT" && n.entityType === "refund") return "/tickets";
     if (n.type === "TICKET" || n.type === "PAYMENT") return "/tickets";
-    if (n.type === "COMMENT" && n.entityType === "mood" && n.entityId) return `/mood/${n.entityId}`;
+    if (n.type === "COMMENT" && n.entityType === "mood" && n.entityId) return `/mood?start=${n.entityId}`;
     if (n.type === "COMMENT" && n.entityId) return `/posts/${n.entityId}`;
     if (n.actor) return `/u/${n.actor.username}`;
     return "/";

@@ -65,7 +65,7 @@ function HomeFeed() {
           </Link>
         ) : null}
         {moods.map((m) => (
-          <Link key={m.id} href={`/mood/${m.id}`} className="tap-scale flex w-16 shrink-0 flex-col items-center gap-1.5">
+          <Link key={m.id} href={`/mood?start=${m.id}`} className="tap-scale flex w-16 shrink-0 flex-col items-center gap-1.5">
             <Avatar
               src={m.imageUrl || m.author.avatarUrl}
               firstName={m.author.firstName}

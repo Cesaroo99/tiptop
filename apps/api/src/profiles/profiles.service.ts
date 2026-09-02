@@ -105,6 +105,7 @@ export class ProfilesService {
         id: m.id,
         body: m.body,
         imageUrl: m.imageUrl,
+        videoUrl: m.videoUrl,
         expiresAt: m.expiresAt.toISOString(),
       })),
     };

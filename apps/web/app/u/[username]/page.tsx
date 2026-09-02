@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { AvailabilityBadge } from "@/components/AvailabilityBadge";
-import { CalendarIcon, ChevronRightIcon, FlagIcon, HeartIcon, MessageIcon, PinIcon, SparklesIcon } from "@/components/Icons";
+import { CalendarIcon, ChevronRightIcon, FlagIcon, HeartIcon, MessageIcon, PinIcon, PlayIcon, SparklesIcon } from "@/components/Icons";
 import { LikeCapital } from "@/components/LikeCapital";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { LikeFaces, LikePlacedCard } from "@/components/LikeFaces";
@@ -75,7 +75,7 @@ type Profile = {
   posts: FeedItem[];
   eventsInterested?: EventPreview[];
   eventsLinked?: EventPreview[];
-  moods?: Array<{ id: string; body: string; imageUrl: string | null; expiresAt: string }>;
+  moods?: Array<{ id: string; body: string; imageUrl: string | null; videoUrl: string | null; expiresAt: string }>;
 };
 
 export default function ProfilePage() {
@@ -320,13 +320,20 @@ function ProfileView() {
           profile.moods?.length ? (
             <div className="grid grid-cols-2 gap-3">
               {profile.moods.map((m) => (
-                <Link key={m.id} href={`/mood/${m.id}`} className="overflow-hidden rounded-card bg-surface shadow-card">
-                  {m.imageUrl ? (
+                <Link key={m.id} href={`/mood?start=${m.id}`} className="relative overflow-hidden rounded-card bg-surface shadow-card">
+                  {m.videoUrl ? (
+                    <video src={m.videoUrl} muted playsInline preload="metadata" className="h-28 w-full object-cover" />
+                  ) : m.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={m.imageUrl} alt="" className="h-28 w-full object-cover" />
                   ) : (
                     <div className="h-28 bg-accent/10" />
                   )}
+                  {m.videoUrl ? (
+                    <span className="absolute right-1.5 top-1.5 rounded-full bg-black/55 p-1 text-white">
+                      <PlayIcon size={10} />
+                    </span>
+                  ) : null}
                   <p className="p-2 text-xs text-ink">{m.body}</p>
                 </Link>
               ))}

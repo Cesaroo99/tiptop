@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
-import { ClockIcon, CommentIcon, FlagIcon, HeartIcon, PinIcon, PlusIcon, ShareIcon, SparklesIcon } from "@/components/Icons";
+import { CameraIcon, ClockIcon, CommentIcon, FlagIcon, HeartIcon, PinIcon, ShareIcon, SparklesIcon } from "@/components/Icons";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { ReportModal } from "@/components/ReportModal";
 import { SocialInviteModal } from "@/components/SocialInviteModal";
@@ -17,27 +18,52 @@ import { useSession } from "@/lib/session";
  * Flux Mood vertical, immersif (#4-6) : un mood par écran, défilement vertical
  * naturel (scroll-snap, tactile comme au clavier), actions contextuelles
  * superposées, et passerelles explicites vers le monde réel (profil, événement,
- * lieu). TipTop n'a pas de pipeline vidéo : l'immersion s'appuie ici sur la
- * photo/texte plein cadre plutôt que de simuler une vidéo qui n'existe pas.
+ * lieu). Toute vignette de mood ailleurs dans l'app (stories de l'accueil,
+ * profil, recherche, notifications, moods liés à un événement) ouvre ce même
+ * flux continu via `?start=<id>` plutôt qu'une vue isolée, pour rester
+ * cohérent avec l'expérience façon TikTok demandée.
  */
 export default function Page() {
   return (
     <AppShell fullBleed>
-      <MoodFeed />
+      <Suspense>
+        <MoodFeed />
+      </Suspense>
     </AppShell>
   );
 }
 
 function MoodFeed() {
   const { messages } = useI18n();
+  const params = useSearchParams();
+  const startId = params.get("start");
   const [items, setItems] = useState<MoodItem[] | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const slideRefs = useRef(new Map<string, HTMLElement>());
 
   useEffect(() => {
     api<{ items: MoodItem[] }>("/moods")
-      .then((d) => setItems(d.items))
+      .then(async (d) => {
+        if (startId && !d.items.some((m) => m.id === startId)) {
+          try {
+            const single = await api<MoodItem>(`/moods/${startId}`);
+            setItems([single, ...d.items]);
+            return;
+          } catch {
+            // Mood expiré ou inaccessible : on ignore silencieusement et on garde le flux général.
+          }
+        }
+        setItems(d.items);
+      })
       .catch(() => setItems([]));
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startId]);
+
+  useEffect(() => {
+    if (!startId || !items) return;
+    const el = slideRefs.current.get(startId);
+    el?.scrollIntoView({ block: "start" });
+  }, [startId, items]);
 
   function updateMood(id: string, patch: Partial<MoodItem>) {
     setItems((cur) => cur?.map((m) => (m.id === id ? { ...m, ...patch } : m)) ?? cur);
@@ -80,20 +106,48 @@ function MoodFeed() {
   }
 
   return (
-    <div
-      ref={containerRef}
-      tabIndex={0}
-      onKeyDown={onKeyDown}
-      className="no-scrollbar h-full snap-y snap-mandatory overflow-y-scroll scroll-smooth outline-none"
-    >
-      {items.map((m) => (
-        <MoodSlide key={m.id} mood={m} onChange={(patch) => updateMood(m.id, patch)} />
-      ))}
+    <div className="relative h-full w-full">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <p className="type-h4 text-white drop-shadow">{messages.nav.mood}</p>
+        <Link
+          href="/compose?type=mood"
+          className="tap-scale pointer-events-auto flex items-center gap-1.5 rounded-pill bg-white/90 px-3.5 py-2 text-ink shadow-sm backdrop-blur-sm"
+        >
+          <CameraIcon size={15} />
+          <span className="type-caption font-semibold">{messages.world.moodCreate}</span>
+        </Link>
+      </div>
+      <div
+        ref={containerRef}
+        tabIndex={0}
+        onKeyDown={onKeyDown}
+        className="no-scrollbar h-full snap-y snap-mandatory overflow-y-scroll scroll-smooth outline-none"
+      >
+        {items.map((m) => (
+          <MoodSlide
+            key={m.id}
+            mood={m}
+            registerRef={(el) => {
+              if (el) slideRefs.current.set(m.id, el);
+              else slideRefs.current.delete(m.id);
+            }}
+            onChange={(patch) => updateMood(m.id, patch)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
 
-function MoodSlide({ mood, onChange }: { mood: MoodItem; onChange: (patch: Partial<MoodItem>) => void }) {
+function MoodSlide({
+  mood,
+  onChange,
+  registerRef,
+}: {
+  mood: MoodItem;
+  onChange: (patch: Partial<MoodItem>) => void;
+  registerRef?: (el: HTMLElement | null) => void;
+}) {
   const { messages } = useI18n();
   const { user } = useSession();
   const [transfer, setTransfer] = useState<string | null>(null);
@@ -157,7 +211,7 @@ function MoodSlide({ mood, onChange }: { mood: MoodItem; onChange: (patch: Parti
   }
 
   return (
-    <section className="relative h-full w-full snap-start snap-always">
+    <section ref={registerRef} className="relative h-full w-full snap-start snap-always">
       {mood.videoUrl ? (
         <MoodVideo src={mood.videoUrl} />
       ) : mood.imageUrl ? (
@@ -169,16 +223,6 @@ function MoodSlide({ mood, onChange }: { mood: MoodItem; onChange: (patch: Parti
         </div>
       )}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80" />
-
-      <div className="absolute right-3 top-[max(1rem,env(safe-area-inset-top))] flex flex-col items-end gap-2">
-        <Link
-          href="/compose?type=mood"
-          aria-label={messages.world.moodCreate}
-          className="tap-scale grid h-11 w-11 place-items-center rounded-full bg-black/35 text-white backdrop-blur-sm"
-        >
-          <PlusIcon size={18} />
-        </Link>
-      </div>
 
       <div className="absolute bottom-24 right-3 flex flex-col items-center gap-5 text-white md:bottom-8">
         <button type="button" onClick={() => void like(false)} className="tap-scale flex flex-col items-center gap-1" aria-label={messages.social.likePlace}>

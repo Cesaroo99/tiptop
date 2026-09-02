@@ -129,7 +129,7 @@ function EventMoods({ eventId }: { eventId: string }) {
         {items.map((m) => (
           <Link
             key={m.id}
-            href={`/mood/${m.id}`}
+            href={`/mood?start=${m.id}`}
             className="tap-scale w-32 shrink-0 overflow-hidden rounded-card bg-surface shadow-xs transition hover:shadow-sm"
           >
             <div className="relative h-40 bg-gradient-to-br from-accent/15 to-yellow/15">
