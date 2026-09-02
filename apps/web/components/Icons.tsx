@@ -154,6 +154,15 @@ export function SparklesIcon({ size = 17, className }: IconProps) {
   );
 }
 
+export function TicketIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d="M4 9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1.2a1.6 1.6 0 0 0 0 3.2V15a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1.6a1.6 1.6 0 0 0 0-3.2Z" />
+      <path d="M9 7v10" strokeDasharray="2.5 2.5" />
+    </svg>
+  );
+}
+
 export function CameraIcon({ size = 16, className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>

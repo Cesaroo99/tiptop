@@ -293,6 +293,11 @@ export type Messages = {
     eventsMine: string;
     eventsEmpty: string;
     eventsEmptyBody: string;
+    eventsManageEmptyBody: string;
+    eventsCreatedTitle: string;
+    eventsAttendingTitle: string;
+    eventsInvitesShortcut: string;
+    eventPublished: string;
     createEvent: string;
     eventTitle: string;
     eventDescription: string;
@@ -887,6 +892,11 @@ export const fr: Messages = {
     eventsMine: "Mes événements",
     eventsEmpty: "Pas de sortie ici",
     eventsEmptyBody: "Crée une sortie ou change de zone. Pas de catalogue mondial.",
+    eventsManageEmptyBody: "Tu n'as encore créé ni rejoint aucun événement. Découvre-en dans le fil d'accueil, ou crée le tien.",
+    eventsCreatedTitle: "Créés par moi",
+    eventsAttendingTitle: "J'y participe",
+    eventsInvitesShortcut: "Mes invitations",
+    eventPublished: "Publié",
     createEvent: "Créer un événement",
     eventTitle: "Titre de la sortie",
     eventDescription: "Description",
@@ -1481,6 +1491,11 @@ export const en: Messages = {
     eventsMine: "My events",
     eventsEmpty: "No meetup here",
     eventsEmptyBody: "Create a meetup or change area. No global catalog.",
+    eventsManageEmptyBody: "You haven't created or joined any event yet. Discover some in the home feed, or create your own.",
+    eventsCreatedTitle: "Created by me",
+    eventsAttendingTitle: "I'm attending",
+    eventsInvitesShortcut: "My invitations",
+    eventPublished: "Published",
     createEvent: "Create an event",
     eventTitle: "Meetup title",
     eventDescription: "Description",

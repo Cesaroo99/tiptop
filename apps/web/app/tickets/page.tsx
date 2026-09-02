@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import { CalendarIcon } from "@/components/Icons";
 import { Chip, EmptyState, ScreenHeader } from "@/components/ui";
 import { api, ApiError, type InvitationItem, type ReservationItem, type TicketItem } from "@/lib/api";
@@ -9,9 +9,21 @@ import { useI18n } from "@/lib/i18n";
 import Link from "next/link";
 
 export default function Page() {
+  return (
+    <Suspense>
+      <TicketsPage />
+    </Suspense>
+  );
+}
+
+function TicketsPage() {
   const { messages } = useI18n();
   const router = useRouter();
-  const [tab, setTab] = useState<"tickets" | "invites" | "reservations">("tickets");
+  const params = useSearchParams();
+  const initialTab = params.get("tab");
+  const [tab, setTab] = useState<"tickets" | "invites" | "reservations">(
+    initialTab === "invites" || initialTab === "reservations" ? initialTab : "tickets",
+  );
   const [box, setBox] = useState<"received" | "sent">("received");
   const [invites, setInvites] = useState<InvitationItem[]>([]);
   const [tickets, setTickets] = useState<TicketItem[]>([]);
