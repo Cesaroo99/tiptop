@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Inject, Param, Post, Query, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query, Req, UseGuards } from "@nestjs/common";
 import { IsBoolean, IsInt, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
 import { Type } from "class-transformer";
 import type { Request } from "express";
@@ -71,6 +71,57 @@ class HeartDto {
   confirmTransfer?: boolean;
 }
 
+class UpdateEventDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(4000)
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  zone?: string;
+
+  @IsOptional()
+  @IsString()
+  venue?: string;
+
+  @IsOptional()
+  @IsString()
+  startsAt?: string;
+
+  @IsOptional()
+  @IsString()
+  endsAt?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(5000)
+  capacity?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(99)
+  minAge?: number;
+}
+
+class DuplicateEventDto {
+  @IsString()
+  startsAt!: string;
+}
+
 class ReviewDto {
   @IsString()
   @MaxLength(500)
@@ -110,6 +161,26 @@ export class EventsController {
   @Get("events/:id")
   get(@Req() req: Request & { user: PublicUser }, @Param("id") id: string) {
     return this.events.get(req.user.id, id);
+  }
+
+  @Patch("events/:id")
+  update(@Req() req: Request & { user: PublicUser }, @Param("id") id: string, @Body() body: UpdateEventDto) {
+    return this.events.update(req.user.id, id, body);
+  }
+
+  @Post("events/:id/cancel")
+  cancel(@Req() req: Request & { user: PublicUser }, @Param("id") id: string) {
+    return this.events.cancel(req.user.id, id);
+  }
+
+  @Post("events/:id/duplicate")
+  duplicate(@Req() req: Request & { user: PublicUser }, @Param("id") id: string, @Body() body: DuplicateEventDto) {
+    return this.events.duplicate(req.user.id, id, body.startsAt);
+  }
+
+  @Get("events/:id/moods")
+  moods(@Param("id") id: string) {
+    return this.events.moods(id);
   }
 
   @Post("events/:id/interested")

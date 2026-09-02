@@ -1,11 +1,12 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { planHeartTransfer } from "@tiptop/domain";
+import { canInteractWithEvent, eventLifecycle, planHeartTransfer } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 
@@ -110,10 +111,162 @@ export class EventsService {
     return this.map(viewerId, event);
   }
 
+  /** Moods liés à l'événement (#4-6, #46) : boucle contenu social ↔ monde réel, y compris les souvenirs après coup. */
+  async moods(eventId: string) {
+    const rows = await this.prisma.mood.findMany({
+      where: { eventId },
+      orderBy: { createdAt: "desc" },
+      take: 24,
+      include: {
+        author: { select: { id: true, username: true, firstName: true, lastName: true, certified: true, profile: { select: { avatarUrl: true } } } },
+      },
+    });
+    return {
+      items: rows.map((m) => ({
+        id: m.id,
+        body: m.body,
+        imageUrl: m.imageUrl,
+        activity: m.activity,
+        createdAt: m.createdAt.toISOString(),
+        active: m.expiresAt.getTime() > Date.now(),
+        author: {
+          id: m.author.id,
+          username: m.author.username,
+          firstName: m.author.firstName,
+          lastName: m.author.lastName,
+          certified: m.author.certified,
+          avatarUrl: m.author.profile?.avatarUrl ?? null,
+        },
+      })),
+    };
+  }
+
+  private async assertHost(hostId: string, eventId: string) {
+    const event = await this.prisma.event.findUnique({ where: { id: eventId } });
+    if (!event) throw new NotFoundException({ code: "EVENT_NOT_FOUND" });
+    if (event.hostId !== hostId) throw new ForbiddenException({ code: "NOT_HOST" });
+    return event;
+  }
+
+  /** Modifier un événement (#21) : uniquement l'hôte, uniquement avant l'annulation/la fin. */
+  async update(hostId: string, eventId: string, patch: Partial<CreateEventInput>) {
+    const event = await this.assertHost(hostId, eventId);
+    if (event.status === "CANCELLED") throw new BadRequestException({ code: "EVENT_CANCELLED" });
+    const phase = eventLifecycle(event.startsAt, event.endsAt, new Date(), event.status).phase;
+    if (phase === "ended") throw new BadRequestException({ code: "EVENT_ENDED" });
+
+    const data: Record<string, unknown> = {};
+    if (patch.title != null) data.title = patch.title.trim().slice(0, 120);
+    if (patch.description != null) data.description = patch.description.trim().slice(0, 4000);
+    if (patch.venue != null) data.venue = patch.venue.trim() || null;
+    if (patch.city != null) data.city = patch.city;
+    if (patch.zone != null) data.zone = patch.zone;
+    if (patch.capacity != null) data.capacity = patch.capacity > 0 ? patch.capacity : null;
+    if (patch.minAge != null) data.minAge = patch.minAge > 0 ? patch.minAge : null;
+
+    let startsAt: Date | undefined;
+    if (patch.startsAt != null) {
+      startsAt = new Date(patch.startsAt);
+      if (Number.isNaN(startsAt.getTime()) || startsAt.getTime() <= Date.now()) {
+        throw new BadRequestException({ code: "EVENT_DATE_INVALID" });
+      }
+      data.startsAt = startsAt;
+    }
+    if (patch.endsAt != null) {
+      const endsAt = new Date(patch.endsAt);
+      if (endsAt.getTime() <= (startsAt ?? event.startsAt).getTime()) {
+        throw new BadRequestException({ code: "EVENT_END_INVALID" });
+      }
+      data.endsAt = endsAt;
+    }
+
+    const timeChanged = startsAt && startsAt.getTime() !== event.startsAt.getTime();
+    const placeChanged =
+      (patch.city != null && patch.city !== event.city) ||
+      (patch.zone != null && patch.zone !== event.zone) ||
+      (patch.venue != null && patch.venue.trim() !== (event.venue ?? ""));
+
+    await this.prisma.event.update({ where: { id: eventId }, data });
+
+    if (timeChanged || placeChanged) {
+      await this.notifyParticipants(eventId, hostId, {
+        entityType: timeChanged ? "event_time_changed" : "event_place_changed",
+      });
+    }
+    return this.get(hostId, eventId);
+  }
+
+  /** Annuler un événement (#8, #21) : réservé à l'hôte, prévient tous les participants. */
+  async cancel(hostId: string, eventId: string) {
+    const event = await this.assertHost(hostId, eventId);
+    if (event.status === "CANCELLED") throw new BadRequestException({ code: "EVENT_ALREADY_CANCELLED" });
+    await this.prisma.event.update({ where: { id: eventId }, data: { status: "CANCELLED" } });
+    await this.notifyParticipants(eventId, hostId, { entityType: "event_cancelled" });
+    return { ok: true };
+  }
+
+  /** Dupliquer un événement (#21) : nouvelle date requise, le reste est repris. */
+  async duplicate(hostId: string, eventId: string, startsAtInput: string) {
+    const event = await this.assertHost(hostId, eventId);
+    const startsAt = new Date(startsAtInput);
+    if (Number.isNaN(startsAt.getTime()) || startsAt.getTime() <= Date.now()) {
+      throw new BadRequestException({ code: "EVENT_DATE_INVALID" });
+    }
+    return this.create(hostId, {
+      title: event.title,
+      description: event.description,
+      imageUrl: event.imageUrl ?? undefined,
+      city: event.city,
+      zone: event.zone ?? undefined,
+      venue: event.venue ?? undefined,
+      startsAt: startsAt.toISOString(),
+      priceXaf: event.priceXaf,
+      capacity: event.capacity ?? undefined,
+      minAge: event.minAge ?? undefined,
+      requiresReservation: event.requiresReservation,
+    });
+  }
+
+  /** Notifie tous les participants actifs (hors annulés) d'un changement — #13. */
+  private async notifyParticipants(
+    eventId: string,
+    hostId: string,
+    payload: { entityType: string },
+  ) {
+    const participants = await this.prisma.eventParticipant.findMany({
+      where: { eventId, status: { not: "CANCELLED" }, userId: { not: hostId } },
+      select: { userId: true },
+    });
+    const ticketHolders = await this.prisma.ticket.findMany({
+      where: { eventId, status: { in: ["CONFIRMED", "AWAITING_PAYMENT"] } },
+      select: { holderId: true },
+    });
+    const userIds = new Set<string>([
+      ...participants.map((p) => p.userId),
+      ...ticketHolders.map((t) => t.holderId),
+    ]);
+    userIds.delete(hostId);
+    await Promise.all(
+      [...userIds].map((userId) =>
+        this.notifications.create({
+          userId,
+          actorId: hostId,
+          type: "EVENT_UPDATE",
+          entityType: payload.entityType,
+          entityId: eventId,
+        }),
+      ),
+    );
+  }
+
   async toggleInterested(viewerId: string, eventId: string) {
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException({ code: "EVENT_NOT_FOUND" });
     if (event.hostId === viewerId) throw new BadRequestException({ code: "EVENT_HOST" });
+    const phase = eventLifecycle(event.startsAt, event.endsAt, new Date(), event.status).phase;
+    if (!canInteractWithEvent(phase)) {
+      throw new BadRequestException({ code: phase === "cancelled" ? "EVENT_CANCELLED" : "EVENT_ENDED" });
+    }
     const existing = await this.prisma.eventParticipant.findUnique({
       where: { eventId_userId: { eventId, userId: viewerId } },
     });
@@ -151,6 +304,10 @@ export class EventsService {
   async heart(userId: string, eventId: string, confirmTransfer: boolean) {
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException({ code: "EVENT_NOT_FOUND" });
+    const phase = eventLifecycle(event.startsAt, event.endsAt, new Date(), event.status).phase;
+    if (!canInteractWithEvent(phase)) {
+      throw new BadRequestException({ code: phase === "cancelled" ? "EVENT_CANCELLED" : "EVENT_ENDED" });
+    }
     const result = await this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${userId} FOR UPDATE`;
       const current = await tx.eventHeart.findFirst({ where: { userId, releasedAt: null } });
@@ -269,6 +426,7 @@ export class EventsService {
     });
     const isHost = e.hostId === viewerId;
     const seated = ["CONFIRMED", "RESERVED", "HOST", "PRESENT"].includes(mine?.status ?? "");
+    const phase = eventLifecycle(e.startsAt, e.endsAt, new Date(), e.status).phase;
     return {
       id: e.id,
       title: e.title,
@@ -286,13 +444,14 @@ export class EventsService {
       minAge: e.minAge,
       requiresReservation: e.requiresReservation,
       status: e.status,
+      phase,
       createdAt: e.createdAt.toISOString(),
       hearts: e._count.hearts,
       viewerHearted: Boolean(heart),
       viewerInterested: mine?.status === "INTERESTED",
       viewerStatus: mine?.status ?? null,
       isHost,
-      canBook: !isHost && (e.requiresReservation || e.priceXaf > 0) && !seated,
+      canBook: !isHost && (e.requiresReservation || e.priceXaf > 0) && !seated && canInteractWithEvent(phase),
       viewerTicketId: ticket?.id ?? null,
       canChatGroup: seated,
       interestedCount: e.participants.filter((p) => p.status === "INTERESTED").length,

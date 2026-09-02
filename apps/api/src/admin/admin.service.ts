@@ -15,12 +15,16 @@ import {
 } from "@tiptop/domain";
 import type { AdminAction, Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma.service";
+import { NotificationsService } from "../notifications/notifications.service";
 
 const person = { id: true, username: true, firstName: true, lastName: true, certified: true } as const;
 
 @Injectable()
 export class AdminService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(NotificationsService) private readonly notifications: NotificationsService,
+  ) {}
 
   async overview() {
     const [users, blocked, posts, hiddenPosts, events, payments, openReports] = await Promise.all([
@@ -149,7 +153,31 @@ export class AdminService {
     if (event.status === "CANCELLED") throw new BadRequestException({ code: "EVENT_ALREADY_CANCELLED" });
     await this.prisma.event.update({ where: { id: eventId }, data: { status: "CANCELLED" } });
     await this.audit(actorId, "EVENT_CANCEL", "event", eventId);
+    await this.notifyEventParticipants(eventId, actorId, "event_cancelled");
     return { ok: true };
+  }
+
+  /** Prévient les participants concernés — utilisé par l'annulation admin (#13, #32). */
+  private async notifyEventParticipants(eventId: string, actorId: string, entityType: string) {
+    const [participants, ticketHolders] = await Promise.all([
+      this.prisma.eventParticipant.findMany({
+        where: { eventId, status: { not: "CANCELLED" } },
+        select: { userId: true },
+      }),
+      this.prisma.ticket.findMany({
+        where: { eventId, status: { in: ["CONFIRMED", "AWAITING_PAYMENT"] } },
+        select: { holderId: true },
+      }),
+    ]);
+    const userIds = new Set<string>([
+      ...participants.map((p) => p.userId),
+      ...ticketHolders.map((t) => t.holderId),
+    ]);
+    await Promise.all(
+      [...userIds].map((userId) =>
+        this.notifications.create({ userId, actorId, type: "EVENT_UPDATE", entityType, entityId: eventId }),
+      ),
+    );
   }
 
   async payments() {
@@ -188,6 +216,13 @@ export class AdminService {
     }
     await this.prisma.payment.update({ where: { id: paymentId }, data: { status: "REFUNDED" } });
     await this.audit(actor.id, "PAYMENT_REFUND", "payment", paymentId, { likesKept: payment.kind === "LIKE_PACK" });
+    await this.notifications.create({
+      userId: payment.userId,
+      actorId: actor.id,
+      type: "PAYMENT",
+      entityType: "refund",
+      entityId: paymentId,
+    });
     return { ok: true, likesKept: payment.kind === "LIKE_PACK" };
   }
 

@@ -274,6 +274,7 @@ enum NotificationType {
   WISH_OFFER
   LIKE_MILESTONE
   SOCIAL_INVITE
+  EVENT_UPDATE
 }
 
 enum EventStatus {
