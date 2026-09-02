@@ -632,6 +632,7 @@ model Mood {
   author     User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   body       String         @default("")
   imageUrl   String?
+  videoUrl   String?
   activity   String?
   city       String?
   zone       String?

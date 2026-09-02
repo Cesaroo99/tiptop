@@ -126,6 +126,7 @@ export class EventsService {
         id: m.id,
         body: m.body,
         imageUrl: m.imageUrl,
+        videoUrl: m.videoUrl,
         activity: m.activity,
         createdAt: m.createdAt.toISOString(),
         active: m.expiresAt.getTime() > Date.now(),

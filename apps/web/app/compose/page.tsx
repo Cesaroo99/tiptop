@@ -8,6 +8,13 @@ import { api, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 
+const MOOD_VIDEOS = [
+  { id: "concert", label: "Concert", src: "/seed/moods/video-concert.mp4" },
+  { id: "piscine", label: "Piscine", src: "/seed/moods/video-piscine.mp4" },
+  { id: "rooftop", label: "Rooftop", src: "/seed/moods/video-rooftop.mp4" },
+  { id: "food", label: "Restaurant", src: "/seed/moods/video-food.mp4" },
+];
+
 export default function ComposePage() {
   return (
     <AppShell>
@@ -32,6 +39,7 @@ function Composer() {
   const [city, setCity] = useState(user?.city ?? "Yaoundé");
   const [zone, setZone] = useState(user?.zone ?? "Carrefour Damas");
   const [imageUrl, setImageUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
   const [title, setTitle] = useState("");
   const [venue, setVenue] = useState("");
   const [startsAt, setStartsAt] = useState("");
@@ -93,7 +101,8 @@ function Composer() {
           method: "POST",
           body: JSON.stringify({
             body,
-            imageUrl: imageUrl || undefined,
+            imageUrl: videoUrl ? undefined : imageUrl || undefined,
+            videoUrl: videoUrl || undefined,
             activity: activity || undefined,
             hours: Number(hours) || 12,
             visibility,
@@ -116,7 +125,7 @@ function Composer() {
       ? Boolean(body.trim())
       : kind === "event"
         ? Boolean(title.trim() && startsAt)
-        : Boolean(body.trim() || imageUrl || activity.trim());
+        : Boolean(body.trim() || imageUrl || videoUrl || activity.trim());
 
   return (
     <div className="px-4 py-4">
@@ -201,6 +210,26 @@ function Composer() {
             ))}
           </select>
         ) : null}
+        <div>
+          <p className="type-label mb-2 text-subtle">{messages.world.moodPickVideo}</p>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {MOOD_VIDEOS.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                onClick={() => {
+                  setVideoUrl((cur) => (cur === v.src ? "" : v.src));
+                  setImageUrl("");
+                }}
+                className={`relative h-24 w-16 shrink-0 overflow-hidden rounded-xl ring-2 transition ${videoUrl === v.src ? "ring-accent" : "ring-transparent"}`}
+              >
+                <video src={v.src} muted playsInline preload="metadata" className="h-full w-full object-cover" />
+                <span className="absolute inset-0 bg-black/25" />
+                <span className="type-caption absolute inset-x-0 bottom-1 text-center font-semibold text-white drop-shadow">{v.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
         </div>
       ) : null}
       {kind !== "mood" || withLoc ? (
@@ -210,10 +239,19 @@ function Composer() {
         </div>
       ) : null}
       <div className="mt-4 space-y-3 border-t border-[var(--border)] pt-3">
-        <button type="button" className="flex w-full items-center gap-2 py-2 text-left text-ink" onClick={() => setImageUrl((v) => (v ? "" : "/seed/black-white.svg"))}>
-          <span>📷</span> {messages.social.addImage}
-          <span className="ml-auto text-xs text-muted">{imageUrl ? "✓" : messages.social.noImageHint}</span>
-        </button>
+        {kind !== "mood" || !videoUrl ? (
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 py-2 text-left text-ink"
+            onClick={() => {
+              setImageUrl((v) => (v ? "" : "/seed/black-white.svg"));
+              setVideoUrl("");
+            }}
+          >
+            <span>📷</span> {messages.social.addImage}
+            <span className="ml-auto text-xs text-muted">{imageUrl ? "✓" : messages.social.noImageHint}</span>
+          </button>
+        ) : null}
         {kind === "post" ? (
           <button type="button" className="flex w-full items-center gap-2 py-2 text-left text-ink" onClick={() => setWithLoc((v) => !v)}>
             <span>📍</span> {messages.social.addLocation}

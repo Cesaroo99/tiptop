@@ -18,6 +18,10 @@ class CreateMoodDto {
 
   @IsOptional()
   @IsString()
+  videoUrl?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(80)
   activity?: string;
 

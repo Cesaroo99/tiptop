@@ -7,7 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
 import { EventCard } from "@/components/EventCard";
 import { MapThumb } from "@/components/MapThumb";
-import { MessageIcon } from "@/components/Icons";
+import { MessageIcon, PlayIcon } from "@/components/Icons";
 import { CardSkeleton, ErrorBanner, PrimaryButton, SecondaryButton } from "@/components/ui";
 import { api, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -102,6 +102,7 @@ type EventMood = {
   id: string;
   body: string;
   imageUrl: string | null;
+  videoUrl: string | null;
   activity: string | null;
   active: boolean;
   author: { id: string; firstName: string; lastName: string; avatarUrl: string | null };
@@ -132,9 +133,16 @@ function EventMoods({ eventId }: { eventId: string }) {
             className="tap-scale w-32 shrink-0 overflow-hidden rounded-card bg-surface shadow-xs transition hover:shadow-sm"
           >
             <div className="relative h-40 bg-gradient-to-br from-accent/15 to-yellow/15">
-              {m.imageUrl ? (
+              {m.videoUrl ? (
+                <video src={m.videoUrl} muted loop playsInline preload="metadata" className="h-full w-full object-cover" />
+              ) : m.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={m.imageUrl} alt="" className="h-full w-full object-cover" />
+              ) : null}
+              {m.videoUrl ? (
+                <span className="absolute right-1.5 top-1.5 rounded-full bg-black/55 p-1 text-white">
+                  <PlayIcon size={10} />
+                </span>
               ) : null}
               {!m.active ? (
                 <span className="type-caption absolute left-1.5 top-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-white">

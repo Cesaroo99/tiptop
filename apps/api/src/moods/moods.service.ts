@@ -17,6 +17,7 @@ export class MoodsService {
     input: {
       body?: string;
       imageUrl?: string;
+      videoUrl?: string;
       activity?: string;
       city?: string;
       zone?: string;
@@ -31,7 +32,12 @@ export class MoodsService {
     if (imageUrl && !imageUrl.startsWith("/seed/")) {
       throw new BadRequestException({ code: "IMAGE_NOT_ALLOWED" });
     }
-    if (!body && !imageUrl && !activity) throw new BadRequestException({ code: "MOOD_EMPTY" });
+    let videoUrl = input.videoUrl?.trim() || null;
+    if (videoUrl && !videoUrl.startsWith("/seed/")) {
+      throw new BadRequestException({ code: "VIDEO_NOT_ALLOWED" });
+    }
+    if (videoUrl) imageUrl = null;
+    if (!body && !imageUrl && !videoUrl && !activity) throw new BadRequestException({ code: "MOOD_EMPTY" });
     if (input.eventId) {
       const ev = await this.prisma.event.findUnique({ where: { id: input.eventId } });
       if (!ev) throw new BadRequestException({ code: "EVENT_NOT_FOUND" });
@@ -50,6 +56,7 @@ export class MoodsService {
         authorId,
         body,
         imageUrl,
+        videoUrl,
         activity,
         city: input.city ?? author?.profile?.city ?? null,
         zone: input.zone ?? author?.profile?.zone ?? null,
@@ -185,6 +192,7 @@ export class MoodsService {
       id: string;
       body: string;
       imageUrl: string | null;
+      videoUrl: string | null;
       activity: string | null;
       city: string | null;
       zone: string | null;
@@ -214,6 +222,7 @@ export class MoodsService {
       id: m.id,
       body: m.body,
       imageUrl: m.imageUrl,
+      videoUrl: m.videoUrl,
       activity: m.activity,
       city: m.city,
       zone: m.zone,

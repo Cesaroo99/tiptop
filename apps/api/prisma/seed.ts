@@ -1001,6 +1001,76 @@ async function enrichLivingWorld(
     }
   }
 
+  // Moods en vidéo courte (#4-6) : quelques clips générés à partir de vraies photos
+  // seed (effet Ken Burns), pour que le flux vertical ne soit jamais vide de vidéo.
+  const videoMoodsWanted: Array<{
+    authorId: string;
+    body: string;
+    videoUrl: string;
+    activity: string;
+    city: string;
+    zone: string;
+    eventId?: string | null;
+  }> = [
+    {
+      authorId: koffi.id,
+      body: "Ambiance de dingue ce soir, venez nous rejoindre 🎶",
+      videoUrl: "/seed/moods/video-concert.mp4",
+      activity: "🎵 Concert",
+      city: "Yaoundé",
+      zone: "Melen",
+      eventId: live.id,
+    },
+    {
+      authorId: alex.id,
+      body: "Piscine + soleil + bonne musique, on est bien 🏖️",
+      videoUrl: "/seed/moods/video-piscine.mp4",
+      activity: "🏖️ Piscine",
+      city: "Yaoundé",
+      zone: "Odza",
+      eventId: piscine.id,
+    },
+    {
+      authorId: erica.id,
+      body: "Coucher de soleil sur le rooftop, qui nous rejoint ?",
+      videoUrl: "/seed/moods/video-rooftop.mp4",
+      activity: "🌆 Rooftop",
+      city: "Yaoundé",
+      zone: "Bastos",
+    },
+    {
+      authorId: amina.id,
+      body: "Petit plat qui sent trop bon 😋",
+      videoUrl: "/seed/moods/video-food.mp4",
+      activity: "🍽️ Restaurant",
+      city: "Yaoundé",
+      zone: "Bastos",
+    },
+  ];
+  for (const m of videoMoodsWanted) {
+    const exists = await db.mood.findFirst({ where: { authorId: m.authorId, videoUrl: m.videoUrl } });
+    if (!exists) {
+      await db.mood.create({
+        data: {
+          authorId: m.authorId,
+          body: m.body,
+          videoUrl: m.videoUrl,
+          activity: m.activity,
+          city: m.city,
+          zone: m.zone,
+          eventId: m.eventId ?? null,
+          visibility: "ZONE",
+          expiresAt: new Date(Date.now() + 18 * 3600_000),
+        },
+      });
+    } else {
+      await db.mood.update({
+        where: { id: exists.id },
+        data: { expiresAt: new Date(Date.now() + 18 * 3600_000) },
+      });
+    }
+  }
+
   const blackPost = await db.post.findFirst({ where: { authorId: cesar.id, body: { contains: "Black" } } });
   if (blackPost) {
     const comments = [

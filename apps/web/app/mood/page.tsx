@@ -158,7 +158,9 @@ function MoodSlide({ mood, onChange }: { mood: MoodItem; onChange: (patch: Parti
 
   return (
     <section className="relative h-full w-full snap-start snap-always">
-      {mood.imageUrl ? (
+      {mood.videoUrl ? (
+        <MoodVideo src={mood.videoUrl} />
+      ) : mood.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={mood.imageUrl} alt="" className="h-full w-full object-cover" />
       ) : (
@@ -271,6 +273,57 @@ function MoodSlide({ mood, onChange }: { mood: MoodItem; onChange: (patch: Parti
       <ReportModal open={reportOpen} kind="MOOD" moodId={mood.id} onClose={() => setReportOpen(false)} />
       <MoodComments moodId={mood.id} open={commentsOpen} onClose={() => setCommentsOpen(false)} onSent={() => onChange({ commentsCount: mood.commentsCount + 1 })} />
     </section>
+  );
+}
+
+/**
+ * Vidéo courte en boucle, muette par défaut (autoplay navigateur), qui ne joue
+ * que lorsque son écran est réellement visible dans le flux — comme Reels/TikTok,
+ * pour ne pas faire tourner plusieurs vidéos en même temps (#71 performance).
+ */
+function MoodVideo({ src }: { src: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(true);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && entry.intersectionRatio > 0.6) void el.play().catch(() => undefined);
+        else el.pause();
+      },
+      { threshold: [0, 0.6, 1] },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  return (
+    <button
+      type="button"
+      aria-label={muted ? "Activer le son" : "Couper le son"}
+      onClick={() => setMuted((v) => !v)}
+      className="relative block h-full w-full"
+    >
+      <video
+        ref={ref}
+        src={src}
+        muted={muted}
+        loop
+        playsInline
+        preload="metadata"
+        className="h-full w-full object-cover"
+      />
+      {muted ? (
+        <span className="absolute left-3 top-[max(1rem,env(safe-area-inset-top))] grid h-8 w-8 place-items-center rounded-full bg-black/35 text-white backdrop-blur-sm">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+            <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+            <line x1="4" y1="4" x2="20" y2="20" />
+          </svg>
+        </span>
+      ) : null}
+    </button>
   );
 }
 

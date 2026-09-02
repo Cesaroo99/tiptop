@@ -321,6 +321,7 @@ export type Messages = {
     visZone: string;
     visFollowers: string;
     moodLinkEventNone: string;
+    moodPickVideo: string;
     visEvent: string;
     moodExpired: string;
     activityPlaceholder: string;
@@ -903,6 +904,7 @@ export const fr: Messages = {
     visZone: "Ma zone",
     visFollowers: "Abonnés",
     moodLinkEventNone: "Associer à un événement (optionnel)",
+    moodPickVideo: "Ou choisis une vidéo courte (optionnel)",
     visEvent: "Participants d’un event",
     moodExpired: "Ce mood est terminé.",
     activityPlaceholder: "Que fais-tu en ce moment ? (ex. 🍣 Restaurant japonais)",
@@ -1485,6 +1487,7 @@ export const en: Messages = {
     visZone: "My area",
     visFollowers: "Followers",
     moodLinkEventNone: "Link to an event (optional)",
+    moodPickVideo: "Or pick a short video (optional)",
     visEvent: "Event guests",
     moodExpired: "This mood ended.",
     activityPlaceholder: "What are you up to right now? (e.g. 🍣 Sushi place)",

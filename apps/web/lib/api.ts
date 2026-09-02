@@ -80,6 +80,7 @@ export type MoodItem = {
   id: string;
   body: string;
   imageUrl: string | null;
+  videoUrl: string | null;
   expiresAt: string;
   createdAt: string;
   commentsCount: number;

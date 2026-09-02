@@ -122,7 +122,9 @@ function MoodViewer() {
   return (
     <div className="px-4 py-4">
       <div className="overflow-hidden rounded-card bg-surface shadow-card">
-        {mood.imageUrl ? (
+        {mood.videoUrl ? (
+          <video src={mood.videoUrl} controls loop muted playsInline className="h-56 w-full object-cover" />
+        ) : mood.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={mood.imageUrl} alt="" className="h-56 w-full object-cover" />
         ) : (
