@@ -77,6 +77,17 @@ export type Messages = {
     title: string;
     subtitle: string;
     continue: string;
+    skip: string;
+    next: string;
+    getStarted: string;
+    slide1Title: string;
+    slide1Body: string;
+    slide2Title: string;
+    slide2Body: string;
+    slide3Title: string;
+    slide3Body: string;
+    slide4Title: string;
+    slide4Body: string;
   };
   common: {
     close: string;
@@ -682,6 +693,17 @@ export const fr: Messages = {
     title: "Complète ton profil",
     subtitle: "Les autres doivent pouvoir te reconnaître dans la vraie vie.",
     continue: "Entrer dans TipTop",
+    skip: "Passer",
+    next: "Suivant",
+    getStarted: "C'est parti",
+    slide1Title: "Du virtuel au réel",
+    slide1Body: "TipTop n'est pas un réseau social de plus. C'est l'application qui t'aide à transformer une interaction en écran en vraie rencontre.",
+    slide2Title: "Découvre ce qui se passe autour de toi",
+    slide2Body: "Événements, personnes disponibles, sorties du moment : découvre ce qui t'entoure, où que tu sois.",
+    slide3Title: "Partage ce que tu vis, maintenant",
+    slide3Body: "Avec Mood, montre en direct où tu es et ce que tu fais — et donne envie à d'autres de te rejoindre.",
+    slide4Title: "Invite, réserve, vis l'expérience",
+    slide4Body: "Un like, une invitation, une réservation : chaque interaction sur TipTop peut se terminer par une vraie rencontre.",
   },
   common: {
     close: "Fermer",
@@ -1287,6 +1309,17 @@ export const en: Messages = {
     title: "Complete your profile",
     subtitle: "People should be able to recognize you in real life.",
     continue: "Enter TipTop",
+    skip: "Skip",
+    next: "Next",
+    getStarted: "Get started",
+    slide1Title: "From virtual to real",
+    slide1Body: "TipTop isn't just another social network. It's the app that helps turn an on-screen interaction into a real meetup.",
+    slide2Title: "Discover what's happening around you",
+    slide2Body: "Events, available people, meetups happening now: discover what surrounds you, wherever you are.",
+    slide3Title: "Share what you're living, right now",
+    slide3Body: "With Mood, show live where you are and what you're doing — and make others want to join you.",
+    slide4Title: "Invite, book, live the experience",
+    slide4Body: "A like, an invitation, a reservation: every interaction on TipTop can end in a real meetup.",
   },
   common: {
     close: "Close",
