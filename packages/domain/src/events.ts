@@ -53,8 +53,24 @@ export function meetsMinAge(birthDate: Date | null | undefined, minAge: number |
   return age >= minAge;
 }
 
+/** Places occupées par des invités — l’organisateur ne compte pas. */
+export const SEATED_GUEST_STATUSES = ["RESERVED", "CONFIRMED", "PRESENT"] as const;
+
+export function isSeatedGuestStatus(status: string): boolean {
+  return (SEATED_GUEST_STATUSES as readonly string[]).includes(status);
+}
+
+export function seatedGuestCount(participants: Array<{ status: string }>): number {
+  return participants.filter((p) => isSeatedGuestStatus(p.status)).length;
+}
+
+export function remainingSeats(capacity: number | null | undefined, taken: number): number | null {
+  if (capacity == null || capacity <= 0) return null;
+  return Math.max(0, capacity - Math.max(0, taken));
+}
+
 export function eventIsFull(capacity: number | null | undefined, taken: number): boolean {
-  if (capacity == null) return false;
+  if (capacity == null || capacity <= 0) return false;
   return taken >= capacity;
 }
 

@@ -23,6 +23,8 @@ import {
   eventLifecycle,
   EVENT_INVITE_DAILY_LIMIT,
   evaluateInvite,
+  remainingSeats,
+  seatedGuestCount,
   moodExpiresAt,
 } from "../src/events";
 import { canConsumeTicket, canShowQr, isInEntryWindow, signTicketQr, verifyTicketQr } from "../src/tickets";
@@ -375,6 +377,13 @@ describe("invitations & moods", () => {
 
   it("refuse un event complet", () => {
     expect(evaluateInvite({ ...base, capacity: 2, taken: 2 })).toBe("EVENT_FULL");
+  });
+
+  it("compte les places restantes sans l’organisateur", () => {
+    expect(seatedGuestCount([{ status: "HOST" }, { status: "RESERVED" }, { status: "INTERESTED" }])).toBe(1);
+    expect(remainingSeats(40, 5)).toBe(35);
+    expect(remainingSeats(40, 40)).toBe(0);
+    expect(remainingSeats(null, 3)).toBeNull();
   });
 
   it("refuse une invitation expirée", () => {

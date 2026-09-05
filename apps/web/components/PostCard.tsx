@@ -25,6 +25,7 @@ import {
 import { BookEventSheet } from "./BookEventSheet";
 import { LikeDialogs, likeErrorKind } from "./LikeDialogs";
 import { MapThumb } from "./MapThumb";
+import { SeatsLeftBadge, seatsLeftLabel, seatsRemainingOf } from "./SeatsLeftBadge";
 import { OptionsSheet } from "./OptionsSheet";
 import { ReportModal } from "./ReportModal";
 import { IconButton, Modal } from "./ui";
@@ -86,6 +87,9 @@ export function PostCard({
   const countdown = event ? formatCountdownLabel(event.startsAt) : null;
   const liked = post.likeTime?.likedByMe ?? post.likedByMe ?? false;
   const interested = event?.viewerInterested ?? false;
+  const remaining = event ? seatsRemainingOf(event.capacity, event.reservedCount, event.remaining) : null;
+  const eventFull = remaining != null && remaining <= 0;
+  const canReserve = Boolean(event) && event?.canBook !== false && !eventFull;
   const { lead, rest } = splitPostLead(post.body);
   const age = isEvent ? ageCategoryLabel(event?.minAge) : null;
   const mapCity = event?.city ?? post.city;
@@ -211,6 +215,7 @@ export function PostCard({
     `${formatCompactCount(post.commentsCount)} ${messages.social.comments}`,
     `${formatCompactCount(shares)} ${messages.social.shares}`,
     isEvent && event ? `${formatCompactCount(event.reservedCount)} ${messages.world.reservationsCount}` : null,
+    isEvent && event ? seatsLeftLabel(remaining, messages.world) : null,
     isEvent && event ? `${formatCompactCount(event.interestedCount)} ${messages.world.interestedCount}` : null,
   ].filter(Boolean);
 
@@ -283,13 +288,18 @@ export function PostCard({
                 </div>
               )}
               {isEvent && event ? (
-                <Link
-                  href={`/events/${event.id}`}
-                  aria-label={messages.world.sortie}
-                  className="absolute bottom-2 right-2 h-[4.25rem] w-[6.25rem]"
-                >
-                  <MapThumb city={mapCity} zone={mapZone} className="h-full w-full" />
-                </Link>
+                <>
+                  <div className="absolute left-2 top-2">
+                    <SeatsLeftBadge remaining={remaining} />
+                  </div>
+                  <Link
+                    href={`/events/${event.id}`}
+                    aria-label={messages.world.sortie}
+                    className="absolute bottom-2 right-2 h-[4.25rem] w-[6.25rem]"
+                  >
+                    <MapThumb city={mapCity} zone={mapZone} className="h-full w-full" />
+                  </Link>
+                </>
               ) : null}
             </div>
           ) : null}
@@ -307,9 +317,15 @@ export function PostCard({
             </ActionCircle>
             {isEvent && event ? (
               <>
-                <ActionCircle label={messages.booking.reserve} onClick={() => setBookOpen(true)}>
-                  <CalendarPlusIcon size={17} />
-                </ActionCircle>
+                {canReserve ? (
+                  <ActionCircle label={messages.booking.reserve} onClick={() => setBookOpen(true)}>
+                    <CalendarPlusIcon size={17} />
+                  </ActionCircle>
+                ) : eventFull ? (
+                  <span className="type-caption rounded-pill bg-danger-soft px-2.5 py-2 font-bold text-danger">
+                    {messages.world.seatsFull}
+                  </span>
+                ) : null}
                 <ActionCircle
                   label={interested ? messages.world.notInterested : messages.world.interested}
                   active={interested}
@@ -339,6 +355,20 @@ export function PostCard({
       <BookEventSheet
         open={bookOpen}
         onClose={() => setBookOpen(false)}
+        onBooked={(seats) => {
+          if (!event || seats <= 0) return;
+          const nextTaken = event.reservedCount + seats;
+          const nextRemaining = remaining != null ? Math.max(0, remaining - seats) : seatsRemainingOf(event.capacity, nextTaken);
+          onChanged?.({
+            ...post,
+            event: {
+              ...event,
+              reservedCount: nextTaken,
+              remaining: nextRemaining,
+              canBook: nextRemaining == null || nextRemaining > 0,
+            },
+          });
+        }}
         preview={
           event
             ? {

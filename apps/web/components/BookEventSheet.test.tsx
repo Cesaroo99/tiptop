@@ -27,6 +27,10 @@ vi.mock("@/lib/api", async () => {
           priceXaf: 5000,
           currency: "XAF",
           paymentRule: "HOLD",
+          capacity: 40,
+          remaining: 12,
+          taken: 28,
+          reservedCount: 28,
           minAge: 18,
           startsAt: "2026-10-12T18:00:00.000Z",
           isHost: false,
@@ -65,6 +69,7 @@ describe("BookEventSheet", () => {
     );
     expect(await screen.findByRole("dialog", { name: "Réserver l'évènement" })).toBeInTheDocument();
     expect(await screen.findByText("11,49 $ CA")).toBeInTheDocument();
+    expect(await screen.findByText("12 places restantes")).toBeInTheDocument();
     expect(screen.getByText("Pour moi même")).toBeInTheDocument();
     expect(screen.getByText("Inviter des amis")).toBeInTheDocument();
     expect(screen.getByText(/Défile les profils/)).toBeInTheDocument();

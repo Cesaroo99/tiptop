@@ -37,6 +37,7 @@ export type EventCard = {
   currency: string;
   capacity: number | null;
   taken: number;
+  remaining?: number | null;
   minAge: number | null;
   requiresReservation: boolean;
   paymentRule?: "HOLD" | "PAY_FIRST" | "PAY_REQUIRED";
@@ -275,6 +276,8 @@ export type FeedItem = {
     zone?: string | null;
     interestedCount: number;
     reservedCount: number;
+    capacity?: number | null;
+    remaining?: number | null;
     viewerInterested?: boolean;
     canBook?: boolean;
   } | null;

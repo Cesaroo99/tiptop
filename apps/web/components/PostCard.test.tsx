@@ -45,6 +45,8 @@ const post: FeedItem = {
     minAge: 18,
     interestedCount: 3,
     reservedCount: 35,
+    capacity: 40,
+    remaining: 5,
     viewerInterested: false,
   },
 };
@@ -71,7 +73,8 @@ describe("PostCard — publication vs événement", () => {
     expect(screen.getByText("Il y a 2 heures")).toBeInTheDocument();
     expect(screen.getByText("-18")).toBeInTheDocument();
     expect(screen.getByText("Un tour au Black&White :")).toBeInTheDocument();
-    expect(screen.getByText("3.4k Commentaires . 46 Partages . 35 Réservations . 3 Intéressés")).toBeInTheDocument();
+    expect(screen.getByText("3.4k Commentaires . 46 Partages . 35 Réservations . 5 places restantes . 3 Intéressés")).toBeInTheDocument();
+    expect(screen.getAllByText("5 places restantes").length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Mon like est ici")).toBeInTheDocument();
     expect(screen.queryByText(/seconde/)).not.toBeInTheDocument();
     expect(screen.getByLabelText("Commentaires")).toHaveAttribute("href", "/posts/p1");
@@ -81,6 +84,16 @@ describe("PostCard — publication vs événement", () => {
     expect(screen.getByText("13min")).toBeInTheDocument();
     expect(screen.queryByText("Suivre")).not.toBeInTheDocument();
     expect(document.querySelector("[data-kind=event]")).toBeTruthy();
+  });
+
+  it("événement complet : badge Complet, plus de bouton Réserver", () => {
+    render(
+      <TestI18nProvider>
+        <PostCard post={{ ...post, event: { ...post.event!, remaining: 0, reservedCount: 40, capacity: 40, canBook: false } }} />
+      </TestI18nProvider>,
+    );
+    expect(screen.getAllByText("Complet").length).toBeGreaterThan(0);
+    expect(screen.queryByLabelText("Réserver")).not.toBeInTheDocument();
   });
 
   it("publication : like + commentaire seulement, pas d’âge ni de timing d’événement", () => {

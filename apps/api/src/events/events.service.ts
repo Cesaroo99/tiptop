@@ -8,10 +8,13 @@ import {
 } from "@nestjs/common";
 import {
   canInteractWithEvent,
+  eventIsFull,
   eventLifecycle,
   normalizePaymentRule,
   planHeartTransfer,
+  remainingSeats,
   resolveUserCurrency,
+  seatedGuestCount,
 } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -432,8 +435,7 @@ export class EventsService {
       where: { userId: viewerId, eventId: e.id, releasedAt: null },
     });
     const mine = e.participants.find((p) => p.userId === viewerId);
-    const taken = e.participants.filter((p) => p.status === "CONFIRMED" || p.status === "RESERVED" || p.status === "HOST")
-      .length;
+    const taken = seatedGuestCount(e.participants);
     const ticket = await this.prisma.ticket.findFirst({
       where: { eventId: e.id, holderId: viewerId },
       orderBy: { createdAt: "desc" },
@@ -455,6 +457,7 @@ export class EventsService {
       currency: e.currency,
       capacity: e.capacity,
       taken,
+      remaining: remainingSeats(e.capacity, taken),
       minAge: e.minAge,
       requiresReservation: e.requiresReservation,
       paymentRule: normalizePaymentRule(e.paymentRule),
@@ -466,13 +469,16 @@ export class EventsService {
       viewerInterested: mine?.status === "INTERESTED",
       viewerStatus: mine?.status ?? null,
       isHost,
-      canBook: !isHost && (e.requiresReservation || e.priceXaf > 0) && !seated && canInteractWithEvent(phase),
+      canBook:
+        !isHost &&
+        (e.requiresReservation || e.priceXaf > 0) &&
+        !seated &&
+        !eventIsFull(e.capacity, taken) &&
+        canInteractWithEvent(phase),
       viewerTicketId: ticket?.id ?? null,
       canChatGroup: seated,
       interestedCount: e.participants.filter((p) => p.status === "INTERESTED").length,
-      reservedCount: e.participants.filter((p) =>
-        ["RESERVED", "CONFIRMED", "PRESENT", "HOST"].includes(p.status),
-      ).length,
+      reservedCount: taken,
       host: {
         id: e.host.id,
         username: e.host.username,

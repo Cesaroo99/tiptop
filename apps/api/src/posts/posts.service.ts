@@ -1,4 +1,5 @@
 import { BadRequestException, ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { eventIsFull, remainingSeats, seatedGuestCount } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { LikesService } from "../likes/likes.service";
@@ -7,7 +8,21 @@ const MAX_BODY = 2000;
 
 const POST_INCLUDE = {
   author: { include: { profile: true } },
-  event: { select: { id: true, title: true, startsAt: true, minAge: true, city: true, zone: true, participants: { select: { status: true, userId: true } } } },
+  event: {
+    select: {
+      id: true,
+      title: true,
+      startsAt: true,
+      minAge: true,
+      city: true,
+      zone: true,
+      capacity: true,
+      requiresReservation: true,
+      priceXaf: true,
+      hostId: true,
+      participants: { select: { status: true, userId: true } },
+    },
+  },
   _count: { select: { comments: true } },
 } as const;
 
@@ -47,6 +62,10 @@ export class PostsService {
         minAge: number | null;
         city?: string | null;
         zone?: string | null;
+        capacity?: number | null;
+        requiresReservation?: boolean;
+        priceXaf?: number;
+        hostId?: string;
         participants: Array<{ status: string; userId?: string }>;
       } | null;
     },
@@ -67,6 +86,13 @@ export class PostsService {
     const until = p.author.profile?.availabilityUntil;
     const available =
       p.author.profile?.availability === "AVAILABLE" && Boolean(until && until.getTime() > Date.now());
+    const taken = p.event ? seatedGuestCount(p.event.participants) : 0;
+    const remaining = p.event ? remainingSeats(p.event.capacity, taken) : null;
+    const seated =
+      p.event?.participants.some(
+        (x) => x.userId === extra.viewerId && ["RESERVED", "CONFIRMED", "PRESENT", "HOST"].includes(x.status),
+      ) ?? false;
+    const isHost = p.event?.hostId === extra.viewerId;
     const event = p.event
       ? {
           id: p.event.id,
@@ -75,13 +101,18 @@ export class PostsService {
           minAge: p.event.minAge,
           city: p.event.city ?? p.city,
           zone: p.event.zone ?? p.zone,
+          capacity: p.event.capacity ?? null,
+          remaining,
           interestedCount: p.event.participants.filter((x) => x.status === "INTERESTED").length,
-          reservedCount: p.event.participants.filter((x) =>
-            ["RESERVED", "CONFIRMED", "PRESENT", "HOST"].includes(x.status),
-          ).length,
+          reservedCount: taken,
           viewerInterested: p.event.participants.some(
             (x) => x.userId === extra.viewerId && x.status === "INTERESTED",
           ),
+          canBook:
+            !isHost &&
+            Boolean(p.event.requiresReservation || (p.event.priceXaf ?? 0) > 0) &&
+            !seated &&
+            !eventIsFull(p.event.capacity, taken),
         }
       : null;
     return {
@@ -163,6 +194,10 @@ export class PostsService {
         minAge: number | null;
         city?: string | null;
         zone?: string | null;
+        capacity?: number | null;
+        requiresReservation?: boolean;
+        priceXaf?: number;
+        hostId?: string;
         participants: Array<{ status: string; userId?: string }>;
       } | null;
     }>,

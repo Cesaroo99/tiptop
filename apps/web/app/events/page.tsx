@@ -9,6 +9,7 @@ import { api, type EventCard as EventCardType, type InvitationItem } from "@/lib
 import { formatEventWhen } from "@/lib/time";
 import { useI18n } from "@/lib/i18n";
 import { useMoney } from "@/lib/money";
+import { seatsLeftLabel, seatsRemainingOf } from "@/components/SeatsLeftBadge";
 
 /**
  * Events = espace de GESTION. La découverte des sorties se fait dans
@@ -181,7 +182,8 @@ function ManageEventCard({ event }: { event: EventCardType }) {
             <div className="grid h-24 place-items-center bg-gradient-to-br from-accent/15 to-yellow/15" />
           )}
           <span className="type-caption absolute left-2 top-2 rounded-pill bg-surface/90 px-2.5 py-1 font-bold text-ink backdrop-blur-sm">
-            {event.reservedCount ?? event.taken} {messages.world.reservationsCount}
+            {seatsLeftLabel(seatsRemainingOf(event.capacity, event.reservedCount ?? event.taken, event.remaining), messages.world) ??
+              `${event.reservedCount ?? event.taken} ${messages.world.reservationsCount}`}
           </span>
           <span className="type-caption absolute right-2 top-2 rounded-pill bg-accent px-2.5 py-1 font-bold text-on-primary">
             {event.priceXaf > 0 ? formatPrice(event.priceXaf, event.currency) : messages.world.free}

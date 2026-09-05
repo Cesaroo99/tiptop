@@ -24,7 +24,21 @@ export class FeedService {
       take: 30,
       include: {
         author: { include: { profile: true } },
-        event: { select: { id: true, title: true, startsAt: true, minAge: true, city: true, zone: true, participants: { select: { status: true, userId: true } } } },
+        event: {
+          select: {
+            id: true,
+            title: true,
+            startsAt: true,
+            minAge: true,
+            city: true,
+            zone: true,
+            capacity: true,
+            requiresReservation: true,
+            priceXaf: true,
+            hostId: true,
+            participants: { select: { status: true, userId: true } },
+          },
+        },
         _count: { select: { comments: true } },
       },
     });

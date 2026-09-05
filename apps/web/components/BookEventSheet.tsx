@@ -8,6 +8,7 @@ import {
   allowedBookingIntents,
   planEventBooking,
   reservationAmountXaf,
+  seatsClaimedNow,
   type BookingIntent,
 } from "@tiptop/domain";
 import { api, ApiError, type EventCard, type ReservationItem } from "@/lib/api";
@@ -17,6 +18,7 @@ import { sheetOverlayClass, useSheetPortal } from "@/lib/sheet-portal";
 import { formatEventDateBadge, formatRelative, splitPostLead } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
 import { BookmarkIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon } from "./Icons";
+import { SeatsLeftBadge, seatsRemainingOf } from "./SeatsLeftBadge";
 
 export type BookContact = {
   id: string;
@@ -57,10 +59,12 @@ const SWIPE_THRESHOLD = 80;
 export function BookEventSheet({
   open,
   onClose,
+  onBooked,
   preview,
 }: {
   open: boolean;
   onClose: () => void;
+  onBooked?: (seats: number) => void;
   preview: BookPreview | null;
 }) {
   const { locale, messages } = useI18n();
@@ -159,8 +163,18 @@ export function BookEventSheet({
     intent,
   });
   const seatsNow = (includeSelf && plan.bookSelfNow ? 1 : 0) + (plan.includeGuestsInReservation ? picked.length : 0);
+  const claimed = seatsClaimedNow(plan, includeSelf, picked.length);
+  const remaining = seatsRemainingOf(event?.capacity, event?.reservedCount ?? event?.taken, event?.remaining);
+  const leftover = remaining == null ? null : remaining - claimed;
+  const eventFull = remaining != null && remaining <= 0;
+  const overCapacity = leftover != null && leftover < 0;
   const total = reservationAmountXaf(price, Math.max(0, seatsNow));
-  const canSubmit = (includeSelf || picked.length > 0) && !event?.isHost && event?.canBook !== false;
+  const canSubmit =
+    (includeSelf || picked.length > 0) &&
+    !event?.isHost &&
+    event?.canBook !== false &&
+    !eventFull &&
+    !overCapacity;
   const { lead, rest } = splitPostLead(preview?.body ?? event?.description ?? "");
 
   useEffect(() => {
@@ -187,6 +201,7 @@ export function BookEventSheet({
         }),
       });
       onClose();
+      onBooked?.(claimed);
       if (res.needsPayment && res.id) {
         router.push(`/events/${preview.eventId}/pay?reservationId=${res.id}`);
       } else if (res.invitations?.length) {
@@ -208,7 +223,23 @@ export function BookEventSheet({
   }
 
   function toggleFriend(id: string) {
-    setPicked((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+    setPicked((cur) => {
+      if (cur.includes(id)) return cur.filter((x) => x !== id);
+      const nextPlan = planEventBooking({
+        price,
+        paymentRule,
+        includeSelf,
+        pickedCount: cur.length + 1,
+        intent,
+      });
+      const nextClaimed = seatsClaimedNow(nextPlan, includeSelf, cur.length + 1);
+      if (remaining != null && nextClaimed > remaining) {
+        setError(messages.booking.full);
+        return cur;
+      }
+      setError(null);
+      return [...cur, id];
+    });
   }
 
   async function toggleLater(person: BookContact) {
@@ -310,9 +341,12 @@ export function BookEventSheet({
             ) : null}
             <h2 className="type-h3 pt-0.5 text-ink">{messages.booking.bookEventTitle}</h2>
           </div>
-          <span className="shrink-0 rounded-lg bg-accent px-2.5 py-1.5 type-caption font-bold text-on-primary">
-            {priceLabel}
-          </span>
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <span className="rounded-lg bg-accent px-2.5 py-1.5 type-caption font-bold text-on-primary">
+              {priceLabel}
+            </span>
+            <SeatsLeftBadge remaining={remaining} />
+          </div>
         </div>
 
         <div className="relative mt-3 rounded-2xl bg-surface-sunken px-3 py-3">
@@ -620,7 +654,16 @@ export function BookEventSheet({
           </p>
         ) : null}
         {event?.isHost ? <p className="type-caption mt-3 text-muted">{messages.booking.bookHost}</p> : null}
-        {event && !event.isHost && event.canBook === false ? (
+        {eventFull ? (
+          <p className="type-caption mt-3 rounded-xl bg-danger-soft px-3 py-2 font-semibold text-danger">
+            {messages.booking.full}
+          </p>
+        ) : leftover != null && leftover >= 0 && claimed > 0 ? (
+          <p className="type-caption mt-3 font-semibold text-ink">
+            {messages.booking.seatsPicking.replace("{count}", String(leftover))}
+          </p>
+        ) : null}
+        {event && !event.isHost && event.canBook === false && !eventFull ? (
           <p className="type-caption mt-3 text-muted">
             {messages.booking.bookAlready}{" "}
             {event.viewerTicketId ? (

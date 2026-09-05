@@ -101,3 +101,14 @@ export function planEventBooking(input: {
 export function unpaidReservationNeedsPay(status: string, amount: number) {
   return amount > 0 && (status === "AWAITING_PAYMENT" || status === "DRAFT");
 }
+
+/** Combien de places ce choix cale tout de suite (pas les invitations sans hold). */
+export function seatsClaimedNow(
+  plan: Pick<EventBookingPlan, "bookSelfNow" | "includeGuestsInReservation" | "holdOnInvite">,
+  includeSelf: boolean,
+  pickedCount: number,
+): number {
+  const self = includeSelf && plan.bookSelfNow ? 1 : 0;
+  const guests = plan.includeGuestsInReservation || plan.holdOnInvite ? pickedCount : 0;
+  return self + guests;
+}

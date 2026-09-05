@@ -14,6 +14,7 @@ import {
   mockCharge,
   normalizePaymentRule,
   planEventBooking,
+  seatedGuestCount,
   qrExpiry,
   reservationAmountXaf,
   signTicketQr,
@@ -145,9 +146,7 @@ export class BookingService {
     });
     if (alreadyTicket) throw new ConflictException({ code: "ALREADY_IN" });
 
-    const taken = event.participants.filter((p) =>
-      ["HOST", "CONFIRMED", "RESERVED"].includes(p.status),
-    ).length;
+    const taken = seatedGuestCount(event.participants);
     const newSeats = holders.filter((id) => id !== event.hostId).length || holders.length;
     if (event.capacity != null && taken + newSeats > event.capacity) {
       throw new ConflictException({ code: "EVENT_FULL" });

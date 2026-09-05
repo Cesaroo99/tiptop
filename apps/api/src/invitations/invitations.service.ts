@@ -13,6 +13,7 @@ import {
   invitationExpiresAt,
   normalizePaymentRule,
   resolveInvitationPayer,
+  seatedGuestCount,
   unpaidReservationNeedsPay,
 } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
@@ -43,9 +44,7 @@ export class InvitationsService {
     });
     const items = events
       .map((e) => {
-        const taken = e.participants.filter((p) =>
-          ["HOST", "CONFIRMED", "RESERVED"].includes(p.status),
-        ).length;
+        const taken = seatedGuestCount(e.participants);
         const already = e.participants.some((p) => p.userId === inviteeId && p.status !== "CANCELLED");
         const reason = evaluateInvite({
           inviterId,
@@ -104,9 +103,7 @@ export class InvitationsService {
       event.priceXaf,
       payerRaw === "HOST" || payerRaw === "GUEST" || payerRaw === "FREE" ? payerRaw : undefined,
     );
-    const taken = event.participants.filter((p) =>
-      ["HOST", "CONFIRMED", "RESERVED"].includes(p.status),
-    ).length;
+    const taken = seatedGuestCount(event.participants);
     const already = event.participants.some((p) => p.userId === inviteeId && p.status !== "CANCELLED");
     const reason = evaluateInvite({
       inviterId,
@@ -251,9 +248,7 @@ export class InvitationsService {
         });
       }
     }
-    const taken = inv.event.participants.filter((p) =>
-      ["HOST", "CONFIRMED", "RESERVED"].includes(p.status),
-    ).length;
+    const taken = seatedGuestCount(inv.event.participants);
     if (inv.event.capacity != null && taken >= inv.event.capacity) {
       throw new ConflictException({ code: "EVENT_FULL" });
     }

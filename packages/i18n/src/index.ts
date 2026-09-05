@@ -444,6 +444,9 @@ export type Messages = {
     eventsLinked: string;
     moreAbout: string;
     reservationsCount: string;
+    seatsLeft: string;
+    seatsLeftOne: string;
+    seatsFull: string;
     interestedCount: string;
     livesAt: string;
     ongoingBadge: string;
@@ -526,6 +529,7 @@ export type Messages = {
     goToPayment: string;
     bookTotal: string;
     bookPickSomeone: string;
+    seatsPicking: string;
     bookAlready: string;
     bookHost: string;
     pay: string;
@@ -1167,6 +1171,9 @@ export const fr: Messages = {
     eventsLinked: "{n} événement(s) lié(s)",
     moreAbout: "Plus d’infos à propos de {name}",
     reservationsCount: "Réservations",
+    seatsLeft: "{count} places restantes",
+    seatsLeftOne: "1 place restante",
+    seatsFull: "Complet",
     interestedCount: "Intéressés",
     livesAt: "Vie à {place}",
     ongoingBadge: "En cours",
@@ -1249,6 +1256,7 @@ export const fr: Messages = {
     goToPayment: "Passer au paiement",
     bookTotal: "Total · {amount}",
     bookPickSomeone: "Coche-toi ou au moins un ami.",
+    seatsPicking: "{count} places restantes pour ce choix.",
     bookAlready: "Tu as déjà une place pour cette sortie.",
     bookHost: "C’est ta sortie — tu la gères, tu ne la réserves pas.",
     pay: "Payer",
@@ -1890,6 +1898,9 @@ export const en: Messages = {
     eventsLinked: "{n} linked event(s)",
     moreAbout: "More about {name}",
     reservationsCount: "Bookings",
+    seatsLeft: "{count} seats left",
+    seatsLeftOne: "1 seat left",
+    seatsFull: "Sold out",
     interestedCount: "Interested",
     livesAt: "Lives in {place}",
     ongoingBadge: "Ongoing",
@@ -1972,6 +1983,7 @@ export const en: Messages = {
     goToPayment: "Continue to payment",
     bookTotal: "Total · {amount}",
     bookPickSomeone: "Select yourself or at least one friend.",
+    seatsPicking: "{count} seats left for this pick.",
     bookAlready: "You already have a seat for this meetup.",
     bookHost: "This is your meetup — you manage it, you don’t book it.",
     pay: "Pay",

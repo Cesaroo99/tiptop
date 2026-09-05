@@ -11,6 +11,7 @@ import { Avatar, CertifiedMark } from "./Avatar";
 import { FlagIcon, HeartIcon, LinkIcon, MoreIcon, PinIcon, ShareIcon } from "./Icons";
 import { BookEventSheet } from "./BookEventSheet";
 import { MapThumb } from "./MapThumb";
+import { SeatsLeftBadge, seatsLeftLabel, seatsRemainingOf } from "./SeatsLeftBadge";
 import { OptionsSheet } from "./OptionsSheet";
 import { ReportModal } from "./ReportModal";
 import { IconButton, Modal } from "./ui";
@@ -93,6 +94,8 @@ export function EventCard({
     event.status,
   );
   const interactive = canInteractWithEvent(lifecycle.phase);
+  const remaining = seatsRemainingOf(event.capacity, event.reservedCount ?? event.taken, event.remaining);
+  const seatsLabel = seatsLeftLabel(remaining, messages.world);
 
   const phaseBadge =
     lifecycle.phase === "cancelled" ? (
@@ -135,7 +138,10 @@ export function EventCard({
           <span className="type-caption rounded-pill bg-surface/90 px-3 py-1.5 font-bold text-ink backdrop-blur-sm">
             {messages.world.sortie}
           </span>
-          {phaseBadge}
+          <div className="flex items-center gap-1.5">
+            <SeatsLeftBadge remaining={remaining} />
+            {phaseBadge}
+          </div>
         </div>
         <div className="absolute bottom-2 right-2 h-16 w-24 overflow-hidden rounded-md ring-2 ring-white/70">
           <MapThumb city={event.city} zone={event.zone} className="h-full w-full" />
@@ -181,7 +187,10 @@ export function EventCard({
           <p className="type-caption mt-1 text-muted">{messages.world.paymentFirst}</p>
         ) : null}
         <p className="type-caption mt-2 text-muted">
-          {event.reservedCount ?? event.taken} {messages.world.reservationsCount} · {event.interestedCount ?? 0} {messages.world.interestedCount} · {event.hearts} {messages.world.heartEvent.toLowerCase()}
+          {event.reservedCount ?? event.taken} {messages.world.reservationsCount}
+          {seatsLabel ? ` · ${seatsLabel}` : ""}
+          {" · "}
+          {event.interestedCount ?? 0} {messages.world.interestedCount} · {event.hearts} {messages.world.heartEvent.toLowerCase()}
         </p>
         {lifecycle.phase === "cancelled" ? (
           <p className="type-body-sm mt-3 rounded-lg bg-danger-soft px-3 py-2.5 font-semibold text-danger">
@@ -258,6 +267,18 @@ export function EventCard({
       <BookEventSheet
         open={bookOpen}
         onClose={() => setBookOpen(false)}
+        onBooked={(seats) => {
+          if (seats <= 0) return;
+          const nextTaken = (event.reservedCount ?? event.taken) + seats;
+          const nextRemaining = remaining != null ? Math.max(0, remaining - seats) : seatsRemainingOf(event.capacity, nextTaken);
+          onChanged?.({
+            ...event,
+            taken: nextTaken,
+            reservedCount: nextTaken,
+            remaining: nextRemaining,
+            canBook: nextRemaining == null || nextRemaining > 0 ? event.canBook : false,
+          });
+        }}
         preview={{
           eventId: event.id,
           title: event.title,

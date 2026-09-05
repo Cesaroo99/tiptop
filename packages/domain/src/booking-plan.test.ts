@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { planEventBooking } from "./booking-plan";
+import { planEventBooking, seatsClaimedNow } from "./booking-plan";
 
 describe("planEventBooking", () => {
   it("soi seul, payant, HOLD : place tenue, paiement tout de suite", () => {
@@ -114,6 +114,32 @@ describe("planEventBooking", () => {
     expect(plan.payAfterAccept).toBe(false);
     expect(plan.includeGuestsInReservation).toBe(true);
     expect(plan.needsPayment).toBe(true);
+  });
+
+  it("places calées maintenant : PAY_NOW compte soi + invités, WAIT_ACCEPT+HOLD aussi", () => {
+    const payNow = planEventBooking({
+      price: 5000,
+      includeSelf: true,
+      pickedCount: 2,
+      intent: "PAY_NOW",
+    });
+    expect(seatsClaimedNow(payNow, true, 2)).toBe(3);
+    const waitHold = planEventBooking({
+      price: 5000,
+      paymentRule: "HOLD",
+      includeSelf: true,
+      pickedCount: 2,
+      intent: "WAIT_ACCEPT",
+    });
+    expect(seatsClaimedNow(waitHold, true, 2)).toBe(3);
+    const waitFirst = planEventBooking({
+      price: 5000,
+      paymentRule: "PAY_FIRST",
+      includeSelf: true,
+      pickedCount: 2,
+      intent: "WAIT_ACCEPT",
+    });
+    expect(seatsClaimedNow(waitFirst, true, 2)).toBe(1);
   });
 
   it("PAY_REQUIRED : chacun paie reste possible (paiement avant la place)", () => {
