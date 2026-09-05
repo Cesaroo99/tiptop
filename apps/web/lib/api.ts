@@ -39,6 +39,7 @@ export type EventCard = {
   taken: number;
   minAge: number | null;
   requiresReservation: boolean;
+  paymentRule?: "HOLD" | "PAY_FIRST";
   status: string;
   phase?: "upcoming" | "startingSoon" | "ongoing" | "ended" | "cancelled";
   hearts: number;
@@ -215,12 +216,16 @@ export type ReservationItem = {
   needsPayment: boolean;
   tickets: Array<{ id: string; holderId: string; status: string }>;
   event?: { title: string; startsAt: string; city: string };
+  invitations?: Array<{ id: string; status: string }>;
+  intent?: string;
 };
 
 export type InvitationItem = {
   id: string;
   payer: string;
+  payAfterAccept?: boolean;
   status: string;
+  awaitingHostPay?: boolean;
   expiresAt: string;
   event: { id: string; title: string; startsAt: string; city: string; zone: string | null; priceXaf: number; currency?: string };
   inviter: { id: string; username: string; firstName: string; lastName: string };

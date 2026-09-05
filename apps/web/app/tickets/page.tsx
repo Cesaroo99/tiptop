@@ -60,6 +60,11 @@ function TicketsPage() {
       const res = await api<InvitationItem & { reservation?: ReservationItem }>(`/invitations/${id}/${action}`, {
         method: "POST",
       });
+      if (res.awaitingHostPay) {
+        setNote(messages.booking.awaitingHostPay);
+        await loadInvites();
+        return;
+      }
       if (res.needsPayment && res.reservation) {
         router.push(`/events/${res.event.id}/pay?reservationId=${res.reservation.id}`);
         return;

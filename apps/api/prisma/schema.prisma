@@ -570,6 +570,7 @@ model Event {
   capacity            Int?
   minAge              Int?
   requiresReservation Boolean     @default(false)
+  paymentRule         String      @default("HOLD")
   status              EventStatus @default(PUBLISHED)
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
@@ -608,9 +609,10 @@ model Invitation {
   inviter     User             @relation("Inviter", fields: [inviterId], references: [id], onDelete: Cascade)
   inviteeId   String
   invitee     User             @relation("Invitee", fields: [inviteeId], references: [id], onDelete: Cascade)
-  payer       InvitationPayer
-  status      InvitationStatus @default(PENDING)
-  expiresAt   DateTime
+  payer          InvitationPayer
+  payAfterAccept Boolean          @default(false)
+  status         InvitationStatus @default(PENDING)
+  expiresAt      DateTime
   createdAt   DateTime         @default(now())
   respondedAt DateTime?
   reservation Reservation?

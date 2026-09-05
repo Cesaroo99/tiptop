@@ -28,7 +28,7 @@ export default function InvitePage() {
   const router = useRouter();
   const [events, setEvents] = useState<Relevant[] | null>(null);
   const [picked, setPicked] = useState<Relevant | null>(null);
-  const [payer, setPayer] = useState<"FREE" | "HOST" | "GUEST">("FREE");
+  const [payer, setPayer] = useState<"FREE" | "HOST" | "GUEST" | "HOST_AFTER">("FREE");
   const [soon, setSoon] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -48,7 +48,8 @@ export default function InvitePage() {
         body: JSON.stringify({
           inviteeId: userId,
           eventId: picked.id,
-          payer: picked.priceXaf > 0 ? payer : "FREE",
+          payer: picked.priceXaf > 0 ? (payer === "HOST_AFTER" ? "HOST" : payer) : "FREE",
+          payAfterAccept: payer === "HOST_AFTER",
         }),
       });
       if (res.needsPayment && res.reservation) {
@@ -98,21 +99,40 @@ export default function InvitePage() {
         <div className="space-y-3">
           <p className="font-semibold">{picked.title}</p>
           <p className="text-sm text-muted">{messages.world.pickPayer}</p>
-          {(picked.priceXaf > 0 ? (["GUEST", "HOST"] as const) : (["FREE"] as const)).map((p) => (
+          {(picked.priceXaf > 0 ? (["GUEST", "HOST", "HOST_AFTER"] as const) : (["FREE"] as const)).map((p) => (
             <button
               key={p}
               type="button"
               onClick={() => setPayer(p)}
               className={`block w-full rounded-card p-4 text-left shadow-card ${payer === p ? "bg-accent/10" : "bg-surface"}`}
             >
-              {p === "FREE" ? messages.world.payerFree : p === "HOST" ? messages.world.payerHost : messages.world.payerGuest}
+              {p === "FREE"
+                ? messages.world.payerFree
+                : p === "HOST"
+                  ? messages.booking.intentPayNow
+                  : p === "HOST_AFTER"
+                    ? messages.booking.intentWaitAccept
+                    : messages.world.payerGuest}
+              <span className="mt-1 block text-xs text-muted">
+                {p === "HOST"
+                  ? messages.booking.intentPayNowHint
+                  : p === "HOST_AFTER"
+                    ? messages.booking.intentWaitAcceptHint
+                    : p === "GUEST"
+                      ? messages.booking.intentGuestPaysHint
+                      : ""}
+              </span>
             </button>
           ))}
           {payer === "HOST" && picked.priceXaf > 0 ? (
             <p className="text-sm text-muted">{messages.booking.invitePayHost}</p>
           ) : null}
           <PrimaryButton loading={loading} onClick={() => void send()}>
-            {payer === "HOST" && picked.priceXaf > 0 ? messages.booking.pay : messages.world.invite}
+            {payer === "HOST" && picked.priceXaf > 0
+              ? messages.booking.pay
+              : payer === "HOST_AFTER"
+                ? messages.booking.waitAcceptCta
+                : messages.world.invite}
           </PrimaryButton>
         </div>
       )}

@@ -21,6 +21,10 @@ class CreateReservationDto {
   @IsOptional()
   @IsBoolean()
   includeSelf?: boolean;
+
+  @IsOptional()
+  @IsIn(["PAY_NOW", "WAIT_ACCEPT", "GUEST_PAYS"])
+  intent?: "PAY_NOW" | "WAIT_ACCEPT" | "GUEST_PAYS";
 }
 
 class PayDto {
@@ -77,7 +81,7 @@ export class BookingController {
 
   @Post("reservations")
   create(@Req() req: Request & { user: PublicUser }, @Body() body: CreateReservationDto) {
-    return this.booking.create(req.user.id, body);
+    return this.booking.checkout(req.user.id, body);
   }
 
   @Get("reservations")

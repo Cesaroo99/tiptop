@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { reservationAmountXaf } from "@tiptop/domain";
+import { planEventBooking, reservationAmountXaf, type BookingIntent } from "@tiptop/domain";
 import { api, ApiError, type EventCard, type ReservationItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useMoney } from "@/lib/money";
@@ -65,6 +65,9 @@ export function BookEventSheet({
   const [circle, setCircle] = useState<Circle>("friends");
   const [includeSelf, setIncludeSelf] = useState(true);
   const [picked, setPicked] = useState<string[]>([]);
+  const [browseMode, setBrowseMode] = useState<"list" | "cards">("list");
+  const [cardIndex, setCardIndex] = useState(0);
+  const [intent, setIntent] = useState<BookingIntent>("PAY_NOW");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,6 +91,9 @@ export function BookEventSheet({
     setPicked([]);
     setQuery("");
     setCircle("friends");
+    setBrowseMode("list");
+    setCardIndex(0);
+    setIntent("PAY_NOW");
     api<EventCard>(`/events/${preview.eventId}`)
       .then(setEvent)
       .catch(() => setEvent(null));
@@ -112,6 +118,12 @@ export function BookEventSheet({
   const list = (circle === "friends" ? pool.friends : circle === "nearby" ? pool.nearby : pool.later).filter(
     (p) => p.id !== hostId,
   );
+
+  useEffect(() => {
+    setCardIndex(0);
+  }, [circle, query, browseMode]);
+
+  const card = list[Math.min(cardIndex, Math.max(0, list.length - 1))] ?? null;
   const emptyLabel =
     circle === "friends"
       ? messages.booking.friendsEmpty
@@ -121,9 +133,17 @@ export function BookEventSheet({
 
   const price = event?.priceXaf ?? 0;
   const eventCurrency = event?.currency ?? "XAF";
-  const seats = (includeSelf ? 1 : 0) + picked.length;
-  const total = reservationAmountXaf(price, Math.max(1, seats));
-  const canSubmit = seats > 0 && !event?.isHost && event?.canBook !== false;
+  const paymentRule = event?.paymentRule ?? "HOLD";
+  const plan = planEventBooking({
+    price,
+    paymentRule,
+    includeSelf,
+    pickedCount: picked.length,
+    intent,
+  });
+  const seatsNow = (includeSelf && plan.bookSelfNow ? 1 : 0) + (plan.includeGuestsInReservation ? picked.length : 0);
+  const total = reservationAmountXaf(price, Math.max(0, seatsNow));
+  const canSubmit = (includeSelf || picked.length > 0) && !event?.isHost && event?.canBook !== false;
   const { lead, rest } = splitPostLead(preview?.body ?? event?.description ?? "");
 
   const dateBadge = useMemo(() => {
@@ -142,11 +162,14 @@ export function BookEventSheet({
           eventId: preview.eventId,
           includeSelf,
           holderIds: picked,
+          intent,
         }),
       });
       onClose();
-      if (res.needsPayment) {
+      if (res.needsPayment && res.id) {
         router.push(`/events/${preview.eventId}/pay?reservationId=${res.id}`);
+      } else if (res.invitations?.length) {
+        router.push("/tickets?tab=invites");
       } else {
         const ticketId = res.tickets[0]?.id;
         router.push(ticketId ? `/tickets/${ticketId}` : "/tickets");
@@ -184,7 +207,14 @@ export function BookEventSheet({
 
   const relative = preview.createdAt ? formatRelative(preview.createdAt, messages.social) : null;
   const priceLabel = price > 0 ? formatPrice(price, eventCurrency) : messages.world.free;
-  const cta = price > 0 && seats > 0 ? messages.booking.goToPayment : messages.booking.reserve;
+  const cta =
+    picked.length > 0 && intent === "WAIT_ACCEPT"
+      ? messages.booking.waitAcceptCta
+      : picked.length > 0 && intent === "GUEST_PAYS"
+        ? messages.booking.guestPaysCta
+        : price > 0 && seatsNow > 0
+          ? messages.booking.goToPayment
+          : messages.booking.reserve;
   const tabs: { id: Circle; label: string; count: number }[] = [
     { id: "friends", label: messages.booking.inviteCircleFriends, count: pool.friends.filter((p) => p.id !== hostId).length },
     { id: "nearby", label: messages.booking.inviteCircleNearby, count: pool.nearby.filter((p) => p.id !== hostId).length },
@@ -259,7 +289,23 @@ export function BookEventSheet({
           <span className="type-body-sm font-medium text-ink">{messages.booking.forMyself}</span>
         </label>
 
-        <p className="type-caption mt-4 font-medium text-muted">{messages.booking.inviteFriends}</p>
+        <div className="mt-4 flex items-center justify-between gap-2">
+          <p className="type-caption font-medium text-muted">{messages.booking.inviteFriends}</p>
+          <div className="grid grid-cols-2 gap-1 rounded-lg bg-surface-sunken p-0.5">
+            {(["list", "cards"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setBrowseMode(mode)}
+                className={`rounded-md px-2 py-1 type-caption font-semibold ${
+                  browseMode === mode ? "bg-accent text-on-primary" : "text-muted"
+                }`}
+              >
+                {mode === "list" ? messages.booking.browseList : messages.booking.browseCards}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="mt-2 rounded-2xl bg-surface-sunken px-2.5 py-2.5">
           {selectedPeople.length ? (
             <div className="no-scrollbar mb-2 flex gap-2 overflow-x-auto">
@@ -308,6 +354,71 @@ export function BookEventSheet({
 
           {list.length === 0 ? (
             <p className="type-caption px-1 py-2 text-muted">{emptyLabel}</p>
+          ) : browseMode === "cards" && card ? (
+            <div className="space-y-2">
+              <div className="overflow-hidden rounded-2xl bg-surface">
+                <div className="relative h-40 bg-gradient-to-br from-accent/15 to-yellow/15">
+                  {card.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={card.avatarUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="grid h-full place-items-center type-h1 text-accent">{card.firstName[0]}</div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-8">
+                    <p className="type-body-sm font-bold text-white">
+                      {card.firstName} {card.lastName}
+                    </p>
+                    <p className="type-caption text-white/80">
+                      @{card.username}
+                      {card.profession ? ` · ${card.profession}` : ""}
+                      {card.city ? ` · ${card.city}` : ""}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 p-2.5">
+                  <button
+                    type="button"
+                    onClick={() => toggleFriend(card.id)}
+                    className={`tap-scale rounded-xl py-2 type-caption font-bold ${
+                      picked.includes(card.id) ? "bg-accent text-on-primary" : "bg-surface-sunken text-ink"
+                    }`}
+                  >
+                    {picked.includes(card.id) ? messages.booking.pickedForSeat : messages.booking.pickForSeat}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (circle !== "friends") void toggleLater(card);
+                      setCardIndex((i) => Math.min(list.length - 1, i + 1));
+                    }}
+                    className="tap-scale rounded-xl bg-surface-sunken py-2 type-caption font-semibold text-ink"
+                  >
+                    {circle === "friends" ? messages.booking.nextProfile : messages.booking.saveForLater}
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  disabled={cardIndex <= 0}
+                  onClick={() => setCardIndex((i) => Math.max(0, i - 1))}
+                  className="type-caption font-semibold text-accent disabled:opacity-30"
+                >
+                  ←
+                </button>
+                <span className="type-caption text-muted">
+                  {Math.min(cardIndex + 1, list.length)} / {list.length}
+                </span>
+                <button
+                  type="button"
+                  disabled={cardIndex >= list.length - 1}
+                  onClick={() => setCardIndex((i) => Math.min(list.length - 1, i + 1))}
+                  className="type-caption font-semibold text-accent disabled:opacity-30"
+                >
+                  →
+                </button>
+              </div>
+            </div>
           ) : (
             <ul className="no-scrollbar max-h-48 space-y-1 overflow-y-auto">
               {list.map((c) => {
@@ -344,6 +455,38 @@ export function BookEventSheet({
           )}
         </div>
 
+        {picked.length > 0 ? (
+          <div className="mt-3 space-y-1.5">
+            {(price > 0
+              ? ([
+                  ["PAY_NOW", messages.booking.intentPayNow, messages.booking.intentPayNowHint],
+                  ["WAIT_ACCEPT", messages.booking.intentWaitAccept, messages.booking.intentWaitAcceptHint],
+                  ["GUEST_PAYS", messages.booking.intentGuestPays, messages.booking.intentGuestPaysHint],
+                ] as const)
+              : ([["PAY_NOW", messages.booking.intentPayNow, messages.booking.intentPayNowHint], ["WAIT_ACCEPT", messages.booking.intentWaitAccept, messages.booking.intentWaitAcceptHint]] as const)
+            ).map(([id, label, hint]) => (
+              <label key={id} className="flex cursor-pointer items-start gap-2.5 rounded-2xl bg-surface-sunken px-3 py-2.5">
+                <input
+                  type="radio"
+                  className="mt-1"
+                  name="book-intent"
+                  checked={intent === id}
+                  onChange={() => setIntent(id)}
+                />
+                <span>
+                  <span className="type-caption block font-semibold text-ink">{label}</span>
+                  <span className="type-caption text-muted">{hint}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+        ) : null}
+        {paymentRule === "PAY_FIRST" && price > 0 ? (
+          <p className="type-caption mt-3 rounded-xl bg-accent-soft px-3 py-2 font-semibold text-accent">
+            {messages.booking.payFirstNotice}
+          </p>
+        ) : null}
+
         {event?.minAge ? (
           <p className="type-caption mt-3 rounded-xl bg-danger-soft px-3 py-2 font-semibold text-danger">
             {messages.booking.ageRestrictedNotice.replace("{age}", String(event.minAge))}
@@ -361,7 +504,7 @@ export function BookEventSheet({
           </p>
         ) : null}
         {error ? <p className="type-caption mt-3 font-semibold text-danger">{error}</p> : null}
-        {price > 0 && seats > 1 ? (
+        {price > 0 && seatsNow > 1 ? (
           <p className="type-caption mt-3 font-semibold text-ink">
             {messages.booking.bookTotal.replace("{amount}", formatPrice(total, eventCurrency))}
           </p>

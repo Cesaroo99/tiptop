@@ -105,6 +105,7 @@ function Composer() {
   const [capacity, setCapacity] = useState("");
   const [minAge, setMinAge] = useState(0);
   const [requiresReservation, setRequiresReservation] = useState(false);
+  const [paymentRule, setPaymentRule] = useState<"HOLD" | "PAY_FIRST">("HOLD");
   const [hours, setHours] = useState("12");
   const [visibility, setVisibility] = useState("ZONE");
   const [activity, setActivity] = useState("");
@@ -202,6 +203,7 @@ function Composer() {
             capacity: capacity ? Number(capacity) : undefined,
             minAge: minAge > 0 ? minAge : undefined,
             requiresReservation,
+            paymentRule: Number(priceXaf) > 0 ? paymentRule : undefined,
             imageUrl: imageUrl || undefined,
           }),
         });
@@ -342,6 +344,29 @@ function Composer() {
             <input type="checkbox" checked={requiresReservation} onChange={(e) => setRequiresReservation(e.target.checked)} />
             {messages.world.eventReserve}
           </label>
+          {Number(priceXaf) > 0 ? (
+            <div className="space-y-2">
+              {(["HOLD", "PAY_FIRST"] as const).map((rule) => (
+                <label key={rule} className="flex cursor-pointer items-start gap-2 rounded-xl bg-surface-sunken px-3 py-2.5">
+                  <input
+                    type="radio"
+                    name="paymentRule"
+                    checked={paymentRule === rule}
+                    onChange={() => setPaymentRule(rule)}
+                    className="mt-1"
+                  />
+                  <span>
+                    <span className="type-body-sm block font-semibold text-ink">
+                      {rule === "HOLD" ? messages.world.paymentHold : messages.world.paymentFirst}
+                    </span>
+                    <span className="type-caption text-muted">
+                      {rule === "HOLD" ? messages.world.paymentHoldHint : messages.world.paymentFirstHint}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          ) : null}
         </div>
       ) : null}
       {kind === "offer" ? (

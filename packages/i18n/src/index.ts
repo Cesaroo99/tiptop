@@ -365,6 +365,10 @@ export type Messages = {
     eventCapacity: string;
     eventMinAge: string;
     eventReserve: string;
+    paymentHold: string;
+    paymentFirst: string;
+    paymentHoldHint: string;
+    paymentFirstHint: string;
     interested: string;
     notInterested: string;
     heartEvent: string;
@@ -491,6 +495,22 @@ export type Messages = {
     saveForLater: string;
     savedForLater: string;
     removeFromLater: string;
+    browseList: string;
+    browseCards: string;
+    pickForSeat: string;
+    pickedForSeat: string;
+    nextProfile: string;
+    intentPayNow: string;
+    intentPayNowHint: string;
+    intentWaitAccept: string;
+    intentWaitAcceptHint: string;
+    intentGuestPays: string;
+    intentGuestPaysHint: string;
+    payFirstNotice: string;
+    waitAcceptCta: string;
+    guestPaysCta: string;
+    invitesSent: string;
+    awaitingHostPay: string;
     goToPayment: string;
     bookTotal: string;
     bookPickSomeone: string;
@@ -1056,6 +1076,10 @@ export const fr: Messages = {
     eventCapacity: "Capacité (optionnel)",
     eventMinAge: "Âge minimum (ex. 18)",
     eventReserve: "Réservation obligatoire même si gratuit",
+    paymentHold: "On peut tenir une place en attente de paiement",
+    paymentFirst: "Pas de réservation sans paiement",
+    paymentHoldHint: "Une place peut être calée, puis payée. Si quelqu’un refuse, elle se libère.",
+    paymentFirstHint: "Aucune place n’est calée tant que le paiement n’est pas passé.",
     interested: "Intéressé",
     notInterested: "Plus intéressé",
     heartEvent: "Coup de cœur",
@@ -1182,6 +1206,22 @@ export const fr: Messages = {
     saveForLater: "Mettre de côté",
     savedForLater: "Mis de côté",
     removeFromLater: "Retirer",
+    browseList: "Liste",
+    browseCards: "Cartes",
+    pickForSeat: "Choisir pour cette place",
+    pickedForSeat: "Choisi",
+    nextProfile: "Profil suivant",
+    intentPayNow: "Je paie maintenant",
+    intentPayNowHint: "Les places sont calées tout de suite. Pas besoin qu’ils acceptent.",
+    intentWaitAccept: "Ils acceptent, puis je paie",
+    intentWaitAcceptHint: "On envoie l’invitation. Tu paies seulement ceux qui disent oui.",
+    intentGuestPays: "Chacun paie sa place",
+    intentGuestPaysHint: "Ils acceptent, puis ils règlent leur entrée.",
+    payFirstNotice: "Cet événement n’cale une place qu’après paiement.",
+    waitAcceptCta: "Inviter et attendre",
+    guestPaysCta: "Envoyer l’invitation",
+    invitesSent: "Invitations envoyées. On attend leur réponse.",
+    awaitingHostPay: "Accepté. L’invitant doit encore payer la place.",
     goToPayment: "Passer au paiement",
     bookTotal: "Total · {amount}",
     bookPickSomeone: "Coche-toi ou au moins un ami.",
@@ -1747,6 +1787,10 @@ export const en: Messages = {
     eventCapacity: "Capacity (optional)",
     eventMinAge: "Minimum age (e.g. 18)",
     eventReserve: "Require a reservation even if free",
+    paymentHold: "Seats can be held pending payment",
+    paymentFirst: "No reservation without payment",
+    paymentHoldHint: "A seat can be held, then paid. If someone declines, it is released.",
+    paymentFirstHint: "No seat is held until payment succeeds.",
     interested: "Interested",
     notInterested: "Not interested",
     heartEvent: "Favorite",
@@ -1873,6 +1917,22 @@ export const en: Messages = {
     saveForLater: "Save for later",
     savedForLater: "Saved",
     removeFromLater: "Remove",
+    browseList: "List",
+    browseCards: "Cards",
+    pickForSeat: "Pick for this seat",
+    pickedForSeat: "Picked",
+    nextProfile: "Next profile",
+    intentPayNow: "I pay now",
+    intentPayNowHint: "Seats are held right away. They don’t need to accept first.",
+    intentWaitAccept: "They accept, then I pay",
+    intentWaitAcceptHint: "We send the invite. You only pay for people who say yes.",
+    intentGuestPays: "Each pays their seat",
+    intentGuestPaysHint: "They accept, then they pay their own entry.",
+    payFirstNotice: "This event only holds a seat after payment.",
+    waitAcceptCta: "Invite and wait",
+    guestPaysCta: "Send the invite",
+    invitesSent: "Invites sent. Waiting for their reply.",
+    awaitingHostPay: "Accepted. The inviter still has to pay the seat.",
     goToPayment: "Continue to payment",
     bookTotal: "Total · {amount}",
     bookPickSomeone: "Select yourself or at least one friend.",

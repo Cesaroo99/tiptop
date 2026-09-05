@@ -924,8 +924,10 @@ async function enrichLivingWorld(
     capacity: 80,
     minAge: 18,
     requiresReservation: true,
+    paymentRule: "PAY_FIRST",
     participants: { create: { userId: koffi.id, status: "HOST" } },
   });
+  await db.event.update({ where: { id: live.id }, data: { paymentRule: "PAY_FIRST" } });
   await ensureEvent("Expo photo Hilton", {
     hostId: erica.id,
     title: "Expo photo Hilton",

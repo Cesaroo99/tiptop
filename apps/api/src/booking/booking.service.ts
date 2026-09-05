@@ -12,9 +12,12 @@ import {
   canShowQr,
   isInEntryWindow,
   mockCharge,
+  normalizePaymentRule,
+  planEventBooking,
   qrExpiry,
   reservationAmountXaf,
   signTicketQr,
+  unpaidReservationNeedsPay,
   verifyTicketQr,
   type PaymentProviderKind,
 } from "@tiptop/domain";
@@ -34,6 +37,63 @@ export class BookingService {
     @Inject(NotificationsService) private readonly notifications: NotificationsService,
     @Inject(LikesService) private readonly likes: LikesService,
   ) {}
+
+  async checkout(
+    bookerId: string,
+    input: { eventId: string; holderIds?: string[]; invitationId?: string; includeSelf?: boolean; intent?: string },
+  ) {
+    if (input.invitationId) {
+      return this.create(bookerId, input);
+    }
+    const event = await this.prisma.event.findUnique({ where: { id: input.eventId } });
+    if (!event) throw new NotFoundException({ code: "EVENT_NOT_FOUND" });
+    const includeSelf = input.includeSelf !== false;
+    const holderIds = [...new Set(input.holderIds ?? [])].filter((id) => id !== bookerId && id !== event.hostId);
+    const plan = planEventBooking({
+      price: event.priceXaf,
+      paymentRule: event.paymentRule,
+      includeSelf,
+      pickedCount: holderIds.length,
+      intent: input.intent,
+    });
+
+    const invitations: Array<Record<string, unknown>> = [];
+    if (plan.sendInvites) {
+      const { InvitationsService } = await import("../invitations/invitations.service");
+      const invites = new InvitationsService(this.prisma, this.notifications, this);
+      for (const inviteeId of holderIds) {
+        invitations.push(
+          await invites.create(bookerId, inviteeId, event.id, plan.invitePayer, plan.payAfterAccept),
+        );
+      }
+    }
+
+    let reservation = null;
+    const guests = plan.includeGuestsInReservation ? holderIds : [];
+    if ((includeSelf && plan.bookSelfNow) || guests.length > 0) {
+      reservation = await this.create(bookerId, {
+        eventId: event.id,
+        includeSelf: includeSelf && plan.bookSelfNow,
+        holderIds: guests,
+      });
+    }
+
+    return {
+      ...(reservation ?? {
+        id: null,
+        eventId: event.id,
+        status: "NONE",
+        seats: 0,
+        amountXaf: 0,
+        currency: event.currency,
+        needsPayment: false,
+        tickets: [],
+      }),
+      invitations,
+      intent: plan.intent,
+      paymentRule: plan.paymentRule,
+    };
+  }
 
   async create(
     bookerId: string,
@@ -105,8 +165,9 @@ export class BookingService {
     }
 
     const amountXaf = reservationAmountXaf(event.priceXaf, holders.length);
-    const ticketStatus = amountXaf > 0 ? "AWAITING_PAYMENT" : "CONFIRMED";
-    const resStatus = amountXaf > 0 ? "AWAITING_PAYMENT" : "CONFIRMED";
+    const holdCapacity = amountXaf === 0 || normalizePaymentRule(event.paymentRule) === "HOLD";
+    const ticketStatus = amountXaf === 0 ? "CONFIRMED" : holdCapacity ? "AWAITING_PAYMENT" : "DRAFT";
+    const resStatus = ticketStatus;
 
     try {
       const reservation = await this.prisma.$transaction(async (tx) => {
@@ -130,7 +191,7 @@ export class BookingService {
         });
         if (amountXaf === 0) {
           await this.confirmParticipants(tx, event.id, holders);
-        } else {
+        } else if (holdCapacity) {
           for (const holderId of holders) {
             if (holderId === event.hostId) continue;
             await tx.eventParticipant.upsert({
@@ -379,6 +440,44 @@ export class BookingService {
     return row;
   }
 
+  async releaseUnpaidForInvitation(invitationId: string) {
+    const reservation = await this.prisma.reservation.findUnique({
+      where: { invitationId },
+      include: { tickets: true },
+    });
+    if (!reservation) return;
+    if (reservation.status === "CONFIRMED") {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.ticket.updateMany({
+          where: { reservationId: reservation.id, status: { in: ["DRAFT", "AWAITING_PAYMENT", "CONFIRMED"] } },
+          data: { status: "CANCELLED" },
+        });
+        await tx.reservation.update({ where: { id: reservation.id }, data: { status: "CANCELLED" } });
+        const holders = reservation.tickets.map((t) => t.holderId);
+        await tx.eventParticipant.updateMany({
+          where: { eventId: reservation.eventId, userId: { in: holders }, status: { in: ["RESERVED", "CONFIRMED"] } },
+          data: { status: "CANCELLED" },
+        });
+      });
+      return;
+    }
+    if (!unpaidReservationNeedsPay(reservation.status, reservation.amountXaf) && reservation.status !== "DRAFT") {
+      return;
+    }
+    await this.prisma.$transaction(async (tx) => {
+      await tx.ticket.updateMany({
+        where: { reservationId: reservation.id },
+        data: { status: "CANCELLED" },
+      });
+      await tx.reservation.update({ where: { id: reservation.id }, data: { status: "CANCELLED" } });
+      const holders = reservation.tickets.map((t) => t.holderId);
+      await tx.eventParticipant.updateMany({
+        where: { eventId: reservation.eventId, userId: { in: holders } },
+        data: { status: "CANCELLED" },
+      });
+    });
+  }
+
   async fulfillInvitation(bookerId: string, invitationId: string, inviteeId: string, eventId: string, paidByHost: boolean) {
     if (paidByHost) {
       const existing = await this.prisma.reservation.findUnique({ where: { invitationId } });
@@ -487,7 +586,7 @@ export class BookingService {
       amountXaf: r.amountXaf,
       currency: r.currency,
       createdAt: r.createdAt.toISOString(),
-      needsPayment: r.status === "AWAITING_PAYMENT" && r.amountXaf > 0,
+      needsPayment: unpaidReservationNeedsPay(r.status, r.amountXaf),
       tickets: (r.tickets ?? []).map((t) => ({ id: t.id, holderId: t.holderId, status: t.status })),
       payment: r.payment
         ? { id: r.payment.id, status: r.payment.status, provider: r.payment.provider }

@@ -71,6 +71,24 @@ describe("BookEventSheet", () => {
     expect(screen.getByRole("button", { name: /Plus tard/ })).toBeInTheDocument();
     expect(await screen.findByText("Boris Nama")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Passer au paiement" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Liste" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cartes" })).toBeInTheDocument();
+  });
+
+  it("fait défiler les profils en cartes et propose d’attendre l’acceptation", async () => {
+    render(
+      <TestI18nProvider>
+        <BookEventSheet open preview={preview} onClose={() => undefined} />
+      </TestI18nProvider>,
+    );
+    await screen.findByText("Boris Nama");
+    fireEvent.click(screen.getByRole("button", { name: "Cartes" }));
+    expect(await screen.findByRole("button", { name: "Choisir pour cette place" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Choisir pour cette place" }));
+    expect(await screen.findByText("Ils acceptent, puis je paie")).toBeInTheDocument();
+    expect(screen.getByText("Chacun paie sa place")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Ils acceptent, puis je paie"));
+    expect(screen.getByRole("button", { name: "Inviter et attendre" })).toBeInTheDocument();
   });
 
   it("parcourt Autour et Plus tard, puis calcule le total en CAD", async () => {

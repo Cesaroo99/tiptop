@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query, Req, UseGuards } from "@nestjs/common";
-import { IsBoolean, IsInt, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
+import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
 import { Type } from "class-transformer";
 import type { Request } from "express";
 import { SessionGuard } from "../auth/session.guard";
@@ -63,6 +63,10 @@ class CreateEventDto {
   @IsOptional()
   @IsBoolean()
   requiresReservation?: boolean;
+
+  @IsOptional()
+  @IsIn(["HOLD", "PAY_FIRST"])
+  paymentRule?: "HOLD" | "PAY_FIRST";
 }
 
 class HeartDto {
