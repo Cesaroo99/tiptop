@@ -434,18 +434,20 @@ export function BookEventSheet({
               ) : browseMode === "cards" && card ? (
                 <div className="space-y-2">
                   <article
-                    className="touch-pan-y select-none overflow-hidden rounded-2xl bg-surface"
+                    className="overflow-hidden rounded-2xl bg-surface"
                     style={{
                       transform: `translateX(${dragX}px) rotate(${dragX / 28}deg)`,
                       transition: dragging ? "none" : "transform 220ms var(--ease-standard)",
                     }}
-                    onPointerDown={onPointerDown}
-                    onPointerMove={onPointerMove}
-                    onPointerUp={onPointerEnd}
-                    onPointerCancel={onPointerEnd}
-                    onDragStart={(e) => e.preventDefault()}
                   >
-                    <div className="relative h-52 bg-gradient-to-br from-accent/15 to-yellow/15">
+                    <div
+                      className="relative h-52 touch-pan-y select-none bg-gradient-to-br from-accent/15 to-yellow/15"
+                      onPointerDown={onPointerDown}
+                      onPointerMove={onPointerMove}
+                      onPointerUp={onPointerEnd}
+                      onPointerCancel={onPointerEnd}
+                      onDragStart={(e) => e.preventDefault()}
+                    >
                       {card.avatarUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={card.avatarUrl} alt="" draggable={false} className="h-full w-full object-cover" />
