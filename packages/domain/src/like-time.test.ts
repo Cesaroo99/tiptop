@@ -6,6 +6,10 @@ import {
   formatLikeDuration,
   highestMilestone,
   LIKE_YEAR_SECONDS,
+  formatCompactCount,
+  formatLikeTimeCompact,
+  likeTimeMeterLabels,
+  likeTimeWindows,
   liveLikeSeconds,
   periodDurationSeconds,
   sumLikeSeconds,
@@ -118,6 +122,50 @@ describe("paliers", () => {
   it("expose les paliers configurables", () => {
     expect(DEFAULT_LIKE_MILESTONES[0]?.seconds).toBe(60);
     expect(CERTIFIED_LIKE_WEIGHT).toBe(1);
+  });
+});
+
+describe("likeTimeWindows", () => {
+  it("un like actif depuis 2 h compte 1 h sur /H et 2 h sur /J et /M", () => {
+    const now = new Date("2026-09-01T12:00:00Z");
+    const windows = likeTimeWindows(
+      [{ startedAt: new Date("2026-09-01T10:00:00Z"), endedAt: null }],
+      now,
+    );
+    expect(windows.hourSeconds).toBe(3600);
+    expect(windows.daySeconds).toBe(7200);
+    expect(windows.monthSeconds).toBe(7200);
+  });
+
+  it("une période close hors de l’heure glissante n’apparaît pas en /H", () => {
+    const now = new Date("2026-09-01T12:00:00Z");
+    const windows = likeTimeWindows(
+      [
+        {
+          startedAt: new Date("2026-09-01T09:00:00Z"),
+          endedAt: new Date("2026-09-01T09:10:00Z"),
+        },
+      ],
+      now,
+    );
+    expect(windows.hourSeconds).toBe(0);
+    expect(windows.daySeconds).toBe(10 * 60);
+    expect(windows.monthSeconds).toBe(10 * 60);
+  });
+});
+
+describe("formatLikeTimeCompact", () => {
+  it("reste un temps compact, jamais un compteur de likes", () => {
+    expect(formatLikeTimeCompact(32)).toBe("32");
+    expect(formatLikeTimeCompact(1500)).toBe("1.5k");
+    expect(formatLikeTimeCompact(78_000)).toBe("78k");
+    expect(formatLikeTimeCompact(111_000)).toBe("111k");
+    expect(formatCompactCount(2300)).toBe("2.3k");
+    expect(likeTimeMeterLabels({ hourSeconds: 111_000, daySeconds: 78_000, monthSeconds: 32 })).toEqual({
+      hourLabel: "111k",
+      dayLabel: "78k",
+      monthLabel: "32",
+    });
   });
 });
 

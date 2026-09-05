@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { MoodPlaceChip } from "./MoodPlace";
+import { MoodPlaceChip, MoodPlaceTag } from "./MoodPlace";
 import { TestI18nProvider } from "@/lib/test-utils";
 
 describe("MoodPlaceChip", () => {
@@ -26,5 +26,29 @@ describe("MoodPlaceChip", () => {
     expect(screen.getByRole("button", { name: "Rooftop Bastos" })).toBeInTheDocument();
     screen.getByRole("button", { name: "Rooftop Bastos" }).click();
     expect(onOpen).toHaveBeenCalledOnce();
+  });
+});
+
+describe("MoodPlaceTag", () => {
+  it("n’affiche rien sans adresse — comme TikTok sans tag lieu", () => {
+    const { container } = render(
+      <TestI18nProvider>
+        <MoodPlaceTag place={{}} onOpen={() => undefined} />
+      </TestI18nProvider>,
+    );
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("montre le pin + le nom au-dessus du nom, sans pastille", () => {
+    render(
+      <TestI18nProvider>
+        <MoodPlaceTag
+          place={{ placeName: "Rooftop Bastos", address: "Rue 1.770, Bastos" }}
+          onOpen={() => undefined}
+        />
+      </TestI18nProvider>,
+    );
+    expect(screen.getByRole("button", { name: "Rooftop Bastos" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Rooftop Bastos" }).className).not.toMatch(/rounded-pill/);
   });
 });

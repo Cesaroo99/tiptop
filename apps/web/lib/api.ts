@@ -78,6 +78,12 @@ export type LikeTimeSnap = {
   activeCount: number;
   likedByMe: boolean;
   label: string;
+  hourSeconds?: number;
+  daySeconds?: number;
+  monthSeconds?: number;
+  hourLabel?: string;
+  dayLabel?: string;
+  monthLabel?: string;
 };
 
 export type LikePlacement = {

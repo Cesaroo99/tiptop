@@ -21,7 +21,33 @@ export function moodPlaceFromItem(mood: MoodPlaceFields): MoodPlaceFields | null
   return mood;
 }
 
-/** Pastille lieu façon TikTok — n'apparaît que si l'auteur a choisi un lieu. */
+/**
+ * Tag lieu façon TikTok : pin + nom, au-dessus du nom / légende.
+ * N’apparaît que si l’auteur a renseigné une adresse.
+ */
+export function MoodPlaceTag({
+  place,
+  onOpen,
+}: {
+  place: MoodPlaceFields;
+  onOpen: () => void;
+}) {
+  const label = place.placeLabel || moodPlaceLabel(place);
+  if (!label) return null;
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="tap-scale inline-flex max-w-full items-center gap-1 text-white"
+      aria-label={label}
+    >
+      <PinIcon size={13} className="shrink-0 drop-shadow" />
+      <span className="type-caption truncate font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]">{label}</span>
+    </button>
+  );
+}
+
+/** Pastille lieu — surfaces claires (fiche mood). N'apparaît que si l'auteur a choisi un lieu. */
 export function MoodPlaceChip({
   place,
   onOpen,

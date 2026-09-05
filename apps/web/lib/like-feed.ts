@@ -7,6 +7,7 @@ export function releaseViewerLike(post: FeedItem): FeedItem {
     ...post,
     likedByMe: false,
     likeTime: {
+      ...post.likeTime,
       totalSeconds: post.likeTime?.totalSeconds ?? 0,
       activeCount: active,
       likedByMe: false,

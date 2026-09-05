@@ -266,6 +266,12 @@ export class MoodsService {
       activeCount: number;
       likedByMe: boolean;
       label: string;
+      hourSeconds?: number;
+      daySeconds?: number;
+      monthSeconds?: number;
+      hourLabel?: string;
+      dayLabel?: string;
+      monthLabel?: string;
     },
   ) {
     return {
@@ -301,8 +307,25 @@ export class MoodsService {
             activeCount: likeTime.activeCount,
             likedByMe: likeTime.likedByMe,
             label: likeTime.label,
+            hourSeconds: likeTime.hourSeconds ?? 0,
+            daySeconds: likeTime.daySeconds ?? 0,
+            monthSeconds: likeTime.monthSeconds ?? 0,
+            hourLabel: likeTime.hourLabel ?? "0",
+            dayLabel: likeTime.dayLabel ?? "0",
+            monthLabel: likeTime.monthLabel ?? "0",
           }
-        : { totalSeconds: 0, activeCount: 0, likedByMe: false, label: "0 seconde" },
+        : {
+            totalSeconds: 0,
+            activeCount: 0,
+            likedByMe: false,
+            label: "0 seconde",
+            hourSeconds: 0,
+            daySeconds: 0,
+            monthSeconds: 0,
+            hourLabel: "0",
+            dayLabel: "0",
+            monthLabel: "0",
+          },
       event: m.event,
       companion: m.companion
         ? {

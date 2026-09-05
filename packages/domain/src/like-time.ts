@@ -11,6 +11,7 @@
  * Internes : toujours des secondes entières.
  */
 
+export const LIKE_HOUR_SECONDS = 3_600;
 export const LIKE_DAY_SECONDS = 86_400;
 export const LIKE_MONTH_SECONDS = 30 * LIKE_DAY_SECONDS;
 export const LIKE_YEAR_SECONDS = 365 * LIKE_DAY_SECONDS;
@@ -42,6 +43,65 @@ export function sumLikeSeconds(periods: LikePeriodSlice[], now: Date) {
     historicalSeconds,
     activeSeconds,
     totalSeconds: historicalSeconds + activeSeconds,
+  };
+}
+
+/** Ne garde que le temps de like qui tombe dans [since, now]. */
+export function clipLikePeriodsSince(periods: LikePeriodSlice[], since: Date, now: Date): LikePeriodSlice[] {
+  const clipped: LikePeriodSlice[] = [];
+  for (const p of periods) {
+    const end = p.endedAt ?? now;
+    if (end <= since || p.startedAt >= now) continue;
+    clipped.push({
+      startedAt: p.startedAt < since ? since : p.startedAt,
+      endedAt: p.endedAt,
+      weight: p.weight,
+    });
+  }
+  return clipped;
+}
+
+/** Temps de like accumulé sur l’heure / le jour / le mois glissants — pas un compteur de cœurs. */
+export function likeTimeWindows(periods: LikePeriodSlice[], now: Date) {
+  const hourSince = new Date(now.getTime() - LIKE_HOUR_SECONDS * 1000);
+  const daySince = new Date(now.getTime() - LIKE_DAY_SECONDS * 1000);
+  const monthSince = new Date(now.getTime() - LIKE_MONTH_SECONDS * 1000);
+  return {
+    hourSeconds: sumLikeSeconds(clipLikePeriodsSince(periods, hourSince, now), now).totalSeconds,
+    daySeconds: sumLikeSeconds(clipLikePeriodsSince(periods, daySince, now), now).totalSeconds,
+    monthSeconds: sumLikeSeconds(clipLikePeriodsSince(periods, monthSince, now), now).totalSeconds,
+  };
+}
+
+/** 32 · 1.5k · 111k · 2.3M — rail Mood (/H /J /M) et compteurs compact. */
+export function formatCompactCount(value: number): string {
+  const n = Math.max(0, Math.floor(value));
+  if (n < 1000) return String(n);
+  if (n < 1_000_000) {
+    const k = n / 1000;
+    if (k >= 100) return `${Math.round(k)}k`;
+    const rounded = Math.round(k * 10) / 10;
+    return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}k`;
+  }
+  const m = n / 1_000_000;
+  if (m >= 100) return `${Math.round(m)}M`;
+  const rounded = Math.round(m * 10) / 10;
+  return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}M`;
+}
+
+export function formatLikeTimeCompact(seconds: number): string {
+  return formatCompactCount(seconds);
+}
+
+export function likeTimeMeterLabels(windows: {
+  hourSeconds: number;
+  daySeconds: number;
+  monthSeconds: number;
+}) {
+  return {
+    hourLabel: formatLikeTimeCompact(windows.hourSeconds),
+    dayLabel: formatLikeTimeCompact(windows.daySeconds),
+    monthLabel: formatLikeTimeCompact(windows.monthSeconds),
   };
 }
 

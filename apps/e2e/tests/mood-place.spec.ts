@@ -9,6 +9,7 @@ test.describe("Mood — lieu optionnel façon TikTok", () => {
   test("pastille adresse sur une vidéo, carte et itinéraire", async ({ page }) => {
     await page.goto("/mood");
     const chip = page.getByRole("button", { name: "Rooftop Bastos" });
+    await chip.scrollIntoViewIfNeeded();
     await expect(chip).toBeVisible();
     await chip.click();
     const sheet = page.getByRole("dialog");

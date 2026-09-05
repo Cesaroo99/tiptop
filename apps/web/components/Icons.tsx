@@ -332,6 +332,25 @@ export function BookmarkIcon({ size = 16, className, filled = false }: IconProps
   );
 }
 
+export function MusicIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <circle cx="8.5" cy="18" r="2.6" />
+      <circle cx="17.5" cy="16.2" r="2.6" />
+      <path d="M11.1 18V6.2l9-1.8V16.2" />
+    </svg>
+  );
+}
+
+export function SmileIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M8.4 10h.1M15.5 10h.1M8.6 14.2c1 .9 2.2 1.4 3.4 1.4s2.4-.5 3.4-1.4" />
+    </svg>
+  );
+}
+
 /** Intéressé — point d’exclamation dans des cercles concentriques (maquette accueil). */
 export function InterestedIcon({ size = 17, className }: IconProps) {
   return (
