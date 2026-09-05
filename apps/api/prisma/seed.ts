@@ -256,10 +256,14 @@ async function main() {
   const tourPost = await prisma.post.findFirst({
     where: { authorId: cesar.id, body: { contains: "Un tour au Black" } },
   });
-  if (black && tourPost && !tourPost.eventId) {
+  if (black && tourPost) {
     await prisma.post.update({
       where: { id: tourPost.id },
-      data: { eventId: black.id, imageUrl: tourPost.imageUrl ?? "/seed/events/black-white.jpg" },
+      data: {
+        eventId: black.id,
+        imageUrl: tourPost.imageUrl ?? "/seed/events/black-white.jpg",
+        createdAt: new Date(),
+      },
     });
   }
 
