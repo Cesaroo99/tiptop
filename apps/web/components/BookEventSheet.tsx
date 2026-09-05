@@ -66,6 +66,7 @@ export function BookEventSheet({
       .catch(() => setContacts([]));
   }, [open, preview]);
 
+  const friends = contacts.filter((c) => c.id !== event?.host?.id);
   const price = event?.priceXaf ?? 0;
   const seats = (includeSelf ? 1 : 0) + picked.length;
   const total = reservationAmountXaf(price, Math.max(1, seats));
@@ -190,11 +191,11 @@ export function BookEventSheet({
 
         <p className="type-caption mt-4 font-medium text-muted">{messages.booking.inviteFriends}</p>
         <div className="mt-2 rounded-2xl bg-surface-sunken px-2.5 py-2.5">
-          {contacts.length === 0 ? (
+          {friends.length === 0 ? (
             <p className="type-caption px-1 py-1 text-muted">{messages.world.contactsEmpty}</p>
           ) : (
             <div className="no-scrollbar flex gap-2 overflow-x-auto">
-              {contacts.map((c) => {
+              {friends.map((c) => {
                 const on = picked.includes(c.id);
                 return (
                   <button
