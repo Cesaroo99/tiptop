@@ -2,16 +2,21 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { planEventBooking, reservationAmountXaf, type BookingIntent } from "@tiptop/domain";
+import {
+  allowedBookingIntents,
+  planEventBooking,
+  reservationAmountXaf,
+  type BookingIntent,
+} from "@tiptop/domain";
 import { api, ApiError, type EventCard, type ReservationItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useMoney } from "@/lib/money";
 import { sheetOverlayClass, useSheetPortal } from "@/lib/sheet-portal";
 import { formatEventDateBadge, formatRelative, splitPostLead } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
-import { BookmarkIcon, SearchIcon } from "./Icons";
+import { BookmarkIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon } from "./Icons";
 
 export type BookContact = {
   id: string;
@@ -45,6 +50,9 @@ export type BookPreview = {
 };
 
 type Circle = "friends" | "nearby" | "later";
+type Step = "browse" | "confirm";
+
+const SWIPE_THRESHOLD = 80;
 
 export function BookEventSheet({
   open,
@@ -65,11 +73,15 @@ export function BookEventSheet({
   const [circle, setCircle] = useState<Circle>("friends");
   const [includeSelf, setIncludeSelf] = useState(true);
   const [picked, setPicked] = useState<string[]>([]);
-  const [browseMode, setBrowseMode] = useState<"list" | "cards">("list");
+  const [browseMode, setBrowseMode] = useState<"list" | "cards">("cards");
   const [cardIndex, setCardIndex] = useState(0);
+  const [step, setStep] = useState<Step>("browse");
   const [intent, setIntent] = useState<BookingIntent>("PAY_NOW");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dragX, setDragX] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const dragStart = useRef<{ x: number; id: number } | null>(null);
 
   async function loadPool(q?: string) {
     try {
@@ -91,8 +103,9 @@ export function BookEventSheet({
     setPicked([]);
     setQuery("");
     setCircle("friends");
-    setBrowseMode("list");
+    setBrowseMode("cards");
     setCardIndex(0);
+    setStep("browse");
     setIntent("PAY_NOW");
     api<EventCard>(`/events/${preview.eventId}`)
       .then(setEvent)
@@ -134,6 +147,10 @@ export function BookEventSheet({
   const price = event?.priceXaf ?? 0;
   const eventCurrency = event?.currency ?? "XAF";
   const paymentRule = event?.paymentRule ?? "HOLD";
+  const allowedIntents = useMemo(
+    () => allowedBookingIntents({ price, paymentRule }),
+    [price, paymentRule],
+  );
   const plan = planEventBooking({
     price,
     paymentRule,
@@ -145,6 +162,10 @@ export function BookEventSheet({
   const total = reservationAmountXaf(price, Math.max(0, seatsNow));
   const canSubmit = (includeSelf || picked.length > 0) && !event?.isHost && event?.canBook !== false;
   const { lead, rest } = splitPostLead(preview?.body ?? event?.description ?? "");
+
+  useEffect(() => {
+    if (!allowedIntents.includes(intent)) setIntent(allowedIntents[0] ?? "PAY_NOW");
+  }, [allowedIntents, intent]);
 
   const dateBadge = useMemo(() => {
     const iso = preview?.startsAt ?? event?.startsAt;
@@ -179,6 +200,7 @@ export function BookEventSheet({
       else if (e instanceof ApiError && e.code === "ALREADY_IN") setError(messages.booking.bookAlready);
       else if (e instanceof ApiError && e.code === "AGE_RESTRICTED") setError(messages.booking.ageRestrictedError);
       else if (e instanceof ApiError && e.code === "NO_HOLDERS") setError(messages.booking.bookPickSomeone);
+      else if (e instanceof ApiError && e.code === "WAIT_NOT_ALLOWED") setError(messages.booking.waitNotAllowed);
       else setError(messages.common.error);
     } finally {
       setLoading(false);
@@ -203,6 +225,32 @@ export function BookEventSheet({
     }
   }
 
+  function goNextCard() {
+    setCardIndex((i) => Math.min(list.length - 1, i + 1));
+  }
+  function goPrevCard() {
+    setCardIndex((i) => Math.max(0, i - 1));
+  }
+
+  function onPointerDown(e: React.PointerEvent<HTMLElement>) {
+    dragStart.current = { x: e.clientX, id: e.pointerId };
+    setDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+  function onPointerMove(e: React.PointerEvent<HTMLElement>) {
+    if (!dragStart.current || dragStart.current.id !== e.pointerId) return;
+    setDragX(e.clientX - dragStart.current.x);
+  }
+  function onPointerEnd(e: React.PointerEvent<HTMLElement>) {
+    if (!dragStart.current || dragStart.current.id !== e.pointerId) return;
+    const dx = e.clientX - dragStart.current.x;
+    dragStart.current = null;
+    setDragging(false);
+    if (dx <= -SWIPE_THRESHOLD && cardIndex < list.length - 1) goNextCard();
+    else if (dx >= SWIPE_THRESHOLD && cardIndex > 0) goPrevCard();
+    setDragX(0);
+  }
+
   if (!open || !preview || !portal) return null;
 
   const relative = preview.createdAt ? formatRelative(preview.createdAt, messages.social) : null;
@@ -221,6 +269,21 @@ export function BookEventSheet({
     { id: "later", label: messages.booking.inviteCircleLater, count: pool.later.filter((p) => p.id !== hostId).length },
   ];
 
+  const intentOptions = (
+    price > 0
+      ? ([
+          ["PAY_NOW", messages.booking.intentPayNow, messages.booking.intentPayNowHint],
+          ["WAIT_ACCEPT", messages.booking.intentWaitAccept, messages.booking.intentWaitAcceptHint],
+          ["GUEST_PAYS", messages.booking.intentGuestPays, messages.booking.intentGuestPaysHint],
+        ] as const)
+      : ([
+          ["PAY_NOW", messages.booking.intentPayNow, messages.booking.intentPayNowHint],
+          ["WAIT_ACCEPT", messages.booking.intentWaitAccept, messages.booking.intentWaitAcceptHint],
+        ] as const)
+  ).filter(([id]) => allowedIntents.includes(id));
+
+  const browseCta = picked.length > 0 ? messages.booking.continueConfirm : cta;
+
   return createPortal(
     <div
       className={sheetOverlayClass(portal)}
@@ -230,12 +293,23 @@ export function BookEventSheet({
       onClick={onClose}
     >
       <div
-        className="sheet-panel w-full max-w-md rounded-t-[28px] bg-surface px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2 shadow-elevated"
+        className="sheet-panel max-h-[min(92dvh,760px)] w-full max-w-md overflow-y-auto rounded-t-[28px] bg-surface px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2 shadow-elevated"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border" aria-hidden />
         <div className="flex items-start justify-between gap-3">
-          <h2 className="type-h3 pt-0.5 text-ink">{messages.booking.bookEventTitle}</h2>
+          <div className="min-w-0">
+            {step === "confirm" ? (
+              <button
+                type="button"
+                onClick={() => setStep("browse")}
+                className="type-caption mb-1 font-semibold text-accent"
+              >
+                ← {messages.booking.backToPeople}
+              </button>
+            ) : null}
+            <h2 className="type-h3 pt-0.5 text-ink">{messages.booking.bookEventTitle}</h2>
+          </div>
           <span className="shrink-0 rounded-lg bg-accent px-2.5 py-1.5 type-caption font-bold text-on-primary">
             {priceLabel}
           </span>
@@ -278,193 +352,229 @@ export function BookEventSheet({
           </p>
         </div>
 
-        <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-2xl bg-surface-sunken px-3 py-3">
-          <CheckBox checked={includeSelf} />
-          <input
-            type="checkbox"
-            className="sr-only"
-            checked={includeSelf}
-            onChange={(e) => setIncludeSelf(e.target.checked)}
-          />
-          <span className="type-body-sm font-medium text-ink">{messages.booking.forMyself}</span>
-        </label>
+        {step === "browse" ? (
+          <>
+            <label className="mt-3 flex cursor-pointer items-center gap-3 rounded-2xl bg-surface-sunken px-3 py-3">
+              <CheckBox checked={includeSelf} />
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={includeSelf}
+                onChange={(e) => setIncludeSelf(e.target.checked)}
+              />
+              <span className="type-body-sm font-medium text-ink">{messages.booking.forMyself}</span>
+            </label>
 
-        <div className="mt-4 flex items-center justify-between gap-2">
-          <p className="type-caption font-medium text-muted">{messages.booking.inviteFriends}</p>
-          <div className="grid grid-cols-2 gap-1 rounded-lg bg-surface-sunken p-0.5">
-            {(["list", "cards"] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setBrowseMode(mode)}
-                className={`rounded-md px-2 py-1 type-caption font-semibold ${
-                  browseMode === mode ? "bg-accent text-on-primary" : "text-muted"
-                }`}
-              >
-                {mode === "list" ? messages.booking.browseList : messages.booking.browseCards}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="mt-2 rounded-2xl bg-surface-sunken px-2.5 py-2.5">
-          {selectedPeople.length ? (
-            <div className="no-scrollbar mb-2 flex gap-2 overflow-x-auto">
-              {selectedPeople.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => toggleFriend(c.id)}
-                  className="tap-scale flex shrink-0 items-center gap-2 rounded-full bg-accent py-1 pl-1.5 pr-3 text-on-primary"
-                >
-                  <Avatar src={c.avatarUrl} firstName={c.firstName} lastName={c.lastName} size={22} />
-                  <span className="type-caption font-semibold">
-                    {c.firstName} {c.lastName}
-                  </span>
-                </button>
-              ))}
-            </div>
-          ) : null}
-
-          <label className="mb-2 flex items-center gap-2 rounded-xl bg-surface px-2.5 py-2">
-            <SearchIcon size={14} />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={messages.booking.inviteSearch}
-              className="w-full bg-transparent type-caption text-ink outline-none placeholder:text-muted"
-            />
-          </label>
-
-          <div className="mb-2 grid grid-cols-3 gap-1 rounded-xl bg-surface p-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setCircle(tab.id)}
-                className={`rounded-lg py-1.5 type-caption font-semibold transition ${
-                  circle === tab.id ? "bg-accent text-on-primary" : "text-muted"
-                }`}
-              >
-                {tab.label}
-                {tab.count ? ` · ${tab.count}` : ""}
-              </button>
-            ))}
-          </div>
-
-          {list.length === 0 ? (
-            <p className="type-caption px-1 py-2 text-muted">{emptyLabel}</p>
-          ) : browseMode === "cards" && card ? (
-            <div className="space-y-2">
-              <div className="overflow-hidden rounded-2xl bg-surface">
-                <div className="relative h-40 bg-gradient-to-br from-accent/15 to-yellow/15">
-                  {card.avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={card.avatarUrl} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="grid h-full place-items-center type-h1 text-accent">{card.firstName[0]}</div>
-                  )}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-8">
-                    <p className="type-body-sm font-bold text-white">
-                      {card.firstName} {card.lastName}
-                    </p>
-                    <p className="type-caption text-white/80">
-                      @{card.username}
-                      {card.profession ? ` · ${card.profession}` : ""}
-                      {card.city ? ` · ${card.city}` : ""}
-                    </p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2 p-2.5">
+            <div className="mt-4 flex items-center justify-between gap-2">
+              <p className="type-caption font-medium text-muted">{messages.booking.inviteFriends}</p>
+              <div className="grid grid-cols-2 gap-1 rounded-lg bg-surface-sunken p-0.5">
+                {(["cards", "list"] as const).map((mode) => (
                   <button
+                    key={mode}
                     type="button"
-                    onClick={() => toggleFriend(card.id)}
-                    className={`tap-scale rounded-xl py-2 type-caption font-bold ${
-                      picked.includes(card.id) ? "bg-accent text-on-primary" : "bg-surface-sunken text-ink"
+                    onClick={() => setBrowseMode(mode)}
+                    className={`rounded-md px-2 py-1 type-caption font-semibold ${
+                      browseMode === mode ? "bg-accent text-on-primary" : "text-muted"
                     }`}
                   >
-                    {picked.includes(card.id) ? messages.booking.pickedForSeat : messages.booking.pickForSeat}
+                    {mode === "list" ? messages.booking.browseList : messages.booking.browseCards}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (circle !== "friends") void toggleLater(card);
-                      setCardIndex((i) => Math.min(list.length - 1, i + 1));
-                    }}
-                    className="tap-scale rounded-xl bg-surface-sunken py-2 type-caption font-semibold text-ink"
-                  >
-                    {circle === "friends" ? messages.booking.nextProfile : messages.booking.saveForLater}
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center justify-center gap-3">
-                <button
-                  type="button"
-                  disabled={cardIndex <= 0}
-                  onClick={() => setCardIndex((i) => Math.max(0, i - 1))}
-                  className="type-caption font-semibold text-accent disabled:opacity-30"
-                >
-                  ←
-                </button>
-                <span className="type-caption text-muted">
-                  {Math.min(cardIndex + 1, list.length)} / {list.length}
-                </span>
-                <button
-                  type="button"
-                  disabled={cardIndex >= list.length - 1}
-                  onClick={() => setCardIndex((i) => Math.min(list.length - 1, i + 1))}
-                  className="type-caption font-semibold text-accent disabled:opacity-30"
-                >
-                  →
-                </button>
+                ))}
               </div>
             </div>
-          ) : (
-            <ul className="no-scrollbar max-h-48 space-y-1 overflow-y-auto">
-              {list.map((c) => {
-                const on = picked.includes(c.id);
-                const saved = laterIds.has(c.id);
-                return (
-                  <li key={c.id} className="flex items-center gap-2 rounded-xl bg-surface px-2 py-1.5">
-                    <button type="button" onClick={() => toggleFriend(c.id)} className="flex min-w-0 flex-1 items-center gap-2">
-                      <CheckBox checked={on} />
-                      <Avatar src={c.avatarUrl} firstName={c.firstName} lastName={c.lastName} size={28} />
-                      <span className="min-w-0 text-left">
-                        <span className="type-caption block truncate font-semibold text-ink">
-                          {c.firstName} {c.lastName}
-                        </span>
-                        <span className="type-caption block truncate text-muted">@{c.username}</span>
+            <p className="type-caption mt-1 text-muted">{messages.booking.browseHint}</p>
+            <div className="mt-2 rounded-2xl bg-surface-sunken px-2.5 py-2.5">
+              {selectedPeople.length ? (
+                <div className="no-scrollbar mb-2 flex gap-2 overflow-x-auto">
+                  {selectedPeople.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => toggleFriend(c.id)}
+                      className="tap-scale flex shrink-0 items-center gap-2 rounded-full bg-accent py-1 pl-1.5 pr-3 text-on-primary"
+                    >
+                      <Avatar src={c.avatarUrl} firstName={c.firstName} lastName={c.lastName} size={22} />
+                      <span className="type-caption font-semibold">
+                        {c.firstName} {c.lastName}
                       </span>
                     </button>
-                    {circle !== "friends" ? (
+                  ))}
+                </div>
+              ) : null}
+
+              <label className="mb-2 flex items-center gap-2 rounded-xl bg-surface px-2.5 py-2">
+                <SearchIcon size={14} />
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={messages.booking.inviteSearch}
+                  className="w-full bg-transparent type-caption text-ink outline-none placeholder:text-muted"
+                />
+              </label>
+
+              <div className="mb-2 grid grid-cols-3 gap-1 rounded-xl bg-surface p-1">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setCircle(tab.id)}
+                    className={`rounded-lg py-1.5 type-caption font-semibold transition ${
+                      circle === tab.id ? "bg-accent text-on-primary" : "text-muted"
+                    }`}
+                  >
+                    {tab.label}
+                    {tab.count ? ` · ${tab.count}` : ""}
+                  </button>
+                ))}
+              </div>
+
+              {list.length === 0 ? (
+                <p className="type-caption px-1 py-2 text-muted">{emptyLabel}</p>
+              ) : browseMode === "cards" && card ? (
+                <div className="space-y-2">
+                  <article
+                    className="touch-pan-y select-none overflow-hidden rounded-2xl bg-surface"
+                    style={{
+                      transform: `translateX(${dragX}px) rotate(${dragX / 28}deg)`,
+                      transition: dragging ? "none" : "transform 220ms var(--ease-standard)",
+                    }}
+                    onPointerDown={onPointerDown}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerEnd}
+                    onPointerCancel={onPointerEnd}
+                    onDragStart={(e) => e.preventDefault()}
+                  >
+                    <div className="relative h-52 bg-gradient-to-br from-accent/15 to-yellow/15">
+                      {card.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={card.avatarUrl} alt="" draggable={false} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="grid h-full place-items-center type-h1 text-accent">{card.firstName[0]}</div>
+                      )}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-8">
+                        <p className="type-body-sm font-bold text-white">
+                          {card.firstName} {card.lastName}
+                        </p>
+                        <p className="type-caption text-white/80">
+                          @{card.username}
+                          {card.profession ? ` · ${card.profession}` : ""}
+                          {card.city ? ` · ${card.city}` : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 p-2.5">
                       <button
                         type="button"
-                        aria-label={saved ? messages.booking.removeFromLater : messages.booking.saveForLater}
-                        onClick={() => void toggleLater(c)}
-                        className={`grid h-8 w-8 place-items-center rounded-full ${
-                          saved ? "bg-yellow text-ink" : "bg-surface-sunken text-muted"
+                        onClick={() => toggleFriend(card.id)}
+                        className={`tap-scale rounded-xl py-2 type-caption font-bold ${
+                          picked.includes(card.id) ? "bg-accent text-on-primary" : "bg-surface-sunken text-ink"
                         }`}
                       >
-                        <BookmarkIcon size={14} filled={saved} />
+                        {picked.includes(card.id) ? messages.booking.pickedForSeat : messages.booking.pickForSeat}
                       </button>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-
-        {picked.length > 0 ? (
-          <div className="mt-3 space-y-1.5">
-            {(price > 0
-              ? ([
-                  ["PAY_NOW", messages.booking.intentPayNow, messages.booking.intentPayNowHint],
-                  ["WAIT_ACCEPT", messages.booking.intentWaitAccept, messages.booking.intentWaitAcceptHint],
-                  ["GUEST_PAYS", messages.booking.intentGuestPays, messages.booking.intentGuestPaysHint],
-                ] as const)
-              : ([["PAY_NOW", messages.booking.intentPayNow, messages.booking.intentPayNowHint], ["WAIT_ACCEPT", messages.booking.intentWaitAccept, messages.booking.intentWaitAcceptHint]] as const)
-            ).map(([id, label, hint]) => (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (circle !== "friends") void toggleLater(card);
+                          goNextCard();
+                        }}
+                        className="tap-scale rounded-xl bg-surface-sunken py-2 type-caption font-semibold text-ink"
+                      >
+                        {circle === "friends" ? messages.booking.skipProfile : messages.booking.saveForLater}
+                      </button>
+                    </div>
+                  </article>
+                  <div className="flex items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      disabled={cardIndex <= 0}
+                      onClick={goPrevCard}
+                      className="grid h-9 w-9 place-items-center rounded-full bg-surface text-ink disabled:opacity-30"
+                      aria-label={messages.booking.nextProfile}
+                    >
+                      <ChevronLeftIcon size={16} />
+                    </button>
+                    <span className="type-caption text-muted">
+                      {Math.min(cardIndex + 1, list.length)} / {list.length}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={cardIndex >= list.length - 1}
+                      onClick={goNextCard}
+                      className="grid h-9 w-9 place-items-center rounded-full bg-accent text-on-primary disabled:opacity-30"
+                      aria-label={messages.booking.nextProfile}
+                    >
+                      <ChevronRightIcon size={16} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <ul className="no-scrollbar max-h-48 space-y-1 overflow-y-auto">
+                  {list.map((c) => {
+                    const on = picked.includes(c.id);
+                    const saved = laterIds.has(c.id);
+                    return (
+                      <li key={c.id} className="flex items-center gap-2 rounded-xl bg-surface px-2 py-1.5">
+                        <button type="button" onClick={() => toggleFriend(c.id)} className="flex min-w-0 flex-1 items-center gap-2">
+                          <CheckBox checked={on} />
+                          <Avatar src={c.avatarUrl} firstName={c.firstName} lastName={c.lastName} size={28} />
+                          <span className="min-w-0 text-left">
+                            <span className="type-caption block truncate font-semibold text-ink">
+                              {c.firstName} {c.lastName}
+                            </span>
+                            <span className="type-caption block truncate text-muted">@{c.username}</span>
+                          </span>
+                        </button>
+                        {circle !== "friends" ? (
+                          <button
+                            type="button"
+                            aria-label={saved ? messages.booking.removeFromLater : messages.booking.saveForLater}
+                            onClick={() => void toggleLater(c)}
+                            className={`grid h-8 w-8 place-items-center rounded-full ${
+                              saved ? "bg-yellow text-ink" : "bg-surface-sunken text-muted"
+                            }`}
+                          >
+                            <BookmarkIcon size={14} filled={saved} />
+                          </button>
+                        ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="mt-3 space-y-2">
+            <label className="flex cursor-pointer items-center gap-3 rounded-2xl bg-surface-sunken px-3 py-3">
+              <CheckBox checked={includeSelf} />
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={includeSelf}
+                onChange={(e) => setIncludeSelf(e.target.checked)}
+              />
+              <span className="type-body-sm font-medium text-ink">{messages.booking.forMyself}</span>
+            </label>
+            {selectedPeople.length ? (
+              <div className="no-scrollbar flex gap-2 overflow-x-auto">
+                {selectedPeople.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => toggleFriend(c.id)}
+                    className="tap-scale flex shrink-0 items-center gap-2 rounded-full bg-accent py-1 pl-1.5 pr-3 text-on-primary"
+                  >
+                    <Avatar src={c.avatarUrl} firstName={c.firstName} lastName={c.lastName} size={22} />
+                    <span className="type-caption font-semibold">
+                      {c.firstName} {c.lastName}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            {intentOptions.map(([id, label, hint]) => (
               <label key={id} className="flex cursor-pointer items-start gap-2.5 rounded-2xl bg-surface-sunken px-3 py-2.5">
                 <input
                   type="radio"
@@ -480,8 +590,23 @@ export function BookEventSheet({
               </label>
             ))}
           </div>
+        )}
+
+        {step === "confirm" && plan.holdOnInvite && price > 0 ? (
+          <p className="type-caption mt-3 rounded-xl bg-yellow/40 px-3 py-2 font-semibold text-ink">
+            {messages.booking.holdWaitNotice}
+          </p>
         ) : null}
-        {paymentRule === "PAY_FIRST" && price > 0 ? (
+        {step === "confirm" && paymentRule === "PAY_FIRST" && price > 0 && intent === "WAIT_ACCEPT" ? (
+          <p className="type-caption mt-3 rounded-xl bg-accent-soft px-3 py-2 font-semibold text-accent">
+            {messages.booking.waitNoHoldNotice}
+          </p>
+        ) : null}
+        {paymentRule === "PAY_REQUIRED" && price > 0 ? (
+          <p className="type-caption mt-3 rounded-xl bg-accent-soft px-3 py-2 font-semibold text-accent">
+            {messages.booking.payRequiredNotice}
+          </p>
+        ) : paymentRule === "PAY_FIRST" && price > 0 && (step === "browse" || intent !== "WAIT_ACCEPT") ? (
           <p className="type-caption mt-3 rounded-xl bg-accent-soft px-3 py-2 font-semibold text-accent">
             {messages.booking.payFirstNotice}
           </p>
@@ -504,7 +629,7 @@ export function BookEventSheet({
           </p>
         ) : null}
         {error ? <p className="type-caption mt-3 font-semibold text-danger">{error}</p> : null}
-        {price > 0 && seatsNow > 1 ? (
+        {(step === "confirm" || picked.length === 0) && price > 0 && seatsNow > 1 ? (
           <p className="type-caption mt-3 font-semibold text-ink">
             {messages.booking.bookTotal.replace("{amount}", formatPrice(total, eventCurrency))}
           </p>
@@ -522,10 +647,16 @@ export function BookEventSheet({
           <button
             type="button"
             disabled={!canSubmit || loading}
-            onClick={() => void book()}
+            onClick={() => {
+              if (step === "browse" && picked.length > 0) {
+                setStep("confirm");
+                return;
+              }
+              void book();
+            }}
             className="tap-scale mt-4 w-full rounded-2xl bg-accent py-3.5 type-button text-on-primary shadow-sm transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-45"
           >
-            {loading ? messages.common.loading : cta}
+            {loading ? messages.common.loading : step === "browse" && picked.length > 0 ? browseCta : cta}
           </button>
         )}
       </div>

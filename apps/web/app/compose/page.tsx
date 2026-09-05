@@ -105,7 +105,7 @@ function Composer() {
   const [capacity, setCapacity] = useState("");
   const [minAge, setMinAge] = useState(0);
   const [requiresReservation, setRequiresReservation] = useState(false);
-  const [paymentRule, setPaymentRule] = useState<"HOLD" | "PAY_FIRST">("HOLD");
+  const [paymentRule, setPaymentRule] = useState<"HOLD" | "PAY_FIRST" | "PAY_REQUIRED">("HOLD");
   const [hours, setHours] = useState("12");
   const [visibility, setVisibility] = useState("ZONE");
   const [activity, setActivity] = useState("");
@@ -346,7 +346,7 @@ function Composer() {
           </label>
           {Number(priceXaf) > 0 ? (
             <div className="space-y-2">
-              {(["HOLD", "PAY_FIRST"] as const).map((rule) => (
+              {(["HOLD", "PAY_FIRST", "PAY_REQUIRED"] as const).map((rule) => (
                 <label key={rule} className="flex cursor-pointer items-start gap-2 rounded-xl bg-surface-sunken px-3 py-2.5">
                   <input
                     type="radio"
@@ -357,10 +357,18 @@ function Composer() {
                   />
                   <span>
                     <span className="type-body-sm block font-semibold text-ink">
-                      {rule === "HOLD" ? messages.world.paymentHold : messages.world.paymentFirst}
+                      {rule === "HOLD"
+                        ? messages.world.paymentHold
+                        : rule === "PAY_FIRST"
+                          ? messages.world.paymentFirst
+                          : messages.world.paymentRequired}
                     </span>
                     <span className="type-caption text-muted">
-                      {rule === "HOLD" ? messages.world.paymentHoldHint : messages.world.paymentFirstHint}
+                      {rule === "HOLD"
+                        ? messages.world.paymentHoldHint
+                        : rule === "PAY_FIRST"
+                          ? messages.world.paymentFirstHint
+                          : messages.world.paymentRequiredHint}
                     </span>
                   </span>
                 </label>

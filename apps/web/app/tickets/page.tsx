@@ -172,7 +172,16 @@ function TicketsPage() {
                 <p className="type-heading text-ink">{inv.event.title}</p>
                 <p className="type-caption mt-1 text-muted">
                   {inv.inviter.firstName} → {inv.invitee.firstName} · {statusLabel[inv.status] ?? inv.status}
+                  {inv.payAfterAccept ? ` · ${messages.booking.waitPayPendingHint}` : ""}
                 </p>
+                {box === "sent" && inv.status === "ACCEPTED" && inv.reservation?.needsPayment ? (
+                  <Link
+                    href={`/events/${inv.event.id}/pay?reservationId=${inv.reservation.id}`}
+                    className="type-body-sm mt-2 inline-block font-semibold text-accent"
+                  >
+                    {messages.booking.payAcceptedSeat}
+                  </Link>
+                ) : null}
                 {box === "received" && inv.status === "PENDING" ? (
                   <div className="mt-3 flex gap-2">
                     <button type="button" className="tap-scale type-button flex-1 rounded-pill bg-accent py-2.5 text-on-primary transition hover:bg-accent-hover" onClick={() => void act(inv.id, "accept")}>

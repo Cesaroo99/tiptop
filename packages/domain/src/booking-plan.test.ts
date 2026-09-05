@@ -74,4 +74,57 @@ describe("planEventBooking", () => {
     expect(plan.sendInvites).toBe(true);
     expect(plan.includeGuestsInReservation).toBe(false);
   });
+
+  it("HOLD + attendre : la place est tenue à l’invitation, paiement après le oui", () => {
+    const plan = planEventBooking({
+      price: 5000,
+      paymentRule: "HOLD",
+      includeSelf: false,
+      pickedCount: 1,
+      intent: "WAIT_ACCEPT",
+    });
+    expect(plan.holdOnInvite).toBe(true);
+    expect(plan.payAfterAccept).toBe(true);
+    expect(plan.needsPayment).toBe(false);
+    expect(plan.sendInvites).toBe(true);
+  });
+
+  it("PAY_FIRST + attendre : invitation sans place tenue", () => {
+    const plan = planEventBooking({
+      price: 5000,
+      paymentRule: "PAY_FIRST",
+      includeSelf: false,
+      pickedCount: 1,
+      intent: "WAIT_ACCEPT",
+    });
+    expect(plan.holdOnInvite).toBe(false);
+    expect(plan.holdCapacity).toBe(false);
+    expect(plan.payAfterAccept).toBe(true);
+  });
+
+  it("PAY_REQUIRED : on ne peut pas attendre — WAIT_ACCEPT retombe sur PAY_NOW", () => {
+    const plan = planEventBooking({
+      price: 5000,
+      paymentRule: "PAY_REQUIRED",
+      includeSelf: true,
+      pickedCount: 2,
+      intent: "WAIT_ACCEPT",
+    });
+    expect(plan.intent).toBe("PAY_NOW");
+    expect(plan.payAfterAccept).toBe(false);
+    expect(plan.includeGuestsInReservation).toBe(true);
+    expect(plan.needsPayment).toBe(true);
+  });
+
+  it("PAY_REQUIRED : chacun paie reste possible (paiement avant la place)", () => {
+    const plan = planEventBooking({
+      price: 5000,
+      paymentRule: "PAY_REQUIRED",
+      includeSelf: true,
+      pickedCount: 1,
+      intent: "GUEST_PAYS",
+    });
+    expect(plan.intent).toBe("GUEST_PAYS");
+    expect(plan.invitePayer).toBe("GUEST");
+  });
 });

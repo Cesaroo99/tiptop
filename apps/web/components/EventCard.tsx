@@ -175,6 +175,11 @@ export function EventCard({
           <span className="text-muted">·</span>
           <span className={price === messages.world.free ? "font-semibold text-success" : "font-semibold text-ink"}>{price}</span>
         </p>
+        {event.paymentRule === "PAY_REQUIRED" && event.priceXaf > 0 ? (
+          <p className="type-caption mt-1 font-semibold text-accent">{messages.world.paymentRequired}</p>
+        ) : event.paymentRule === "PAY_FIRST" && event.priceXaf > 0 ? (
+          <p className="type-caption mt-1 text-muted">{messages.world.paymentFirst}</p>
+        ) : null}
         <p className="type-caption mt-2 text-muted">
           {event.reservedCount ?? event.taken} {messages.world.reservationsCount} · {event.interestedCount ?? 0} {messages.world.interestedCount} · {event.hearts} {messages.world.heartEvent.toLowerCase()}
         </p>

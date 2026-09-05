@@ -11,7 +11,9 @@ import {
   canSendEventInvite,
   evaluateInvite,
   invitationExpiresAt,
+  normalizePaymentRule,
   resolveInvitationPayer,
+  unpaidReservationNeedsPay,
 } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -65,6 +67,8 @@ export class InvitationsService {
           zone: e.zone,
           startsAt: e.startsAt.toISOString(),
           priceXaf: e.priceXaf,
+          currency: e.currency,
+          paymentRule: normalizePaymentRule(e.paymentRule),
           capacity: e.capacity,
           taken,
           minAge: e.minAge,
@@ -130,7 +134,11 @@ export class InvitationsService {
       throw new ConflictException({ code: "INVITE_RATE_LIMITED" });
     }
 
+    const paymentRule = normalizePaymentRule(event.paymentRule);
     const payAfterAccept = Boolean(payAfterAcceptRaw) && payer === "HOST" && event.priceXaf > 0;
+    if (payAfterAccept && paymentRule === "PAY_REQUIRED") {
+      throw new BadRequestException({ code: "WAIT_NOT_ALLOWED" });
+    }
     const invitation = await this.prisma.invitation.create({
       data: {
         eventId,
@@ -149,7 +157,9 @@ export class InvitationsService {
       entityId: invitation.id,
     });
     const mapped = await this.mapOne(invitation.id);
-    if (event.priceXaf > 0 && payer === "HOST" && !payAfterAccept) {
+    const holdUnpaid =
+      event.priceXaf > 0 && payer === "HOST" && (!payAfterAccept || paymentRule === "HOLD");
+    if (holdUnpaid) {
       try {
         const reservation = await this.booking.create(inviterId, {
           eventId,
@@ -157,7 +167,12 @@ export class InvitationsService {
           includeSelf: false,
           holderIds: [inviteeId],
         });
-        return { ...mapped, needsPayment: reservation.needsPayment, reservation };
+        return {
+          ...mapped,
+          needsPayment: payAfterAccept ? false : reservation.needsPayment,
+          awaitingHostPay: payAfterAccept && reservation.needsPayment,
+          reservation,
+        };
       } catch (e) {
         await this.prisma.invitation.delete({ where: { id: invitation.id } });
         throw e;
@@ -324,9 +339,22 @@ export class InvitationsService {
 
   private include() {
     return {
-      event: { select: { id: true, title: true, startsAt: true, city: true, zone: true, priceXaf: true, imageUrl: true } },
+      event: {
+        select: {
+          id: true,
+          title: true,
+          startsAt: true,
+          city: true,
+          zone: true,
+          priceXaf: true,
+          currency: true,
+          paymentRule: true,
+          imageUrl: true,
+        },
+      },
       inviter: { select: { id: true, username: true, firstName: true, lastName: true, certified: true } },
       invitee: { select: { id: true, username: true, firstName: true, lastName: true, certified: true } },
+      reservation: { select: { id: true, status: true, amountXaf: true, currency: true } },
     };
   }
 
@@ -351,11 +379,23 @@ export class InvitationsService {
       city: string;
       zone: string | null;
       priceXaf: number;
+      currency?: string;
+      paymentRule?: string;
       imageUrl: string | null;
     };
     inviter: { id: string; username: string; firstName: string; lastName: string; certified: boolean };
     invitee: { id: string; username: string; firstName: string; lastName: string; certified: boolean };
+    reservation?: { id: string; status: string; amountXaf: number; currency: string } | null;
   }) {
+    const reservation = r.reservation
+      ? {
+          id: r.reservation.id,
+          status: r.reservation.status,
+          amountXaf: r.reservation.amountXaf,
+          currency: r.reservation.currency,
+          needsPayment: unpaidReservationNeedsPay(r.reservation.status, r.reservation.amountXaf),
+        }
+      : null;
     return {
       id: r.id,
       payer: r.payer,
@@ -367,9 +407,11 @@ export class InvitationsService {
       event: {
         ...r.event,
         startsAt: r.event.startsAt.toISOString(),
+        paymentRule: normalizePaymentRule(r.event.paymentRule),
       },
       inviter: r.inviter,
       invitee: r.invitee,
+      reservation,
     };
   }
 }

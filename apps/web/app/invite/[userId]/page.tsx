@@ -16,6 +16,7 @@ type Relevant = {
   startsAt: string;
   priceXaf: number;
   currency?: string;
+  paymentRule?: "HOLD" | "PAY_FIRST" | "PAY_REQUIRED";
   reason: string;
   eligible: boolean;
   host: { firstName: string; lastName: string };
@@ -99,7 +100,12 @@ export default function InvitePage() {
         <div className="space-y-3">
           <p className="font-semibold">{picked.title}</p>
           <p className="text-sm text-muted">{messages.world.pickPayer}</p>
-          {(picked.priceXaf > 0 ? (["GUEST", "HOST", "HOST_AFTER"] as const) : (["FREE"] as const)).map((p) => (
+          {(picked.priceXaf > 0
+            ? picked.paymentRule === "PAY_REQUIRED"
+              ? (["GUEST", "HOST"] as const)
+              : (["GUEST", "HOST", "HOST_AFTER"] as const)
+            : (["FREE"] as const)
+          ).map((p) => (
             <button
               key={p}
               type="button"

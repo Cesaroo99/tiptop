@@ -39,7 +39,7 @@ export type EventCard = {
   taken: number;
   minAge: number | null;
   requiresReservation: boolean;
-  paymentRule?: "HOLD" | "PAY_FIRST";
+  paymentRule?: "HOLD" | "PAY_FIRST" | "PAY_REQUIRED";
   status: string;
   phase?: "upcoming" | "startingSoon" | "ongoing" | "ended" | "cancelled";
   hearts: number;
@@ -227,11 +227,20 @@ export type InvitationItem = {
   status: string;
   awaitingHostPay?: boolean;
   expiresAt: string;
-  event: { id: string; title: string; startsAt: string; city: string; zone: string | null; priceXaf: number; currency?: string };
+  event: {
+    id: string;
+    title: string;
+    startsAt: string;
+    city: string;
+    zone: string | null;
+    priceXaf: number;
+    currency?: string;
+    paymentRule?: "HOLD" | "PAY_FIRST" | "PAY_REQUIRED";
+  };
   inviter: { id: string; username: string; firstName: string; lastName: string };
   invitee: { id: string; username: string; firstName: string; lastName: string };
   needsPayment?: boolean;
-  reservation?: ReservationItem;
+  reservation?: Pick<ReservationItem, "id" | "status" | "needsPayment" | "amountXaf"> & { currency?: string };
 };
 
 export type FeedItem = {
