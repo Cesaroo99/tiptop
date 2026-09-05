@@ -34,6 +34,7 @@ function PeopleCarousel() {
   const [maxKm, setMaxKm] = useState("");
   const [profession, setProfession] = useState("");
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [laterIds, setLaterIds] = useState<Set<string>>(new Set());
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef<{ x: number; id: number } | null>(null);
@@ -47,8 +48,12 @@ function PeopleCarousel() {
       if (availableOnly) params.set("available", "1");
       if (maxKm) params.set("maxKm", maxKm);
       if (profession.trim()) params.set("profession", profession.trim());
-      const data = await api<{ items: PersonCard[] }>(`/discovery/people?${params.toString()}`);
+      const [data, later] = await Promise.all([
+        api<{ items: PersonCard[] }>(`/discovery/people?${params.toString()}`),
+        api<{ items: Array<{ id: string }> }>("/invite-later").catch(() => ({ items: [] as Array<{ id: string }> })),
+      ]);
       setItems(data.items);
+      setLaterIds(new Set(later.items.map((p) => p.id)));
       setIndex(0);
     } catch {
       setError(messages.common.error);
@@ -263,6 +268,30 @@ function PeopleCarousel() {
                 </span>
               )}
             </div>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  const saved = laterIds.has(person.id);
+                  await api(`/invite-later/${person.id}`, { method: saved ? "DELETE" : "POST" });
+                  setLaterIds((cur) => {
+                    const next = new Set(cur);
+                    if (saved) next.delete(person.id);
+                    else next.add(person.id);
+                    return next;
+                  });
+                } catch {
+                  setError(messages.common.error);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+              className="type-button tap-scale mt-1 w-full rounded-pill bg-surface-sunken py-3 text-ink"
+            >
+              {laterIds.has(person.id) ? messages.world.savedForLater : messages.world.saveForLater}
+            </button>
             <Link href={`/u/${person.username}`} className="type-caption block pt-1 text-center font-semibold text-accent">
               @{person.username}
             </Link>

@@ -8,7 +8,10 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/lib/session", () => ({
-  useSession: () => ({ user: { id: "viewer", profileCompleted: true }, loading: false }),
+  useSession: () => ({
+    user: { id: "viewer", profileCompleted: true, currency: "CAD", country: "CA" },
+    loading: false,
+  }),
 }));
 
 vi.mock("@/lib/api", async () => {
@@ -22,16 +25,19 @@ vi.mock("@/lib/api", async () => {
           title: "Piscine party - Odza, Yaoundé",
           description: "Bassin, dj set.",
           priceXaf: 5000,
+          currency: "XAF",
           minAge: 18,
           startsAt: "2026-10-12T18:00:00.000Z",
           isHost: false,
           canBook: true,
-          host: { firstName: "Alex", lastName: "Moullion", avatarUrl: null, certified: true },
+          host: { id: "host-1", firstName: "Alex", lastName: "Moullion", avatarUrl: null, certified: true },
         };
       }
-      if (String(path) === "/contacts") {
+      if (String(path).startsWith("/invite-pool")) {
         return {
-          items: [{ id: "u-boris", firstName: "Boris", lastName: "Nama", username: "boris", avatarUrl: null }],
+          friends: [{ id: "u-boris", firstName: "Boris", lastName: "Nama", username: "boris", avatarUrl: null }],
+          nearby: [{ id: "u-amina", firstName: "Amina", lastName: "Bell", username: "amina.bell", avatarUrl: null }],
+          later: [{ id: "u-sarah", firstName: "Sarah", lastName: "Nkodo", username: "sarah.nkodo", avatarUrl: null }],
         };
       }
       return {};
@@ -50,28 +56,36 @@ const preview = {
 };
 
 describe("BookEventSheet", () => {
-  it("ouvre la feuille de réservation avec prix, soi-même et amis", async () => {
+  it("ouvre la feuille avec prix en CAD et les cercles d’invités", async () => {
     render(
       <TestI18nProvider>
         <BookEventSheet open preview={preview} onClose={() => undefined} />
       </TestI18nProvider>,
     );
     expect(await screen.findByRole("dialog", { name: "Réserver l'évènement" })).toBeInTheDocument();
-    expect(await screen.findByText("5.000 FCFA")).toBeInTheDocument();
+    expect(await screen.findByText("11,49 $ CA")).toBeInTheDocument();
     expect(screen.getByText("Pour moi même")).toBeInTheDocument();
     expect(screen.getByText("Inviter des amis")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Amis/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Autour/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Plus tard/ })).toBeInTheDocument();
     expect(await screen.findByText("Boris Nama")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Passer au paiement" })).toBeInTheDocument();
   });
 
-  it("calcule le total si un ami est ajouté", async () => {
+  it("parcourt Autour et Plus tard, puis calcule le total en CAD", async () => {
     render(
       <TestI18nProvider>
         <BookEventSheet open preview={preview} onClose={() => undefined} />
       </TestI18nProvider>,
     );
     await screen.findByText("Boris Nama");
+    fireEvent.click(screen.getByRole("button", { name: /Autour/ }));
+    expect(await screen.findByText("Amina Bell")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Plus tard/ }));
+    expect(await screen.findByText("Sarah Nkodo")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Amis/ }));
     fireEvent.click(screen.getByText("Boris Nama"));
-    expect(await screen.findByText(/Total · 10.000 FCFA/)).toBeInTheDocument();
+    expect(await screen.findByText(/Total · 22,99 \$ CA/)).toBeInTheDocument();
   });
 });

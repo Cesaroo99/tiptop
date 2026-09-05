@@ -128,6 +128,7 @@ export class SearchService {
         city: e.city,
         zone: e.zone,
         priceXaf: e.priceXaf,
+        currency: e.currency,
         host: e.host,
       })),
       wishes: wishes.map((w) => ({
@@ -147,6 +148,7 @@ export class SearchService {
         id: o.id,
         title: o.title,
         priceXaf: o.priceXaf,
+        currency: o.currency,
         city: o.city,
         shopName: o.shopName,
         seller: o.seller,

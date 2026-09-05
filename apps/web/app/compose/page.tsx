@@ -7,6 +7,7 @@ import { AgeCategoryPicker } from "@/components/AgeCategoryPicker";
 import { CameraIcon, ImageIcon, PlayIcon } from "@/components/Icons";
 import { MoodPlacePicker, type PickedPlace } from "@/components/MoodPlacePicker";
 import { TextInput } from "@/components/ui";
+import { resolveUserCurrency } from "@tiptop/domain";
 import { api, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -78,6 +79,7 @@ export default function ComposePage() {
 function Composer() {
   const { messages } = useI18n();
   const { user } = useSession();
+  const viewerCurrency = resolveUserCurrency(user?.currency, user?.country);
   const router = useRouter();
   const params = useSearchParams();
   const initial = params.get("type");
@@ -329,7 +331,7 @@ function Composer() {
           <TextInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder={messages.world.eventTitle} />
           <TextInput value={startsAt} onChange={(e) => setStartsAt(e.target.value)} type="datetime-local" />
           <TextInput value={venue} onChange={(e) => setVenue(e.target.value)} placeholder={messages.world.eventVenue} />
-          <TextInput value={priceXaf} onChange={(e) => setPriceXaf(e.target.value)} type="number" min={0} placeholder={messages.world.eventPrice} />
+          <TextInput value={priceXaf} onChange={(e) => setPriceXaf(e.target.value)} type="number" min={0} placeholder={messages.world.eventPrice.replace("{currency}", viewerCurrency)} />
           <p className="text-xs text-muted">{messages.world.eventPriceHint}</p>
           <TextInput value={capacity} onChange={(e) => setCapacity(e.target.value)} type="number" min={1} placeholder={messages.world.eventCapacity} />
           <div>
@@ -345,7 +347,7 @@ function Composer() {
       {kind === "offer" ? (
         <div className="space-y-3">
           <TextInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder={messages.need.titlePlaceholder} />
-          <TextInput value={priceXaf} onChange={(e) => setPriceXaf(e.target.value)} type="number" min={0} placeholder={messages.need.pricePlaceholder} />
+          <TextInput value={priceXaf} onChange={(e) => setPriceXaf(e.target.value)} type="number" min={0} placeholder={messages.need.pricePlaceholder.replace("{currency}", viewerCurrency)} />
           <div className="flex gap-2">
             <button
               type="button"

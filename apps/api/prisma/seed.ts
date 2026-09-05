@@ -7,7 +7,7 @@ async function main() {
   const availableUntil = new Date(Date.now() + 7 * 24 * 3600_000);
   const cesar = await prisma.user.upsert({
     where: { phoneE164: "+237695214785" },
-    update: { role: UserRole.ADMIN, theme: "light" },
+    update: { role: UserRole.ADMIN, theme: "light", currency: "CAD" },
     create: {
       phoneE164: "+237695214785",
       phoneCountry: "CM",
@@ -19,6 +19,7 @@ async function main() {
       profileCompleted: true,
       locale: "fr",
       theme: "light",
+      currency: "CAD",
       profile: {
         create: {
           profession: "Fondateur TipTop",
@@ -1148,6 +1149,14 @@ async function enrichLivingWorld(
 
   for (const personId of [erica.id, mbelle.id, onguene.id, amina.id, alex.id, koffi.id, mireille.id]) {
     await db.contact.upsert({
+      where: { ownerId_personId: { ownerId: cesar.id, personId } },
+      update: {},
+      create: { ownerId: cesar.id, personId },
+    });
+  }
+
+  for (const personId of [sarah.id, rachel.id]) {
+    await db.inviteLater.upsert({
       where: { ownerId_personId: { ownerId: cesar.id, personId } },
       update: {},
       create: { ownerId: cesar.id, personId },

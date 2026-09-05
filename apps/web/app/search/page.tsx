@@ -6,6 +6,7 @@ import { EmptyState, ScreenHeader, TextInput } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { formatEventWhen } from "@/lib/time";
+import { useMoney } from "@/lib/money";
 import { useRouter } from "next/navigation";
 
 type SearchResult = {
@@ -31,6 +32,7 @@ type SearchResult = {
     city: string;
     zone: string | null;
     priceXaf: number;
+    currency?: string;
   }>;
   wishes: Array<{
     id: string;
@@ -49,6 +51,7 @@ type SearchResult = {
     id: string;
     title: string;
     priceXaf: number;
+    currency?: string;
     city: string;
     shopName: string | null;
     seller: { username: string; firstName: string; lastName: string };
@@ -59,6 +62,7 @@ const filters = ["all", "people", "posts", "events", "wishes", "moods", "offers"
 
 export default function SearchPage() {
   const { locale, messages } = useI18n();
+  const { formatPrice } = useMoney();
   const router = useRouter();
   const [q, setQ] = useState("");
   const [type, setType] = useState<(typeof filters)[number]>("all");
@@ -132,7 +136,7 @@ export default function SearchPage() {
             <p className="text-sm font-semibold text-accent">{e.title}</p>
             <p className="text-xs text-muted">
               {formatEventWhen(e.startsAt, locale)} · {e.city}
-              {e.priceXaf > 0 ? ` · ${e.priceXaf} FCFA` : ""}
+              {e.priceXaf > 0 ? ` · ${formatPrice(e.priceXaf, e.currency ?? "XAF")}` : ""}
             </p>
           </Link>
         ))}
@@ -165,7 +169,7 @@ export default function SearchPage() {
             <p className="text-sm font-semibold text-accent">{o.title}</p>
             <p className="text-xs text-muted">
               {o.shopName || `${o.seller.firstName} ${o.seller.lastName}`} · {o.city}
-              {o.priceXaf > 0 ? ` · ${o.priceXaf} FCFA` : ""}
+              {o.priceXaf > 0 ? ` · ${formatPrice(o.priceXaf, o.currency ?? "XAF")}` : ""}
             </p>
           </Link>
         ))}

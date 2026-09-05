@@ -89,6 +89,8 @@ export type Messages = {
     title: string;
     darkMode: string;
     language: string;
+    currency: string;
+    currencyHint: string;
     password: string;
     terms: string;
     logout: string;
@@ -339,6 +341,8 @@ export type Messages = {
     maxAge: string;
     professionFilter: string;
     message: string;
+    saveForLater: string;
+    savedForLater: string;
     age: string;
     distance: string;
     nextPerson: string;
@@ -477,6 +481,16 @@ export type Messages = {
     bookEventTitle: string;
     forMyself: string;
     inviteFriends: string;
+    inviteSearch: string;
+    inviteCircleFriends: string;
+    inviteCircleNearby: string;
+    inviteCircleLater: string;
+    friendsEmpty: string;
+    nearbyEmpty: string;
+    laterEmpty: string;
+    saveForLater: string;
+    savedForLater: string;
+    removeFromLater: string;
     goToPayment: string;
     bookTotal: string;
     bookPickSomeone: string;
@@ -731,7 +745,7 @@ export const fr: Messages = {
     seller: "Proposé par",
     createTitle: "Publier une offre",
     titlePlaceholder: "Ex. Pain chaud, pressing, tresses",
-    pricePlaceholder: "Prix (FCFA)",
+    pricePlaceholder: "Prix ({currency})",
     shopName: "Nom de la boutique (optionnel)",
     sellerPerson: "Particulier",
     sellerShop: "Boutique",
@@ -766,6 +780,8 @@ export const fr: Messages = {
     title: "Paramètres",
     darkMode: "Mode sombre",
     language: "Langue",
+    currency: "Devise",
+    currencyHint: "Les prix s’affichent dans ta monnaie. L’organisateur encaisse dans la sienne.",
     password: "Changer le mot de passe",
     terms: "Conditions et règlements",
     logout: "Déconnexion",
@@ -1016,6 +1032,8 @@ export const fr: Messages = {
     maxAge: "Âge max",
     professionFilter: "Profession",
     message: "Message",
+    saveForLater: "Plus tard",
+    savedForLater: "Mis de côté",
     age: "{age} ans",
     distance: "{km} km",
     nextPerson: "Suivant",
@@ -1033,7 +1051,7 @@ export const fr: Messages = {
     eventDescription: "Description",
     eventWhen: "Date et heure",
     eventVenue: "Lieu",
-    eventPrice: "Prix (FCFA, 0 = gratuit)",
+    eventPrice: "Prix ({currency}, 0 = gratuit)",
     eventPriceHint: "Un prix ouvre une réservation. Le paiement arrive en Phase 4.",
     eventCapacity: "Capacité (optionnel)",
     eventMinAge: "Âge minimum (ex. 18)",
@@ -1044,7 +1062,7 @@ export const fr: Messages = {
     heartTransferTitle: "Changer de coup de cœur ?",
     heartTransferBody: "Ton coup de cœur quittera « {title} » pour cette sortie.",
     free: "Gratuit",
-    paid: "{amount} FCFA",
+    paid: "{amount}",
     host: "Hôte",
     peopleLinked: "Personnes liées",
     bookLater: "Réserver et payer arrive en Phase 4. Ici tu peux t’intéresser, mettre un coup de cœur, ou inviter sur une sortie gratuite.",
@@ -1154,6 +1172,16 @@ export const fr: Messages = {
     bookEventTitle: "Réserver l'évènement",
     forMyself: "Pour moi même",
     inviteFriends: "Inviter des amis",
+    inviteSearch: "Rechercher quelqu’un",
+    inviteCircleFriends: "Amis",
+    inviteCircleNearby: "Autour",
+    inviteCircleLater: "Plus tard",
+    friendsEmpty: "Pas encore d’amis ici. Accepte une invitation, ou parcours Autour.",
+    nearbyEmpty: "Personne d’autre autour pour l’instant.",
+    laterEmpty: "Personne de côté. Sur Autour, mets de côté ceux que tu veux inviter plus tard.",
+    saveForLater: "Mettre de côté",
+    savedForLater: "Mis de côté",
+    removeFromLater: "Retirer",
     goToPayment: "Passer au paiement",
     bookTotal: "Total · {amount}",
     bookPickSomeone: "Coche-toi ou au moins un ami.",
@@ -1187,7 +1215,7 @@ export const fr: Messages = {
     tabValidated: "Validés",
     paidBadge: "Payé",
     unpaidBadge: "Non payé",
-    amount: "{amount} FCFA",
+    amount: "{amount}",
     mockHint: "Paiement mock : aucun argent réel. Échec volontaire pour tester.",
     failDemo: "Simuler un échec",
     awaiting: "En attente",
@@ -1408,7 +1436,7 @@ export const en: Messages = {
     seller: "Offered by",
     createTitle: "List an offer",
     titlePlaceholder: "e.g. Fresh bread, laundry, braids",
-    pricePlaceholder: "Price (XAF)",
+    pricePlaceholder: "Price ({currency})",
     shopName: "Shop name (optional)",
     sellerPerson: "Individual",
     sellerShop: "Shop",
@@ -1443,6 +1471,8 @@ export const en: Messages = {
     title: "Settings",
     darkMode: "Dark mode",
     language: "Language",
+    currency: "Currency",
+    currencyHint: "Prices show in your currency. The host is paid in theirs.",
     password: "Change password",
     terms: "Terms and policies",
     logout: "Log out",
@@ -1693,6 +1723,8 @@ export const en: Messages = {
     maxAge: "Max age",
     professionFilter: "Profession",
     message: "Message",
+    saveForLater: "Later",
+    savedForLater: "Saved for later",
     age: "{age} yrs",
     distance: "{km} km",
     nextPerson: "Next",
@@ -1710,7 +1742,7 @@ export const en: Messages = {
     eventDescription: "Description",
     eventWhen: "Date and time",
     eventVenue: "Venue",
-    eventPrice: "Price (XAF, 0 = free)",
+    eventPrice: "Price ({currency}, 0 = free)",
     eventPriceHint: "A price requires a reservation. Payment ships in Phase 4.",
     eventCapacity: "Capacity (optional)",
     eventMinAge: "Minimum age (e.g. 18)",
@@ -1721,7 +1753,7 @@ export const en: Messages = {
     heartTransferTitle: "Move your favorite?",
     heartTransferBody: "Your favorite will leave “{title}” for this meetup.",
     free: "Free",
-    paid: "{amount} XAF",
+    paid: "{amount}",
     host: "Host",
     peopleLinked: "People",
     bookLater: "Booking and payment ship in Phase 4. You can mark interest, favorite, or invite to a free meetup.",
@@ -1831,6 +1863,16 @@ export const en: Messages = {
     bookEventTitle: "Book the event",
     forMyself: "For myself",
     inviteFriends: "Invite friends",
+    inviteSearch: "Search someone",
+    inviteCircleFriends: "Friends",
+    inviteCircleNearby: "Around",
+    inviteCircleLater: "Later",
+    friendsEmpty: "No friends yet. Accept an invite, or browse Around.",
+    nearbyEmpty: "Nobody else around right now.",
+    laterEmpty: "Nobody set aside. On Around, save people you want to invite later.",
+    saveForLater: "Save for later",
+    savedForLater: "Saved",
+    removeFromLater: "Remove",
     goToPayment: "Continue to payment",
     bookTotal: "Total · {amount}",
     bookPickSomeone: "Select yourself or at least one friend.",
@@ -1864,7 +1906,7 @@ export const en: Messages = {
     tabValidated: "Checked in",
     paidBadge: "Paid",
     unpaidBadge: "Unpaid",
-    amount: "{amount} XAF",
+    amount: "{amount}",
     mockHint: "Mock payment: no real money. Optional fail to test errors.",
     failDemo: "Simulate a failure",
     awaiting: "Pending",

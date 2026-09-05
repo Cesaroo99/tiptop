@@ -8,6 +8,7 @@ import { CardSkeleton, Chip, EmptyState, ErrorBanner } from "@/components/ui";
 import { api, type EventCard as EventCardType, type InvitationItem } from "@/lib/api";
 import { formatEventWhen } from "@/lib/time";
 import { useI18n } from "@/lib/i18n";
+import { useMoney } from "@/lib/money";
 
 /**
  * Events = espace de GESTION. La découverte des sorties se fait dans
@@ -156,6 +157,7 @@ function statusChip(event: EventCardType, messages: ReturnType<typeof useI18n>["
 
 function ManageEventCard({ event }: { event: EventCardType }) {
   const { locale, messages } = useI18n();
+  const { formatPrice } = useMoney();
   const chip = statusChip(event, messages);
   const primaryHref = event.isHost
     ? `/events/${event.id}/manage`
@@ -182,7 +184,7 @@ function ManageEventCard({ event }: { event: EventCardType }) {
             {event.reservedCount ?? event.taken} {messages.world.reservationsCount}
           </span>
           <span className="type-caption absolute right-2 top-2 rounded-pill bg-accent px-2.5 py-1 font-bold text-on-primary">
-            {event.priceXaf > 0 ? `${event.priceXaf.toLocaleString(locale)} ${event.currency}` : messages.world.free}
+            {event.priceXaf > 0 ? formatPrice(event.priceXaf, event.currency) : messages.world.free}
           </span>
         </div>
         <div className="px-3.5 pt-3.5">

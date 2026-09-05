@@ -324,6 +324,14 @@ export function BroadcastIcon({ size = 17, className }: IconProps) {
   return <InterestedIcon size={size} className={className} />;
 }
 
+export function BookmarkIcon({ size = 16, className, filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d="M6.5 4.5h11v16l-5.5-3.4L6.5 20.5v-16Z" />
+    </svg>
+  );
+}
+
 /** Intéressé — point d’exclamation dans des cercles concentriques (maquette accueil). */
 export function InterestedIcon({ size = 17, className }: IconProps) {
   return (

@@ -9,6 +9,7 @@ import { MapThumb } from "@/components/MapThumb";
 import { CardSkeleton, ErrorBanner, PrimaryButton, SecondaryButton } from "@/components/ui";
 import { api, type OfferItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useMoney } from "@/lib/money";
 
 export default function Page() {
   return (
@@ -20,7 +21,8 @@ export default function Page() {
 
 function OfferDetail() {
   const { id } = useParams<{ id: string }>();
-  const { locale, messages } = useI18n();
+  const { messages } = useI18n();
+  const { formatPrice } = useMoney();
   const router = useRouter();
   const [offer, setOffer] = useState<OfferItem | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +62,7 @@ function OfferDetail() {
           <h1 className="type-h2 text-ink">{offer.title}</h1>
         </div>
         <p className="type-h3 shrink-0 text-accent">
-          {offer.priceXaf.toLocaleString(locale)} {offer.currency}
+          {formatPrice(offer.priceXaf, offer.currency)}
         </p>
       </div>
       {offer.description ? <p className="type-body text-ink">{offer.description}</p> : null}

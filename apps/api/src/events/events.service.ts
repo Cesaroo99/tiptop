@@ -6,7 +6,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { canInteractWithEvent, eventLifecycle, planHeartTransfer } from "@tiptop/domain";
+import { canInteractWithEvent, eventLifecycle, planHeartTransfer, resolveUserCurrency } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 
@@ -50,6 +50,7 @@ export class EventsService {
     const host = await this.prisma.user.findUnique({ where: { id: hostId }, include: { profile: true } });
     const priceXaf = Math.max(0, Math.round(input.priceXaf ?? 0));
     const requiresReservation = priceXaf > 0 ? true : Boolean(input.requiresReservation);
+    const currency = resolveUserCurrency(host?.currency, host?.profile?.country);
     const event = await this.prisma.event.create({
       data: {
         hostId,
@@ -62,6 +63,7 @@ export class EventsService {
         startsAt,
         endsAt,
         priceXaf,
+        currency,
         capacity: input.capacity && input.capacity > 0 ? input.capacity : null,
         minAge: input.minAge && input.minAge > 0 ? input.minAge : null,
         requiresReservation,

@@ -7,9 +7,11 @@ import { createPortal } from "react-dom";
 import { reservationAmountXaf } from "@tiptop/domain";
 import { api, ApiError, type EventCard, type ReservationItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useMoney } from "@/lib/money";
 import { sheetOverlayClass, useSheetPortal } from "@/lib/sheet-portal";
-import { formatEventDateBadge, formatFcfa, formatRelative, splitPostLead } from "@/lib/time";
+import { formatEventDateBadge, formatRelative, splitPostLead } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
+import { BookmarkIcon, SearchIcon } from "./Icons";
 
 export type BookContact = {
   id: string;
@@ -17,6 +19,14 @@ export type BookContact = {
   lastName: string;
   username: string;
   avatarUrl?: string | null;
+  city?: string | null;
+  profession?: string | null;
+};
+
+export type InvitePool = {
+  friends: BookContact[];
+  nearby: BookContact[];
+  later: BookContact[];
 };
 
 export type BookPreview = {
@@ -34,6 +44,8 @@ export type BookPreview = {
   };
 };
 
+type Circle = "friends" | "nearby" | "later";
+
 export function BookEventSheet({
   open,
   onClose,
@@ -44,30 +56,71 @@ export function BookEventSheet({
   preview: BookPreview | null;
 }) {
   const { locale, messages } = useI18n();
+  const { formatPrice } = useMoney();
   const router = useRouter();
   const portal = useSheetPortal();
   const [event, setEvent] = useState<EventCard | null>(null);
-  const [contacts, setContacts] = useState<BookContact[]>([]);
+  const [pool, setPool] = useState<InvitePool>({ friends: [], nearby: [], later: [] });
+  const [query, setQuery] = useState("");
+  const [circle, setCircle] = useState<Circle>("friends");
   const [includeSelf, setIncludeSelf] = useState(true);
   const [picked, setPicked] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function loadPool(q?: string) {
+    try {
+      const data = await api<InvitePool>(`/invite-pool${q?.trim() ? `?q=${encodeURIComponent(q.trim())}` : ""}`);
+      setPool({
+        friends: data.friends ?? [],
+        nearby: data.nearby ?? [],
+        later: data.later ?? [],
+      });
+    } catch {
+      setPool({ friends: [], nearby: [], later: [] });
+    }
+  }
 
   useEffect(() => {
     if (!open || !preview) return;
     setError(null);
     setIncludeSelf(true);
     setPicked([]);
+    setQuery("");
+    setCircle("friends");
     api<EventCard>(`/events/${preview.eventId}`)
       .then(setEvent)
       .catch(() => setEvent(null));
-    api<{ items: BookContact[] }>("/contacts")
-      .then((d) => setContacts(d.items ?? []))
-      .catch(() => setContacts([]));
+    void loadPool();
   }, [open, preview]);
 
-  const friends = contacts.filter((c) => c.id !== event?.host?.id);
+  useEffect(() => {
+    if (!open) return;
+    const t = window.setTimeout(() => void loadPool(query), query ? 220 : 0);
+    return () => window.clearTimeout(t);
+  }, [open, query]);
+
+  const hostId = event?.host?.id;
+  const laterIds = new Set(pool.later.map((p) => p.id));
+  const directory = useMemo(() => {
+    const map = new Map<string, BookContact>();
+    for (const p of [...pool.friends, ...pool.nearby, ...pool.later]) map.set(p.id, p);
+    return map;
+  }, [pool]);
+
+  const selectedPeople = picked.map((id) => directory.get(id)).filter(Boolean) as BookContact[];
+  const list = (circle === "friends" ? pool.friends : circle === "nearby" ? pool.nearby : pool.later).filter(
+    (p) => p.id !== hostId,
+  );
+  const emptyLabel =
+    circle === "friends"
+      ? messages.booking.friendsEmpty
+      : circle === "nearby"
+        ? messages.booking.nearbyEmpty
+        : messages.booking.laterEmpty;
+
   const price = event?.priceXaf ?? 0;
+  const eventCurrency = event?.currency ?? "XAF";
   const seats = (includeSelf ? 1 : 0) + picked.length;
   const total = reservationAmountXaf(price, Math.max(1, seats));
   const canSubmit = seats > 0 && !event?.isHost && event?.canBook !== false;
@@ -113,13 +166,30 @@ export function BookEventSheet({
     setPicked((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   }
 
+  async function toggleLater(person: BookContact) {
+    const saved = laterIds.has(person.id);
+    try {
+      if (saved) {
+        await api(`/invite-later/${person.id}`, { method: "DELETE" });
+      } else {
+        await api(`/invite-later/${person.id}`, { method: "POST" });
+      }
+      await loadPool(query);
+    } catch {
+      setError(messages.common.error);
+    }
+  }
+
   if (!open || !preview || !portal) return null;
 
-  const relative = preview.createdAt
-    ? formatRelative(preview.createdAt, messages.social)
-    : null;
-  const priceLabel = price > 0 ? formatFcfa(price) : messages.world.free;
+  const relative = preview.createdAt ? formatRelative(preview.createdAt, messages.social) : null;
+  const priceLabel = price > 0 ? formatPrice(price, eventCurrency) : messages.world.free;
   const cta = price > 0 && seats > 0 ? messages.booking.goToPayment : messages.booking.reserve;
+  const tabs: { id: Circle; label: string; count: number }[] = [
+    { id: "friends", label: messages.booking.inviteCircleFriends, count: pool.friends.filter((p) => p.id !== hostId).length },
+    { id: "nearby", label: messages.booking.inviteCircleNearby, count: pool.nearby.filter((p) => p.id !== hostId).length },
+    { id: "later", label: messages.booking.inviteCircleLater, count: pool.later.filter((p) => p.id !== hostId).length },
+  ];
 
   return createPortal(
     <div
@@ -191,28 +261,86 @@ export function BookEventSheet({
 
         <p className="type-caption mt-4 font-medium text-muted">{messages.booking.inviteFriends}</p>
         <div className="mt-2 rounded-2xl bg-surface-sunken px-2.5 py-2.5">
-          {friends.length === 0 ? (
-            <p className="type-caption px-1 py-1 text-muted">{messages.world.contactsEmpty}</p>
+          {selectedPeople.length ? (
+            <div className="no-scrollbar mb-2 flex gap-2 overflow-x-auto">
+              {selectedPeople.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => toggleFriend(c.id)}
+                  className="tap-scale flex shrink-0 items-center gap-2 rounded-full bg-accent py-1 pl-1.5 pr-3 text-on-primary"
+                >
+                  <Avatar src={c.avatarUrl} firstName={c.firstName} lastName={c.lastName} size={22} />
+                  <span className="type-caption font-semibold">
+                    {c.firstName} {c.lastName}
+                  </span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          <label className="mb-2 flex items-center gap-2 rounded-xl bg-surface px-2.5 py-2">
+            <SearchIcon size={14} />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={messages.booking.inviteSearch}
+              className="w-full bg-transparent type-caption text-ink outline-none placeholder:text-muted"
+            />
+          </label>
+
+          <div className="mb-2 grid grid-cols-3 gap-1 rounded-xl bg-surface p-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setCircle(tab.id)}
+                className={`rounded-lg py-1.5 type-caption font-semibold transition ${
+                  circle === tab.id ? "bg-accent text-on-primary" : "text-muted"
+                }`}
+              >
+                {tab.label}
+                {tab.count ? ` · ${tab.count}` : ""}
+              </button>
+            ))}
+          </div>
+
+          {list.length === 0 ? (
+            <p className="type-caption px-1 py-2 text-muted">{emptyLabel}</p>
           ) : (
-            <div className="no-scrollbar flex gap-2 overflow-x-auto">
-              {friends.map((c) => {
+            <ul className="no-scrollbar max-h-48 space-y-1 overflow-y-auto">
+              {list.map((c) => {
                 const on = picked.includes(c.id);
+                const saved = laterIds.has(c.id);
                 return (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => toggleFriend(c.id)}
-                    className="tap-scale flex shrink-0 items-center gap-2 rounded-full bg-surface py-1 pl-1.5 pr-3 shadow-xs"
-                  >
-                    <CheckBox checked={on} />
-                    <Avatar src={c.avatarUrl} firstName={c.firstName} lastName={c.lastName} size={22} />
-                    <span className="type-caption font-semibold text-ink">
-                      {c.firstName} {c.lastName}
-                    </span>
-                  </button>
+                  <li key={c.id} className="flex items-center gap-2 rounded-xl bg-surface px-2 py-1.5">
+                    <button type="button" onClick={() => toggleFriend(c.id)} className="flex min-w-0 flex-1 items-center gap-2">
+                      <CheckBox checked={on} />
+                      <Avatar src={c.avatarUrl} firstName={c.firstName} lastName={c.lastName} size={28} />
+                      <span className="min-w-0 text-left">
+                        <span className="type-caption block truncate font-semibold text-ink">
+                          {c.firstName} {c.lastName}
+                        </span>
+                        <span className="type-caption block truncate text-muted">@{c.username}</span>
+                      </span>
+                    </button>
+                    {circle !== "friends" ? (
+                      <button
+                        type="button"
+                        aria-label={saved ? messages.booking.removeFromLater : messages.booking.saveForLater}
+                        onClick={() => void toggleLater(c)}
+                        className={`grid h-8 w-8 place-items-center rounded-full ${
+                          saved ? "bg-yellow text-ink" : "bg-surface-sunken text-muted"
+                        }`}
+                      >
+                        <BookmarkIcon size={14} filled={saved} />
+                      </button>
+                    ) : null}
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           )}
         </div>
 
@@ -235,7 +363,7 @@ export function BookEventSheet({
         {error ? <p className="type-caption mt-3 font-semibold text-danger">{error}</p> : null}
         {price > 0 && seats > 1 ? (
           <p className="type-caption mt-3 font-semibold text-ink">
-            {messages.booking.bookTotal.replace("{amount}", formatFcfa(total))}
+            {messages.booking.bookTotal.replace("{amount}", formatPrice(total, eventCurrency))}
           </p>
         ) : null}
 

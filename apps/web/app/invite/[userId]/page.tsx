@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { EmptyState, Modal, PrimaryButton, ScreenHeader } from "@/components/ui";
 import { api, ApiError, type InvitationItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useMoney } from "@/lib/money";
 import { formatEventWhen } from "@/lib/time";
 
 type Relevant = {
@@ -14,6 +15,7 @@ type Relevant = {
   zone: string | null;
   startsAt: string;
   priceXaf: number;
+  currency?: string;
   reason: string;
   eligible: boolean;
   host: { firstName: string; lastName: string };
@@ -22,6 +24,7 @@ type Relevant = {
 export default function InvitePage() {
   const { userId } = useParams<{ userId: string }>();
   const { locale, messages } = useI18n();
+  const { formatPrice } = useMoney();
   const router = useRouter();
   const [events, setEvents] = useState<Relevant[] | null>(null);
   const [picked, setPicked] = useState<Relevant | null>(null);
@@ -86,7 +89,7 @@ export default function InvitePage() {
               <p className="font-semibold text-accent">{e.title}</p>
               <p className="text-xs text-muted">
                 {formatEventWhen(e.startsAt, locale)} · {e.city}
-                {e.priceXaf > 0 ? ` · ${e.priceXaf} FCFA` : ` · ${messages.world.free}`}
+                {e.priceXaf > 0 ? ` · ${formatPrice(e.priceXaf, e.currency ?? "XAF")}` : ` · ${messages.world.free}`}
               </p>
             </button>
           ))}

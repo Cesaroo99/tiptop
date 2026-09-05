@@ -19,6 +19,8 @@ export type PublicUser = {
   locationPrecision: string;
   latitude: number | null;
   longitude: number | null;
+  currency?: string;
+  country?: string | null;
 };
 
 export type EventCard = {
@@ -209,6 +211,7 @@ export type ReservationItem = {
   status: string;
   seats: number;
   amountXaf: number;
+  currency?: string;
   needsPayment: boolean;
   tickets: Array<{ id: string; holderId: string; status: string }>;
   event?: { title: string; startsAt: string; city: string };
@@ -219,7 +222,7 @@ export type InvitationItem = {
   payer: string;
   status: string;
   expiresAt: string;
-  event: { id: string; title: string; startsAt: string; city: string; zone: string | null; priceXaf: number };
+  event: { id: string; title: string; startsAt: string; city: string; zone: string | null; priceXaf: number; currency?: string };
   inviter: { id: string; username: string; firstName: string; lastName: string };
   invitee: { id: string; username: string; firstName: string; lastName: string };
   needsPayment?: boolean;

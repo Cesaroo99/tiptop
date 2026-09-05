@@ -6,6 +6,7 @@ import { CalendarIcon } from "@/components/Icons";
 import { Chip, EmptyState, ScreenHeader } from "@/components/ui";
 import { api, ApiError, type InvitationItem, type ReservationItem, type TicketItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useMoney } from "@/lib/money";
 import Link from "next/link";
 
 export default function Page() {
@@ -18,6 +19,7 @@ export default function Page() {
 
 function TicketsPage() {
   const { messages } = useI18n();
+  const { formatPrice } = useMoney();
   const router = useRouter();
   const params = useSearchParams();
   const initialTab = params.get("tab");
@@ -132,7 +134,7 @@ function TicketsPage() {
             <article key={r.id} className="rounded-card bg-surface p-4 shadow-card">
               <p className="type-heading text-ink">{r.event?.title ?? r.eventId}</p>
               <p className="type-caption mt-1 text-muted">
-                {statusLabel[r.status] ?? r.status} · {r.seats} · {r.amountXaf} FCFA
+                {statusLabel[r.status] ?? r.status} · {r.seats} · {formatPrice(r.amountXaf, r.currency ?? "XAF")}
               </p>
               {r.needsPayment ? (
                 <Link href={`/events/${r.eventId}/pay?reservationId=${r.id}`} className="type-body-sm mt-2 inline-block font-semibold text-accent">

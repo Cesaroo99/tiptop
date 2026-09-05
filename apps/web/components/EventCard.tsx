@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ageCategoryLabel, canInteractWithEvent, eventLifecycle } from "@tiptop/domain";
 import { api, ApiError, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useMoney } from "@/lib/money";
 import { eventCountdown, formatEventWhen, formatRelative } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
 import { FlagIcon, HeartIcon, LinkIcon, MoreIcon, PinIcon, ShareIcon } from "./Icons";
@@ -22,6 +23,7 @@ export function EventCard({
   onChanged?: (next: EventCardType) => void;
 }) {
   const { locale, messages } = useI18n();
+  const { formatPrice } = useMoney();
   const [transfer, setTransfer] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -81,7 +83,7 @@ export function EventCard({
     setTimeout(() => setCopied(false), 1600);
   }
 
-  const price = event.priceXaf > 0 ? messages.world.paid.replace("{amount}", String(event.priceXaf)) : messages.world.free;
+  const price = event.priceXaf > 0 ? messages.world.paid.replace("{amount}", formatPrice(event.priceXaf, event.currency)) : messages.world.free;
   const countdown = eventCountdown(event.startsAt);
   const relative = formatRelative(event.createdAt ?? event.startsAt, messages.social);
   const lifecycle = eventLifecycle(
