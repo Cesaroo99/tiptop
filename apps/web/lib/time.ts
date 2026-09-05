@@ -16,6 +16,20 @@ export function dateLocale(locale: string) {
   return locale === "en" ? "en-GB" : "fr-FR";
 }
 
+export function formatFcfa(amount: number) {
+  const n = Math.max(0, Math.round(amount));
+  return `${String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".")} FCFA`;
+}
+
+export function formatEventDateBadge(iso: string, locale: string) {
+  const raw = new Date(iso).toLocaleDateString(dateLocale(locale), {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  return raw.replace(/(^|\s)\S/g, (ch) => ch.toUpperCase());
+}
+
 export function formatEventWhen(iso: string, locale: string) {
   return new Date(iso).toLocaleString(dateLocale(locale), {
     weekday: "short",

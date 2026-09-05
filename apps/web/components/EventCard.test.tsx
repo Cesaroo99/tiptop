@@ -6,6 +6,11 @@ import type { EventCard as EventCardType } from "@/lib/api";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/events",
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
+}));
+
+vi.mock("@/lib/session", () => ({
+  useSession: () => ({ user: { id: "viewer", profileCompleted: true }, loading: false }),
 }));
 
 const baseEvent: EventCardType = {

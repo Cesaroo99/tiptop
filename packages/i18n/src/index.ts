@@ -474,6 +474,14 @@ export type Messages = {
   booking: {
     reserve: string;
     bookSelf: string;
+    bookEventTitle: string;
+    forMyself: string;
+    inviteFriends: string;
+    goToPayment: string;
+    bookTotal: string;
+    bookPickSomeone: string;
+    bookAlready: string;
+    bookHost: string;
     pay: string;
     paySuccess: string;
     paySuccessBody: string;
@@ -1143,6 +1151,14 @@ export const fr: Messages = {
   booking: {
     reserve: "Réserver",
     bookSelf: "Réserver pour moi",
+    bookEventTitle: "Réserver l'évènement",
+    forMyself: "Pour moi même",
+    inviteFriends: "Inviter des amis",
+    goToPayment: "Passer au paiement",
+    bookTotal: "Total · {amount}",
+    bookPickSomeone: "Coche-toi ou au moins un ami.",
+    bookAlready: "Tu as déjà une place pour cette sortie.",
+    bookHost: "C’est ta sortie — tu la gères, tu ne la réserves pas.",
     pay: "Payer",
     paySuccess: "Paiement réussi",
     paySuccessBody: "Tes tickets sont prêts. Montre le QR à l’entrée.",
@@ -1812,6 +1828,14 @@ export const en: Messages = {
   booking: {
     reserve: "Book",
     bookSelf: "Book for myself",
+    bookEventTitle: "Book the event",
+    forMyself: "For myself",
+    inviteFriends: "Invite friends",
+    goToPayment: "Continue to payment",
+    bookTotal: "Total · {amount}",
+    bookPickSomeone: "Select yourself or at least one friend.",
+    bookAlready: "You already have a seat for this meetup.",
+    bookHost: "This is your meetup — you manage it, you don’t book it.",
     pay: "Pay",
     paySuccess: "Payment succeeded",
     paySuccessBody: "Your tickets are ready. Show the QR at the door.",

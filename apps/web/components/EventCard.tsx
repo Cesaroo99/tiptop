@@ -8,6 +8,7 @@ import { useI18n } from "@/lib/i18n";
 import { eventCountdown, formatEventWhen, formatRelative } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
 import { FlagIcon, HeartIcon, LinkIcon, MoreIcon, PinIcon, ShareIcon } from "./Icons";
+import { BookEventSheet } from "./BookEventSheet";
 import { MapThumb } from "./MapThumb";
 import { OptionsSheet } from "./OptionsSheet";
 import { ReportModal } from "./ReportModal";
@@ -25,6 +26,7 @@ export function EventCard({
   const [copied, setCopied] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [bookOpen, setBookOpen] = useState(false);
 
   async function heart(confirmTransfer = false) {
     try {
@@ -204,9 +206,13 @@ export function EventCard({
               </button>
             ) : null}
             {event.canBook ? (
-              <Link href={`/events/${event.id}/book`} className="tap-scale type-button rounded-pill bg-accent px-5 py-2.5 text-on-primary shadow-sm transition hover:bg-accent-hover">
+              <button
+                type="button"
+                onClick={() => setBookOpen(true)}
+                className="tap-scale type-button rounded-pill bg-accent px-5 py-2.5 text-on-primary shadow-sm transition hover:bg-accent-hover"
+              >
                 {messages.booking.reserve}
-              </Link>
+              </button>
             ) : null}
             {event.viewerTicketId ? (
               <Link href={`/tickets/${event.viewerTicketId}`} className="tap-scale type-button rounded-pill border border-border bg-surface px-4 py-2.5 text-ink transition hover:bg-surface-sunken">
@@ -242,6 +248,19 @@ export function EventCard({
         ]}
       />
       <ReportModal open={reportOpen} kind="EVENT" eventId={event.id} onClose={() => setReportOpen(false)} />
+      <BookEventSheet
+        open={bookOpen}
+        onClose={() => setBookOpen(false)}
+        preview={{
+          eventId: event.id,
+          title: event.title,
+          body: event.description ? `${event.title} : ${event.description}` : event.title,
+          startsAt: event.startsAt,
+          createdAt: event.createdAt,
+          minAge: event.minAge,
+          author: event.host,
+        }}
+      />
     </article>
   );
 }

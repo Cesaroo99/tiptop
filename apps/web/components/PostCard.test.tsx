@@ -4,6 +4,10 @@ import { TestI18nProvider } from "@/lib/test-utils";
 import { PostCard } from "./PostCard";
 import type { FeedItem } from "@/lib/api";
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
+}));
+
 vi.mock("@/lib/session", () => ({
   useSession: () => ({
     user: { id: "viewer", profileCompleted: true },
@@ -71,7 +75,7 @@ describe("PostCard — publication vs événement", () => {
     expect(screen.getByLabelText("Mon like est ici")).toBeInTheDocument();
     expect(screen.queryByText(/seconde/)).not.toBeInTheDocument();
     expect(screen.getByLabelText("Commentaires")).toHaveAttribute("href", "/posts/p1");
-    expect(screen.getByLabelText("Réserver")).toHaveAttribute("href", "/events/evt-bw/book");
+    expect(screen.getByLabelText("Réserver")).toBeInTheDocument();
     expect(screen.getByLabelText("Intéressé")).toBeInTheDocument();
     expect(screen.getByText("Événement dans :")).toBeInTheDocument();
     expect(screen.getByText("13min")).toBeInTheDocument();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCompactCount, formatCountdownLabel, splitPostLead } from "./time";
+import { formatCompactCount, formatCountdownLabel, formatEventDateBadge, formatFcfa, splitPostLead } from "./time";
 
 describe("formatCompactCount", () => {
   it("garde les petits nombres et compacte les milliers", () => {
@@ -15,6 +15,20 @@ describe("splitPostLead", () => {
     const split = splitPostLead("Un tour au Black&White : on se retrouve ce soir. 🥳💎");
     expect(split.lead).toBe("Un tour au Black&White :");
     expect(split.rest).toContain("on se retrouve");
+  });
+});
+
+describe("formatFcfa", () => {
+  it("affiche le prix comme sur la maquette", () => {
+    expect(formatFcfa(5000)).toBe("5.000 FCFA");
+    expect(formatFcfa(0)).toBe("0 FCFA");
+  });
+});
+
+describe("formatEventDateBadge", () => {
+  it("met le jour et le mois en avant", () => {
+    expect(formatEventDateBadge("2026-10-13T18:00:00+01:00", "fr")).toMatch(/Mardi/i);
+    expect(formatEventDateBadge("2026-10-13T18:00:00+01:00", "fr")).toMatch(/Octobre/i);
   });
 });
 

@@ -22,6 +22,7 @@ import {
   SlashIcon,
   TrashIcon,
 } from "./Icons";
+import { BookEventSheet } from "./BookEventSheet";
 import { LikeDialogs, likeErrorKind } from "./LikeDialogs";
 import { MapThumb } from "./MapThumb";
 import { OptionsSheet } from "./OptionsSheet";
@@ -78,6 +79,7 @@ export function PostCard({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleted, setDeleted] = useState(false);
+  const [bookOpen, setBookOpen] = useState(false);
   const mine = user?.id === post.author.id;
   const event = post.event ?? null;
   const isEvent = Boolean(event);
@@ -305,7 +307,7 @@ export function PostCard({
             </ActionCircle>
             {isEvent && event ? (
               <>
-                <ActionCircle href={`/events/${event.id}/book`} label={messages.booking.reserve}>
+                <ActionCircle label={messages.booking.reserve} onClick={() => setBookOpen(true)}>
                   <CalendarPlusIcon size={17} />
                 </ActionCircle>
                 <ActionCircle
@@ -333,6 +335,23 @@ export function PostCard({
         onCloseTransfer={() => setTransfer(null)}
         onConfirmTransfer={() => void like(true)}
         onCloseBuy={() => setBuy(false)}
+      />
+      <BookEventSheet
+        open={bookOpen}
+        onClose={() => setBookOpen(false)}
+        preview={
+          event
+            ? {
+                eventId: event.id,
+                title: event.title,
+                body: post.body,
+                startsAt: event.startsAt,
+                createdAt: post.createdAt,
+                minAge: event.minAge,
+                author: post.author,
+              }
+            : null
+        }
       />
       <Modal open={Boolean(soon)} title={messages.social.likePerson} onClose={() => setSoon(null)}>
         {soon}

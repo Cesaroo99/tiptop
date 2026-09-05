@@ -11,26 +11,37 @@ export class ContactsController {
 
   @Get()
   async list(@Req() req: Request & { user: PublicUser }) {
-    const rows = await this.prisma.contact.findMany({
-      where: { ownerId: req.user.id },
-      orderBy: { createdAt: "desc" },
-      include: {
-        person: {
-          include: { profile: true },
-        },
-      },
-    });
-    return {
-      items: rows.map((c) => ({
-        id: c.person.id,
-        username: c.person.username,
-        firstName: c.person.firstName,
-        lastName: c.person.lastName,
-        certified: c.person.certified,
-        profession: c.person.profile?.profession ?? null,
-        city: c.person.profile?.city ?? null,
-        avatarUrl: c.person.profile?.avatarUrl ?? null,
-      })),
-    };
+    const [rows, follows] = await Promise.all([
+      this.prisma.contact.findMany({
+        where: { ownerId: req.user.id },
+        orderBy: { createdAt: "desc" },
+        include: { person: { include: { profile: true } } },
+      }),
+      this.prisma.follow.findMany({
+        where: { followerId: req.user.id },
+        include: { followee: { include: { profile: true } } },
+        take: 20,
+      }),
+    ]);
+    const seen = new Set<string>();
+    const items = [];
+    for (const row of [
+      ...rows.map((c) => c.person),
+      ...follows.map((f) => f.followee),
+    ]) {
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      items.push({
+        id: row.id,
+        username: row.username,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        certified: row.certified,
+        profession: row.profile?.profession ?? null,
+        city: row.profile?.city ?? null,
+        avatarUrl: row.profile?.avatarUrl ?? null,
+      });
+    }
+    return { items };
   }
 }
