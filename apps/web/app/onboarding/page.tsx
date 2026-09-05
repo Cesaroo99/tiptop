@@ -36,7 +36,7 @@ function ConceptSlide({ step, onNext, onSkip }: { step: number; onNext: () => vo
   const last = step === SLIDES.length - 1;
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col px-6 py-8">
+    <main className="mx-auto flex h-full max-w-md flex-col px-6 py-8">
       <div className="flex justify-end">
         <button type="button" onClick={onSkip} className="type-body-sm font-semibold text-muted">
           {messages.onboarding.skip}
@@ -90,7 +90,7 @@ function ProfileForm() {
   }
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md px-4 py-6">
+    <main className="mx-auto h-full max-w-md overflow-y-auto px-4 py-6">
       <ScreenHeader title={messages.onboarding.title} />
       <p className="px-2 text-sm text-muted">{messages.onboarding.subtitle}</p>
       <form onSubmit={save} className="mt-6 space-y-4 px-2">

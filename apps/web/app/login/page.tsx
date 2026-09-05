@@ -1,7 +1,7 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Logo } from "@/components/Logo";
 import { Modal, PrimaryButton, TextInput } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
@@ -10,6 +10,7 @@ import { useI18n } from "@/lib/i18n";
 export default function LoginPage() {
   const { messages } = useI18n();
   const router = useRouter();
+  const phoneRef = useRef<HTMLInputElement>(null);
   const [phone, setPhone] = useState("+237 695 21 47 85");
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -45,19 +46,25 @@ export default function LoginPage() {
     }
   }
 
+  function usePhoneInstead() {
+    setOauth(false);
+    phoneRef.current?.focus();
+  }
+
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col px-6 py-10">
-      <div className="mb-10 flex justify-center">
+    <main className="flex h-full flex-col px-6 pb-8 pt-10">
+      <div className="phone-safe-top mb-10 flex justify-center">
         <Logo size={48} />
       </div>
       <h1 className="type-h1 text-center text-ink">{messages.auth.welcome}</h1>
       <p className="type-body mt-2 text-center text-muted">{messages.auth.connect}</p>
       <form onSubmit={submit} className="mt-10 space-y-6">
-        <div className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-1 transition focus-within:border-accent">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-1 shadow-xs transition focus-within:border-accent">
           <span className="text-xl" aria-hidden>
             🇨🇲
           </span>
           <TextInput
+            ref={phoneRef}
             aria-label={messages.account.phone}
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
@@ -93,7 +100,12 @@ export default function LoginPage() {
         </button>
       </div>
       <Modal open={oauth} title={messages.auth.oauthSoon} onClose={() => setOauth(false)}>
-        {messages.auth.oauthSoonBody}
+        <p className="type-body-sm text-muted">{messages.auth.oauthSoonBody}</p>
+        <div className="mt-5">
+          <PrimaryButton type="button" onClick={usePhoneInstead}>
+            {messages.auth.oauthUsePhone}
+          </PrimaryButton>
+        </div>
       </Modal>
     </main>
   );

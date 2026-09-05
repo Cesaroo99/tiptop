@@ -1,17 +1,27 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { PhoneStage } from "@/components/PhoneStage";
 import { Providers } from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: "TipTop",
-  description: "Reconectar les personnes à la vraie vie",
+  description: "Sors. Rencontre. Vis.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className="font-sans antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          <PhoneStage>{children}</PhoneStage>
+        </Providers>
       </body>
     </html>
   );

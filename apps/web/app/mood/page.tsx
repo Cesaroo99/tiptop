@@ -108,7 +108,7 @@ function MoodFeed() {
 
   return (
     <div className="relative h-full w-full">
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
+      <div className="phone-safe-top pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4">
         <p className="type-h4 text-white drop-shadow">{messages.nav.mood}</p>
         <Link
           href="/compose?type=mood"
@@ -227,7 +227,7 @@ function MoodSlide({
       )}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80" />
 
-      <div className="absolute bottom-24 right-3 flex flex-col items-center gap-5 text-white md:bottom-8">
+      <div className="absolute bottom-24 right-3 flex flex-col items-center gap-5 text-white">
         <button type="button" onClick={() => void like(false)} className="tap-scale flex flex-col items-center gap-1" aria-label={messages.social.likePlace}>
           <span className={`grid h-11 w-11 place-items-center rounded-full backdrop-blur-sm ${liked ? "bg-accent" : "bg-black/35"}`}>
             <HeartIcon size={20} filled={liked} />
@@ -256,7 +256,7 @@ function MoodSlide({
         ) : null}
       </div>
 
-      <div className="absolute inset-x-0 bottom-[max(5.5rem,calc(5.5rem+env(safe-area-inset-bottom)))] px-4 pr-20 text-white md:bottom-6">
+      <div className="absolute inset-x-0 bottom-[max(5.5rem,calc(5.5rem+env(safe-area-inset-bottom)))] px-4 pr-20 text-white">
         {place ? (
           <div className="mb-2">
             <MoodPlaceChip place={place} onOpen={() => setPlaceOpen(true)} />

@@ -48,7 +48,7 @@ export function AppHeader({
   }
 
   return (
-    <header className="space-y-3 px-4 pb-1 pt-3">
+    <header className="phone-safe-top space-y-3 px-4 pb-1">
       <div className="flex items-center justify-between">
         <Logo size={34} />
         <div className="flex items-center gap-1.5">

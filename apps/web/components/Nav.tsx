@@ -22,7 +22,7 @@ export function BottomNav() {
   const pathname = usePathname();
   const { messages } = useI18n();
   return (
-    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
+    <nav className="phone-nav pointer-events-none absolute inset-x-0 bottom-0 z-40 flex justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <div className="pointer-events-auto flex w-full max-w-md items-center justify-between rounded-[28px] bg-[var(--nav)] px-1 py-2.5 shadow-elevated">
         {items.map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
