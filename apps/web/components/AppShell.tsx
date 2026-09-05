@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/session";
+import { useLikePlacement } from "@/lib/like-placement";
 import { BottomNav } from "./Nav";
 import { AppHeader } from "./AppHeader";
 import { Skeleton } from "./ui";
@@ -20,7 +21,9 @@ export function AppShell({
   chrome?: "full" | "nav";
 }) {
   const { user, loading } = useSession();
+  const { placement } = useLikePlacement();
   const router = useRouter();
+  const mainPad = placement ? "pb-36" : "pb-24";
 
   useEffect(() => {
     if (loading) return;
@@ -57,7 +60,7 @@ export function AppShell({
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       {chrome === "full" ? <AppHeader location={location} /> : <div className="phone-safe-top" />}
-      <main className="min-h-0 flex-1 overflow-y-auto pb-24">{children}</main>
+      <main className={`min-h-0 flex-1 overflow-y-auto ${mainPad}`}>{children}</main>
       <LikeMilestoneCelebration />
       <BottomNav />
     </div>

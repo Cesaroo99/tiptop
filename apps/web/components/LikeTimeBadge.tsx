@@ -11,9 +11,7 @@ export type LikeTimeView = {
   label: string;
 };
 
-export function useLiveLikeLabel(time: LikeTimeView | undefined | null, loadedAt: number) {
-  const { locale } = useI18n();
-  const loc: LikeDurationLocale = locale === "en" ? "en" : "fr";
+export function useLiveLikeSeconds(time: LikeTimeView | undefined | null, loadedAt: number) {
   const [now, setNow] = useState(() => Date.now());
   const active = time?.activeCount ?? 0;
 
@@ -23,8 +21,15 @@ export function useLiveLikeLabel(time: LikeTimeView | undefined | null, loadedAt
     return () => clearInterval(t);
   }, [active]);
 
+  if (!time) return 0;
+  return liveLikeSeconds(time.totalSeconds, active, new Date(loadedAt), new Date(now));
+}
+
+export function useLiveLikeLabel(time: LikeTimeView | undefined | null, loadedAt: number) {
+  const { locale } = useI18n();
+  const loc: LikeDurationLocale = locale === "en" ? "en" : "fr";
+  const seconds = useLiveLikeSeconds(time, loadedAt);
   if (!time) return "0 s";
-  const seconds = liveLikeSeconds(time.totalSeconds, active, new Date(loadedAt), new Date(now));
   return formatLikeDuration(seconds, loc);
 }
 

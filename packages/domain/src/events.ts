@@ -11,14 +11,13 @@ export type InvitationPayer = "HOST" | "GUEST" | "FREE";
  * numérique libre, l'organisateur choisit parmi des seuils reconnaissables.
  * La donnée stockée reste un entier simple (`minAge`) — ces catégories ne
  * sont qu'une présentation cohérente au-dessus, pas un nouveau modèle de
- * données. « -13 »/« -16 »/« -18 » et « 18+ »/« 21+ » désignent le même
- * concept (âge minimum requis) ; les seuils dupliqués ont été fusionnés.
+ * données. « -13 » / « -16 » / « -18 » et « 21+ » : seuils d’âge minimum.
  */
 export const EVENT_AGE_CATEGORIES = [
   { id: "ALL", minAge: 0, label: "Tout âge" },
   { id: "U13", minAge: 13, label: "-13" },
   { id: "U16", minAge: 16, label: "-16" },
-  { id: "U18", minAge: 18, label: "18+" },
+  { id: "U18", minAge: 18, label: "-18" },
   { id: "U21", minAge: 21, label: "21+" },
 ] as const;
 
@@ -54,8 +53,24 @@ export function meetsMinAge(birthDate: Date | null | undefined, minAge: number |
   return age >= minAge;
 }
 
+/** Places occupées par des invités — l’organisateur ne compte pas. */
+export const SEATED_GUEST_STATUSES = ["RESERVED", "CONFIRMED", "PRESENT"] as const;
+
+export function isSeatedGuestStatus(status: string): boolean {
+  return (SEATED_GUEST_STATUSES as readonly string[]).includes(status);
+}
+
+export function seatedGuestCount(participants: Array<{ status: string }>): number {
+  return participants.filter((p) => isSeatedGuestStatus(p.status)).length;
+}
+
+export function remainingSeats(capacity: number | null | undefined, taken: number): number | null {
+  if (capacity == null || capacity <= 0) return null;
+  return Math.max(0, capacity - Math.max(0, taken));
+}
+
 export function eventIsFull(capacity: number | null | undefined, taken: number): boolean {
-  if (capacity == null) return false;
+  if (capacity == null || capacity <= 0) return false;
   return taken >= capacity;
 }
 

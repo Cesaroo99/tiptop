@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { useSession } from "@/lib/session";
 import { BellIcon, ChevronDownIcon, MessageIcon, PinIcon, SearchIcon } from "./Icons";
 import { Logo } from "./Logo";
 
@@ -14,10 +13,8 @@ export function AppHeader({
   location?: string | null;
 }) {
   const { messages } = useI18n();
-  const { user, refresh } = useSession();
   const [unread, setUnread] = useState(0);
   const [chatUnread, setChatUnread] = useState(0);
-  const [busy, setBusy] = useState(false);
   useEffect(() => {
     api<{ unreadCount: number }>("/notifications")
       .then((d) => setUnread(d.unreadCount))
@@ -26,26 +23,6 @@ export function AppHeader({
       .then((d) => setChatUnread(d.unreadTotal ?? 0))
       .catch(() => setChatUnread(0));
   }, []);
-
-  const available =
-    user?.availability === "AVAILABLE" &&
-    Boolean(user.availabilityUntil && new Date(user.availabilityUntil).getTime() > Date.now());
-
-  async function toggleAvail() {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await api("/users/me", {
-        method: "PATCH",
-        body: JSON.stringify(
-          available ? { availability: "HIDDEN" } : { availability: "AVAILABLE", ttlHours: 4 },
-        ),
-      });
-      await refresh();
-    } finally {
-      setBusy(false);
-    }
-  }
 
   return (
     <header className="phone-safe-top space-y-3 px-4 pb-1">
@@ -63,31 +40,23 @@ export function AppHeader({
           </HeaderIcon>
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         <Link
           href="/zone"
-          className="tap-scale type-body-sm flex flex-1 items-center gap-2 rounded-xl bg-surface-sunken px-3.5 py-3 text-left text-muted transition hover:brightness-95"
+          className="tap-scale type-body-sm flex h-12 flex-1 items-center gap-2 rounded-full bg-surface-sunken px-4 text-left text-ink transition hover:brightness-95"
         >
-          <PinIcon size={16} />
-          <span className="flex-1 truncate">{location || messages.home.locationFallback}</span>
-          <ChevronDownIcon size={14} />
+          <PinIcon size={16} className="shrink-0 text-muted" />
+          <span className="flex-1 truncate font-semibold">{location || messages.home.locationFallback}</span>
+          <ChevronDownIcon size={14} className="shrink-0 text-muted" />
         </Link>
         <Link
           href="/search"
           aria-label="Recherche"
-          className="tap-scale grid h-12 w-12 place-items-center rounded-xl bg-surface-sunken text-muted transition hover:brightness-95"
+          className="tap-scale grid h-12 w-12 shrink-0 place-items-center rounded-full bg-surface-sunken text-muted transition hover:brightness-95"
         >
           <SearchIcon size={18} />
         </Link>
       </div>
-      <button
-        type="button"
-        onClick={() => void toggleAvail()}
-        className={`type-caption tap-scale inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 font-semibold transition ${available ? "bg-success-soft text-success" : "bg-surface-sunken text-muted"}`}
-      >
-        <span className={`h-1.5 w-1.5 rounded-full ${available ? "bg-success" : "bg-disabled"}`} aria-hidden />
-        {available ? messages.world.available : messages.world.goAvailable}
-      </button>
     </header>
   );
 }

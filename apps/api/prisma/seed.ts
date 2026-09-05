@@ -7,7 +7,7 @@ async function main() {
   const availableUntil = new Date(Date.now() + 7 * 24 * 3600_000);
   const cesar = await prisma.user.upsert({
     where: { phoneE164: "+237695214785" },
-    update: { role: UserRole.ADMIN, theme: "light" },
+    update: { role: UserRole.ADMIN, theme: "light", currency: "CAD" },
     create: {
       phoneE164: "+237695214785",
       phoneCountry: "CM",
@@ -19,6 +19,7 @@ async function main() {
       profileCompleted: true,
       locale: "fr",
       theme: "light",
+      currency: "CAD",
       profile: {
         create: {
           profession: "Fondateur TipTop",
@@ -253,6 +254,20 @@ async function main() {
     });
   }
 
+  const tourPost = await prisma.post.findFirst({
+    where: { authorId: cesar.id, body: { contains: "Un tour au Black" } },
+  });
+  if (black && tourPost) {
+    await prisma.post.update({
+      where: { id: tourPost.id },
+      data: {
+        eventId: black.id,
+        imageUrl: tourPost.imageUrl ?? "/seed/events/black-white.jpg",
+        createdAt: new Date(),
+      },
+    });
+  }
+
   let paid = await prisma.event.findFirst({ where: { hostId: erica.id, title: "Afterwork Bastos" } });
   if (!paid) {
     paid = await prisma.event.create({
@@ -270,9 +285,12 @@ async function main() {
         capacity: 25,
         minAge: 18,
         requiresReservation: true,
+        paymentRule: "PAY_REQUIRED",
         participants: { create: { userId: erica.id, status: "HOST" } },
       },
     });
+  } else {
+    await prisma.event.update({ where: { id: paid.id }, data: { paymentRule: "PAY_REQUIRED" } });
   }
 
   let picnic = await prisma.event.findFirst({ where: { hostId: mbelle.id, title: "Brunch Odza" } });
@@ -909,8 +927,10 @@ async function enrichLivingWorld(
     capacity: 80,
     minAge: 18,
     requiresReservation: true,
+    paymentRule: "PAY_FIRST",
     participants: { create: { userId: koffi.id, status: "HOST" } },
   });
+  await db.event.update({ where: { id: live.id }, data: { paymentRule: "PAY_FIRST" } });
   await ensureEvent("Expo photo Hilton", {
     hostId: erica.id,
     title: "Expo photo Hilton",
@@ -938,6 +958,26 @@ async function enrichLivingWorld(
       where: { eventId_userId: { eventId, userId } },
       update: { status },
       create: { eventId, userId, status },
+    });
+  }
+
+  const allEvents = await db.event.findMany({
+    where: { status: "PUBLISHED" },
+    select: { id: true, hostId: true, title: true, description: true, imageUrl: true, city: true, zone: true },
+  });
+  for (const ev of allEvents) {
+    const linked = await db.post.findFirst({ where: { eventId: ev.id } });
+    if (linked) continue;
+    const body = ev.description?.trim() ? `${ev.title} : ${ev.description.trim()}` : ev.title;
+    await db.post.create({
+      data: {
+        authorId: ev.hostId,
+        body,
+        imageUrl: ev.imageUrl,
+        city: ev.city,
+        zone: ev.zone,
+        eventId: ev.id,
+      },
     });
   }
 
@@ -1114,6 +1154,14 @@ async function enrichLivingWorld(
 
   for (const personId of [erica.id, mbelle.id, onguene.id, amina.id, alex.id, koffi.id, mireille.id]) {
     await db.contact.upsert({
+      where: { ownerId_personId: { ownerId: cesar.id, personId } },
+      update: {},
+      create: { ownerId: cesar.id, personId },
+    });
+  }
+
+  for (const personId of [sarah.id, rachel.id]) {
+    await db.inviteLater.upsert({
       where: { ownerId_personId: { ownerId: cesar.id, personId } },
       update: {},
       create: { ownerId: cesar.id, personId },

@@ -433,13 +433,26 @@ body {
 
 @media (min-width: 768px) {
   .phone-stage {
+    --phone-w: 390px;
+    --phone-h: 844px;
+    --phone-pad-x: 40px;
+    --phone-pad-y: 20px;
+    --phone-scale: clamp(1.6, calc((100dvw - 96px) / 720px), 1.9);
     position: relative;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     background: #050607;
-    padding: 24px 16px;
+    padding: var(--phone-pad-y) var(--phone-pad-x);
+  }
+
+  .phone-frame {
+    position: relative;
+    width: calc(var(--phone-w) * var(--phone-scale));
+    height: calc(var(--phone-h) * var(--phone-scale));
+    flex-shrink: 0;
   }
 
   .phone-glow {
@@ -453,12 +466,16 @@ body {
   }
 
   .phone-device {
-    position: relative;
-    width: 390px;
-    height: min(844px, calc(100dvh - 48px));
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--phone-w);
+    height: var(--phone-h);
     overflow: hidden;
     border-radius: 44px;
     background: #0a0a0c;
+    transform: translate(-50%, -50%) scale(var(--phone-scale));
+    transform-origin: center center;
     box-shadow:
       0 0 0 10px #16171b,
       0 0 0 12px #2c2d32,

@@ -300,3 +300,46 @@ export function CommentIcon({ size = 18, className }: IconProps) {
     </svg>
   );
 }
+
+export function GlobeIcon({ size = 14, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18" />
+      <path d="M12 3c2.4 2.4 3.7 5.6 3.7 9s-1.3 6.6-3.7 9c-2.4-2.4-3.7-5.6-3.7-9S9.6 5.4 12 3Z" />
+    </svg>
+  );
+}
+
+export function CalendarPlusIcon({ size = 17, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <rect x="3.5" y="5" width="17" height="15" rx="3" />
+      <path d="M8 3v4M16 3v4M3.5 10h17M12 13.2v5M9.5 15.7h5" />
+    </svg>
+  );
+}
+
+export function BroadcastIcon({ size = 17, className }: IconProps) {
+  return <InterestedIcon size={size} className={className} />;
+}
+
+export function BookmarkIcon({ size = 16, className, filled = false }: IconProps & { filled?: boolean }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d="M6.5 4.5h11v16l-5.5-3.4L6.5 20.5v-16Z" />
+    </svg>
+  );
+}
+
+/** Intéressé — point d’exclamation dans des cercles concentriques (maquette accueil). */
+export function InterestedIcon({ size = 17, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <circle cx="12" cy="12" r="8.6" />
+      <circle cx="12" cy="12" r="5.2" />
+      <path d="M12 8.4v3.8" />
+      <circle cx="12" cy="15.3" r="0.7" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}

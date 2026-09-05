@@ -25,6 +25,12 @@ import {
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import {
+  likePlacementHref,
+  likePlacementLabel,
+  parseLikePlacementKind,
+  type LikePlacementKind,
+} from "./like-placement";
 
 type LockedUnit = {
   id: string;
@@ -289,6 +295,7 @@ export class LikesService {
       placedOn: stats.placedOn,
       receivedFrom: stats.receivedFrom,
       likeTime: stats.likeTime,
+      placement: await this.currentPlacement(ownerId),
       production: {
         active: stats.active,
         perHour: stats.perHour,
@@ -299,6 +306,80 @@ export class LikesService {
       allocations: units
         .filter((u) => u.activeTargetKey)
         .map((u) => ({ unitId: u.id, toUserId: u.toUserId, targetKey: u.activeTargetKey })),
+    };
+  }
+
+  private async currentPlacement(ownerId: string) {
+    const open = await this.prisma.likePeriod.findFirst({
+      where: { actorId: ownerId, endedAt: null },
+      orderBy: { startedAt: "desc" },
+    });
+    if (!open) return null;
+    const kind = parseLikePlacementKind(open.targetType);
+    if (!kind) return null;
+    const meta = await this.placementMeta(kind, open.targetId);
+    const seconds = periodDurationSeconds(
+      { startedAt: open.startedAt, endedAt: null, weight: open.weight },
+      new Date(),
+    );
+    return {
+      targetType: kind,
+      targetId: open.targetId,
+      label: meta.label,
+      href: meta.href,
+      startedAt: open.startedAt.toISOString(),
+      seconds,
+    };
+  }
+
+  private async placementMeta(kind: LikePlacementKind, id: string) {
+    if (kind === "user") {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+        select: { username: true, firstName: true, lastName: true },
+      });
+      return {
+        label: likePlacementLabel("user", { name: user ? `${user.firstName} ${user.lastName}` : "" }),
+        href: likePlacementHref("user", { id, username: user?.username }),
+      };
+    }
+    if (kind === "post") {
+      const post = await this.prisma.post.findUnique({
+        where: { id },
+        select: { id: true, body: true, event: { select: { id: true, title: true } } },
+      });
+      return {
+        label: likePlacementLabel("post", { title: post?.event?.title, body: post?.body }),
+        href: likePlacementHref("post", { id, eventId: post?.event?.id }),
+      };
+    }
+    if (kind === "comment") {
+      const comment = await this.prisma.comment.findUnique({
+        where: { id },
+        select: { body: true, postId: true },
+      });
+      return {
+        label: likePlacementLabel("comment", { body: comment?.body }),
+        href: likePlacementHref("comment", { id, postId: comment?.postId }),
+      };
+    }
+    if (kind === "mood") {
+      const mood = await this.prisma.mood.findUnique({
+        where: { id },
+        select: { body: true, activity: true },
+      });
+      return {
+        label: likePlacementLabel("mood", { body: mood?.body, activity: mood?.activity }),
+        href: likePlacementHref("mood", { id }),
+      };
+    }
+    const wish = await this.prisma.wish.findUnique({
+      where: { id },
+      select: { title: true },
+    });
+    return {
+      label: likePlacementLabel("wish", { title: wish?.title }),
+      href: likePlacementHref("wish", { id }),
     };
   }
 

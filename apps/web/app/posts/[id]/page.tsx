@@ -8,6 +8,7 @@ import { PostCard } from "@/components/PostCard";
 import { EmptyState, ErrorBanner, Skeleton, TextInput } from "@/components/ui";
 import { api, type CommentItem, type FeedItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useLikePlacement } from "@/lib/like-placement";
 
 export default function PostPage() {
   return (
@@ -20,6 +21,7 @@ export default function PostPage() {
 function Thread() {
   const { id } = useParams<{ id: string }>();
   const { messages } = useI18n();
+  const { refresh: refreshPlacement } = useLikePlacement();
   const [post, setPost] = useState<FeedItem | null>(null);
   const [comments, setComments] = useState<CommentItem[] | null>(null);
   const [text, setText] = useState("");
@@ -90,6 +92,7 @@ function Thread() {
                   });
                 }
                 await load();
+                await refreshPlacement();
               }}
             >
               ♥

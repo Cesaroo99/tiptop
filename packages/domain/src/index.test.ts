@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { maskPhone, parsePhone } from "../src/phone";
 import { canResendOtp, evaluateOtp } from "../src/otp";
-import { availableBalance, displayLikeRatio, likeProduction, pickUnitForLike, planHeartTransfer, planTransfer } from "../src/likes";
+import { availableBalance, displayLikeRatio, likeProduction, pickUnitForLike, pickUnitForTarget, planHeartTransfer, planTransfer } from "../src/likes";
 import { getLikePack, likeCreditAllowed, LIKE_PACKS, needsLikePurchase } from "../src/wallet";
 import { availabilityUntil, isCurrentlyAvailable } from "../src/availability";
 import {
@@ -23,6 +23,8 @@ import {
   eventLifecycle,
   EVENT_INVITE_DAILY_LIMIT,
   evaluateInvite,
+  remainingSeats,
+  seatedGuestCount,
   moodExpiresAt,
 } from "../src/events";
 import { canConsumeTicket, canShowQr, isInEntryWindow, signTicketQr, verifyTicketQr } from "../src/tickets";
@@ -165,7 +167,7 @@ describe("likes", () => {
     expect(plan.toEventId).toBe("e2");
   });
 
-  it("préfère une unité libre (achetée) avant de transférer", () => {
+  it("un like déjà posé se déplace — on n’en pose pas un second en parallèle", () => {
     const plan = pickUnitForLike(
       [
         { id: "busy", ownerId: "c", source: "free", activeAllocationUserId: "alice" },
@@ -174,8 +176,22 @@ describe("likes", () => {
       "sarah",
       "c",
     );
-    expect(plan.unitId).toBe("bought");
-    expect(plan.fromBeneficiaryId).toBeNull();
+    expect(plan.unitId).toBe("busy");
+    expect(plan.fromBeneficiaryId).toBe("alice");
+  });
+
+  it("un like sur une publication quitte la précédente", () => {
+    const plan = pickUnitForTarget(
+      [
+        { id: "busy", ownerId: "c", activeTargetKey: "post:p1" },
+        { id: "spare", ownerId: "c", activeTargetKey: null },
+      ],
+      "post:p2",
+      "c",
+    );
+    expect(plan.unitId).toBe("busy");
+    expect(plan.fromTargetKey).toBe("post:p1");
+    expect(plan.toTargetKey).toBe("post:p2");
   });
 
   it("transfère si plus d'unité libre", () => {
@@ -258,7 +274,7 @@ describe("catégories d'âge (#16)", () => {
     expect(ageCategoryLabel(null)).toBeNull();
     expect(ageCategoryLabel(0)).toBeNull();
     expect(ageCategoryLabel(13)).toBe("-13");
-    expect(ageCategoryLabel(18)).toBe("18+");
+    expect(ageCategoryLabel(18)).toBe("-18");
     expect(ageCategoryLabel(21)).toBe("21+");
   });
 });
@@ -361,6 +377,13 @@ describe("invitations & moods", () => {
 
   it("refuse un event complet", () => {
     expect(evaluateInvite({ ...base, capacity: 2, taken: 2 })).toBe("EVENT_FULL");
+  });
+
+  it("compte les places restantes sans l’organisateur", () => {
+    expect(seatedGuestCount([{ status: "HOST" }, { status: "RESERVED" }, { status: "INTERESTED" }])).toBe(1);
+    expect(remainingSeats(40, 5)).toBe(35);
+    expect(remainingSeats(40, 40)).toBe(0);
+    expect(remainingSeats(null, 3)).toBeNull();
   });
 
   it("refuse une invitation expirée", () => {

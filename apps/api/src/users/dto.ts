@@ -1,4 +1,5 @@
 import { IsIn, IsNumber, IsOptional, IsString, Length, Matches, Max, Min } from "class-validator";
+import { CURRENCY_CODES } from "@tiptop/domain";
 
 export class UpdateMeDto {
   @IsOptional()
@@ -31,6 +32,10 @@ export class UpdateMeDto {
   @IsString()
   @Matches(/^(light|dark)$/)
   theme?: string;
+
+  @IsOptional()
+  @IsIn([...CURRENCY_CODES])
+  currency?: string;
 
   @IsOptional()
   @IsString()

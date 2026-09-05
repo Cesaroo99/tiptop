@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useI18n } from "@/lib/i18n";
+import { LikePlacementDock } from "./LikePlacementDock";
 
 const items = [
   { href: "/", key: "home" as const, icon: HomeIcon },
@@ -23,22 +24,25 @@ export function BottomNav() {
   const { messages } = useI18n();
   return (
     <nav className="phone-nav pointer-events-none absolute inset-x-0 bottom-0 z-40 flex justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-      <div className="pointer-events-auto flex w-full max-w-md items-center justify-between rounded-[28px] bg-[var(--nav)] px-1 py-2.5 shadow-elevated">
-        {items.map((item) => {
-          const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-label={messages.nav[item.key]}
-              className={`type-nav tap-scale flex min-w-[56px] flex-1 flex-col items-center gap-1 rounded-2xl py-1 transition ${active ? "text-accent" : "text-muted"}`}
-            >
-              <Icon active={active} />
-              <span className="text-[10px]">{messages.nav[item.key]}</span>
-            </Link>
-          );
-        })}
+      <div className="pointer-events-auto flex w-full max-w-md flex-col rounded-[28px] bg-[var(--nav)] shadow-elevated">
+        <LikePlacementDock />
+        <div className="flex items-center justify-between px-1 py-2.5">
+          {items.map((item) => {
+            const active = item.href === "/" ? pathname === "/" : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-label={messages.nav[item.key]}
+                className={`type-nav tap-scale flex min-w-[56px] flex-1 flex-col items-center gap-1 rounded-2xl py-1 transition ${active ? "text-accent" : "text-muted"}`}
+              >
+                <Icon active={active} />
+                <span className="text-[10px]">{messages.nav[item.key]}</span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );
@@ -89,10 +93,8 @@ function HomeIcon({ active }: { active: boolean }) {
 function MoodIcon({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <circle cx="12" cy="12" r="8" fill={active ? "currentColor" : "none"} fillOpacity="0.18" />
-      <circle cx="9" cy="10" r="1.1" fill="currentColor" />
-      <circle cx="15" cy="10" r="1.1" fill="currentColor" />
-      <path d="M8.5 14.5c1.2 1.4 5.8 1.4 7 0" />
+      <circle cx="9.2" cy="12" r="5.2" fill={active ? "currentColor" : "none"} fillOpacity="0.16" />
+      <circle cx="14.8" cy="12" r="5.2" />
     </svg>
   );
 }

@@ -21,6 +21,7 @@ import { AdminModule } from "./admin/admin.module";
 import { WishesModule } from "./wishes/wishes.module";
 import { SocialInvitesModule } from "./social-invites/social-invites.module";
 import { OffersModule } from "./offers/offers.module";
+import { InvitePoolModule } from "./invite-pool/invite-pool.module";
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { OffersModule } from "./offers/offers.module";
     WishesModule,
     SocialInvitesModule,
     OffersModule,
+    InvitePoolModule,
   ],
   controllers: [HealthController],
 })

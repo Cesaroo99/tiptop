@@ -72,6 +72,6 @@ describe("Autour de moi", () => {
     expect(screen.getByRole("button", { name: "Les plus proches" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Les moins chers" })).toBeInTheDocument();
     expect(await screen.findByText("Pain chaud du matin")).toBeInTheDocument();
-    expect(screen.getByText("250 XAF")).toBeInTheDocument();
+    expect(screen.getByText("0,57 $ CA")).toBeInTheDocument();
   });
 });

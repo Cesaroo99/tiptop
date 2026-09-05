@@ -6,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { PrimaryButton } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useMoney } from "@/lib/money";
 
 export default function Page() {
   return (
@@ -22,18 +23,23 @@ function PaySheet() {
   const params = useSearchParams();
   const reservationId = params.get("reservationId") ?? "";
   const { messages } = useI18n();
+  const { formatPrice } = useMoney();
   const router = useRouter();
   const [provider, setProvider] = useState<"CARD" | "ORANGE_MONEY" | "MTN_MOMO">("CARD");
   const [fail, setFail] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [amount, setAmount] = useState<number | null>(null);
+  const [payCurrency, setPayCurrency] = useState("XAF");
 
   useEffect(() => {
-    api<{ items: Array<{ id: string; amountXaf: number }> }>("/reservations")
+    api<{ items: Array<{ id: string; amountXaf: number; currency?: string }> }>("/reservations")
       .then((d) => {
         const row = d.items.find((r) => r.id === reservationId);
-        if (row) setAmount(row.amountXaf);
+        if (row) {
+          setAmount(row.amountXaf);
+          setPayCurrency(row.currency ?? "XAF");
+        }
       })
       .catch(() => undefined);
   }, [reservationId]);
@@ -74,7 +80,7 @@ function PaySheet() {
       <h1 className="text-lg font-semibold">{messages.booking.pay}</h1>
       <p className="mt-1 text-sm text-muted">{messages.booking.mockHint}</p>
       {amount != null ? (
-        <p className="mt-3 text-xl font-bold text-accent">{messages.booking.amount.replace("{amount}", String(amount))}</p>
+        <p className="mt-3 text-xl font-bold text-accent">{messages.booking.amount.replace("{amount}", formatPrice(amount, payCurrency))}</p>
       ) : null}
       <div className="mt-4 space-y-2">
         {methods.map((m) => (

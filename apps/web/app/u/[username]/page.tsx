@@ -16,6 +16,8 @@ import { PostCard } from "@/components/PostCard";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
 import { Chip, EmptyState, ErrorBanner, IconButton, Modal, Skeleton } from "@/components/ui";
 import { api, ApiError, type FeedItem } from "@/lib/api";
+import { applySoleLike, replaceFeedItem } from "@/lib/like-feed";
+import { useLikePlacement } from "@/lib/like-placement";
 import { useI18n } from "@/lib/i18n";
 import { formatEventWhen } from "@/lib/time";
 
@@ -89,6 +91,7 @@ export default function ProfilePage() {
 function ProfileView() {
   const { username } = useParams<{ username: string }>();
   const { messages } = useI18n();
+  const { refresh: refreshPlacement } = useLikePlacement();
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -129,6 +132,7 @@ function ProfileView() {
       if (profile.likedByMe) {
         await api(`/users/${profile.id}/like`, { method: "DELETE" });
         setProfile({ ...profile, likedByMe: false });
+        await refreshPlacement();
         return;
       }
       await api(`/users/${profile.id}/like`, {
@@ -136,6 +140,7 @@ function ProfileView() {
         body: JSON.stringify({ confirmTransfer }),
       });
       setProfile({ ...profile, likedByMe: true });
+      await refreshPlacement();
       setTransfer(null);
       setBuy(false);
     } catch (e) {
@@ -302,7 +307,20 @@ function ProfileView() {
           ) : (
             <div className="space-y-3">
               {profile.posts.map((p) => (
-                <PostCard key={p.id} post={p} />
+                <PostCard
+                  key={p.id}
+                  post={p}
+                  onChanged={(next, meta) =>
+                    setProfile((cur) =>
+                      cur
+                        ? {
+                            ...cur,
+                            posts: meta?.soleLike ? applySoleLike(cur.posts, next) : replaceFeedItem(cur.posts, next),
+                          }
+                        : cur,
+                    )
+                  }
+                />
               ))}
             </div>
           )

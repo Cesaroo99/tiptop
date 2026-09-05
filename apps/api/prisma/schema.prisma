@@ -62,6 +62,7 @@ model User {
   profileCompleted Boolean    @default(false)
   locale           String     @default("fr")
   theme            String     @default("light")
+  currency         String     @default("CAD")
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
   deletedAt        DateTime?
@@ -100,6 +101,8 @@ model User {
   moodComments       MoodComment[]
   contactsOwned      Contact[]            @relation("ContactOwner")
   contactsOf         Contact[]            @relation("ContactPerson")
+  inviteLaterOwned   InviteLater[]        @relation("InviteLaterOwner")
+  inviteLaterOf      InviteLater[]        @relation("InviteLaterPerson")
   reservations       Reservation[]
   tickets            Ticket[]
   paymentMethods     PaymentMethod[]
@@ -567,6 +570,7 @@ model Event {
   capacity            Int?
   minAge              Int?
   requiresReservation Boolean     @default(false)
+  paymentRule         String      @default("HOLD")
   status              EventStatus @default(PUBLISHED)
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
@@ -605,9 +609,10 @@ model Invitation {
   inviter     User             @relation("Inviter", fields: [inviterId], references: [id], onDelete: Cascade)
   inviteeId   String
   invitee     User             @relation("Invitee", fields: [inviteeId], references: [id], onDelete: Cascade)
-  payer       InvitationPayer
-  status      InvitationStatus @default(PENDING)
-  expiresAt   DateTime
+  payer          InvitationPayer
+  payAfterAccept Boolean          @default(false)
+  status         InvitationStatus @default(PENDING)
+  expiresAt      DateTime
   createdAt   DateTime         @default(now())
   respondedAt DateTime?
   reservation Reservation?
@@ -675,6 +680,18 @@ model Contact {
   createdAt DateTime @default(now())
 
   @@unique([ownerId, personId])
+}
+
+model InviteLater {
+  id        String   @id @default(cuid())
+  ownerId   String
+  owner     User     @relation("InviteLaterOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  personId  String
+  person    User     @relation("InviteLaterPerson", fields: [personId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([ownerId, personId])
+  @@index([ownerId, createdAt])
 }
 
 model Reservation {

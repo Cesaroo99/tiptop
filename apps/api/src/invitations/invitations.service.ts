@@ -11,7 +11,10 @@ import {
   canSendEventInvite,
   evaluateInvite,
   invitationExpiresAt,
+  normalizePaymentRule,
   resolveInvitationPayer,
+  seatedGuestCount,
+  unpaidReservationNeedsPay,
 } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -41,9 +44,7 @@ export class InvitationsService {
     });
     const items = events
       .map((e) => {
-        const taken = e.participants.filter((p) =>
-          ["HOST", "CONFIRMED", "RESERVED"].includes(p.status),
-        ).length;
+        const taken = seatedGuestCount(e.participants);
         const already = e.participants.some((p) => p.userId === inviteeId && p.status !== "CANCELLED");
         const reason = evaluateInvite({
           inviterId,
@@ -65,6 +66,8 @@ export class InvitationsService {
           zone: e.zone,
           startsAt: e.startsAt.toISOString(),
           priceXaf: e.priceXaf,
+          currency: e.currency,
+          paymentRule: normalizePaymentRule(e.paymentRule),
           capacity: e.capacity,
           taken,
           minAge: e.minAge,
@@ -82,7 +85,13 @@ export class InvitationsService {
     return { items };
   }
 
-  async create(inviterId: string, inviteeId: string, eventId: string, payerRaw?: string) {
+  async create(
+    inviterId: string,
+    inviteeId: string,
+    eventId: string,
+    payerRaw?: string,
+    payAfterAcceptRaw?: boolean,
+  ) {
     if (inviterId === inviteeId) throw new BadRequestException({ code: "INVITE_SELF" });
     const [event, invitee] = await Promise.all([
       this.prisma.event.findUnique({ where: { id: eventId }, include: { participants: true } }),
@@ -94,9 +103,7 @@ export class InvitationsService {
       event.priceXaf,
       payerRaw === "HOST" || payerRaw === "GUEST" || payerRaw === "FREE" ? payerRaw : undefined,
     );
-    const taken = event.participants.filter((p) =>
-      ["HOST", "CONFIRMED", "RESERVED"].includes(p.status),
-    ).length;
+    const taken = seatedGuestCount(event.participants);
     const already = event.participants.some((p) => p.userId === inviteeId && p.status !== "CANCELLED");
     const reason = evaluateInvite({
       inviterId,
@@ -124,12 +131,18 @@ export class InvitationsService {
       throw new ConflictException({ code: "INVITE_RATE_LIMITED" });
     }
 
+    const paymentRule = normalizePaymentRule(event.paymentRule);
+    const payAfterAccept = Boolean(payAfterAcceptRaw) && payer === "HOST" && event.priceXaf > 0;
+    if (payAfterAccept && paymentRule === "PAY_REQUIRED") {
+      throw new BadRequestException({ code: "WAIT_NOT_ALLOWED" });
+    }
     const invitation = await this.prisma.invitation.create({
       data: {
         eventId,
         inviterId,
         inviteeId,
         payer,
+        payAfterAccept,
         expiresAt: invitationExpiresAt(new Date()),
       },
     });
@@ -141,7 +154,9 @@ export class InvitationsService {
       entityId: invitation.id,
     });
     const mapped = await this.mapOne(invitation.id);
-    if (event.priceXaf > 0 && payer === "HOST") {
+    const holdUnpaid =
+      event.priceXaf > 0 && payer === "HOST" && (!payAfterAccept || paymentRule === "HOLD");
+    if (holdUnpaid) {
       try {
         const reservation = await this.booking.create(inviterId, {
           eventId,
@@ -149,7 +164,12 @@ export class InvitationsService {
           includeSelf: false,
           holderIds: [inviteeId],
         });
-        return { ...mapped, needsPayment: reservation.needsPayment, reservation };
+        return {
+          ...mapped,
+          needsPayment: payAfterAccept ? false : reservation.needsPayment,
+          awaitingHostPay: payAfterAccept && reservation.needsPayment,
+          reservation,
+        };
       } catch (e) {
         await this.prisma.invitation.delete({ where: { id: invitation.id } });
         throw e;
@@ -198,6 +218,27 @@ export class InvitationsService {
       const mapped = await this.mapOne(id);
       return { ...mapped, needsPayment: reservation.needsPayment, reservation };
     }
+    if (inv.event.priceXaf > 0 && inv.payer === "HOST" && inv.payAfterAccept) {
+      const reservation = await this.booking.create(inv.inviterId, {
+        eventId: inv.eventId,
+        invitationId: inv.id,
+        includeSelf: false,
+        holderIds: [inv.inviteeId],
+      });
+      await this.prisma.invitation.update({
+        where: { id },
+        data: { status: "ACCEPTED", respondedAt: new Date() },
+      });
+      await this.notifications.create({
+        userId: inv.inviterId,
+        actorId,
+        type: "INVITE",
+        entityType: "invitation",
+        entityId: id,
+      });
+      const mapped = await this.mapOne(id);
+      return { ...mapped, needsPayment: false, awaitingHostPay: reservation.needsPayment, reservation };
+    }
     if (inv.event.priceXaf > 0 && inv.payer === "HOST") {
       const existing = await this.prisma.reservation.findUnique({ where: { invitationId: inv.id } });
       if (!existing || existing.status !== "CONFIRMED") {
@@ -207,9 +248,7 @@ export class InvitationsService {
         });
       }
     }
-    const taken = inv.event.participants.filter((p) =>
-      ["HOST", "CONFIRMED", "RESERVED"].includes(p.status),
-    ).length;
+    const taken = seatedGuestCount(inv.event.participants);
     if (inv.event.capacity != null && taken >= inv.event.capacity) {
       throw new ConflictException({ code: "EVENT_FULL" });
     }
@@ -262,25 +301,55 @@ export class InvitationsService {
     if (!inv) throw new NotFoundException({ code: "INVITE_NOT_FOUND" });
     if (inv.inviteeId !== actorId) throw new ForbiddenException({ code: "NOT_INVITEE" });
     if (inv.status !== "PENDING") throw new BadRequestException({ code: "NOT_PENDING" });
+    await this.booking.releaseUnpaidForInvitation(id);
     await this.prisma.invitation.update({
       where: { id },
       data: { status: "REFUSED", respondedAt: new Date() },
+    });
+    await this.notifications.create({
+      userId: inv.inviterId,
+      actorId,
+      type: "INVITE",
+      entityType: "invitation",
+      entityId: id,
     });
     return this.mapOne(id);
   }
 
   private async expireStale() {
-    await this.prisma.invitation.updateMany({
+    const stale = await this.prisma.invitation.findMany({
       where: { status: "PENDING", expiresAt: { lte: new Date() } },
-      data: { status: "EXPIRED" },
+      select: { id: true, inviterId: true },
     });
+    for (const row of stale) {
+      await this.booking.releaseUnpaidForInvitation(row.id);
+    }
+    if (stale.length) {
+      await this.prisma.invitation.updateMany({
+        where: { id: { in: stale.map((r) => r.id) } },
+        data: { status: "EXPIRED" },
+      });
+    }
   }
 
   private include() {
     return {
-      event: { select: { id: true, title: true, startsAt: true, city: true, zone: true, priceXaf: true, imageUrl: true } },
+      event: {
+        select: {
+          id: true,
+          title: true,
+          startsAt: true,
+          city: true,
+          zone: true,
+          priceXaf: true,
+          currency: true,
+          paymentRule: true,
+          imageUrl: true,
+        },
+      },
       inviter: { select: { id: true, username: true, firstName: true, lastName: true, certified: true } },
       invitee: { select: { id: true, username: true, firstName: true, lastName: true, certified: true } },
+      reservation: { select: { id: true, status: true, amountXaf: true, currency: true } },
     };
   }
 
@@ -293,6 +362,7 @@ export class InvitationsService {
   private serialize(r: {
     id: string;
     payer: string;
+    payAfterAccept: boolean;
     status: string;
     expiresAt: Date;
     createdAt: Date;
@@ -304,14 +374,27 @@ export class InvitationsService {
       city: string;
       zone: string | null;
       priceXaf: number;
+      currency?: string;
+      paymentRule?: string;
       imageUrl: string | null;
     };
     inviter: { id: string; username: string; firstName: string; lastName: string; certified: boolean };
     invitee: { id: string; username: string; firstName: string; lastName: string; certified: boolean };
+    reservation?: { id: string; status: string; amountXaf: number; currency: string } | null;
   }) {
+    const reservation = r.reservation
+      ? {
+          id: r.reservation.id,
+          status: r.reservation.status,
+          amountXaf: r.reservation.amountXaf,
+          currency: r.reservation.currency,
+          needsPayment: unpaidReservationNeedsPay(r.reservation.status, r.reservation.amountXaf),
+        }
+      : null;
     return {
       id: r.id,
       payer: r.payer,
+      payAfterAccept: r.payAfterAccept,
       status: r.status,
       expiresAt: r.expiresAt.toISOString(),
       createdAt: r.createdAt.toISOString(),
@@ -319,9 +402,11 @@ export class InvitationsService {
       event: {
         ...r.event,
         startsAt: r.event.startsAt.toISOString(),
+        paymentRule: normalizePaymentRule(r.event.paymentRule),
       },
       inviter: r.inviter,
       invitee: r.invitee,
+      reservation,
     };
   }
 }

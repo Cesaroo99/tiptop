@@ -8,6 +8,7 @@ import { PinIcon, PlusIcon } from "@/components/Icons";
 import { CardSkeleton, EmptyState, ErrorBanner, TextInput } from "@/components/ui";
 import { api, type OfferItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useMoney } from "@/lib/money";
 import { useSession } from "@/lib/session";
 
 export default function Page() {
@@ -21,7 +22,8 @@ export default function Page() {
 }
 
 function NeedScreen() {
-  const { locale, messages } = useI18n();
+  const { messages } = useI18n();
+  const { formatPrice } = useMoney();
   const { user } = useSession();
   const router = useRouter();
   const params = useSearchParams();
@@ -179,7 +181,7 @@ function NeedScreen() {
               <div className="flex items-start justify-between gap-2">
                 <p className="type-heading text-ink">{offer.title}</p>
                 <p className="type-heading shrink-0 text-accent">
-                  {offer.priceXaf.toLocaleString(locale)} {offer.currency}
+                  {formatPrice(offer.priceXaf, offer.currency)}
                 </p>
               </div>
               <p className="type-caption flex items-center gap-1 text-muted">

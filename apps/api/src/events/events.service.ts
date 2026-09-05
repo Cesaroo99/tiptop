@@ -6,7 +6,16 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { canInteractWithEvent, eventLifecycle, planHeartTransfer } from "@tiptop/domain";
+import {
+  canInteractWithEvent,
+  eventIsFull,
+  eventLifecycle,
+  normalizePaymentRule,
+  planHeartTransfer,
+  remainingSeats,
+  resolveUserCurrency,
+  seatedGuestCount,
+} from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 
@@ -23,6 +32,7 @@ export type CreateEventInput = {
   capacity?: number;
   minAge?: number;
   requiresReservation?: boolean;
+  paymentRule?: string;
 };
 
 @Injectable()
@@ -50,6 +60,8 @@ export class EventsService {
     const host = await this.prisma.user.findUnique({ where: { id: hostId }, include: { profile: true } });
     const priceXaf = Math.max(0, Math.round(input.priceXaf ?? 0));
     const requiresReservation = priceXaf > 0 ? true : Boolean(input.requiresReservation);
+    const paymentRule = priceXaf > 0 ? normalizePaymentRule(input.paymentRule) : "HOLD";
+    const currency = resolveUserCurrency(host?.currency, host?.profile?.country);
     const event = await this.prisma.event.create({
       data: {
         hostId,
@@ -62,16 +74,19 @@ export class EventsService {
         startsAt,
         endsAt,
         priceXaf,
+        currency,
         capacity: input.capacity && input.capacity > 0 ? input.capacity : null,
         minAge: input.minAge && input.minAge > 0 ? input.minAge : null,
         requiresReservation,
+        paymentRule,
         participants: { create: { userId: hostId, status: "HOST" } },
       },
     });
+    const description = (input.description ?? "").trim();
     await this.prisma.post.create({
       data: {
         authorId: hostId,
-        body: title,
+        body: description ? `${title} : ${description}` : title,
         imageUrl,
         city: event.city,
         zone: event.zone,
@@ -390,6 +405,7 @@ export class EventsService {
       capacity: number | null;
       minAge: number | null;
       requiresReservation: boolean;
+      paymentRule?: string;
       status: string;
       createdAt: Date;
       host: {
@@ -419,8 +435,7 @@ export class EventsService {
       where: { userId: viewerId, eventId: e.id, releasedAt: null },
     });
     const mine = e.participants.find((p) => p.userId === viewerId);
-    const taken = e.participants.filter((p) => p.status === "CONFIRMED" || p.status === "RESERVED" || p.status === "HOST")
-      .length;
+    const taken = seatedGuestCount(e.participants);
     const ticket = await this.prisma.ticket.findFirst({
       where: { eventId: e.id, holderId: viewerId },
       orderBy: { createdAt: "desc" },
@@ -442,8 +457,10 @@ export class EventsService {
       currency: e.currency,
       capacity: e.capacity,
       taken,
+      remaining: remainingSeats(e.capacity, taken),
       minAge: e.minAge,
       requiresReservation: e.requiresReservation,
+      paymentRule: normalizePaymentRule(e.paymentRule),
       status: e.status,
       phase,
       createdAt: e.createdAt.toISOString(),
@@ -452,13 +469,16 @@ export class EventsService {
       viewerInterested: mine?.status === "INTERESTED",
       viewerStatus: mine?.status ?? null,
       isHost,
-      canBook: !isHost && (e.requiresReservation || e.priceXaf > 0) && !seated && canInteractWithEvent(phase),
+      canBook:
+        !isHost &&
+        (e.requiresReservation || e.priceXaf > 0) &&
+        !seated &&
+        !eventIsFull(e.capacity, taken) &&
+        canInteractWithEvent(phase),
       viewerTicketId: ticket?.id ?? null,
       canChatGroup: seated,
       interestedCount: e.participants.filter((p) => p.status === "INTERESTED").length,
-      reservedCount: e.participants.filter((p) =>
-        ["RESERVED", "CONFIRMED", "PRESENT", "HOST"].includes(p.status),
-      ).length,
+      reservedCount: taken,
       host: {
         id: e.host.id,
         username: e.host.username,

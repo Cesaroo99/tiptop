@@ -19,6 +19,8 @@ export type PublicUser = {
   locationPrecision: string;
   latitude: number | null;
   longitude: number | null;
+  currency?: string;
+  country?: string | null;
 };
 
 export type EventCard = {
@@ -35,8 +37,10 @@ export type EventCard = {
   currency: string;
   capacity: number | null;
   taken: number;
+  remaining?: number | null;
   minAge: number | null;
   requiresReservation: boolean;
+  paymentRule?: "HOLD" | "PAY_FIRST" | "PAY_REQUIRED";
   status: string;
   phase?: "upcoming" | "startingSoon" | "ongoing" | "ended" | "cancelled";
   hearts: number;
@@ -74,6 +78,21 @@ export type LikeTimeSnap = {
   activeCount: number;
   likedByMe: boolean;
   label: string;
+};
+
+export type LikePlacement = {
+  targetType: "user" | "post" | "comment" | "mood" | "wish";
+  targetId: string;
+  label: string;
+  href: string;
+  startedAt: string;
+  seconds: number;
+};
+
+export type LikesMe = {
+  available: number;
+  total: number;
+  placement: LikePlacement | null;
 };
 
 export type MoodItem = {
@@ -194,21 +213,35 @@ export type ReservationItem = {
   status: string;
   seats: number;
   amountXaf: number;
+  currency?: string;
   needsPayment: boolean;
   tickets: Array<{ id: string; holderId: string; status: string }>;
   event?: { title: string; startsAt: string; city: string };
+  invitations?: Array<{ id: string; status: string }>;
+  intent?: string;
 };
 
 export type InvitationItem = {
   id: string;
   payer: string;
+  payAfterAccept?: boolean;
   status: string;
+  awaitingHostPay?: boolean;
   expiresAt: string;
-  event: { id: string; title: string; startsAt: string; city: string; zone: string | null; priceXaf: number };
+  event: {
+    id: string;
+    title: string;
+    startsAt: string;
+    city: string;
+    zone: string | null;
+    priceXaf: number;
+    currency?: string;
+    paymentRule?: "HOLD" | "PAY_FIRST" | "PAY_REQUIRED";
+  };
   inviter: { id: string; username: string; firstName: string; lastName: string };
   invitee: { id: string; username: string; firstName: string; lastName: string };
   needsPayment?: boolean;
-  reservation?: ReservationItem;
+  reservation?: Pick<ReservationItem, "id" | "status" | "needsPayment" | "amountXaf"> & { currency?: string };
 };
 
 export type FeedItem = {
@@ -224,6 +257,7 @@ export type FeedItem = {
   viewerFollows: boolean;
   authorActiveLikes: number;
   likeTime?: LikeTimeSnap;
+  sharesCount?: number;
   author: {
     id: string;
     username: string;
@@ -231,14 +265,21 @@ export type FeedItem = {
     lastName: string;
     certified: boolean;
     avatarUrl: string | null;
+    available?: boolean;
   };
   event?: {
     id: string;
     title: string;
     startsAt: string;
     minAge: number | null;
+    city?: string | null;
+    zone?: string | null;
     interestedCount: number;
     reservedCount: number;
+    capacity?: number | null;
+    remaining?: number | null;
+    viewerInterested?: boolean;
+    canBook?: boolean;
   } | null;
 };
 

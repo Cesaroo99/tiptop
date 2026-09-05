@@ -89,6 +89,8 @@ export type Messages = {
     title: string;
     darkMode: string;
     language: string;
+    currency: string;
+    currencyHint: string;
     password: string;
     terms: string;
     logout: string;
@@ -143,6 +145,7 @@ export type Messages = {
     addImage: string;
     addLocation: string;
     comments: string;
+    shares: string;
     addComment: string;
     follow: string;
     following: string;
@@ -156,6 +159,8 @@ export type Messages = {
     likeHere: string;
     likePlacedOn: string;
     likeIdle: string;
+    likeDockOn: string;
+    likeDockAria: string;
     likeExplain: string;
     likesNow: string;
     likeReceivedTitle: string;
@@ -336,6 +341,8 @@ export type Messages = {
     maxAge: string;
     professionFilter: string;
     message: string;
+    saveForLater: string;
+    savedForLater: string;
     age: string;
     distance: string;
     nextPerson: string;
@@ -358,6 +365,12 @@ export type Messages = {
     eventCapacity: string;
     eventMinAge: string;
     eventReserve: string;
+    paymentHold: string;
+    paymentFirst: string;
+    paymentRequired: string;
+    paymentHoldHint: string;
+    paymentFirstHint: string;
+    paymentRequiredHint: string;
     interested: string;
     notInterested: string;
     heartEvent: string;
@@ -424,12 +437,16 @@ export type Messages = {
     tabReservations: string;
     sortie: string;
     eventIn: string;
+    eventInLabel: string;
     inviteNamed: string;
     seeAll: string;
     eventsInterested: string;
     eventsLinked: string;
     moreAbout: string;
     reservationsCount: string;
+    seatsLeft: string;
+    seatsLeftOne: string;
+    seatsFull: string;
     interestedCount: string;
     livesAt: string;
     ongoingBadge: string;
@@ -470,6 +487,51 @@ export type Messages = {
   booking: {
     reserve: string;
     bookSelf: string;
+    bookEventTitle: string;
+    forMyself: string;
+    inviteFriends: string;
+    inviteSearch: string;
+    inviteCircleFriends: string;
+    inviteCircleNearby: string;
+    inviteCircleLater: string;
+    friendsEmpty: string;
+    nearbyEmpty: string;
+    laterEmpty: string;
+    saveForLater: string;
+    savedForLater: string;
+    removeFromLater: string;
+    browseList: string;
+    browseCards: string;
+    browseHint: string;
+    continueConfirm: string;
+    backToPeople: string;
+    pickForSeat: string;
+    pickedForSeat: string;
+    nextProfile: string;
+    skipProfile: string;
+    intentPayNow: string;
+    intentPayNowHint: string;
+    intentWaitAccept: string;
+    intentWaitAcceptHint: string;
+    intentGuestPays: string;
+    intentGuestPaysHint: string;
+    payFirstNotice: string;
+    payRequiredNotice: string;
+    holdWaitNotice: string;
+    waitNoHoldNotice: string;
+    waitNotAllowed: string;
+    payAcceptedSeat: string;
+    waitPayPendingHint: string;
+    waitAcceptCta: string;
+    guestPaysCta: string;
+    invitesSent: string;
+    awaitingHostPay: string;
+    goToPayment: string;
+    bookTotal: string;
+    bookPickSomeone: string;
+    seatsPicking: string;
+    bookAlready: string;
+    bookHost: string;
     pay: string;
     paySuccess: string;
     paySuccessBody: string;
@@ -719,7 +781,7 @@ export const fr: Messages = {
     seller: "Proposé par",
     createTitle: "Publier une offre",
     titlePlaceholder: "Ex. Pain chaud, pressing, tresses",
-    pricePlaceholder: "Prix (FCFA)",
+    pricePlaceholder: "Prix ({currency})",
     shopName: "Nom de la boutique (optionnel)",
     sellerPerson: "Particulier",
     sellerShop: "Boutique",
@@ -754,6 +816,8 @@ export const fr: Messages = {
     title: "Paramètres",
     darkMode: "Mode sombre",
     language: "Langue",
+    currency: "Devise",
+    currencyHint: "Les prix s’affichent dans ta monnaie. L’organisateur encaisse dans la sienne.",
     password: "Changer le mot de passe",
     terms: "Conditions et règlements",
     logout: "Déconnexion",
@@ -808,6 +872,7 @@ export const fr: Messages = {
     addImage: "Ajouter une image",
     addLocation: "Ajouter une localisation",
     comments: "Commentaires",
+    shares: "Partages",
     addComment: "Ajouter un commentaire",
     follow: "Suivre",
     following: "Abonné",
@@ -821,6 +886,8 @@ export const fr: Messages = {
     likeHere: "Mon like est ici",
     likePlacedOn: "Ton like est chez {name}",
     likeIdle: "Ton like n’est posé sur personne pour l’instant.",
+    likeDockOn: "{duration} · {label}",
+    likeDockAria: "Ton like tourne depuis {duration} sur {label}",
     likeExplain: "Chacun n’a qu’un like. Tu le poses sur une personne. Si tu en likes une autre, il se déplace.",
     likesNow: "{n} likes maintenant",
     likeReceivedTitle: "Qui lui a posé son like",
@@ -1001,6 +1068,8 @@ export const fr: Messages = {
     maxAge: "Âge max",
     professionFilter: "Profession",
     message: "Message",
+    saveForLater: "Plus tard",
+    savedForLater: "Mis de côté",
     age: "{age} ans",
     distance: "{km} km",
     nextPerson: "Suivant",
@@ -1018,18 +1087,24 @@ export const fr: Messages = {
     eventDescription: "Description",
     eventWhen: "Date et heure",
     eventVenue: "Lieu",
-    eventPrice: "Prix (FCFA, 0 = gratuit)",
+    eventPrice: "Prix ({currency}, 0 = gratuit)",
     eventPriceHint: "Un prix ouvre une réservation. Le paiement arrive en Phase 4.",
     eventCapacity: "Capacité (optionnel)",
     eventMinAge: "Âge minimum (ex. 18)",
     eventReserve: "Réservation obligatoire même si gratuit",
+    paymentHold: "On peut tenir une place en attente de paiement",
+    paymentFirst: "Pas de réservation sans paiement",
+    paymentRequired: "Il faut payer tout de suite pour réserver",
+    paymentHoldHint: "Une place peut être calée, puis payée. Si quelqu’un refuse, elle se libère.",
+    paymentFirstHint: "Aucune place n’est calée tant que le paiement n’est pas passé. On peut quand même inviter et attendre.",
+    paymentRequiredHint: "Pas d’invitation « ils acceptent puis je paie ». Soit tu paies maintenant, soit chacun paie sa place.",
     interested: "Intéressé",
     notInterested: "Plus intéressé",
     heartEvent: "Coup de cœur",
     heartTransferTitle: "Changer de coup de cœur ?",
     heartTransferBody: "Ton coup de cœur quittera « {title} » pour cette sortie.",
     free: "Gratuit",
-    paid: "{amount} FCFA",
+    paid: "{amount}",
     host: "Hôte",
     peopleLinked: "Personnes liées",
     bookLater: "Réserver et payer arrive en Phase 4. Ici tu peux t’intéresser, mettre un coup de cœur, ou inviter sur une sortie gratuite.",
@@ -1089,12 +1164,16 @@ export const fr: Messages = {
     tabReservations: "Réservations",
     sortie: "Sortie",
     eventIn: "Événement dans : {when}",
+    eventInLabel: "Événement dans :",
     inviteNamed: "+ Inviter {name}",
     seeAll: "Tous voir",
     eventsInterested: "Événements qui m’intéressent",
     eventsLinked: "{n} événement(s) lié(s)",
     moreAbout: "Plus d’infos à propos de {name}",
     reservationsCount: "Réservations",
+    seatsLeft: "{count} places restantes",
+    seatsLeftOne: "1 place restante",
+    seatsFull: "Complet",
     interestedCount: "Intéressés",
     livesAt: "Vie à {place}",
     ongoingBadge: "En cours",
@@ -1135,6 +1214,51 @@ export const fr: Messages = {
   booking: {
     reserve: "Réserver",
     bookSelf: "Réserver pour moi",
+    bookEventTitle: "Réserver l'évènement",
+    forMyself: "Pour moi même",
+    inviteFriends: "Inviter des amis",
+    inviteSearch: "Rechercher quelqu’un",
+    inviteCircleFriends: "Amis",
+    inviteCircleNearby: "Autour",
+    inviteCircleLater: "Plus tard",
+    friendsEmpty: "Pas encore d’amis ici. Accepte une invitation, ou parcours Autour.",
+    nearbyEmpty: "Personne d’autre autour pour l’instant.",
+    laterEmpty: "Personne de côté. Sur Autour, mets de côté ceux que tu veux inviter plus tard.",
+    saveForLater: "Mettre de côté",
+    savedForLater: "Mis de côté",
+    removeFromLater: "Retirer",
+    browseList: "Liste",
+    browseCards: "Cartes",
+    browseHint: "Défile les profils comme sur Amis, puis cale la place.",
+    continueConfirm: "Continuer",
+    backToPeople: "Retour aux profils",
+    pickForSeat: "Choisir pour cette place",
+    pickedForSeat: "Choisi",
+    nextProfile: "Profil suivant",
+    skipProfile: "Passer",
+    intentPayNow: "Je paie maintenant",
+    intentPayNowHint: "Les places sont calées tout de suite. Pas besoin qu’ils acceptent.",
+    intentWaitAccept: "Ils acceptent, puis je paie",
+    intentWaitAcceptHint: "On envoie l’invitation. Tu paies seulement ceux qui disent oui.",
+    intentGuestPays: "Chacun paie sa place",
+    intentGuestPaysHint: "Ils acceptent, puis ils règlent leur entrée.",
+    payFirstNotice: "Cet événement ne cale une place qu’après paiement.",
+    payRequiredNotice: "Ici, pas de réservation sans payer maintenant. Tu ne peux pas attendre leur oui.",
+    holdWaitNotice: "La place est tenue tout de suite. Tu paies seulement s’ils disent oui. S’ils refusent, elle se libère.",
+    waitNoHoldNotice: "On envoie l’invitation sans caler la place. Elle n’est prise qu’après paiement.",
+    waitNotAllowed: "Cet événement n’autorise pas d’attendre l’acceptation avant de payer.",
+    payAcceptedSeat: "Payer la place",
+    waitPayPendingHint: "En attente de leur oui. Tu paieras ensuite.",
+    waitAcceptCta: "Inviter et attendre",
+    guestPaysCta: "Envoyer l’invitation",
+    invitesSent: "Invitations envoyées. On attend leur réponse.",
+    awaitingHostPay: "Accepté. L’invitant doit encore payer la place.",
+    goToPayment: "Passer au paiement",
+    bookTotal: "Total · {amount}",
+    bookPickSomeone: "Coche-toi ou au moins un ami.",
+    seatsPicking: "{count} places restantes pour ce choix.",
+    bookAlready: "Tu as déjà une place pour cette sortie.",
+    bookHost: "C’est ta sortie — tu la gères, tu ne la réserves pas.",
     pay: "Payer",
     paySuccess: "Paiement réussi",
     paySuccessBody: "Tes tickets sont prêts. Montre le QR à l’entrée.",
@@ -1163,7 +1287,7 @@ export const fr: Messages = {
     tabValidated: "Validés",
     paidBadge: "Payé",
     unpaidBadge: "Non payé",
-    amount: "{amount} FCFA",
+    amount: "{amount}",
     mockHint: "Paiement mock : aucun argent réel. Échec volontaire pour tester.",
     failDemo: "Simuler un échec",
     awaiting: "En attente",
@@ -1384,7 +1508,7 @@ export const en: Messages = {
     seller: "Offered by",
     createTitle: "List an offer",
     titlePlaceholder: "e.g. Fresh bread, laundry, braids",
-    pricePlaceholder: "Price (XAF)",
+    pricePlaceholder: "Price ({currency})",
     shopName: "Shop name (optional)",
     sellerPerson: "Individual",
     sellerShop: "Shop",
@@ -1419,6 +1543,8 @@ export const en: Messages = {
     title: "Settings",
     darkMode: "Dark mode",
     language: "Language",
+    currency: "Currency",
+    currencyHint: "Prices show in your currency. The host is paid in theirs.",
     password: "Change password",
     terms: "Terms and policies",
     logout: "Log out",
@@ -1473,6 +1599,7 @@ export const en: Messages = {
     addImage: "Add an image",
     addLocation: "Add a location",
     comments: "Comments",
+    shares: "Shares",
     addComment: "Add a comment",
     follow: "Follow",
     following: "Following",
@@ -1486,6 +1613,8 @@ export const en: Messages = {
     likeHere: "My like is here",
     likePlacedOn: "Your like is with {name}",
     likeIdle: "Your like is not placed on anyone yet.",
+    likeDockOn: "{duration} · {label}",
+    likeDockAria: "Your like has been running for {duration} on {label}",
     likeExplain: "Everyone has one like. You place it on a person. Like someone else and it moves.",
     likesNow: "{n} likes now",
     likeReceivedTitle: "Who placed their like here",
@@ -1666,6 +1795,8 @@ export const en: Messages = {
     maxAge: "Max age",
     professionFilter: "Profession",
     message: "Message",
+    saveForLater: "Later",
+    savedForLater: "Saved for later",
     age: "{age} yrs",
     distance: "{km} km",
     nextPerson: "Next",
@@ -1683,18 +1814,24 @@ export const en: Messages = {
     eventDescription: "Description",
     eventWhen: "Date and time",
     eventVenue: "Venue",
-    eventPrice: "Price (XAF, 0 = free)",
+    eventPrice: "Price ({currency}, 0 = free)",
     eventPriceHint: "A price requires a reservation. Payment ships in Phase 4.",
     eventCapacity: "Capacity (optional)",
     eventMinAge: "Minimum age (e.g. 18)",
     eventReserve: "Require a reservation even if free",
+    paymentHold: "Seats can be held pending payment",
+    paymentFirst: "No reservation without payment",
+    paymentRequired: "Pay now to book — no waiting",
+    paymentHoldHint: "A seat can be held, then paid. If someone declines, it is released.",
+    paymentFirstHint: "No seat is held until payment succeeds. You can still invite and wait.",
+    paymentRequiredHint: "No “they accept then I pay”. Either you pay now, or each guest pays their seat.",
     interested: "Interested",
     notInterested: "Not interested",
     heartEvent: "Favorite",
     heartTransferTitle: "Move your favorite?",
     heartTransferBody: "Your favorite will leave “{title}” for this meetup.",
     free: "Free",
-    paid: "{amount} XAF",
+    paid: "{amount}",
     host: "Host",
     peopleLinked: "People",
     bookLater: "Booking and payment ship in Phase 4. You can mark interest, favorite, or invite to a free meetup.",
@@ -1754,12 +1891,16 @@ export const en: Messages = {
     tabReservations: "Bookings",
     sortie: "Meetup",
     eventIn: "Event in: {when}",
+    eventInLabel: "Event in:",
     inviteNamed: "+ Invite {name}",
     seeAll: "See all",
     eventsInterested: "Events I’m interested in",
     eventsLinked: "{n} linked event(s)",
     moreAbout: "More about {name}",
     reservationsCount: "Bookings",
+    seatsLeft: "{count} seats left",
+    seatsLeftOne: "1 seat left",
+    seatsFull: "Sold out",
     interestedCount: "Interested",
     livesAt: "Lives in {place}",
     ongoingBadge: "Ongoing",
@@ -1800,6 +1941,51 @@ export const en: Messages = {
   booking: {
     reserve: "Book",
     bookSelf: "Book for myself",
+    bookEventTitle: "Book the event",
+    forMyself: "For myself",
+    inviteFriends: "Invite friends",
+    inviteSearch: "Search someone",
+    inviteCircleFriends: "Friends",
+    inviteCircleNearby: "Around",
+    inviteCircleLater: "Later",
+    friendsEmpty: "No friends yet. Accept an invite, or browse Around.",
+    nearbyEmpty: "Nobody else around right now.",
+    laterEmpty: "Nobody set aside. On Around, save people you want to invite later.",
+    saveForLater: "Save for later",
+    savedForLater: "Saved",
+    removeFromLater: "Remove",
+    browseList: "List",
+    browseCards: "Cards",
+    browseHint: "Swipe profiles like on People, then lock the seat.",
+    continueConfirm: "Continue",
+    backToPeople: "Back to profiles",
+    pickForSeat: "Pick for this seat",
+    pickedForSeat: "Picked",
+    nextProfile: "Next profile",
+    skipProfile: "Skip",
+    intentPayNow: "I pay now",
+    intentPayNowHint: "Seats are held right away. They don’t need to accept first.",
+    intentWaitAccept: "They accept, then I pay",
+    intentWaitAcceptHint: "We send the invite. You only pay for people who say yes.",
+    intentGuestPays: "Each pays their seat",
+    intentGuestPaysHint: "They accept, then they pay their own entry.",
+    payFirstNotice: "This event only holds a seat after payment.",
+    payRequiredNotice: "This event does not allow booking without paying now. You can’t wait for a yes.",
+    holdWaitNotice: "The seat is held right away. You only pay if they say yes. If they decline, it is released.",
+    waitNoHoldNotice: "We send the invite without holding a seat. The seat is taken only after payment.",
+    waitNotAllowed: "This event does not allow waiting for an accept before paying.",
+    payAcceptedSeat: "Pay the seat",
+    waitPayPendingHint: "Waiting for their yes. You pay after that.",
+    waitAcceptCta: "Invite and wait",
+    guestPaysCta: "Send the invite",
+    invitesSent: "Invites sent. Waiting for their reply.",
+    awaitingHostPay: "Accepted. The inviter still has to pay the seat.",
+    goToPayment: "Continue to payment",
+    bookTotal: "Total · {amount}",
+    bookPickSomeone: "Select yourself or at least one friend.",
+    seatsPicking: "{count} seats left for this pick.",
+    bookAlready: "You already have a seat for this meetup.",
+    bookHost: "This is your meetup — you manage it, you don’t book it.",
     pay: "Pay",
     paySuccess: "Payment succeeded",
     paySuccessBody: "Your tickets are ready. Show the QR at the door.",
@@ -1828,7 +2014,7 @@ export const en: Messages = {
     tabValidated: "Checked in",
     paidBadge: "Paid",
     unpaidBadge: "Unpaid",
-    amount: "{amount} XAF",
+    amount: "{amount}",
     mockHint: "Mock payment: no real money. Optional fail to test errors.",
     failDemo: "Simulate a failure",
     awaiting: "Pending",

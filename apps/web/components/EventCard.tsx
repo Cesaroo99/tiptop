@@ -5,10 +5,13 @@ import { useState } from "react";
 import { ageCategoryLabel, canInteractWithEvent, eventLifecycle } from "@tiptop/domain";
 import { api, ApiError, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useMoney } from "@/lib/money";
 import { eventCountdown, formatEventWhen, formatRelative } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
 import { FlagIcon, HeartIcon, LinkIcon, MoreIcon, PinIcon, ShareIcon } from "./Icons";
+import { BookEventSheet } from "./BookEventSheet";
 import { MapThumb } from "./MapThumb";
+import { SeatsLeftBadge, seatsLeftLabel, seatsRemainingOf } from "./SeatsLeftBadge";
 import { OptionsSheet } from "./OptionsSheet";
 import { ReportModal } from "./ReportModal";
 import { IconButton, Modal } from "./ui";
@@ -21,10 +24,12 @@ export function EventCard({
   onChanged?: (next: EventCardType) => void;
 }) {
   const { locale, messages } = useI18n();
+  const { formatPrice } = useMoney();
   const [transfer, setTransfer] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [bookOpen, setBookOpen] = useState(false);
 
   async function heart(confirmTransfer = false) {
     try {
@@ -79,7 +84,7 @@ export function EventCard({
     setTimeout(() => setCopied(false), 1600);
   }
 
-  const price = event.priceXaf > 0 ? messages.world.paid.replace("{amount}", String(event.priceXaf)) : messages.world.free;
+  const price = event.priceXaf > 0 ? messages.world.paid.replace("{amount}", formatPrice(event.priceXaf, event.currency)) : messages.world.free;
   const countdown = eventCountdown(event.startsAt);
   const relative = formatRelative(event.createdAt ?? event.startsAt, messages.social);
   const lifecycle = eventLifecycle(
@@ -89,6 +94,8 @@ export function EventCard({
     event.status,
   );
   const interactive = canInteractWithEvent(lifecycle.phase);
+  const remaining = seatsRemainingOf(event.capacity, event.reservedCount ?? event.taken, event.remaining);
+  const seatsLabel = seatsLeftLabel(remaining, messages.world);
 
   const phaseBadge =
     lifecycle.phase === "cancelled" ? (
@@ -131,7 +138,10 @@ export function EventCard({
           <span className="type-caption rounded-pill bg-surface/90 px-3 py-1.5 font-bold text-ink backdrop-blur-sm">
             {messages.world.sortie}
           </span>
-          {phaseBadge}
+          <div className="flex items-center gap-1.5">
+            <SeatsLeftBadge remaining={remaining} />
+            {phaseBadge}
+          </div>
         </div>
         <div className="absolute bottom-2 right-2 h-16 w-24 overflow-hidden rounded-md ring-2 ring-white/70">
           <MapThumb city={event.city} zone={event.zone} className="h-full w-full" />
@@ -171,8 +181,16 @@ export function EventCard({
           <span className="text-muted">·</span>
           <span className={price === messages.world.free ? "font-semibold text-success" : "font-semibold text-ink"}>{price}</span>
         </p>
+        {event.paymentRule === "PAY_REQUIRED" && event.priceXaf > 0 ? (
+          <p className="type-caption mt-1 font-semibold text-accent">{messages.world.paymentRequired}</p>
+        ) : event.paymentRule === "PAY_FIRST" && event.priceXaf > 0 ? (
+          <p className="type-caption mt-1 text-muted">{messages.world.paymentFirst}</p>
+        ) : null}
         <p className="type-caption mt-2 text-muted">
-          {event.reservedCount ?? event.taken} {messages.world.reservationsCount} · {event.interestedCount ?? 0} {messages.world.interestedCount} · {event.hearts} {messages.world.heartEvent.toLowerCase()}
+          {event.reservedCount ?? event.taken} {messages.world.reservationsCount}
+          {seatsLabel ? ` · ${seatsLabel}` : ""}
+          {" · "}
+          {event.interestedCount ?? 0} {messages.world.interestedCount} · {event.hearts} {messages.world.heartEvent.toLowerCase()}
         </p>
         {lifecycle.phase === "cancelled" ? (
           <p className="type-body-sm mt-3 rounded-lg bg-danger-soft px-3 py-2.5 font-semibold text-danger">
@@ -204,9 +222,13 @@ export function EventCard({
               </button>
             ) : null}
             {event.canBook ? (
-              <Link href={`/events/${event.id}/book`} className="tap-scale type-button rounded-pill bg-accent px-5 py-2.5 text-on-primary shadow-sm transition hover:bg-accent-hover">
+              <button
+                type="button"
+                onClick={() => setBookOpen(true)}
+                className="tap-scale type-button rounded-pill bg-accent px-5 py-2.5 text-on-primary shadow-sm transition hover:bg-accent-hover"
+              >
                 {messages.booking.reserve}
-              </Link>
+              </button>
             ) : null}
             {event.viewerTicketId ? (
               <Link href={`/tickets/${event.viewerTicketId}`} className="tap-scale type-button rounded-pill border border-border bg-surface px-4 py-2.5 text-ink transition hover:bg-surface-sunken">
@@ -242,6 +264,31 @@ export function EventCard({
         ]}
       />
       <ReportModal open={reportOpen} kind="EVENT" eventId={event.id} onClose={() => setReportOpen(false)} />
+      <BookEventSheet
+        open={bookOpen}
+        onClose={() => setBookOpen(false)}
+        onBooked={(seats) => {
+          if (seats <= 0) return;
+          const nextTaken = (event.reservedCount ?? event.taken) + seats;
+          const nextRemaining = remaining != null ? Math.max(0, remaining - seats) : seatsRemainingOf(event.capacity, nextTaken);
+          onChanged?.({
+            ...event,
+            taken: nextTaken,
+            reservedCount: nextTaken,
+            remaining: nextRemaining,
+            canBook: nextRemaining == null || nextRemaining > 0 ? event.canBook : false,
+          });
+        }}
+        preview={{
+          eventId: event.id,
+          title: event.title,
+          body: event.description ? `${event.title} : ${event.description}` : event.title,
+          startsAt: event.startsAt,
+          createdAt: event.createdAt,
+          minAge: event.minAge,
+          author: event.host,
+        }}
+      />
     </article>
   );
 }

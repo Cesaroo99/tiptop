@@ -14,6 +14,7 @@ import {
   generateNumericOtp,
   maskPhone,
   parsePhone,
+  resolveUserCurrency,
 } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { loadEnv } from "../env";
@@ -33,6 +34,8 @@ export type PublicUser = {
   profileCompleted: boolean;
   locale: string;
   theme: string;
+  currency: string;
+  country: string | null;
   profession: string | null;
   avatarUrl: string | null;
   city: string | null;
@@ -59,11 +62,13 @@ export class AuthService {
     profileCompleted: boolean;
     locale: string;
     theme: string;
+    currency?: string | null;
     profile: {
       profession: string | null;
       avatarUrl: string | null;
       city: string | null;
       zone: string | null;
+      country?: string | null;
       availability: Availability;
       availabilityUntil: Date | null;
       locationPrecision: LocationPrecision;
@@ -83,6 +88,8 @@ export class AuthService {
       profileCompleted: user.profileCompleted,
       locale: user.locale,
       theme: user.theme,
+      currency: resolveUserCurrency(user.currency, user.profile?.country),
+      country: user.profile?.country ?? null,
       profession: user.profile?.profession ?? null,
       avatarUrl: user.profile?.avatarUrl ?? null,
       city: user.profile?.city ?? null,

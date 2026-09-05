@@ -14,23 +14,21 @@ export class ContactsController {
     const rows = await this.prisma.contact.findMany({
       where: { ownerId: req.user.id },
       orderBy: { createdAt: "desc" },
-      include: {
-        person: {
-          include: { profile: true },
-        },
-      },
+      include: { person: { include: { profile: true } } },
     });
     return {
-      items: rows.map((c) => ({
-        id: c.person.id,
-        username: c.person.username,
-        firstName: c.person.firstName,
-        lastName: c.person.lastName,
-        certified: c.person.certified,
-        profession: c.person.profile?.profession ?? null,
-        city: c.person.profile?.city ?? null,
-        avatarUrl: c.person.profile?.avatarUrl ?? null,
-      })),
+      items: rows
+        .filter((row) => row.person.status === "ACTIVE")
+        .map((row) => ({
+          id: row.person.id,
+          username: row.person.username,
+          firstName: row.person.firstName,
+          lastName: row.person.lastName,
+          certified: row.person.certified,
+          profession: row.person.profile?.profession ?? null,
+          city: row.person.profile?.city ?? null,
+          avatarUrl: row.person.profile?.avatarUrl ?? null,
+        })),
     };
   }
 }

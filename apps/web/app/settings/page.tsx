@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CardButton, Modal, NavChevron, ScreenHeader } from "@/components/ui";
+import { CURRENCY_OPTIONS, type CurrencyCode } from "@tiptop/domain";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -10,12 +11,14 @@ import type { Locale } from "@tiptop/i18n";
 
 export default function SettingsPage() {
   const { messages } = useI18n();
-  const { theme, setTheme, locale, setLocale, logout, refresh } = useSession();
+  const { user, theme, setTheme, locale, setLocale, logout, refresh } = useSession();
   const router = useRouter();
   const [confirm, setConfirm] = useState(false);
   const [securityOpen, setSecurityOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [currencyOpen, setCurrencyOpen] = useState(false);
   const [pushOpen, setPushOpen] = useState(false);
+  const currentCurrency = (user?.currency ?? "CAD") as CurrencyCode;
   const [prefs, setPrefs] = useState({ messages: true, social: true, events: true, invitations: true, mood: true });
 
   useEffect(() => {
@@ -42,6 +45,16 @@ export default function SettingsPage() {
     setLangOpen(false);
     try {
       await api("/users/me", { method: "PATCH", body: JSON.stringify({ locale: l }) });
+    } catch {
+      /* keep local */
+    }
+  }
+
+  async function pickCurrency(code: CurrencyCode) {
+    setCurrencyOpen(false);
+    try {
+      await api("/users/me", { method: "PATCH", body: JSON.stringify({ currency: code }) });
+      await refresh();
     } catch {
       /* keep local */
     }
@@ -88,6 +101,26 @@ export default function SettingsPage() {
             >
               {messages.common.english}
             </button>
+          </div>
+        ) : null}
+
+        <CardButton onClick={() => setCurrencyOpen((v) => !v)}>
+          <span>{messages.settings.currency}</span>
+          <span className="type-caption text-muted">{currentCurrency}</span>
+        </CardButton>
+        {currencyOpen ? (
+          <div className="space-y-1 rounded-card bg-surface p-2 shadow-card">
+            <p className="type-caption px-3 py-1 text-muted">{messages.settings.currencyHint}</p>
+            {CURRENCY_OPTIONS.map((opt) => (
+              <button
+                key={opt.code}
+                type="button"
+                className={`type-body-sm block w-full rounded-lg px-3 py-2.5 text-left transition ${currentCurrency === opt.code ? "bg-accent-soft text-accent" : "hover:bg-surface-sunken"}`}
+                onClick={() => void pickCurrency(opt.code)}
+              >
+                {locale === "en" ? opt.labelEn : opt.labelFr} · {opt.code}
+              </button>
+            ))}
           </div>
         ) : null}
 

@@ -55,8 +55,9 @@ export function pickUnitForLike(units: LikeUnit[], toUserId: string, ownerId: st
   if (units.some((u) => u.activeAllocationUserId === toUserId)) {
     throw new Error("LIKE_ALREADY_ON_TARGET");
   }
+  const placed = units.find((u) => u.activeAllocationUserId);
   const free = units.find((u) => u.activeAllocationUserId === null);
-  return planTransfer(free ?? units[0], toUserId, ownerId);
+  return planTransfer(placed ?? free ?? units[0], toUserId, ownerId);
 }
 
 export type LikeUnitTarget = {
@@ -80,9 +81,11 @@ export function pickUnitForTarget(
   if (units.some((u) => u.activeTargetKey === toTargetKey)) {
     throw new Error("LIKE_ALREADY_ON_TARGET");
   }
-  const free = units.find((u) => u.activeTargetKey === null) ?? units[0];
-  if (free.ownerId !== ownerId) throw new Error("LIKE_NOT_OWNED");
-  return { unitId: free.id, fromTargetKey: free.activeTargetKey, toTargetKey };
+  const placed = units.find((u) => u.activeTargetKey);
+  const free = units.find((u) => u.activeTargetKey === null);
+  const chosen = placed ?? free ?? units[0];
+  if (chosen.ownerId !== ownerId) throw new Error("LIKE_NOT_OWNED");
+  return { unitId: chosen.id, fromTargetKey: chosen.activeTargetKey, toTargetKey };
 }
 
 export type HeartAllocation = {

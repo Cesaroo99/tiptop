@@ -7,6 +7,7 @@ import { AgeCategoryPicker } from "@/components/AgeCategoryPicker";
 import { CameraIcon, ImageIcon, PlayIcon } from "@/components/Icons";
 import { MoodPlacePicker, type PickedPlace } from "@/components/MoodPlacePicker";
 import { TextInput } from "@/components/ui";
+import { resolveUserCurrency } from "@tiptop/domain";
 import { api, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -78,6 +79,7 @@ export default function ComposePage() {
 function Composer() {
   const { messages } = useI18n();
   const { user } = useSession();
+  const viewerCurrency = resolveUserCurrency(user?.currency, user?.country);
   const router = useRouter();
   const params = useSearchParams();
   const initial = params.get("type");
@@ -103,6 +105,7 @@ function Composer() {
   const [capacity, setCapacity] = useState("");
   const [minAge, setMinAge] = useState(0);
   const [requiresReservation, setRequiresReservation] = useState(false);
+  const [paymentRule, setPaymentRule] = useState<"HOLD" | "PAY_FIRST" | "PAY_REQUIRED">("HOLD");
   const [hours, setHours] = useState("12");
   const [visibility, setVisibility] = useState("ZONE");
   const [activity, setActivity] = useState("");
@@ -200,10 +203,11 @@ function Composer() {
             capacity: capacity ? Number(capacity) : undefined,
             minAge: minAge > 0 ? minAge : undefined,
             requiresReservation,
+            paymentRule: Number(priceXaf) > 0 ? paymentRule : undefined,
             imageUrl: imageUrl || undefined,
           }),
         });
-        router.replace("/events");
+        router.replace("/");
       } else if (kind === "offer") {
         await api("/offers", {
           method: "POST",
@@ -329,7 +333,7 @@ function Composer() {
           <TextInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder={messages.world.eventTitle} />
           <TextInput value={startsAt} onChange={(e) => setStartsAt(e.target.value)} type="datetime-local" />
           <TextInput value={venue} onChange={(e) => setVenue(e.target.value)} placeholder={messages.world.eventVenue} />
-          <TextInput value={priceXaf} onChange={(e) => setPriceXaf(e.target.value)} type="number" min={0} placeholder={messages.world.eventPrice} />
+          <TextInput value={priceXaf} onChange={(e) => setPriceXaf(e.target.value)} type="number" min={0} placeholder={messages.world.eventPrice.replace("{currency}", viewerCurrency)} />
           <p className="text-xs text-muted">{messages.world.eventPriceHint}</p>
           <TextInput value={capacity} onChange={(e) => setCapacity(e.target.value)} type="number" min={1} placeholder={messages.world.eventCapacity} />
           <div>
@@ -340,12 +344,43 @@ function Composer() {
             <input type="checkbox" checked={requiresReservation} onChange={(e) => setRequiresReservation(e.target.checked)} />
             {messages.world.eventReserve}
           </label>
+          {Number(priceXaf) > 0 ? (
+            <div className="space-y-2">
+              {(["HOLD", "PAY_FIRST", "PAY_REQUIRED"] as const).map((rule) => (
+                <label key={rule} className="flex cursor-pointer items-start gap-2 rounded-xl bg-surface-sunken px-3 py-2.5">
+                  <input
+                    type="radio"
+                    name="paymentRule"
+                    checked={paymentRule === rule}
+                    onChange={() => setPaymentRule(rule)}
+                    className="mt-1"
+                  />
+                  <span>
+                    <span className="type-body-sm block font-semibold text-ink">
+                      {rule === "HOLD"
+                        ? messages.world.paymentHold
+                        : rule === "PAY_FIRST"
+                          ? messages.world.paymentFirst
+                          : messages.world.paymentRequired}
+                    </span>
+                    <span className="type-caption text-muted">
+                      {rule === "HOLD"
+                        ? messages.world.paymentHoldHint
+                        : rule === "PAY_FIRST"
+                          ? messages.world.paymentFirstHint
+                          : messages.world.paymentRequiredHint}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          ) : null}
         </div>
       ) : null}
       {kind === "offer" ? (
         <div className="space-y-3">
           <TextInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder={messages.need.titlePlaceholder} />
-          <TextInput value={priceXaf} onChange={(e) => setPriceXaf(e.target.value)} type="number" min={0} placeholder={messages.need.pricePlaceholder} />
+          <TextInput value={priceXaf} onChange={(e) => setPriceXaf(e.target.value)} type="number" min={0} placeholder={messages.need.pricePlaceholder.replace("{currency}", viewerCurrency)} />
           <div className="flex gap-2">
             <button
               type="button"

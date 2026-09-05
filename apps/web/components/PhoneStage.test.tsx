@@ -10,6 +10,7 @@ describe("PhoneStage", () => {
       </PhoneStage>,
     );
     expect(document.querySelector("[data-phone-device]")).toBeTruthy();
+    expect(document.querySelector(".phone-frame")).toBeTruthy();
     expect(document.querySelector(".phone-screen")).toBeTruthy();
     expect(screen.getByText("contenu")).toBeInTheDocument();
   });

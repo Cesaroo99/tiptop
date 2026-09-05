@@ -10,6 +10,7 @@ import {
   parseOfferSellerKind,
   parseOfferSort,
   rankOffers,
+  resolveUserCurrency,
   validateMoodCoords,
 } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
@@ -159,6 +160,7 @@ export class OffersService {
         description: (input.description ?? "").trim().slice(0, 500),
         shopName: input.shopName?.trim().slice(0, 80) || null,
         priceXaf: Math.round(priceXaf),
+        currency: resolveUserCurrency(seller?.currency, seller?.profile?.country),
         city: city || seller?.profile?.city || "Yaoundé",
         zone: zone || seller?.profile?.zone || null,
         placeName,

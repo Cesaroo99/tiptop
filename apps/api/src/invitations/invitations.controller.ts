@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Inject, Param, Post, Query, Req, UseGuards } from "@nestjs/common";
-import { IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsOptional, IsString } from "class-validator";
 import type { Request } from "express";
 import { SessionGuard } from "../auth/session.guard";
 import type { PublicUser } from "../auth/auth.service";
@@ -15,6 +15,10 @@ class CreateInviteDto {
   @IsOptional()
   @IsString()
   payer?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  payAfterAccept?: boolean;
 }
 
 @Controller()
@@ -35,7 +39,7 @@ export class InvitationsController {
 
   @Post("invitations")
   create(@Req() req: Request & { user: PublicUser }, @Body() body: CreateInviteDto) {
-    return this.invitations.create(req.user.id, body.inviteeId, body.eventId, body.payer);
+    return this.invitations.create(req.user.id, body.inviteeId, body.eventId, body.payer, body.payAfterAccept);
   }
 
   @Post("invitations/:id/accept")

@@ -6,6 +6,7 @@ import { CalendarIcon } from "@/components/Icons";
 import { Chip, EmptyState, ScreenHeader } from "@/components/ui";
 import { api, ApiError, type InvitationItem, type ReservationItem, type TicketItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useMoney } from "@/lib/money";
 import Link from "next/link";
 
 export default function Page() {
@@ -18,6 +19,7 @@ export default function Page() {
 
 function TicketsPage() {
   const { messages } = useI18n();
+  const { formatPrice } = useMoney();
   const router = useRouter();
   const params = useSearchParams();
   const initialTab = params.get("tab");
@@ -58,6 +60,11 @@ function TicketsPage() {
       const res = await api<InvitationItem & { reservation?: ReservationItem }>(`/invitations/${id}/${action}`, {
         method: "POST",
       });
+      if (res.awaitingHostPay) {
+        setNote(messages.booking.awaitingHostPay);
+        await loadInvites();
+        return;
+      }
       if (res.needsPayment && res.reservation) {
         router.push(`/events/${res.event.id}/pay?reservationId=${res.reservation.id}`);
         return;
@@ -132,7 +139,7 @@ function TicketsPage() {
             <article key={r.id} className="rounded-card bg-surface p-4 shadow-card">
               <p className="type-heading text-ink">{r.event?.title ?? r.eventId}</p>
               <p className="type-caption mt-1 text-muted">
-                {statusLabel[r.status] ?? r.status} · {r.seats} · {r.amountXaf} FCFA
+                {statusLabel[r.status] ?? r.status} · {r.seats} · {formatPrice(r.amountXaf, r.currency ?? "XAF")}
               </p>
               {r.needsPayment ? (
                 <Link href={`/events/${r.eventId}/pay?reservationId=${r.id}`} className="type-body-sm mt-2 inline-block font-semibold text-accent">
@@ -165,7 +172,16 @@ function TicketsPage() {
                 <p className="type-heading text-ink">{inv.event.title}</p>
                 <p className="type-caption mt-1 text-muted">
                   {inv.inviter.firstName} → {inv.invitee.firstName} · {statusLabel[inv.status] ?? inv.status}
+                  {inv.payAfterAccept ? ` · ${messages.booking.waitPayPendingHint}` : ""}
                 </p>
+                {box === "sent" && inv.status === "ACCEPTED" && inv.reservation?.needsPayment ? (
+                  <Link
+                    href={`/events/${inv.event.id}/pay?reservationId=${inv.reservation.id}`}
+                    className="type-body-sm mt-2 inline-block font-semibold text-accent"
+                  >
+                    {messages.booking.payAcceptedSeat}
+                  </Link>
+                ) : null}
                 {box === "received" && inv.status === "PENDING" ? (
                   <div className="mt-3 flex gap-2">
                     <button type="button" className="tap-scale type-button flex-1 rounded-pill bg-accent py-2.5 text-on-primary transition hover:bg-accent-hover" onClick={() => void act(inv.id, "accept")}>

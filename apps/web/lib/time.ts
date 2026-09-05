@@ -16,6 +16,20 @@ export function dateLocale(locale: string) {
   return locale === "en" ? "en-GB" : "fr-FR";
 }
 
+export function formatFcfa(amount: number) {
+  const n = Math.max(0, Math.round(amount));
+  return `${String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".")} FCFA`;
+}
+
+export function formatEventDateBadge(iso: string, locale: string) {
+  const raw = new Date(iso).toLocaleDateString(dateLocale(locale), {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  return raw.replace(/(^|\s)\S/g, (ch) => ch.toUpperCase());
+}
+
 export function formatEventWhen(iso: string, locale: string) {
   return new Date(iso).toLocaleString(dateLocale(locale), {
     weekday: "short",
@@ -43,6 +57,35 @@ export function eventCountdown(startsAt: string) {
   const hours = Math.round(min / 60);
   if (hours < 48) return { unit: "h" as const, value: hours };
   return { unit: "d" as const, value: Math.round(hours / 24) };
+}
+
+export function formatCountdownLabel(startsAt: string) {
+  const countdown = eventCountdown(startsAt);
+  if (!countdown) return null;
+  if (countdown.unit === "min") return `${countdown.value}min`;
+  if (countdown.unit === "h") return `${countdown.value}h`;
+  return `${countdown.value}j`;
+}
+
+/** 3400 → « 3.4k », comme la ligne de stats de la maquette accueil. */
+export function formatCompactCount(n: number) {
+  if (n < 1000) return String(n);
+  if (n < 1_000_000) {
+    const k = n / 1000;
+    const rounded = k >= 10 ? Math.round(k) : Math.round(k * 10) / 10;
+    return `${rounded}k`;
+  }
+  const m = n / 1_000_000;
+  const rounded = m >= 10 ? Math.round(m) : Math.round(m * 10) / 10;
+  return `${rounded}M`;
+}
+
+export function splitPostLead(body: string): { lead: string; rest: string } {
+  const idx = body.indexOf(":");
+  if (idx > 0 && idx < 72) {
+    return { lead: body.slice(0, idx + 1).trim(), rest: body.slice(idx + 1).trim() };
+  }
+  return { lead: "", rest: body };
 }
 
 export const ZONE_COORDS: Record<string, { lat: number; lng: number }> = {

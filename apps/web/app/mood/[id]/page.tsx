@@ -13,6 +13,7 @@ import { SocialInviteModal } from "@/components/SocialInviteModal";
 import { ErrorBanner, IconButton, TextInput } from "@/components/ui";
 import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useLikePlacement } from "@/lib/like-placement";
 import { useSession } from "@/lib/session";
 
 export default function Page() {
@@ -27,6 +28,7 @@ function MoodViewer() {
   const { id } = useParams<{ id: string }>();
   const { messages } = useI18n();
   const { user } = useSession();
+  const { refresh: refreshPlacement } = useLikePlacement();
   const [mood, setMood] = useState<MoodItem | null>(null);
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [body, setBody] = useState("");
@@ -74,6 +76,7 @@ function MoodViewer() {
             label: mood.likeTime?.label ?? "0 s",
           },
         });
+        await refreshPlacement();
         return;
       }
       await api("/likes", {
@@ -90,6 +93,7 @@ function MoodViewer() {
           label: mood.likeTime?.label ?? "0 s",
         },
       });
+      await refreshPlacement();
       setTransfer(null);
       setBuy(false);
     } catch (e) {

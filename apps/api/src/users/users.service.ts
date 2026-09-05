@@ -47,6 +47,7 @@ export class UsersService {
           username: dto.username,
           locale: dto.locale,
           theme: dto.theme,
+          currency: dto.currency,
           profileCompleted: Boolean(firstName && lastName) ? true : undefined,
           profile: {
             upsert: {

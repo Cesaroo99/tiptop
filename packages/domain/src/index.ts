@@ -9,6 +9,8 @@ export * from "./location";
 export * from "./events";
 export * from "./tickets";
 export * from "./payments";
+export * from "./money";
+export * from "./booking-plan";
 export * from "./chat";
 export * from "./admin";
 export * from "./reviews";

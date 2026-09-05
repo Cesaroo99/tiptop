@@ -6,6 +6,11 @@ import type { EventCard as EventCardType } from "@/lib/api";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/events",
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
+}));
+
+vi.mock("@/lib/session", () => ({
+  useSession: () => ({ user: { id: "viewer", profileCompleted: true }, loading: false }),
 }));
 
 const baseEvent: EventCardType = {
@@ -56,6 +61,7 @@ describe("EventCard (#23-25)", () => {
     expect(screen.getByText("Afterwork Bastos")).toBeInTheDocument();
     expect(screen.getAllByText(/Bastos/).length).toBeGreaterThan(0);
     expect(screen.getByText("Gratuit")).toBeInTheDocument();
+    expect(screen.getAllByText("35 places restantes").length).toBeGreaterThan(0);
     // Sans réservation requise : CTA "Intéressé", jamais un faux "Réserver".
     expect(screen.getByText("Intéressé")).toBeInTheDocument();
     expect(screen.queryByText("Réserver")).not.toBeInTheDocument();
