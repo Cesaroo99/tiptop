@@ -1,7 +1,12 @@
 # TipTop — Vision produit
 
 TipTop n’est pas un réseau social de plus. Instagram, TikTok et Snapchat
-optimisent le **temps d’écran**. TipTop optimise le **temps passé dehors**.
+optimisent seulement le **temps d’écran**. TipTop optimise les deux :
+
+**Soit je suis dehors. Soit je suis sur TipTop.**
+
+Pas un troisième endroit. Pas un autre fil. Quand tu es sur ton téléphone,
+tu es ici. Quand tu n’y es pas, tu es dehors — et TipTop t’y a envoyé.
 
 La boucle n’est pas « scroller jusqu’à en avoir assez ». C’est :
 
@@ -20,20 +25,22 @@ un shooting — **près de toi**, avec un prix et une carte.
 
 ## Ce que l’utilisateur ne doit plus pouvoir quitter
 
-L’addiction TipTop n’est pas celle du feed infini. C’est celle du **FOMO réel** :
+L’addiction TipTop n’est pas celle du feed infini. C’est celle du **FOMO réel**,
+et celle d’un écran qui ne te lâche que pour la rue :
 
 1. **Qui est dehors, près de moi, maintenant ?** — pas un catalogue mondial.
 2. **Quel Mood vient d’être filmé dans ma zone ?** — une vidéo, un lieu, un visage.
-3. **Quelle sortie commence bientôt ?** — réserver, inviter, y aller.
+3. **Quelle sortie commence bientôt ?** — liker, commenter, réserver, s’intéresser.
 4. **Qui m’a donné du temps de like ?** — une relation, pas une métrique vaniteuse.
 5. **Où trouver ce dont j’ai besoin, tout de suite ?** — le plus proche, ou le
    moins cher, avec l’itinéraire.
 
 Si tu fermes l’app, tu rates une rencontre — ou tu paies trop cher plus loin.
+Si tu restes, tu es sur TipTop. Pas ailleurs.
 
 ## Forme : un téléphone, partout
 
-Les maquettes sont des écrans iPhone. Le produit aussi.
+Les maquettes sont des écrans iPhone. Le produit aussi — **trait pour trait**.
 
 - Sur un vrai téléphone : plein écran, barre basse toujours là.
 - Sur un ordinateur : le même iPhone 390×844, centré, pas un site à trois
@@ -42,18 +49,23 @@ Les maquettes sont des écrans iPhone. Le produit aussi.
 Même navigation (Home / Mood / Ajouter / Amies / Events), mêmes gestes,
 même charte : cyan `#05C7F2`, jaune `#F2E205`, noir `#0D0D0D`, Inter.
 
+L’accueil est le pulse : logo, lieu, Moods, publications. La carte d’une
+publication porte quatre actions — **Like, Commentaire, Réservation,
+Intéressé** — et le compte à rebours de la sortie.
+
 ## Cartographie des cinq onglets
 
 | Onglet | Rôle | Ce qui doit marcher |
 | --- | --- | --- |
-| Home | Pulse de ta zone | Besoin (recherche locale), Moods, « Dehors maintenant », publications et sorties |
+| Home | Pulse de ta zone | Moods, publications (like / commentaire / réservation / intéressé) |
 | Mood | Preuve du réel | Flux vertical immersif, lieu optionnel, passerelle événement / profil |
 | Ajouter | Créer | Publication, événement, Mood **ou offre** (produit / service) |
 | Amies | Qui est là | Carousel local, message réel, invitation à rejoindre |
 | Events | Gérer | **Uniquement** tes sorties : créées, celles auxquelles tu participes, invitations, tickets, favoris. Pas un fil de découverte. |
 
-La découverte des événements reste dans l’accueil. L’onglet Events est un
-tableau de bord, pas un catalogue.
+La découverte des événements reste dans l’accueil, **dans les publications**.
+L’onglet Events est un tableau de bord, pas un catalogue.
+Le besoin local (pain, pressing, coupe) se cherche depuis la loupe.
 
 ## Autour de moi — produits et services
 
@@ -76,6 +88,7 @@ Chaque fiche mène à un itinéraire réel.
 - Pas un catalogue mondial. La zone est le produit.
 - Pas des compteurs de likes. Le capital, c’est le **temps**.
 - Pas Amazon. C’est « qui, près de moi, l’a, à quel prix, comment y aller ».
+- Pas un endroit où tu restes « un peu » : dehors, ou TipTop.
 
 ## Performance perçue
 
@@ -91,4 +104,4 @@ vidéos Mood une à la fois, skeletons plutôt que pages blanches.
 - Multi-devises le jour où le marché n’est plus uniquement le Cameroun.
 - Paiement in-app d’une offre (aujourd’hui : on y va, on paie sur place).
 
-Jusque-là : chaque écran ouvert mène quelque part de réel.
+Jusque-là : chaque écran ouvert mène quelque part de réel — ou te garde ici.

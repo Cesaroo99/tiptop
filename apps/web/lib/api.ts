@@ -224,6 +224,7 @@ export type FeedItem = {
   viewerFollows: boolean;
   authorActiveLikes: number;
   likeTime?: LikeTimeSnap;
+  sharesCount?: number;
   author: {
     id: string;
     username: string;
@@ -231,6 +232,7 @@ export type FeedItem = {
     lastName: string;
     certified: boolean;
     avatarUrl: string | null;
+    available?: boolean;
   };
   event?: {
     id: string;
@@ -239,6 +241,8 @@ export type FeedItem = {
     minAge: number | null;
     interestedCount: number;
     reservedCount: number;
+    viewerInterested?: boolean;
+    canBook?: boolean;
   } | null;
 };
 

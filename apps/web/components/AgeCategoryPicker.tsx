@@ -5,7 +5,7 @@ import { ageCategoryFromMinAge, EVENT_AGE_CATEGORIES } from "@tiptop/domain";
 /**
  * Sélecteur de catégorie d'âge standardisée pour un événement (#16), plutôt
  * qu'un champ numérique libre — l'organisateur choisit un seuil reconnaissable
- * (Tout âge / -13 / -16 / 18+ / 21+), la valeur stockée reste `minAge` (int).
+ * (Tout âge / -13 / -16 / -18 / 21+), la valeur stockée reste `minAge` (int).
  */
 export function AgeCategoryPicker({ minAge, onChange }: { minAge: number; onChange: (minAge: number) => void }) {
   const active = ageCategoryFromMinAge(minAge);

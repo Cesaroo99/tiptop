@@ -7,7 +7,7 @@ const MAX_BODY = 2000;
 
 const POST_INCLUDE = {
   author: { include: { profile: true } },
-  event: { select: { id: true, title: true, startsAt: true, minAge: true, participants: { select: { status: true } } } },
+  event: { select: { id: true, title: true, startsAt: true, minAge: true, participants: { select: { status: true, userId: true } } } },
   _count: { select: { comments: true } },
 } as const;
 
@@ -33,7 +33,11 @@ export class PostsService {
         firstName: string;
         lastName: string;
         certified: boolean;
-        profile: { avatarUrl: string | null } | null;
+        profile: {
+          avatarUrl: string | null;
+          availability?: string;
+          availabilityUntil?: Date | null;
+        } | null;
       };
       _count: { comments: number };
       event?: {
@@ -41,10 +45,11 @@ export class PostsService {
         title: string;
         startsAt: Date;
         minAge: number | null;
-        participants: Array<{ status: string }>;
+        participants: Array<{ status: string; userId?: string }>;
       } | null;
     },
     extra: {
+      viewerId: string;
       likedAuthor: boolean;
       viewerFollows: boolean;
       authorLikes: number;
@@ -57,6 +62,9 @@ export class PostsService {
       };
     },
   ) {
+    const until = p.author.profile?.availabilityUntil;
+    const available =
+      p.author.profile?.availability === "AVAILABLE" && Boolean(until && until.getTime() > Date.now());
     const event = p.event
       ? {
           id: p.event.id,
@@ -67,6 +75,9 @@ export class PostsService {
           reservedCount: p.event.participants.filter((x) =>
             ["RESERVED", "CONFIRMED", "PRESENT", "HOST"].includes(x.status),
           ).length,
+          viewerInterested: p.event.participants.some(
+            (x) => x.userId === extra.viewerId && x.status === "INTERESTED",
+          ),
         }
       : null;
     return {
@@ -77,6 +88,7 @@ export class PostsService {
       zone: p.zone,
       createdAt: p.createdAt.toISOString(),
       commentsCount: p._count.comments,
+      sharesCount: 0,
       likedAuthor: extra.likedAuthor,
       likedByMe: extra.likedByMe,
       viewerFollows: extra.viewerFollows,
@@ -89,6 +101,7 @@ export class PostsService {
         lastName: p.author.lastName,
         certified: p.author.certified,
         avatarUrl: p.author.profile?.avatarUrl ?? null,
+        available,
       },
       event,
     };
@@ -132,7 +145,11 @@ export class PostsService {
         firstName: string;
         lastName: string;
         certified: boolean;
-        profile: { avatarUrl: string | null } | null;
+        profile: {
+          avatarUrl: string | null;
+          availability?: string;
+          availabilityUntil?: Date | null;
+        } | null;
       };
       _count: { comments: number };
       event?: {
@@ -140,7 +157,7 @@ export class PostsService {
         title: string;
         startsAt: Date;
         minAge: number | null;
-        participants: Array<{ status: string }>;
+        participants: Array<{ status: string; userId?: string }>;
       } | null;
     }>,
   ) {
@@ -157,6 +174,7 @@ export class PostsService {
     return posts.map((p) => {
       const snap = likeTimes.get(p.id);
       return this.mapPost(p, {
+        viewerId,
         likedAuthor: extras.liked.has(p.author.id),
         viewerFollows: extras.following.has(p.author.id),
         authorLikes: extras.counts.get(p.author.id) ?? 0,

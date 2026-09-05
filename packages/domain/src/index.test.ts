@@ -258,7 +258,7 @@ describe("catégories d'âge (#16)", () => {
     expect(ageCategoryLabel(null)).toBeNull();
     expect(ageCategoryLabel(0)).toBeNull();
     expect(ageCategoryLabel(13)).toBe("-13");
-    expect(ageCategoryLabel(18)).toBe("18+");
+    expect(ageCategoryLabel(18)).toBe("-18");
     expect(ageCategoryLabel(21)).toBe("21+");
   });
 });

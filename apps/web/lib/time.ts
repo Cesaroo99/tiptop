@@ -45,6 +45,35 @@ export function eventCountdown(startsAt: string) {
   return { unit: "d" as const, value: Math.round(hours / 24) };
 }
 
+export function formatCountdownLabel(startsAt: string) {
+  const countdown = eventCountdown(startsAt);
+  if (!countdown) return null;
+  if (countdown.unit === "min") return `${countdown.value}min`;
+  if (countdown.unit === "h") return `${countdown.value}h`;
+  return `${countdown.value}j`;
+}
+
+/** 3400 → « 3.4k », comme la ligne de stats de la maquette accueil. */
+export function formatCompactCount(n: number) {
+  if (n < 1000) return String(n);
+  if (n < 1_000_000) {
+    const k = n / 1000;
+    const rounded = k >= 10 ? Math.round(k) : Math.round(k * 10) / 10;
+    return `${rounded}k`;
+  }
+  const m = n / 1_000_000;
+  const rounded = m >= 10 ? Math.round(m) : Math.round(m * 10) / 10;
+  return `${rounded}M`;
+}
+
+export function splitPostLead(body: string): { lead: string; rest: string } {
+  const idx = body.indexOf(":");
+  if (idx > 0 && idx < 72) {
+    return { lead: body.slice(0, idx + 1).trim(), rest: body.slice(idx + 1).trim() };
+  }
+  return { lead: "", rest: body };
+}
+
 export const ZONE_COORDS: Record<string, { lat: number; lng: number }> = {
   "Carrefour Damas": { lat: 3.848, lng: 11.502 },
   Bastos: { lat: 3.89, lng: 11.512 },

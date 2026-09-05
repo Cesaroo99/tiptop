@@ -89,10 +89,8 @@ function HomeIcon({ active }: { active: boolean }) {
 function MoodIcon({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <circle cx="12" cy="12" r="8" fill={active ? "currentColor" : "none"} fillOpacity="0.18" />
-      <circle cx="9" cy="10" r="1.1" fill="currentColor" />
-      <circle cx="15" cy="10" r="1.1" fill="currentColor" />
-      <path d="M8.5 14.5c1.2 1.4 5.8 1.4 7 0" />
+      <circle cx="9.2" cy="12" r="5.2" fill={active ? "currentColor" : "none"} fillOpacity="0.16" />
+      <circle cx="14.8" cy="12" r="5.2" />
     </svg>
   );
 }

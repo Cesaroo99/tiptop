@@ -143,6 +143,7 @@ export type Messages = {
     addImage: string;
     addLocation: string;
     comments: string;
+    shares: string;
     addComment: string;
     follow: string;
     following: string;
@@ -424,6 +425,7 @@ export type Messages = {
     tabReservations: string;
     sortie: string;
     eventIn: string;
+    eventInLabel: string;
     inviteNamed: string;
     seeAll: string;
     eventsInterested: string;
@@ -808,6 +810,7 @@ export const fr: Messages = {
     addImage: "Ajouter une image",
     addLocation: "Ajouter une localisation",
     comments: "Commentaires",
+    shares: "Partages",
     addComment: "Ajouter un commentaire",
     follow: "Suivre",
     following: "Abonné",
@@ -1089,6 +1092,7 @@ export const fr: Messages = {
     tabReservations: "Réservations",
     sortie: "Sortie",
     eventIn: "Événement dans : {when}",
+    eventInLabel: "Événement dans :",
     inviteNamed: "+ Inviter {name}",
     seeAll: "Tous voir",
     eventsInterested: "Événements qui m’intéressent",
@@ -1473,6 +1477,7 @@ export const en: Messages = {
     addImage: "Add an image",
     addLocation: "Add a location",
     comments: "Comments",
+    shares: "Shares",
     addComment: "Add a comment",
     follow: "Follow",
     following: "Following",
@@ -1754,6 +1759,7 @@ export const en: Messages = {
     tabReservations: "Bookings",
     sortie: "Meetup",
     eventIn: "Event in: {when}",
+    eventInLabel: "Event in:",
     inviteNamed: "+ Invite {name}",
     seeAll: "See all",
     eventsInterested: "Events I’m interested in",

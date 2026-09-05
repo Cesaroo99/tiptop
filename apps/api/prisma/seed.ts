@@ -253,6 +253,16 @@ async function main() {
     });
   }
 
+  const tourPost = await prisma.post.findFirst({
+    where: { authorId: cesar.id, body: { contains: "Un tour au Black" } },
+  });
+  if (black && tourPost && !tourPost.eventId) {
+    await prisma.post.update({
+      where: { id: tourPost.id },
+      data: { eventId: black.id, imageUrl: tourPost.imageUrl ?? "/seed/events/black-white.jpg" },
+    });
+  }
+
   let paid = await prisma.event.findFirst({ where: { hostId: erica.id, title: "Afterwork Bastos" } });
   if (!paid) {
     paid = await prisma.event.create({
