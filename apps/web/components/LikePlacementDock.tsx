@@ -34,11 +34,11 @@ export function LikePlacementDock() {
       aria-label={aria}
       title={line}
       data-like-dock="active"
-      className="mx-2 mt-2 flex min-w-0 items-center gap-1.5 rounded-2xl bg-accent-soft px-3 py-1.5"
+      className="flex min-w-0 items-center gap-1.5 border-b border-divider px-3.5 py-1.5"
     >
-      <HeartIcon size={13} filled className="shrink-0 text-accent" />
+      <HeartIcon size={12} filled className="shrink-0 text-accent" />
       <span className="type-caption shrink-0 font-bold tabular-nums text-accent">{duration}</span>
-      <span className="type-caption min-w-0 truncate font-medium text-ink">· {placement.label}</span>
+      <span className="type-caption min-w-0 truncate text-muted">· {placement.label}</span>
     </Link>
   );
 }
