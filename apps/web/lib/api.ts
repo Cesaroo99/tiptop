@@ -76,6 +76,21 @@ export type LikeTimeSnap = {
   label: string;
 };
 
+export type LikePlacement = {
+  targetType: "user" | "post" | "comment" | "mood" | "wish";
+  targetId: string;
+  label: string;
+  href: string;
+  startedAt: string;
+  seconds: number;
+};
+
+export type LikesMe = {
+  available: number;
+  total: number;
+  placement: LikePlacement | null;
+};
+
 export type MoodItem = {
   id: string;
   body: string;

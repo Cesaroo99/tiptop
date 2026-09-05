@@ -2,6 +2,7 @@
 
 import { Inter } from "next/font/google";
 import { I18nProvider } from "@/lib/i18n";
+import { LikePlacementProvider } from "@/lib/like-placement";
 import { SessionProvider, useSession } from "@/lib/session";
 import type { ReactNode } from "react";
 
@@ -11,7 +12,7 @@ function I18nGate({ children }: { children: ReactNode }) {
   const { locale, setLocale } = useSession();
   return (
     <I18nProvider locale={locale} setLocale={setLocale}>
-      {children}
+      <LikePlacementProvider>{children}</LikePlacementProvider>
     </I18nProvider>
   );
 }

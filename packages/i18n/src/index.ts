@@ -157,6 +157,8 @@ export type Messages = {
     likeHere: string;
     likePlacedOn: string;
     likeIdle: string;
+    likeDockOn: string;
+    likeDockAria: string;
     likeExplain: string;
     likesNow: string;
     likeReceivedTitle: string;
@@ -824,6 +826,8 @@ export const fr: Messages = {
     likeHere: "Mon like est ici",
     likePlacedOn: "Ton like est chez {name}",
     likeIdle: "Ton like n’est posé sur personne pour l’instant.",
+    likeDockOn: "{duration} · {label}",
+    likeDockAria: "Ton like tourne depuis {duration} sur {label}",
     likeExplain: "Chacun n’a qu’un like. Tu le poses sur une personne. Si tu en likes une autre, il se déplace.",
     likesNow: "{n} likes maintenant",
     likeReceivedTitle: "Qui lui a posé son like",
@@ -1491,6 +1495,8 @@ export const en: Messages = {
     likeHere: "My like is here",
     likePlacedOn: "Your like is with {name}",
     likeIdle: "Your like is not placed on anyone yet.",
+    likeDockOn: "{duration} · {label}",
+    likeDockAria: "Your like has been running for {duration} on {label}",
     likeExplain: "Everyone has one like. You place it on a person. Like someone else and it moves.",
     likesNow: "{n} likes now",
     likeReceivedTitle: "Who placed their like here",

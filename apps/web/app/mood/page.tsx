@@ -13,6 +13,7 @@ import { MoodPlaceChip, MoodPlaceSheet, moodPlaceFromItem } from "@/components/M
 import { EmptyState, Modal, Skeleton, TextInput } from "@/components/ui";
 import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useLikePlacement } from "@/lib/like-placement";
 import { useSession } from "@/lib/session";
 
 /**
@@ -151,6 +152,7 @@ function MoodSlide({
 }) {
   const { messages } = useI18n();
   const { user } = useSession();
+  const { refresh: refreshPlacement } = useLikePlacement();
   const [transfer, setTransfer] = useState<string | null>(null);
   const [buy, setBuy] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
@@ -172,6 +174,7 @@ function MoodSlide({
             ? { ...mood.likeTime, likedByMe: false, activeCount: Math.max(0, mood.likeTime.activeCount - 1) }
             : undefined,
         });
+        await refreshPlacement();
         return;
       }
       await api("/likes", {
@@ -184,6 +187,7 @@ function MoodSlide({
           ? { ...mood.likeTime, likedByMe: true, activeCount: mood.likeTime.activeCount + 1 }
           : undefined,
       });
+      await refreshPlacement();
       setTransfer(null);
       setBuy(false);
     } catch (e) {

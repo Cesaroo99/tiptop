@@ -5,8 +5,8 @@ import { useState } from "react";
 import { api, ApiError, type FeedItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
+import { useLikePlacement } from "@/lib/like-placement";
 import { formatCompactCount, formatCountdownLabel, formatRelative, splitPostLead } from "@/lib/time";
-import { useLiveLikeLabel } from "./LikeTimeBadge";
 import { ageCategoryLabel } from "@tiptop/domain";
 import { Avatar, CertifiedMark } from "./Avatar";
 import {
@@ -67,12 +67,12 @@ export function PostCard({
 }) {
   const { messages } = useI18n();
   const { user } = useSession();
+  const { refresh: refreshPlacement } = useLikePlacement();
   const [transfer, setTransfer] = useState<{ name: string } | null>(null);
   const [soon, setSoon] = useState<string | null>(null);
   const [buy, setBuy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [shares, setShares] = useState(post.sharesCount ?? 0);
-  const [loadedAt, setLoadedAt] = useState(() => Date.now());
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -83,8 +83,6 @@ export function PostCard({
   const isEvent = Boolean(event);
   const countdown = event ? formatCountdownLabel(event.startsAt) : null;
   const liked = post.likeTime?.likedByMe ?? post.likedByMe ?? false;
-  const likeLabel = useLiveLikeLabel(post.likeTime, loadedAt);
-  const likeTicking = (post.likeTime?.activeCount ?? 0) > 0;
   const interested = event?.viewerInterested ?? false;
   const { lead, rest } = splitPostLead(post.body);
   const age = isEvent ? ageCategoryLabel(event?.minAge) : null;
@@ -99,7 +97,6 @@ export function PostCard({
           body: JSON.stringify({ targetType: "post", targetId: post.id }),
         });
         const active = Math.max(0, (post.likeTime?.activeCount ?? 1) - 1);
-        setLoadedAt(Date.now());
         onChanged?.({
           ...post,
           likedByMe: false,
@@ -110,13 +107,13 @@ export function PostCard({
             label: post.likeTime?.label ?? "0 s",
           },
         });
+        await refreshPlacement();
         return;
       }
       await api("/likes", {
         method: "POST",
         body: JSON.stringify({ targetType: "post", targetId: post.id, confirmTransfer }),
       });
-      setLoadedAt(Date.now());
       onChanged?.(
         {
           ...post,
@@ -130,6 +127,7 @@ export function PostCard({
         },
         { soleLike: true },
       );
+      await refreshPlacement();
       setTransfer(null);
       setBuy(false);
     } catch (e) {
@@ -302,11 +300,6 @@ export function PostCard({
             >
               <HeartIcon size={17} filled={liked} />
             </ActionCircle>
-            {likeTicking ? (
-              <span className="type-caption max-w-[4.5rem] shrink-0 font-semibold leading-tight text-accent" aria-live="polite">
-                {likeLabel}
-              </span>
-            ) : null}
             <ActionCircle href={`/posts/${post.id}`} label={messages.social.comments}>
               <CommentIcon size={17} />
             </ActionCircle>
