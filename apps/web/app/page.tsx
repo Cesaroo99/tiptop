@@ -7,6 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { PlusIcon } from "@/components/Icons";
 import { CardSkeleton, EmptyState, ErrorBanner } from "@/components/ui";
 import { api, type FeedItem, type MoodItem } from "@/lib/api";
+import { applySoleLike, replaceFeedItem } from "@/lib/like-feed";
 import { useI18n } from "@/lib/i18n";
 import Link from "next/link";
 
@@ -95,7 +96,12 @@ function HomeFeed() {
         <PostCard
           key={post.id}
           post={post}
-          onChanged={(next) => setItems((cur) => cur?.map((p) => (p.id === next.id ? next : p)) ?? null)}
+          onChanged={(next, meta) =>
+            setItems((cur) => {
+              if (!cur) return cur;
+              return meta?.soleLike ? applySoleLike(cur, next) : replaceFeedItem(cur, next);
+            })
+          }
         />
       ))}
     </div>

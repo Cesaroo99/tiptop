@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { maskPhone, parsePhone } from "../src/phone";
 import { canResendOtp, evaluateOtp } from "../src/otp";
-import { availableBalance, displayLikeRatio, likeProduction, pickUnitForLike, planHeartTransfer, planTransfer } from "../src/likes";
+import { availableBalance, displayLikeRatio, likeProduction, pickUnitForLike, pickUnitForTarget, planHeartTransfer, planTransfer } from "../src/likes";
 import { getLikePack, likeCreditAllowed, LIKE_PACKS, needsLikePurchase } from "../src/wallet";
 import { availabilityUntil, isCurrentlyAvailable } from "../src/availability";
 import {
@@ -165,7 +165,7 @@ describe("likes", () => {
     expect(plan.toEventId).toBe("e2");
   });
 
-  it("préfère une unité libre (achetée) avant de transférer", () => {
+  it("un like déjà posé se déplace — on n’en pose pas un second en parallèle", () => {
     const plan = pickUnitForLike(
       [
         { id: "busy", ownerId: "c", source: "free", activeAllocationUserId: "alice" },
@@ -174,8 +174,22 @@ describe("likes", () => {
       "sarah",
       "c",
     );
-    expect(plan.unitId).toBe("bought");
-    expect(plan.fromBeneficiaryId).toBeNull();
+    expect(plan.unitId).toBe("busy");
+    expect(plan.fromBeneficiaryId).toBe("alice");
+  });
+
+  it("un like sur une publication quitte la précédente", () => {
+    const plan = pickUnitForTarget(
+      [
+        { id: "busy", ownerId: "c", activeTargetKey: "post:p1" },
+        { id: "spare", ownerId: "c", activeTargetKey: null },
+      ],
+      "post:p2",
+      "c",
+    );
+    expect(plan.unitId).toBe("busy");
+    expect(plan.fromTargetKey).toBe("post:p1");
+    expect(plan.toTargetKey).toBe("post:p2");
   });
 
   it("transfère si plus d'unité libre", () => {

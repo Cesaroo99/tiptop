@@ -16,6 +16,7 @@ import { PostCard } from "@/components/PostCard";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
 import { Chip, EmptyState, ErrorBanner, IconButton, Modal, Skeleton } from "@/components/ui";
 import { api, ApiError, type FeedItem } from "@/lib/api";
+import { applySoleLike, replaceFeedItem } from "@/lib/like-feed";
 import { useI18n } from "@/lib/i18n";
 import { formatEventWhen } from "@/lib/time";
 
@@ -302,7 +303,20 @@ function ProfileView() {
           ) : (
             <div className="space-y-3">
               {profile.posts.map((p) => (
-                <PostCard key={p.id} post={p} />
+                <PostCard
+                  key={p.id}
+                  post={p}
+                  onChanged={(next, meta) =>
+                    setProfile((cur) =>
+                      cur
+                        ? {
+                            ...cur,
+                            posts: meta?.soleLike ? applySoleLike(cur.posts, next) : replaceFeedItem(cur.posts, next),
+                          }
+                        : cur,
+                    )
+                  }
+                />
               ))}
             </div>
           )
