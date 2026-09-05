@@ -321,11 +321,17 @@ export function CalendarPlusIcon({ size = 17, className }: IconProps) {
 }
 
 export function BroadcastIcon({ size = 17, className }: IconProps) {
+  return <InterestedIcon size={size} className={className} />;
+}
+
+/** Intéressé — point d’exclamation dans des cercles concentriques (maquette accueil). */
+export function InterestedIcon({ size = 17, className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <circle cx="12" cy="12" r="1.6" fill="currentColor" />
-      <path d="M8.2 8.2a5.4 5.4 0 0 0 0 7.6M15.8 8.2a5.4 5.4 0 0 1 0 7.6" />
-      <path d="M5.4 5.4a9.4 9.4 0 0 0 0 13.2M18.6 5.4a9.4 9.4 0 0 1 0 13.2" />
+      <circle cx="12" cy="12" r="8.6" />
+      <circle cx="12" cy="12" r="5.2" />
+      <path d="M12 8.4v3.8" />
+      <circle cx="12" cy="15.3" r="0.7" fill="currentColor" stroke="none" />
     </svg>
   );
 }

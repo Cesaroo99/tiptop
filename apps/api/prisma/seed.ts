@@ -955,6 +955,26 @@ async function enrichLivingWorld(
     });
   }
 
+  const allEvents = await db.event.findMany({
+    where: { status: "PUBLISHED" },
+    select: { id: true, hostId: true, title: true, description: true, imageUrl: true, city: true, zone: true },
+  });
+  for (const ev of allEvents) {
+    const linked = await db.post.findFirst({ where: { eventId: ev.id } });
+    if (linked) continue;
+    const body = ev.description?.trim() ? `${ev.title} : ${ev.description.trim()}` : ev.title;
+    await db.post.create({
+      data: {
+        authorId: ev.hostId,
+        body,
+        imageUrl: ev.imageUrl,
+        city: ev.city,
+        zone: ev.zone,
+        eventId: ev.id,
+      },
+    });
+  }
+
   const moodsWanted = [
     {
       authorId: koffi.id,

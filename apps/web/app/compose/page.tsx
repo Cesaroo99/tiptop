@@ -203,7 +203,7 @@ function Composer() {
             imageUrl: imageUrl || undefined,
           }),
         });
-        router.replace("/events");
+        router.replace("/");
       } else if (kind === "offer") {
         await api("/offers", {
           method: "POST",

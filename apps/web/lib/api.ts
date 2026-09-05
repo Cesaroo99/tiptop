@@ -239,6 +239,8 @@ export type FeedItem = {
     title: string;
     startsAt: string;
     minAge: number | null;
+    city?: string | null;
+    zone?: string | null;
     interestedCount: number;
     reservedCount: number;
     viewerInterested?: boolean;

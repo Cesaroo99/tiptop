@@ -9,12 +9,12 @@ import { formatCompactCount, formatCountdownLabel, formatRelative, splitPostLead
 import { ageCategoryLabel } from "@tiptop/domain";
 import { Avatar, CertifiedMark } from "./Avatar";
 import {
-  BroadcastIcon,
   CalendarPlusIcon,
   CommentIcon,
   FlagIcon,
   GlobeIcon,
   HeartIcon,
+  InterestedIcon,
   LinkIcon,
   MoreIcon,
   ShareIcon,
@@ -26,6 +26,36 @@ import { MapThumb } from "./MapThumb";
 import { OptionsSheet } from "./OptionsSheet";
 import { ReportModal } from "./ReportModal";
 import { IconButton, Modal } from "./ui";
+
+function ActionCircle({
+  href,
+  label,
+  onClick,
+  active,
+  children,
+}: {
+  href?: string;
+  label: string;
+  onClick?: () => void;
+  active?: boolean;
+  children: React.ReactNode;
+}) {
+  const cls = `tap-scale grid h-10 w-10 shrink-0 place-items-center rounded-full transition hover:brightness-95 ${
+    active ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
+  }`;
+  if (href) {
+    return (
+      <Link href={href} aria-label={label} className={cls}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" aria-label={label} onClick={onClick} className={cls}>
+      {children}
+    </button>
+  );
+}
 
 export function PostCard({
   post,
@@ -47,12 +77,15 @@ export function PostCard({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleted, setDeleted] = useState(false);
   const mine = user?.id === post.author.id;
-  const event = post.event;
+  const event = post.event ?? null;
+  const isEvent = Boolean(event);
   const countdown = event ? formatCountdownLabel(event.startsAt) : null;
   const liked = post.likeTime?.likedByMe ?? post.likedByMe ?? false;
   const interested = event?.viewerInterested ?? false;
   const { lead, rest } = splitPostLead(post.body);
-  const age = ageCategoryLabel(event?.minAge);
+  const age = isEvent ? ageCategoryLabel(event?.minAge) : null;
+  const mapCity = event?.city ?? post.city;
+  const mapZone = event?.zone ?? post.zone;
 
   async function like(confirmTransfer = false) {
     try {
@@ -104,12 +137,12 @@ export function PostCard({
     }
   }
 
-  function postUrl() {
-    return `${window.location.origin}${event ? `/events/${event.id}` : `/posts/${post.id}`}`;
+  function shareTarget() {
+    return `${window.location.origin}${isEvent && event ? `/events/${event.id}` : `/posts/${post.id}`}`;
   }
 
   async function share() {
-    const url = postUrl();
+    const url = shareTarget();
     try {
       if (navigator.share) await navigator.share({ title: "TipTop", url });
       else {
@@ -128,7 +161,7 @@ export function PostCard({
   }
 
   async function copyLink() {
-    await navigator.clipboard.writeText(postUrl());
+    await navigator.clipboard.writeText(shareTarget());
     setCopied(true);
     setTimeout(() => setCopied(false), 1600);
   }
@@ -168,12 +201,15 @@ export function PostCard({
   const stats = [
     `${formatCompactCount(post.commentsCount)} ${messages.social.comments}`,
     `${formatCompactCount(shares)} ${messages.social.shares}`,
-    event ? `${formatCompactCount(event.reservedCount)} ${messages.world.reservationsCount}` : null,
-    event ? `${formatCompactCount(event.interestedCount)} ${messages.world.interestedCount}` : null,
+    isEvent && event ? `${formatCompactCount(event.reservedCount)} ${messages.world.reservationsCount}` : null,
+    isEvent && event ? `${formatCompactCount(event.interestedCount)} ${messages.world.interestedCount}` : null,
   ].filter(Boolean);
 
   return (
-    <article className="overflow-hidden rounded-card bg-surface px-3.5 py-3.5 shadow-card">
+    <article
+      data-kind={isEvent ? "event" : "post"}
+      className="overflow-hidden rounded-card bg-surface px-3.5 py-3.5 shadow-card"
+    >
       <div className="flex items-start gap-2.5">
         <Link href={`/u/${post.author.username}`} className="shrink-0">
           <Avatar
@@ -185,20 +221,22 @@ export function PostCard({
           />
         </Link>
         <div className="min-w-0 flex-1 pt-0.5">
-          <Link href={`/u/${post.author.username}`} className="type-body-sm flex items-center gap-1 font-bold text-ink">
-            {post.author.firstName} {post.author.lastName}
+          <div className="flex items-center gap-1.5">
+            <Link href={`/u/${post.author.username}`} className="type-body-sm truncate font-bold text-ink">
+              {post.author.firstName} {post.author.lastName}
+            </Link>
             {post.author.certified ? <CertifiedMark /> : null}
-          </Link>
+            {age ? (
+              <span className="type-caption shrink-0 rounded-full bg-danger px-2 py-0.5 font-bold leading-none text-white">
+                {age}
+              </span>
+            ) : null}
+          </div>
           <p className="type-caption mt-0.5 flex items-center gap-1 text-muted">
             <GlobeIcon size={12} />
             <span>{relative}</span>
           </p>
         </div>
-        {age ? (
-          <span className="type-caption mt-1 shrink-0 rounded-full bg-danger px-2 py-0.5 font-bold text-white">
-            {age}
-          </span>
-        ) : null}
         <button
           type="button"
           aria-label={messages.social.share}
@@ -225,57 +263,57 @@ export function PostCard({
               post.body
             )}
           </p>
-          {post.imageUrl ? (
+          {post.imageUrl || isEvent ? (
             <div className="relative mt-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={post.imageUrl} alt="" className="h-56 w-full rounded-xl object-cover" />
-              {event ? (
-                <Link href={`/events/${event.id}`} className="absolute bottom-2 right-2 h-[4.25rem] w-[6.25rem]">
-                  <MapThumb city={post.city} zone={post.zone} className="h-full w-full" />
+              {post.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={post.imageUrl} alt="" className="h-56 w-full rounded-xl object-cover" />
+              ) : (
+                <div className="grid h-40 w-full place-items-center rounded-xl bg-gradient-to-br from-accent/15 to-yellow/20 type-body-sm text-accent">
+                  {event?.title ?? messages.world.sortie}
+                </div>
+              )}
+              {isEvent && event ? (
+                <Link
+                  href={`/events/${event.id}`}
+                  aria-label={messages.world.sortie}
+                  className="absolute bottom-2 right-2 h-[4.25rem] w-[6.25rem]"
+                >
+                  <MapThumb city={mapCity} zone={mapZone} className="h-full w-full" />
                 </Link>
               ) : null}
             </div>
           ) : null}
           <p className="type-caption mt-3 text-muted">{stats.join(" . ")}</p>
           <div className="mt-3 flex items-center gap-2">
-            <IconButton
+            <ActionCircle
               label={liked ? messages.social.likeHere : messages.social.likePlace}
-              tone={liked ? "accent" : "neutral"}
+              active={liked}
               onClick={() => void like(false)}
-              size={42}
             >
               <HeartIcon size={17} filled={liked} />
-            </IconButton>
-            <Link
-              href={`/posts/${post.id}`}
-              className="tap-scale grid h-[42px] w-[42px] place-items-center rounded-full bg-surface-sunken text-muted transition hover:brightness-95"
-              aria-label={messages.social.comments}
-            >
+            </ActionCircle>
+            <ActionCircle href={`/posts/${post.id}`} label={messages.social.comments}>
               <CommentIcon size={17} />
-            </Link>
-            {event ? (
+            </ActionCircle>
+            {isEvent && event ? (
               <>
-                <Link
-                  href={`/events/${event.id}/book`}
-                  className="tap-scale grid h-[42px] w-[42px] place-items-center rounded-full bg-surface-sunken text-muted transition hover:brightness-95"
-                  aria-label={messages.booking.reserve}
-                >
+                <ActionCircle href={`/events/${event.id}/book`} label={messages.booking.reserve}>
                   <CalendarPlusIcon size={17} />
-                </Link>
-                <IconButton
+                </ActionCircle>
+                <ActionCircle
                   label={interested ? messages.world.notInterested : messages.world.interested}
-                  tone={interested ? "accent" : "neutral"}
+                  active={interested}
                   onClick={() => void toggleInterested()}
-                  size={42}
                 >
-                  <BroadcastIcon size={17} />
-                </IconButton>
+                  <InterestedIcon size={17} />
+                </ActionCircle>
               </>
             ) : null}
-            {countdown ? (
-              <span className="ml-auto flex items-center gap-1.5">
+            {isEvent && countdown ? (
+              <span className="ml-auto flex min-w-0 items-center gap-1.5">
                 <span className="type-caption whitespace-nowrap text-muted">{messages.world.eventInLabel}</span>
-                <span className="type-caption rounded-full bg-yellow px-2.5 py-1 font-bold text-ink">{countdown}</span>
+                <span className="type-caption shrink-0 rounded-full bg-yellow px-2.5 py-1 font-bold text-ink">{countdown}</span>
               </span>
             ) : null}
           </div>

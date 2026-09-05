@@ -7,7 +7,7 @@ const MAX_BODY = 2000;
 
 const POST_INCLUDE = {
   author: { include: { profile: true } },
-  event: { select: { id: true, title: true, startsAt: true, minAge: true, participants: { select: { status: true, userId: true } } } },
+  event: { select: { id: true, title: true, startsAt: true, minAge: true, city: true, zone: true, participants: { select: { status: true, userId: true } } } },
   _count: { select: { comments: true } },
 } as const;
 
@@ -45,6 +45,8 @@ export class PostsService {
         title: string;
         startsAt: Date;
         minAge: number | null;
+        city?: string | null;
+        zone?: string | null;
         participants: Array<{ status: string; userId?: string }>;
       } | null;
     },
@@ -71,6 +73,8 @@ export class PostsService {
           title: p.event.title,
           startsAt: p.event.startsAt.toISOString(),
           minAge: p.event.minAge,
+          city: p.event.city ?? p.city,
+          zone: p.event.zone ?? p.zone,
           interestedCount: p.event.participants.filter((x) => x.status === "INTERESTED").length,
           reservedCount: p.event.participants.filter((x) =>
             ["RESERVED", "CONFIRMED", "PRESENT", "HOST"].includes(x.status),
@@ -157,6 +161,8 @@ export class PostsService {
         title: string;
         startsAt: Date;
         minAge: number | null;
+        city?: string | null;
+        zone?: string | null;
         participants: Array<{ status: string; userId?: string }>;
       } | null;
     }>,

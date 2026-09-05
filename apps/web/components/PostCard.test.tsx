@@ -45,8 +45,19 @@ const post: FeedItem = {
   },
 };
 
-describe("PostCard — maquette accueil", () => {
-  it("affiche header, stats et les 4 actions Like / Commentaire / Réservation / Intéressé", () => {
+const organic: FeedItem = {
+  ...post,
+  id: "p-organic",
+  body: "Match à Omnisports puis bières. Places limitées, on se parle.",
+  event: null,
+  commentsCount: 2,
+  sharesCount: 0,
+  likedByMe: false,
+  likeTime: { totalSeconds: 0, activeCount: 0, likedByMe: false, label: "0 s" },
+};
+
+describe("PostCard — publication vs événement", () => {
+  it("événement : âge, carte, 4 actions et countdown — jamais sur une simple publication", () => {
     render(
       <TestI18nProvider>
         <PostCard post={post} />
@@ -64,5 +75,25 @@ describe("PostCard — maquette accueil", () => {
     expect(screen.getByText("Événement dans :")).toBeInTheDocument();
     expect(screen.getByText("13min")).toBeInTheDocument();
     expect(screen.queryByText("Suivre")).not.toBeInTheDocument();
+    expect(document.querySelector("[data-kind=event]")).toBeTruthy();
+  });
+
+  it("publication : like + commentaire seulement, pas d’âge ni de timing d’événement", () => {
+    render(
+      <TestI18nProvider>
+        <PostCard post={organic} />
+      </TestI18nProvider>,
+    );
+    expect(screen.getByText("Match à Omnisports puis bières. Places limitées, on se parle.")).toBeInTheDocument();
+    expect(screen.getByText("2 Commentaires . 0 Partages")).toBeInTheDocument();
+    expect(screen.queryByText("-18")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Réserver")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Intéressé")).not.toBeInTheDocument();
+    expect(screen.queryByText("Événement dans :")).not.toBeInTheDocument();
+    expect(screen.queryByText("Réservations")).not.toBeInTheDocument();
+    expect(screen.queryByText("Intéressés")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Poser mon like")).toBeInTheDocument();
+    expect(screen.getByLabelText("Commentaires")).toHaveAttribute("href", "/posts/p-organic");
+    expect(document.querySelector("[data-kind=post]")).toBeTruthy();
   });
 });

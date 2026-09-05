@@ -68,10 +68,11 @@ export class EventsService {
         participants: { create: { userId: hostId, status: "HOST" } },
       },
     });
+    const description = (input.description ?? "").trim();
     await this.prisma.post.create({
       data: {
         authorId: hostId,
-        body: title,
+        body: description ? `${title} : ${description}` : title,
         imageUrl,
         city: event.city,
         zone: event.zone,
