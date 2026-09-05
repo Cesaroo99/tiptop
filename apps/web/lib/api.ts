@@ -116,6 +116,39 @@ export type MoodItem = {
   };
 };
 
+export type OfferItem = {
+  id: string;
+  kind: "PRODUCT" | "SERVICE";
+  sellerKind: "PERSON" | "SHOP" | "BUSINESS";
+  title: string;
+  description: string;
+  shopName: string | null;
+  priceXaf: number;
+  currency: string;
+  city: string;
+  zone: string | null;
+  placeName: string | null;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  placeLabel: string | null;
+  directionsUrl: string | null;
+  imageUrl: string | null;
+  status: string;
+  isMine: boolean;
+  distanceKm: number | null;
+  distanceLabel: string | null;
+  seller: {
+    id: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+    certified: boolean;
+    avatarUrl: string | null;
+    profession: string | null;
+  };
+};
+
 export type PersonCard = {
   id: string;
   username: string;

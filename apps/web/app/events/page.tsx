@@ -1,140 +1,42 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
-import { EventCard } from "@/components/EventCard";
 import { CalendarIcon, HeartIcon, PinIcon, PlusIcon, TicketIcon } from "@/components/Icons";
 import { CardSkeleton, Chip, EmptyState, ErrorBanner } from "@/components/ui";
-import { api, type EventCard as EventCardType } from "@/lib/api";
+import { api, type EventCard as EventCardType, type InvitationItem } from "@/lib/api";
 import { formatEventWhen } from "@/lib/time";
 import { useI18n } from "@/lib/i18n";
-import { useSession } from "@/lib/session";
 
 /**
- * Fil Événements des maquettes (TipTop2_14 / TipTop2_15) :
- * « Tous » = découverte locale, « Mes événements » = gestion.
+ * Events = espace de GESTION. La découverte des sorties se fait dans
+ * l'accueil. Ici : créés par moi, ceux auxquels je participe, invitations
+ * reçues, tickets et favoris.
  */
 export default function Page() {
   return (
     <AppShell>
-      <Suspense>
-        <EventsScreen />
-      </Suspense>
+      <EventsHub />
     </AppShell>
   );
 }
 
-function EventsScreen() {
-  const params = useSearchParams();
-  const tab = params.get("tab") === "mine" ? "mine" : "all";
+function EventsHub() {
   const { messages } = useI18n();
-
-  return (
-    <div className="px-4 py-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="type-h1 text-ink">{messages.nav.events}</h1>
-        <Link
-          href="/compose?type=event"
-          className="tap-scale type-button flex items-center gap-1.5 rounded-pill bg-accent px-4 py-2.5 text-on-primary shadow-sm transition hover:bg-accent-hover"
-        >
-          <PlusIcon size={15} />
-          {messages.world.createEvent}
-        </Link>
-      </div>
-      <div className="mb-4 flex gap-2">
-        <Link
-          href="/events"
-          className={`type-caption tap-scale rounded-pill px-4 py-2 font-semibold transition ${
-            tab === "all" ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
-          }`}
-        >
-          {messages.world.eventsAll}
-        </Link>
-        <Link
-          href="/events?tab=mine"
-          className={`type-caption tap-scale rounded-pill px-4 py-2 font-semibold transition ${
-            tab === "mine" ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
-          }`}
-        >
-          {messages.world.eventsMine}
-        </Link>
-      </div>
-      {tab === "all" ? <DiscoverEvents /> : <MineEvents />}
-    </div>
-  );
-}
-
-function DiscoverEvents() {
-  const { messages } = useI18n();
-  const { user } = useSession();
   const [items, setItems] = useState<EventCardType[] | null>(null);
+  const [invites, setInvites] = useState<InvitationItem[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
     setError(null);
     try {
-      const params = new URLSearchParams({ tab: "all" });
-      if (user?.city) params.set("city", user.city);
-      const data = await api<{ items: EventCardType[] }>(`/events?${params.toString()}`);
-      setItems(data.items);
-    } catch {
-      setError(messages.common.error);
-    }
-  }
-
-  useEffect(() => {
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.city]);
-
-  if (error) return <ErrorBanner message={error} onRetry={() => void load()} />;
-  if (items === null) {
-    return (
-      <div className="space-y-3">
-        <CardSkeleton />
-        <CardSkeleton />
-      </div>
-    );
-  }
-  if (items.length === 0) {
-    return (
-      <EmptyState
-        title={messages.world.eventsEmpty}
-        body={messages.world.eventsEmptyBody}
-        action={
-          <Link href="/compose?type=event" className="type-body-sm font-semibold text-accent">
-            {messages.world.createEvent}
-          </Link>
-        }
-      />
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {items.map((event) => (
-        <EventCard
-          key={event.id}
-          event={event}
-          onChanged={(next) => setItems((cur) => cur?.map((e) => (e.id === next.id ? next : e)) ?? cur)}
-        />
-      ))}
-    </div>
-  );
-}
-
-function MineEvents() {
-  const { messages } = useI18n();
-  const [items, setItems] = useState<EventCardType[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function load() {
-    setError(null);
-    try {
-      const data = await api<{ items: EventCardType[] }>("/events?tab=mine");
-      setItems(data.items);
+      const [events, invitationBox] = await Promise.all([
+        api<{ items: EventCardType[] }>("/events?tab=mine"),
+        api<{ items: InvitationItem[] }>("/invitations?box=received").catch(() => ({ items: [] as InvitationItem[] })),
+      ]);
+      setItems(events.items);
+      setInvites(invitationBox.items.filter((i) => i.status === "PENDING"));
     } catch {
       setError(messages.common.error);
     }
@@ -149,7 +51,18 @@ function MineEvents() {
   const attending = items?.filter((e) => !e.isHost) ?? [];
 
   return (
-    <>
+    <div className="px-4 py-4">
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="type-h1 text-ink">{messages.nav.events}</h1>
+        <Link
+          href="/compose?type=event"
+          className="tap-scale type-button flex items-center gap-1.5 rounded-pill bg-accent px-4 py-2.5 text-on-primary shadow-sm transition hover:bg-accent-hover"
+        >
+          <PlusIcon size={15} />
+          {messages.world.createEvent}
+        </Link>
+      </div>
+
       <div className="mb-5 grid grid-cols-3 gap-2">
         <Link href="/tickets" className="tap-scale flex flex-col items-center gap-1.5 rounded-card bg-surface p-3 text-center shadow-xs">
           <TicketIcon size={18} className="text-accent" />
@@ -173,13 +86,33 @@ function MineEvents() {
         </div>
       ) : null}
 
-      {items && items.length === 0 ? (
+      {invites.length > 0 ? (
+        <section className="mb-6">
+          <p className="type-heading mb-3 text-ink">{messages.world.inviteReceived}</p>
+          <div className="space-y-2">
+            {invites.map((inv) => (
+              <Link
+                key={inv.id}
+                href="/tickets?tab=invites"
+                className="tap-scale block rounded-card bg-surface px-4 py-3.5 shadow-xs"
+              >
+                <p className="type-body-sm font-semibold text-ink">{inv.event.title}</p>
+                <p className="type-caption mt-1 text-muted">
+                  {inv.inviter.firstName} {inv.inviter.lastName} · {inv.event.city}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {items && items.length === 0 && invites.length === 0 ? (
         <EmptyState
           title={messages.world.eventsEmpty}
           body={messages.world.eventsManageEmptyBody}
           action={
-            <Link href="/events" className="type-body-sm font-semibold text-accent">
-              {messages.world.eventsAll}
+            <Link href="/compose?type=event" className="type-body-sm font-semibold text-accent">
+              {messages.world.createEvent}
             </Link>
           }
         />
@@ -206,7 +139,7 @@ function MineEvents() {
           </div>
         </section>
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -237,7 +170,7 @@ function ManageEventCard({ event }: { event: EventCardType }) {
 
   return (
     <div className="overflow-hidden rounded-card bg-surface shadow-card transition hover:shadow-sm">
-      <Link href={`/events/${event.id}`} className="tap-scale block">
+      <Link href={primaryHref} className="tap-scale block">
         <div className="relative">
           {event.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element

@@ -36,6 +36,33 @@ export type Messages = {
     outNow: string;
     outNowEmpty: string;
     seeAll: string;
+    needHint: string;
+  };
+  need: {
+    title: string;
+    searchPlaceholder: string;
+    nearby: string;
+    cheapest: string;
+    allKinds: string;
+    product: string;
+    service: string;
+    empty: string;
+    emptyBody: string;
+    listOffer: string;
+    myOffers: string;
+    goThere: string;
+    seller: string;
+    createTitle: string;
+    titlePlaceholder: string;
+    pricePlaceholder: string;
+    shopName: string;
+    sellerPerson: string;
+    sellerShop: string;
+    sellerBusiness: string;
+    listed: string;
+    hide: string;
+    directions: string;
+    maxKm: string;
   };
   menu: {
     title: string;
@@ -49,6 +76,7 @@ export type Messages = {
     ranking: string;
     wishes: string;
     invitations: string;
+    offers: string;
     wallet: string;
     perHour: string;
     perDay: string;
@@ -368,6 +396,7 @@ export type Messages = {
     typePost: string;
     typeEvent: string;
     typeMood: string;
+    typeOffer: string;
     pickEvent: string;
     pickEventEmpty: string;
     pickPayer: string;
@@ -672,6 +701,33 @@ export const fr: Messages = {
     outNow: "Dehors maintenant",
     outNowEmpty: "Personne de dispo autour de toi. Déclare-toi disponible pour apparaître ici.",
     seeAll: "Voir",
+    needHint: "Pain, pressing, coiffeur…",
+  },
+  need: {
+    title: "Autour de moi",
+    searchPlaceholder: "Tu cherches quoi ?",
+    nearby: "Les plus proches",
+    cheapest: "Les moins chers",
+    allKinds: "Tout",
+    product: "Produit",
+    service: "Service",
+    empty: "Rien autour de toi pour ça",
+    emptyBody: "Change de mot, élargis la distance, ou publie l’offre si tu l’as.",
+    listOffer: "Publier une offre",
+    myOffers: "Mes offres",
+    goThere: "Y aller",
+    seller: "Proposé par",
+    createTitle: "Publier une offre",
+    titlePlaceholder: "Ex. Pain chaud, pressing, tresses",
+    pricePlaceholder: "Prix (FCFA)",
+    shopName: "Nom de la boutique (optionnel)",
+    sellerPerson: "Particulier",
+    sellerShop: "Boutique",
+    sellerBusiness: "Entreprise",
+    listed: "Offre publiée",
+    hide: "Retirer l’offre",
+    directions: "Itinéraire",
+    maxKm: "Max km",
   },
   menu: {
     title: "Menu",
@@ -685,6 +741,7 @@ export const fr: Messages = {
     ranking: "Classement",
     wishes: "Mes envies",
     invitations: "Mes rencontres",
+    offers: "Mes offres",
     wallet: "Mon like",
     perHour: "cette heure",
     perDay: "aujourd’hui",
@@ -1004,6 +1061,7 @@ export const fr: Messages = {
     typePost: "Publication",
     typeEvent: "Événement",
     typeMood: "Mood",
+    typeOffer: "Offre",
     pickEvent: "Choisir une sortie",
     pickEventEmpty: "Aucune sortie pertinente pour cette personne (zone, âge, places, date).",
     pickPayer: "Qui paie ?",
@@ -1308,6 +1366,33 @@ export const en: Messages = {
     outNow: "Out now",
     outNowEmpty: "Nobody available around you. Go available to show up here.",
     seeAll: "See all",
+    needHint: "Bread, laundry, haircut…",
+  },
+  need: {
+    title: "Around me",
+    searchPlaceholder: "What do you need?",
+    nearby: "Nearest",
+    cheapest: "Cheapest",
+    allKinds: "All",
+    product: "Product",
+    service: "Service",
+    empty: "Nothing around you for that",
+    emptyBody: "Try another word, widen the distance, or list it if you have it.",
+    listOffer: "List an offer",
+    myOffers: "My offers",
+    goThere: "Go there",
+    seller: "Offered by",
+    createTitle: "List an offer",
+    titlePlaceholder: "e.g. Fresh bread, laundry, braids",
+    pricePlaceholder: "Price (XAF)",
+    shopName: "Shop name (optional)",
+    sellerPerson: "Individual",
+    sellerShop: "Shop",
+    sellerBusiness: "Business",
+    listed: "Offer published",
+    hide: "Remove offer",
+    directions: "Directions",
+    maxKm: "Max km",
   },
   menu: {
     title: "Menu",
@@ -1321,6 +1406,7 @@ export const en: Messages = {
     ranking: "Ranking",
     wishes: "My wishes",
     invitations: "My meetups",
+    offers: "My offers",
     wallet: "My like",
     perHour: "this hour",
     perDay: "today",
@@ -1640,6 +1726,7 @@ export const en: Messages = {
     typePost: "Post",
     typeEvent: "Event",
     typeMood: "Mood",
+    typeOffer: "Offer",
     pickEvent: "Pick a meetup",
     pickEventEmpty: "No relevant meetup for this person (area, age, seats, date).",
     pickPayer: "Who pays?",

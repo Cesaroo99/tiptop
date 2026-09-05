@@ -5,7 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { EventCard } from "@/components/EventCard";
 import { PostCard } from "@/components/PostCard";
 import { Avatar } from "@/components/Avatar";
-import { PlusIcon } from "@/components/Icons";
+import { PlusIcon, SearchIcon } from "@/components/Icons";
 import { CardSkeleton, EmptyState, ErrorBanner } from "@/components/ui";
 import { api, type EventCard as EventCardType, type FeedItem, type MoodItem, type PersonCard } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -62,6 +62,16 @@ function HomeFeed() {
 
   return (
     <div className="space-y-5 px-4 py-4">
+      <Link
+        href="/need"
+        className="tap-scale flex items-center gap-3 rounded-xl bg-surface px-4 py-3.5 shadow-xs"
+      >
+        <SearchIcon size={18} className="text-accent" />
+        <div className="min-w-0">
+          <p className="type-heading text-ink">{messages.need.searchPlaceholder}</p>
+          <p className="type-caption truncate text-muted">{messages.home.needHint}</p>
+        </div>
+      </Link>
       <section>
         <div className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
           <Link href="/compose?type=mood" className="tap-scale flex w-[72px] shrink-0 flex-col items-center gap-1.5">
