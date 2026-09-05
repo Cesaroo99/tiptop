@@ -10,6 +10,7 @@ import { CardSkeleton, Chip, EmptyState, ErrorBanner } from "@/components/ui";
 import { api, type EventCard as EventCardType } from "@/lib/api";
 import { formatEventWhen } from "@/lib/time";
 import { useI18n } from "@/lib/i18n";
+import { useSession } from "@/lib/session";
 
 /**
  * Fil Événements des maquettes (TipTop2_14 / TipTop2_15) :
@@ -67,13 +68,16 @@ function EventsScreen() {
 
 function DiscoverEvents() {
   const { messages } = useI18n();
+  const { user } = useSession();
   const [items, setItems] = useState<EventCardType[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
     setError(null);
     try {
-      const data = await api<{ items: EventCardType[] }>("/events?tab=all");
+      const params = new URLSearchParams({ tab: "all" });
+      if (user?.city) params.set("city", user.city);
+      const data = await api<{ items: EventCardType[] }>(`/events?${params.toString()}`);
       setItems(data.items);
     } catch {
       setError(messages.common.error);
@@ -83,7 +87,7 @@ function DiscoverEvents() {
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.city]);
 
   if (error) return <ErrorBanner message={error} onRetry={() => void load()} />;
   if (items === null) {
