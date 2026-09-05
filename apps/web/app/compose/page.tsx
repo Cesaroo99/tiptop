@@ -6,7 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { AgeCategoryPicker } from "@/components/AgeCategoryPicker";
 import { CameraIcon, ImageIcon, PlayIcon } from "@/components/Icons";
 import { MoodPlacePicker, type PickedPlace } from "@/components/MoodPlacePicker";
-import { PrimaryButton, TextInput } from "@/components/ui";
+import { TextInput } from "@/components/ui";
 import { api, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -67,7 +67,7 @@ const MOOD_VIDEOS = [
 
 export default function ComposePage() {
   return (
-    <AppShell>
+    <AppShell chrome="nav">
       <Suspense>
         <Composer />
       </Suspense>
@@ -496,11 +496,6 @@ function Composer() {
         ) : null}
       </div>
       {error ? <p className="type-body-sm mt-3 text-danger">{error}</p> : null}
-      <div className="mt-6">
-        <PrimaryButton disabled={!canPublish} loading={loading} onClick={() => void publish()}>
-          {messages.social.publish}
-        </PrimaryButton>
-      </div>
     </div>
   );
 }

@@ -11,10 +11,13 @@ import { LikeMilestoneCelebration } from "./LikeMilestoneCelebration";
 export function AppShell({
   children,
   fullBleed = false,
+  chrome = "full",
 }: {
   children: React.ReactNode;
   /** Écran plein cadre sans header (ex. flux Mood vertical immersif). Nav en overlay. */
   fullBleed?: boolean;
+  /** `nav` : barre basse seulement — écrans de création (maquettes 21-22). */
+  chrome?: "full" | "nav";
 }) {
   const { user, loading } = useSession();
   const router = useRouter();
@@ -53,7 +56,7 @@ export function AppShell({
 
   return (
     <div className="relative flex h-full min-h-0 flex-col">
-      <AppHeader location={location} />
+      {chrome === "full" ? <AppHeader location={location} /> : <div className="phone-safe-top" />}
       <main className="min-h-0 flex-1 overflow-y-auto pb-24">{children}</main>
       <LikeMilestoneCelebration />
       <BottomNav />

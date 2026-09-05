@@ -76,18 +76,19 @@ function HomeFeed() {
               href={`/mood?start=${m.id}`}
               className="tap-scale flex w-[72px] shrink-0 flex-col items-center gap-1.5"
             >
-              <span className="mood-ring relative grid h-[72px] w-[72px] place-items-center rounded-full bg-gradient-to-br from-yellow to-accent p-[3px]">
-                {m.videoUrl ? (
-                  <video src={m.videoUrl} muted playsInline preload="metadata" className="h-full w-full rounded-full object-cover" />
-                ) : (
-                  <Avatar
-                    src={m.imageUrl || m.author.avatarUrl}
-                    firstName={m.author.firstName}
-                    lastName={m.author.lastName}
-                    size={66}
-                    className="overflow-hidden rounded-full"
-                  />
-                )}
+              <span className="mood-ring grid h-[72px] w-[72px] place-items-center rounded-full bg-gradient-to-br from-yellow to-accent p-[3px]">
+                <span className="block h-full w-full overflow-hidden rounded-full bg-surface">
+                  {m.videoUrl ? (
+                    <video src={m.videoUrl} muted playsInline preload="metadata" className="h-full w-full object-cover" />
+                  ) : (
+                    <Avatar
+                      src={m.imageUrl || m.author.avatarUrl}
+                      firstName={m.author.firstName}
+                      lastName={m.author.lastName}
+                      size={66}
+                    />
+                  )}
+                </span>
               </span>
               <span className="type-caption w-[72px] truncate text-center text-muted">{m.author.firstName}</span>
             </Link>
