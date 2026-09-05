@@ -57,7 +57,7 @@ export default function OtpPage() {
   }
 
   return (
-    <main className="mx-auto min-h-dvh max-w-md px-4 py-6">
+    <main className="mx-auto h-full max-w-md px-4 py-6">
       <ScreenHeader title={messages.auth.otpTitle} onBack={() => router.push("/login")} />
       <p className="type-body-sm px-2 text-muted">{messages.auth.otpSent.replace("{phone}", masked || phone)}</p>
       <form onSubmit={verify} className="mt-8 space-y-8 px-2">

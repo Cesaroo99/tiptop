@@ -6,7 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { AgeCategoryPicker } from "@/components/AgeCategoryPicker";
 import { CameraIcon, ImageIcon, PlayIcon } from "@/components/Icons";
 import { MoodPlacePicker, type PickedPlace } from "@/components/MoodPlacePicker";
-import { PrimaryButton, TextInput } from "@/components/ui";
+import { TextInput } from "@/components/ui";
 import { api, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -67,7 +67,7 @@ const MOOD_VIDEOS = [
 
 export default function ComposePage() {
   return (
-    <AppShell>
+    <AppShell chrome="nav">
       <Suspense>
         <Composer />
       </Suspense>
@@ -252,29 +252,36 @@ function Composer() {
 
   return (
     <div className="px-4 py-4">
-      <div className="mb-4 flex items-center justify-between">
-        <button type="button" onClick={() => router.back()} className="text-xl text-muted" aria-label={messages.common.close}>
+      <div className="mb-5 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="tap-scale grid h-10 w-10 place-items-center rounded-full bg-surface-sunken text-ink"
+          aria-label={messages.common.close}
+        >
           ×
         </button>
-        <p className="font-semibold">
+        <p className="type-heading text-ink">
           {kind === "event" ? messages.world.createEvent : kind === "mood" ? messages.world.moodCreate : messages.social.publication}
         </p>
         <button
           type="button"
           disabled={loading || !canPublish}
           onClick={() => void publish()}
-          className="rounded-pill bg-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+          className="tap-scale type-button rounded-pill bg-accent px-4 py-2 text-on-primary shadow-sm disabled:opacity-40"
         >
           {messages.social.publish}
         </button>
       </div>
-      <div className="mb-4 flex gap-2 text-sm">
+      <div className="mb-5 flex gap-2">
         {(["post", "event", "mood"] as const).map((k) => (
           <button
             key={k}
             type="button"
             onClick={() => setKind(k)}
-            className={`rounded-pill px-3 py-1.5 ${kind === k ? "bg-accent text-white" : "bg-[var(--border)]"}`}
+            className={`type-caption tap-scale rounded-pill px-4 py-2 font-semibold transition ${
+              kind === k ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
+            }`}
           >
             {k === "post" ? messages.world.typePost : k === "event" ? messages.world.typeEvent : messages.world.typeMood}
           </button>
@@ -302,7 +309,7 @@ function Composer() {
         value={body}
         onChange={(e) => setBody(e.target.value)}
         placeholder={kind === "event" ? messages.world.eventDescription : messages.social.saySomething}
-        className="mt-3 min-h-32 w-full rounded-2xl border border-[var(--border)] bg-surface p-4 text-ink"
+        className="type-body mt-3 min-h-32 w-full rounded-card border border-border bg-surface p-4 text-ink placeholder:text-subtle"
       />
       {kind === "mood" ? (
         <div className="mt-3 space-y-2">
@@ -316,7 +323,7 @@ function Composer() {
           <select
             value={visibility}
             onChange={(e) => setVisibility(e.target.value)}
-            className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-ink"
+            className="type-body rounded-xl border border-border bg-surface px-4 py-3.5 text-ink"
           >
             <option value="ZONE">{messages.world.visZone}</option>
             <option value="FOLLOWERS">{messages.world.visFollowers}</option>
@@ -326,7 +333,7 @@ function Composer() {
           <select
             value={eventId}
             onChange={(e) => setEventId(e.target.value)}
-            className="w-full rounded-2xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-ink"
+            className="type-body w-full rounded-xl border border-border bg-surface px-4 py-3.5 text-ink"
           >
             <option value="">{messages.world.moodLinkEventNone}</option>
             {myEvents.map((e) => (
@@ -340,7 +347,7 @@ function Composer() {
           <select
             value={companionId}
             onChange={(e) => setCompanionId(e.target.value)}
-            className="w-full rounded-2xl border border-[var(--border)] bg-[var(--bg)] px-4 py-3 text-ink"
+            className="type-body w-full rounded-xl border border-border bg-surface px-4 py-3.5 text-ink"
           >
             <option value="">{messages.world.moodCompanionNone}</option>
             {contacts.map((c) => (
@@ -350,7 +357,7 @@ function Composer() {
             ))}
           </select>
         ) : null}
-        <div className="rounded-2xl border border-dashed border-[var(--border)] p-3">
+        <div className="rounded-card border border-dashed border-border bg-surface p-3">
           <p className="type-label mb-2 text-subtle">{messages.world.moodAddVideo}</p>
           {videoPreviewUrl || videoUrl ? (
             <div className="relative overflow-hidden rounded-xl">
@@ -460,32 +467,35 @@ function Composer() {
           <TextInput value={zone} onChange={(e) => setZone(e.target.value)} placeholder="Zone" />
         </div>
       ) : null}
-      <div className="mt-4 space-y-3 border-t border-[var(--border)] pt-3">
+      <div className="mt-4 space-y-2 border-t border-divider pt-3">
         {kind !== "mood" || (!videoUrl && !videoFile) ? (
           <button
             type="button"
-            className="flex w-full items-center gap-2 py-2 text-left text-ink"
+            className="tap-scale flex w-full items-center gap-3 rounded-xl bg-surface px-4 py-3 text-left text-ink shadow-xs"
             onClick={() => {
               setImageUrl((v) => (v ? "" : "/seed/black-white.svg"));
               setVideoUrl("");
             }}
           >
-            <span>📷</span> {messages.social.addImage}
-            <span className="ml-auto text-xs text-muted">{imageUrl ? "✓" : messages.social.noImageHint}</span>
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-accent-soft text-accent">
+              <ImageIcon size={16} />
+            </span>
+            <span className="type-body-sm font-semibold">{messages.social.addImage}</span>
+            <span className="ml-auto type-caption text-muted">{imageUrl ? "✓" : messages.social.noImageHint}</span>
           </button>
         ) : null}
         {kind === "post" ? (
-          <button type="button" className="flex w-full items-center gap-2 py-2 text-left text-ink" onClick={() => setWithLoc((v) => !v)}>
-            <span>📍</span> {messages.social.addLocation}
+          <button
+            type="button"
+            className="tap-scale flex w-full items-center gap-3 rounded-xl bg-surface px-4 py-3 text-left text-ink shadow-xs"
+            onClick={() => setWithLoc((v) => !v)}
+          >
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-accent-soft text-accent">📍</span>
+            <span className="type-body-sm font-semibold">{messages.social.addLocation}</span>
           </button>
         ) : null}
       </div>
-      {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
-      <div className="mt-6 md:hidden">
-        <PrimaryButton disabled={!canPublish} loading={loading} onClick={() => void publish()}>
-          {messages.social.publish}
-        </PrimaryButton>
-      </div>
+      {error ? <p className="type-body-sm mt-3 text-danger">{error}</p> : null}
     </div>
   );
 }

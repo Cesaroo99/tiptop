@@ -18,6 +18,7 @@ export type Messages = {
     networkError: string;
     oauthSoon: string;
     oauthSoonBody: string;
+    oauthUsePhone: string;
   };
   nav: {
     home: string;
@@ -32,6 +33,9 @@ export type Messages = {
     emptyBody: string;
     retry: string;
     locationFallback: string;
+    outNow: string;
+    outNowEmpty: string;
+    seeAll: string;
   };
   menu: {
     title: string;
@@ -649,7 +653,8 @@ export const fr: Messages = {
     lockedOtp: "Trop de tentatives. Demande un nouveau code.",
     networkError: "Réseau indisponible. Réessaie.",
     oauthSoon: "Bientôt disponible",
-    oauthSoonBody: "La connexion sociale n’est pas encore active. Utilise ton numéro de téléphone.",
+    oauthSoonBody: "Google, Facebook et Apple arrivent. En attendant, ton numéro ouvre TipTop en quelques secondes.",
+    oauthUsePhone: "Continuer avec mon numéro",
   },
   nav: {
     home: "Home",
@@ -664,6 +669,9 @@ export const fr: Messages = {
     emptyBody: "Quand des personnes publient ou créent une sortie près de toi, ça apparaîtra ici.",
     retry: "Réessayer",
     locationFallback: "Choisir une zone",
+    outNow: "Dehors maintenant",
+    outNowEmpty: "Personne de dispo autour de toi. Déclare-toi disponible pour apparaître ici.",
+    seeAll: "Voir",
   },
   menu: {
     title: "Menu",
@@ -1281,7 +1289,8 @@ export const en: Messages = {
     lockedOtp: "Too many attempts. Request a new code.",
     networkError: "Network unavailable. Try again.",
     oauthSoon: "Coming soon",
-    oauthSoonBody: "Social login is not available yet. Use your phone number.",
+    oauthSoonBody: "Google, Facebook and Apple are coming. For now, your phone number opens TipTop in seconds.",
+    oauthUsePhone: "Continue with my number",
   },
   nav: {
     home: "Home",
@@ -1296,6 +1305,9 @@ export const en: Messages = {
     emptyBody: "When people post or create a meetup near you, it will show up here.",
     retry: "Retry",
     locationFallback: "Choose an area",
+    outNow: "Out now",
+    outNowEmpty: "Nobody available around you. Go available to show up here.",
+    seeAll: "See all",
   },
   menu: {
     title: "Menu",

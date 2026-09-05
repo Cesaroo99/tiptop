@@ -27,4 +27,14 @@ describe("Navigation (#49-50)", () => {
     );
     expect(screen.getAllByRole("link").length).toBeGreaterThanOrEqual(5);
   });
+
+  it("BottomNav reste visible dans le cadre téléphone (pas cachée dès md)", () => {
+    const { container } = render(
+      <TestI18nProvider>
+        <BottomNav />
+      </TestI18nProvider>,
+    );
+    expect(container.querySelector("nav")?.className).not.toContain("md:hidden");
+    expect(container.querySelector("nav")?.className).toContain("phone-nav");
+  });
 });

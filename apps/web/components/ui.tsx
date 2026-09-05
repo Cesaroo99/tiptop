@@ -1,7 +1,7 @@
 "use client";
 
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { ArrowLeftIcon, ChevronRightIcon, CloseIcon } from "./Icons";
 
@@ -225,17 +225,19 @@ export function Field({
   );
 }
 
-export function TextInput(
-  props: React.InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean },
-) {
+export const TextInput = forwardRef<
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement> & { invalid?: boolean }
+>(function TextInput(props, ref) {
   const { invalid, ...rest } = props;
   return (
     <input
       {...rest}
+      ref={ref}
       className={`type-body w-full rounded-xl border bg-surface px-4 py-3.5 text-ink transition placeholder:text-subtle focus:border-accent ${invalid ? "border-danger" : "border-border"} ${props.className ?? ""}`}
     />
   );
-}
+});
 
 export function EmptyState({
   title,
