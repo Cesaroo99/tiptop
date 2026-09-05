@@ -5,7 +5,8 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
-import { ClockIcon, FlagIcon, HeartIcon, PinIcon, SparklesIcon } from "@/components/Icons";
+import { ClockIcon, FlagIcon, HeartIcon, SparklesIcon } from "@/components/Icons";
+import { MoodPlaceChip, MoodPlaceSheet, moodPlaceFromItem } from "@/components/MoodPlace";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { ReportModal } from "@/components/ReportModal";
 import { SocialInviteModal } from "@/components/SocialInviteModal";
@@ -34,6 +35,7 @@ function MoodViewer() {
   const [buy, setBuy] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [placeOpen, setPlaceOpen] = useState(false);
 
   async function load() {
     try {
@@ -153,11 +155,10 @@ function MoodViewer() {
             </p>
           ) : null}
           <p className="type-body mt-2 text-ink">{mood.body}</p>
-          {mood.zone ? (
-            <p className="type-caption mt-1 inline-flex items-center gap-1 text-muted">
-              <PinIcon size={12} />
-              {mood.city} - {mood.zone}
-            </p>
+          {moodPlaceFromItem(mood) ? (
+            <div className="mt-2">
+              <MoodPlaceChip place={mood} onOpen={() => setPlaceOpen(true)} tone="surface" />
+            </div>
           ) : null}
           {mood.event ? (
             <Link href={`/events/${mood.event.id}`} className="type-body-sm mt-2 block font-semibold text-accent">
@@ -224,6 +225,7 @@ function MoodViewer() {
         />
       ) : null}
       <ReportModal open={reportOpen} kind="MOOD" moodId={id} onClose={() => setReportOpen(false)} />
+      <MoodPlaceSheet place={moodPlaceFromItem(mood)} open={placeOpen} onClose={() => setPlaceOpen(false)} />
     </div>
   );
 }

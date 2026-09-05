@@ -4,7 +4,16 @@ import { canResendOtp, evaluateOtp } from "../src/otp";
 import { availableBalance, displayLikeRatio, likeProduction, pickUnitForLike, planHeartTransfer, planTransfer } from "../src/likes";
 import { getLikePack, likeCreditAllowed, LIKE_PACKS, needsLikePurchase } from "../src/wallet";
 import { availabilityUntil, isCurrentlyAvailable } from "../src/availability";
-import { displayLocation, formatApproxDistance, roundDistanceKm } from "../src/location";
+import {
+  displayLocation,
+  formatApproxDistance,
+  mapsDirectionsUrl,
+  moodHasPlace,
+  moodPlaceLabel,
+  nearestZone,
+  roundDistanceKm,
+  validateMoodCoords,
+} from "../src/location";
 import {
   ageCategoryFromMinAge,
   ageCategoryLabel,
@@ -302,6 +311,28 @@ describe("localisation", () => {
   it("grise la carte hors EXACT", () => {
     expect(displayLocation({ precision: "ZONE", city: "Yaoundé", zone: "Bastos" }).mapGrayed).toBe(true);
     expect(displayLocation({ precision: "EXACT", city: "Yaoundé", zone: "Bastos" }).mapGrayed).toBe(false);
+  });
+
+  it("le lieu d’un Mood est optionnel et le libellé privilégie le nom", () => {
+    expect(moodHasPlace({})).toBe(false);
+    expect(moodPlaceLabel({})).toBeNull();
+    expect(moodHasPlace({ placeName: "Rooftop Bastos" })).toBe(true);
+    expect(moodPlaceLabel({ placeName: "Rooftop Bastos", address: "Rue 1.770, Bastos" })).toBe("Rooftop Bastos");
+    expect(moodPlaceLabel({ address: "Rue 1.770, Bastos, Yaoundé" })).toBe("Rue 1.770");
+    expect(moodPlaceLabel({ city: "Yaoundé", zone: "Bastos" })).toBe("Bastos · Yaoundé");
+  });
+
+  it("rejette des coordonnées incomplètes ou hors bornes", () => {
+    expect(validateMoodCoords(undefined, undefined)).toBeNull();
+    expect(() => validateMoodCoords(3.89, undefined)).toThrow("MOOD_COORDS_INCOMPLETE");
+    expect(() => validateMoodCoords(91, 11)).toThrow("MOOD_COORDS_INVALID");
+    expect(validateMoodCoords(3.89, 11.512)).toEqual({ latitude: 3.89, longitude: 11.512 });
+  });
+
+  it("construit un itinéraire carte et reconnaît la zone la plus proche", () => {
+    expect(mapsDirectionsUrl({ latitude: 3.89, longitude: 11.512 })).toContain("3.89,11.512");
+    expect(mapsDirectionsUrl({ address: "Bastos, Yaoundé" })).toContain(encodeURIComponent("Bastos, Yaoundé"));
+    expect(nearestZone(3.889, 11.511)?.zone).toBe("Bastos");
   });
 });
 

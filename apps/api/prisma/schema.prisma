@@ -638,6 +638,10 @@ model Mood {
   activity   String?
   city       String?
   zone       String?
+  placeName  String?
+  address    String?
+  latitude   Float?
+  longitude  Float?
   eventId    String?
   event      Event?         @relation(fields: [eventId], references: [id], onDelete: SetNull)
   companionId String?

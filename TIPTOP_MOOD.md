@@ -9,7 +9,8 @@ Mood = équivalent TipTop des stories, orienté vie réelle (« ce que je vis ma
 | `body` | Texte libre |
 | `imageUrl` | Photo (`/seed/` uniquement en démo) |
 | `activity` *(nouveau)* | Emoji + activité courte (« 🍣 Restaurant japonais »), 80 caractères max |
-| `city` / `zone` *(nouveau)* | Lieu, hérité du profil de l'auteur par défaut, éditable |
+| `city` / `zone` | Quartier, seulement si l'auteur a choisi d'ajouter un lieu |
+| `placeName` / `address` / `latitude` / `longitude` | Lieu optionnel façon TikTok : nom + adresse + coordonnées. **Absent si l'auteur ne le renseigne pas.** Saisie manuelle ou géolocalisation à la création. Le spectateur peut ouvrir la carte / l'itinéraire. |
 | `eventId` | Lien optionnel vers un événement |
 | `visibility` | `ZONE` / `FOLLOWERS` / `EVENT` |
 | `expiresAt` | Expiration automatique (1-24 h, `moodExpiresAt`) |
