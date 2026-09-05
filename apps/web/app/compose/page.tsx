@@ -81,8 +81,8 @@ function Composer() {
   const router = useRouter();
   const params = useSearchParams();
   const initial = params.get("type");
-  const [kind, setKind] = useState<"post" | "event" | "mood">(
-    initial === "event" || initial === "mood" ? initial : "post",
+  const [kind, setKind] = useState<"post" | "event" | "mood" | "offer">(
+    initial === "event" || initial === "mood" || initial === "offer" ? initial : "post",
   );
   const [body, setBody] = useState("");
   const [withLoc, setWithLoc] = useState(true);
@@ -111,6 +111,9 @@ function Composer() {
   const [companionId, setCompanionId] = useState("");
   const [contacts, setContacts] = useState<ContactItem[]>([]);
   const [place, setPlace] = useState<PickedPlace | null>(null);
+  const [shopName, setShopName] = useState("");
+  const [sellerKind, setSellerKind] = useState("PERSON");
+  const [offerKind, setOfferKind] = useState<"PRODUCT" | "SERVICE">("PRODUCT");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -201,6 +204,26 @@ function Composer() {
           }),
         });
         router.replace("/events");
+      } else if (kind === "offer") {
+        await api("/offers", {
+          method: "POST",
+          body: JSON.stringify({
+            title,
+            description: body,
+            kind: offerKind,
+            sellerKind,
+            shopName: shopName || undefined,
+            priceXaf: Number(priceXaf) || 0,
+            city: place?.city || city,
+            zone: place?.zone || zone,
+            placeName: place?.placeName || undefined,
+            address: place?.address || undefined,
+            latitude: place?.latitude ?? undefined,
+            longitude: place?.longitude ?? undefined,
+            imageUrl: imageUrl || undefined,
+          }),
+        });
+        router.replace("/need");
       } else {
         let finalVideoUrl = videoUrl;
         if (videoFile) {
@@ -248,7 +271,9 @@ function Composer() {
       ? Boolean(body.trim())
       : kind === "event"
         ? Boolean(title.trim() && startsAt)
-        : Boolean(body.trim() || imageUrl || videoUrl || videoFile || activity.trim());
+        : kind === "offer"
+          ? Boolean(title.trim())
+          : Boolean(body.trim() || imageUrl || videoUrl || videoFile || activity.trim());
 
   return (
     <div className="px-4 py-4">
@@ -262,7 +287,13 @@ function Composer() {
           ×
         </button>
         <p className="type-heading text-ink">
-          {kind === "event" ? messages.world.createEvent : kind === "mood" ? messages.world.moodCreate : messages.social.publication}
+          {kind === "event"
+            ? messages.world.createEvent
+            : kind === "mood"
+              ? messages.world.moodCreate
+              : kind === "offer"
+                ? messages.need.createTitle
+                : messages.social.publication}
         </p>
         <button
           type="button"
@@ -273,17 +304,23 @@ function Composer() {
           {messages.social.publish}
         </button>
       </div>
-      <div className="mb-5 flex gap-2">
-        {(["post", "event", "mood"] as const).map((k) => (
+      <div className="no-scrollbar mb-5 flex gap-2 overflow-x-auto">
+        {(["post", "event", "mood", "offer"] as const).map((k) => (
           <button
             key={k}
             type="button"
             onClick={() => setKind(k)}
-            className={`type-caption tap-scale rounded-pill px-4 py-2 font-semibold transition ${
+            className={`type-caption tap-scale shrink-0 rounded-pill px-4 py-2 font-semibold transition ${
               kind === k ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
             }`}
           >
-            {k === "post" ? messages.world.typePost : k === "event" ? messages.world.typeEvent : messages.world.typeMood}
+            {k === "post"
+              ? messages.world.typePost
+              : k === "event"
+                ? messages.world.typeEvent
+                : k === "mood"
+                  ? messages.world.typeMood
+                  : messages.world.typeOffer}
           </button>
         ))}
       </div>
@@ -305,10 +342,48 @@ function Composer() {
           </label>
         </div>
       ) : null}
+      {kind === "offer" ? (
+        <div className="space-y-3">
+          <TextInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder={messages.need.titlePlaceholder} />
+          <TextInput value={priceXaf} onChange={(e) => setPriceXaf(e.target.value)} type="number" min={0} placeholder={messages.need.pricePlaceholder} />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setOfferKind("PRODUCT")}
+              className={`type-caption tap-scale flex-1 rounded-pill px-3 py-2 font-semibold ${
+                offerKind === "PRODUCT" ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
+              }`}
+            >
+              {messages.need.product}
+            </button>
+            <button
+              type="button"
+              onClick={() => setOfferKind("SERVICE")}
+              className={`type-caption tap-scale flex-1 rounded-pill px-3 py-2 font-semibold ${
+                offerKind === "SERVICE" ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
+              }`}
+            >
+              {messages.need.service}
+            </button>
+          </div>
+          <select
+            value={sellerKind}
+            onChange={(e) => setSellerKind(e.target.value)}
+            className="type-body w-full rounded-xl border border-border bg-surface px-4 py-3.5 text-ink"
+          >
+            <option value="PERSON">{messages.need.sellerPerson}</option>
+            <option value="SHOP">{messages.need.sellerShop}</option>
+            <option value="BUSINESS">{messages.need.sellerBusiness}</option>
+          </select>
+          {sellerKind !== "PERSON" ? (
+            <TextInput value={shopName} onChange={(e) => setShopName(e.target.value)} placeholder={messages.need.shopName} />
+          ) : null}
+        </div>
+      ) : null}
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder={kind === "event" ? messages.world.eventDescription : messages.social.saySomething}
+        placeholder={kind === "event" || kind === "offer" ? messages.world.eventDescription : messages.social.saySomething}
         className="type-body mt-3 min-h-32 w-full rounded-card border border-border bg-surface p-4 text-ink placeholder:text-subtle"
       />
       {kind === "mood" ? (
@@ -457,7 +532,7 @@ function Composer() {
         </div>
         </div>
       ) : null}
-      {kind === "mood" ? (
+      {kind === "mood" || kind === "offer" ? (
         <div className="mt-3">
           <MoodPlacePicker value={place} onChange={setPlace} />
         </div>

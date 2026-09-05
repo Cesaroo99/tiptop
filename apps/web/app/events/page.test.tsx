@@ -2,13 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { TestI18nProvider } from "@/lib/test-utils";
 
-const search = { tab: "" };
-
 vi.mock("next/navigation", () => ({
   usePathname: () => "/events",
-  useSearchParams: () => ({
-    get: (key: string) => (key === "tab" ? search.tab : null),
-  }),
   useRouter: () => ({ replace: vi.fn(), push: vi.fn(), back: vi.fn() }),
 }));
 
@@ -33,22 +28,25 @@ vi.mock("@/lib/api", async () => {
   const actual = await vi.importActual<typeof import("@/lib/api")>("@/lib/api");
   return {
     ...actual,
-    api: vi.fn().mockResolvedValue({ items: [] }),
+    api: vi.fn().mockImplementation(async (path: string) => {
+      if (String(path).includes("/invitations")) return { items: [] };
+      return { items: [] };
+    }),
   };
 });
 
 import Page from "./page";
 
-describe("Écran Events — Tous / Mes événements", () => {
-  it("affiche les onglets de la maquette et le fil Découvrir par défaut", async () => {
-    search.tab = "";
+describe("Écran Events — gestion, pas un fil", () => {
+  it("ouvre le hub de gestion : tickets, invitations, mes sorties", async () => {
     render(
       <TestI18nProvider>
         <Page />
       </TestI18nProvider>,
     );
-    expect(screen.getByRole("link", { name: "Tous" })).toHaveAttribute("href", "/events");
-    expect(screen.getByRole("link", { name: "Mes événements" })).toHaveAttribute("href", "/events?tab=mine");
-    expect(await screen.findByText("Pas de sortie ici")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Tous" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Les Tickets" })).toHaveAttribute("href", "/tickets");
+    expect(screen.getByRole("link", { name: "Mes invitations" })).toHaveAttribute("href", "/tickets?tab=invites");
+    expect(await screen.findByText("Tu n'as encore créé ni rejoint aucun événement. Découvre-en dans le fil d'accueil, ou crée le tien.")).toBeInTheDocument();
   });
 });

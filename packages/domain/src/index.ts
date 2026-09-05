@@ -12,3 +12,4 @@ export * from "./payments";
 export * from "./chat";
 export * from "./admin";
 export * from "./reviews";
+export * from "./offers";

@@ -113,6 +113,7 @@ model User {
   adminAudits        AdminAudit[]
   pushPreference     PushPreference?
   eventReviews       EventReview[]
+  offers             Offer[]
 }
 
 model Profile {
@@ -810,6 +811,48 @@ model Message {
   reports        Report[]
 
   @@index([conversationId, createdAt])
+}
+
+enum OfferKind {
+  PRODUCT
+  SERVICE
+}
+
+enum OfferSellerKind {
+  PERSON
+  SHOP
+  BUSINESS
+}
+
+enum OfferStatus {
+  ACTIVE
+  HIDDEN
+}
+
+model Offer {
+  id          String          @id @default(cuid())
+  sellerId    String
+  seller      User            @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  kind        OfferKind
+  sellerKind  OfferSellerKind @default(PERSON)
+  title       String
+  description String          @default("")
+  shopName    String?
+  priceXaf    Int
+  currency    String          @default("XAF")
+  city        String
+  zone        String?
+  placeName   String?
+  address     String?
+  latitude    Float?
+  longitude   Float?
+  imageUrl    String?
+  status      OfferStatus     @default(ACTIVE)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([city, status])
+  @@index([kind, status])
 }
 
 model UserBlock {

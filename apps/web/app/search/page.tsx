@@ -45,9 +45,17 @@ type SearchResult = {
     city: string | null;
     author: { username: string; firstName: string; lastName: string };
   }>;
+  offers: Array<{
+    id: string;
+    title: string;
+    priceXaf: number;
+    city: string;
+    shopName: string | null;
+    seller: { username: string; firstName: string; lastName: string };
+  }>;
 };
 
-const filters = ["all", "people", "posts", "events", "wishes", "moods"] as const;
+const filters = ["all", "people", "posts", "events", "wishes", "moods", "offers"] as const;
 
 export default function SearchPage() {
   const { locale, messages } = useI18n();
@@ -73,6 +81,7 @@ export default function SearchPage() {
     events: messages.social.events,
     wishes: messages.social.wishesLabel,
     moods: messages.social.moodsLabel,
+    offers: messages.need.title,
   };
 
   const empty =
@@ -81,7 +90,8 @@ export default function SearchPage() {
     result.posts.length === 0 &&
     result.events.length === 0 &&
     result.wishes.length === 0 &&
-    result.moods.length === 0;
+    result.moods.length === 0 &&
+    result.offers.length === 0;
 
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-4 py-4">
@@ -147,6 +157,15 @@ export default function SearchPage() {
             <p className="text-sm font-semibold text-accent">{m.activity || m.body}</p>
             <p className="text-xs text-muted">
               {m.author.firstName} {m.author.lastName} {m.city ? `· ${m.city}` : ""}
+            </p>
+          </Link>
+        ))}
+        {result?.offers.map((o) => (
+          <Link key={o.id} href={`/need/${o.id}`} className="block rounded-card bg-surface p-4 shadow-card">
+            <p className="text-sm font-semibold text-accent">{o.title}</p>
+            <p className="text-xs text-muted">
+              {o.shopName || `${o.seller.firstName} ${o.seller.lastName}`} · {o.city}
+              {o.priceXaf > 0 ? ` · ${o.priceXaf} FCFA` : ""}
             </p>
           </Link>
         ))}

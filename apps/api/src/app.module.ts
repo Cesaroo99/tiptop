@@ -20,6 +20,7 @@ import { ChatModule } from "./chat/chat.module";
 import { AdminModule } from "./admin/admin.module";
 import { WishesModule } from "./wishes/wishes.module";
 import { SocialInvitesModule } from "./social-invites/social-invites.module";
+import { OffersModule } from "./offers/offers.module";
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { SocialInvitesModule } from "./social-invites/social-invites.module";
     AdminModule,
     WishesModule,
     SocialInvitesModule,
+    OffersModule,
   ],
   controllers: [HealthController],
 })

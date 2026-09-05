@@ -6,10 +6,10 @@ import { PrismaService } from "../prisma.service";
 export class SearchService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  async search(q: string, type: "all" | "people" | "posts" | "events" | "wishes" | "moods") {
+  async search(q: string, type: "all" | "people" | "posts" | "events" | "wishes" | "moods" | "offers") {
     const query = q.trim();
     if (!query) {
-      return { people: [], posts: [], events: [], wishes: [], moods: [] };
+      return { people: [], posts: [], events: [], wishes: [], moods: [], offers: [] };
     }
     const people =
       type !== "all" && type !== "people"
@@ -89,6 +89,22 @@ export class SearchService {
             orderBy: { createdAt: "desc" },
             include: { author: { select: { username: true, firstName: true, lastName: true } } },
           });
+    const offers =
+      type !== "all" && type !== "offers"
+        ? []
+        : await this.prisma.offer.findMany({
+            where: {
+              status: "ACTIVE",
+              OR: [
+                { title: { contains: query, mode: Prisma.QueryMode.insensitive } },
+                { description: { contains: query, mode: Prisma.QueryMode.insensitive } },
+                { shopName: { contains: query, mode: Prisma.QueryMode.insensitive } },
+              ],
+            },
+            take: 20,
+            orderBy: { priceXaf: "asc" },
+            include: { seller: { select: { username: true, firstName: true, lastName: true } } },
+          });
     return {
       people: people.map((u) => ({
         id: u.id,
@@ -126,6 +142,14 @@ export class SearchService {
         activity: m.activity,
         city: m.city,
         author: m.author,
+      })),
+      offers: offers.map((o) => ({
+        id: o.id,
+        title: o.title,
+        priceXaf: o.priceXaf,
+        city: o.city,
+        shopName: o.shopName,
+        seller: o.seller,
       })),
     };
   }

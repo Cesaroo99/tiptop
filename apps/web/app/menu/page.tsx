@@ -46,6 +46,7 @@ export default function MenuPage() {
       { href: "/tickets", label: messages.menu.tickets, fresh: true },
       { href: "/favorites", label: messages.menu.favorites, fresh: true },
       { href: "/contacts", label: messages.menu.contacts },
+      { href: "/need?mine=1", label: messages.menu.offers },
       { href: "/payments", label: messages.menu.payments },
     ],
     [
