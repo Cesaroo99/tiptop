@@ -419,6 +419,20 @@ export type Messages = {
     eventMoodsTitle: string;
     eventMoodsEmpty: string;
     seeEventFromMood: string;
+    moodAddPlace: string;
+    moodAddPlaceHint: string;
+    moodPlaceName: string;
+    moodPlaceAddress: string;
+    moodPlaceSearch: string;
+    moodUseMyLocation: string;
+    moodLocating: string;
+    moodLocationDenied: string;
+    moodLocationUnavailable: string;
+    moodLocationClear: string;
+    moodOpenMap: string;
+    moodDirections: string;
+    moodPlaceSheetTitle: string;
+    moodGeocodeEmpty: string;
   };
   booking: {
     reserve: string;
@@ -1037,6 +1051,20 @@ export const fr: Messages = {
     eventMoodsTitle: "Moods de cet événement",
     eventMoodsEmpty: "Aucun mood pour cet événement pour l’instant.",
     seeEventFromMood: "Voir l’événement",
+    moodAddPlace: "Ajouter un lieu",
+    moodAddPlaceHint: "Optionnel. Seulement si tu veux montrer où tu es — tu peux taper l’adresse ou te géolocaliser.",
+    moodPlaceName: "Nom du lieu",
+    moodPlaceAddress: "Adresse",
+    moodPlaceSearch: "Rechercher un lieu ou une adresse",
+    moodUseMyLocation: "Me géolocaliser",
+    moodLocating: "Localisation en cours…",
+    moodLocationDenied: "Localisation refusée. Tu peux saisir l’adresse à la main.",
+    moodLocationUnavailable: "Impossible de te localiser. Saisis l’adresse à la main.",
+    moodLocationClear: "Retirer le lieu",
+    moodOpenMap: "Voir sur la carte",
+    moodDirections: "Y aller",
+    moodPlaceSheetTitle: "Lieu",
+    moodGeocodeEmpty: "Aucun lieu trouvé. Tu peux quand même enregistrer cette adresse.",
   },
   booking: {
     reserve: "Réserver",
@@ -1655,6 +1683,20 @@ export const en: Messages = {
     eventMoodsTitle: "Moods from this event",
     eventMoodsEmpty: "No mood for this event yet.",
     seeEventFromMood: "See the event",
+    moodAddPlace: "Add a place",
+    moodAddPlaceHint: "Optional. Only if you want to show where you are — type an address or use your location.",
+    moodPlaceName: "Place name",
+    moodPlaceAddress: "Address",
+    moodPlaceSearch: "Search a place or address",
+    moodUseMyLocation: "Use my location",
+    moodLocating: "Finding you…",
+    moodLocationDenied: "Location denied. You can type the address instead.",
+    moodLocationUnavailable: "Could not find you. Type the address instead.",
+    moodLocationClear: "Remove place",
+    moodOpenMap: "See on the map",
+    moodDirections: "Directions",
+    moodPlaceSheetTitle: "Place",
+    moodGeocodeEmpty: "No place found. You can still save this address.",
   },
   booking: {
     reserve: "Book",

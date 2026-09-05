@@ -1,5 +1,5 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { isMoodActive, moodExpiresAt } from "@tiptop/domain";
+import { isMoodActive, moodExpiresAt, moodHasPlace, moodPlaceLabel, validateMoodCoords } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { LikesService } from "../likes/likes.service";
@@ -21,6 +21,10 @@ export class MoodsService {
       activity?: string;
       city?: string;
       zone?: string;
+      placeName?: string;
+      address?: string;
+      latitude?: number;
+      longitude?: number;
       eventId?: string;
       companionId?: string;
       visibility?: string;
@@ -58,7 +62,22 @@ export class MoodsService {
     }
     const visibility =
       input.visibility === "FOLLOWERS" || input.visibility === "EVENT" ? input.visibility : "ZONE";
-    const author = await this.prisma.user.findUnique({ where: { id: authorId }, include: { profile: true } });
+    let coords: { latitude: number; longitude: number } | null = null;
+    try {
+      coords = validateMoodCoords(input.latitude, input.longitude);
+    } catch {
+      throw new BadRequestException({ code: "MOOD_COORDS_INVALID" });
+    }
+    const placeName = input.placeName?.trim().slice(0, 120) || null;
+    const address = input.address?.trim().slice(0, 240) || null;
+    const explicitPlace = moodHasPlace({
+      placeName,
+      address,
+      city: input.city,
+      zone: input.zone,
+      latitude: coords?.latitude,
+      longitude: coords?.longitude,
+    });
     const mood = await this.prisma.mood.create({
       data: {
         authorId,
@@ -66,8 +85,12 @@ export class MoodsService {
         imageUrl,
         videoUrl,
         activity,
-        city: input.city ?? author?.profile?.city ?? null,
-        zone: input.zone ?? author?.profile?.zone ?? null,
+        city: explicitPlace ? input.city?.trim() || null : null,
+        zone: explicitPlace ? input.zone?.trim() || null : null,
+        placeName: explicitPlace ? placeName : null,
+        address: explicitPlace ? address : null,
+        latitude: explicitPlace ? coords?.latitude ?? null : null,
+        longitude: explicitPlace ? coords?.longitude ?? null : null,
         eventId: input.eventId || null,
         companionId,
         visibility,
@@ -211,6 +234,10 @@ export class MoodsService {
       activity: string | null;
       city: string | null;
       zone: string | null;
+      placeName: string | null;
+      address: string | null;
+      latitude: number | null;
+      longitude: number | null;
       expiresAt: Date;
       createdAt: Date;
       visibility: string;
@@ -249,6 +276,18 @@ export class MoodsService {
       activity: m.activity,
       city: m.city,
       zone: m.zone,
+      placeName: m.placeName,
+      address: m.address,
+      latitude: m.latitude,
+      longitude: m.longitude,
+      placeLabel: moodPlaceLabel({
+        placeName: m.placeName,
+        address: m.address,
+        city: m.city,
+        zone: m.zone,
+        latitude: m.latitude,
+        longitude: m.longitude,
+      }),
       visibility: m.visibility,
       expiresAt: m.expiresAt.toISOString(),
       createdAt: m.createdAt.toISOString(),

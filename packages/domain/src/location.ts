@@ -99,3 +99,82 @@ export function publicCoords(
   }
   return { latitude, longitude };
 }
+
+/** Lieu optionnel d'un Mood : l'auteur décide de le partager, jamais imposé. */
+export type MoodPlaceInput = {
+  placeName?: string | null;
+  address?: string | null;
+  city?: string | null;
+  zone?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+};
+
+export function moodHasPlace(place: MoodPlaceInput): boolean {
+  return Boolean(
+    place.placeName?.trim() ||
+      place.address?.trim() ||
+      (place.latitude != null && place.longitude != null) ||
+      place.zone?.trim() ||
+      place.city?.trim(),
+  );
+}
+
+/** Libellé court façon TikTok : nom du lieu, sinon premier segment d'adresse, sinon zone. */
+export function moodPlaceLabel(place: MoodPlaceInput): string | null {
+  const name = place.placeName?.trim();
+  if (name) return name;
+  const address = place.address?.trim();
+  if (address) return address.split(",")[0]?.trim() || address;
+  const cityZone = [place.zone, place.city].filter((v) => Boolean(v?.trim())).join(" · ");
+  return cityZone || null;
+}
+
+export function validateMoodCoords(
+  latitude?: number | null,
+  longitude?: number | null,
+): { latitude: number; longitude: number } | null {
+  const hasLat = latitude != null;
+  const hasLng = longitude != null;
+  if (!hasLat && !hasLng) return null;
+  if (!hasLat || !hasLng) throw new Error("MOOD_COORDS_INCOMPLETE");
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) throw new Error("MOOD_COORDS_INVALID");
+  if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    throw new Error("MOOD_COORDS_INVALID");
+  }
+  return { latitude, longitude };
+}
+
+export function mapsDirectionsUrl(place: MoodPlaceInput): string | null {
+  if (place.latitude != null && place.longitude != null) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${place.latitude},${place.longitude}`;
+  }
+  const q =
+    place.address?.trim() ||
+    place.placeName?.trim() ||
+    [place.zone, place.city].filter(Boolean).join(", ");
+  if (!q) return null;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q)}`;
+}
+
+export function osmBrowseUrl(place: MoodPlaceInput): string | null {
+  if (place.latitude != null && place.longitude != null) {
+    return `https://www.openstreetmap.org/?mlat=${place.latitude}&mlon=${place.longitude}#map=16/${place.latitude}/${place.longitude}`;
+  }
+  return null;
+}
+
+/** Zone catalogue la plus proche, si on est encore dans un rayon raisonnable. */
+export function nearestZone(
+  latitude: number,
+  longitude: number,
+  maxKm = 25,
+): ZoneCatalogEntry | undefined {
+  let best: { entry: ZoneCatalogEntry; km: number } | undefined;
+  for (const entry of YAOUNDE_ZONES) {
+    const km = haversineKm({ latitude, longitude }, entry);
+    if (!best || km < best.km) best = { entry, km };
+  }
+  if (!best || best.km > maxKm) return undefined;
+  return best.entry;
+}

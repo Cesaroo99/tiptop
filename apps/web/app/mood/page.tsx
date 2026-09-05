@@ -5,10 +5,11 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
-import { CameraIcon, ClockIcon, CommentIcon, FlagIcon, HeartIcon, PinIcon, ShareIcon, SparklesIcon } from "@/components/Icons";
+import { CameraIcon, ClockIcon, CommentIcon, FlagIcon, HeartIcon, ShareIcon, SparklesIcon } from "@/components/Icons";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { ReportModal } from "@/components/ReportModal";
 import { SocialInviteModal } from "@/components/SocialInviteModal";
+import { MoodPlaceChip, MoodPlaceSheet, moodPlaceFromItem } from "@/components/MoodPlace";
 import { EmptyState, Modal, Skeleton, TextInput } from "@/components/ui";
 import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -155,7 +156,9 @@ function MoodSlide({
   const [joinOpen, setJoinOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [placeOpen, setPlaceOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const place = moodPlaceFromItem(mood);
 
   const liked = mood.likeTime?.likedByMe ?? mood.likedByMe ?? false;
 
@@ -254,6 +257,11 @@ function MoodSlide({
       </div>
 
       <div className="absolute inset-x-0 bottom-[max(5.5rem,calc(5.5rem+env(safe-area-inset-bottom)))] px-4 pr-20 text-white md:bottom-6">
+        {place ? (
+          <div className="mb-2">
+            <MoodPlaceChip place={place} onOpen={() => setPlaceOpen(true)} />
+          </div>
+        ) : null}
         <div className="flex items-center gap-2.5">
           <Link href={`/u/${mood.author.username}`} className="flex items-center gap-2.5">
             <Avatar src={mood.author.avatarUrl} firstName={mood.author.firstName} lastName={mood.author.lastName} size="sm" ring="accent" />
@@ -278,12 +286,6 @@ function MoodSlide({
         ) : null}
         {mood.body ? <p className="type-body mt-2 line-clamp-3 drop-shadow">{mood.body}</p> : null}
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-          {mood.zone ? (
-            <span className="type-caption inline-flex items-center gap-1 opacity-90">
-              <PinIcon size={12} />
-              {mood.city} - {mood.zone}
-            </span>
-          ) : null}
           <span className="type-caption inline-flex items-center gap-1 opacity-90">
             <ClockIcon size={12} />
             {messages.world.availableUntil.replace("{time}", new Date(mood.expiresAt).toLocaleTimeString())}
@@ -325,6 +327,7 @@ function MoodSlide({
         onClose={() => setJoinOpen(false)}
       />
       <ReportModal open={reportOpen} kind="MOOD" moodId={mood.id} onClose={() => setReportOpen(false)} />
+      <MoodPlaceSheet place={place} open={placeOpen} onClose={() => setPlaceOpen(false)} />
       <MoodComments moodId={mood.id} open={commentsOpen} onClose={() => setCommentsOpen(false)} onSent={() => onChange({ commentsCount: mood.commentsCount + 1 })} />
     </section>
   );

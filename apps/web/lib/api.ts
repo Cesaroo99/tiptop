@@ -91,6 +91,11 @@ export type MoodItem = {
   activity: string | null;
   city: string | null;
   zone: string | null;
+  placeName?: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  placeLabel?: string | null;
   event: { id: string; title: string } | null;
   companion: {
     id: string;

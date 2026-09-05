@@ -1008,8 +1008,12 @@ async function enrichLivingWorld(
     body: string;
     videoUrl: string;
     activity: string;
-    city: string;
-    zone: string;
+    city?: string;
+    zone?: string;
+    placeName?: string;
+    address?: string;
+    latitude?: number;
+    longitude?: number;
     eventId?: string | null;
   }> = [
     {
@@ -1019,6 +1023,10 @@ async function enrichLivingWorld(
       activity: "🎵 Concert",
       city: "Yaoundé",
       zone: "Melen",
+      placeName: "Salle Live Melen",
+      address: "Carrefour Melen, Yaoundé, Cameroun",
+      latitude: 3.86,
+      longitude: 11.49,
       eventId: live.id,
     },
     {
@@ -1028,6 +1036,10 @@ async function enrichLivingWorld(
       activity: "🏖️ Piscine",
       city: "Yaoundé",
       zone: "Odza",
+      placeName: "Complexe aquatique Odza",
+      address: "Odza, Yaoundé, Cameroun",
+      latitude: 3.8,
+      longitude: 11.54,
       eventId: piscine.id,
     },
     {
@@ -1037,14 +1049,17 @@ async function enrichLivingWorld(
       activity: "🌆 Rooftop",
       city: "Yaoundé",
       zone: "Bastos",
+      placeName: "Rooftop Bastos",
+      address: "Rue 1.770, Bastos, Yaoundé, Cameroun",
+      latitude: 3.89,
+      longitude: 11.512,
     },
     {
       authorId: amina.id,
       body: "Petit plat qui sent trop bon 😋",
       videoUrl: "/seed/moods/video-food.mp4",
       activity: "🍽️ Restaurant",
-      city: "Yaoundé",
-      zone: "Bastos",
+      // Volontairement sans adresse : toutes les vidéos n'ont pas de lieu.
     },
   ];
   for (const m of videoMoodsWanted) {
@@ -1056,8 +1071,12 @@ async function enrichLivingWorld(
           body: m.body,
           videoUrl: m.videoUrl,
           activity: m.activity,
-          city: m.city,
-          zone: m.zone,
+          city: m.city ?? null,
+          zone: m.zone ?? null,
+          placeName: m.placeName ?? null,
+          address: m.address ?? null,
+          latitude: m.latitude ?? null,
+          longitude: m.longitude ?? null,
           eventId: m.eventId ?? null,
           visibility: "ZONE",
           expiresAt: new Date(Date.now() + 18 * 3600_000),
@@ -1066,7 +1085,15 @@ async function enrichLivingWorld(
     } else {
       await db.mood.update({
         where: { id: exists.id },
-        data: { expiresAt: new Date(Date.now() + 18 * 3600_000) },
+        data: {
+          city: m.city ?? exists.city,
+          zone: m.zone ?? exists.zone,
+          placeName: m.placeName ?? exists.placeName,
+          address: m.address ?? exists.address,
+          latitude: m.latitude ?? exists.latitude,
+          longitude: m.longitude ?? exists.longitude,
+          expiresAt: new Date(Date.now() + 18 * 3600_000),
+        },
       });
     }
   }

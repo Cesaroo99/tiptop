@@ -5,14 +5,23 @@ import { ZONE_COORDS } from "@/lib/time";
 export function MapThumb({
   city,
   zone,
+  lat,
+  lng,
   className = "",
 }: {
   city?: string | null;
   zone?: string | null;
+  lat?: number | null;
+  lng?: number | null;
   className?: string;
 }) {
-  const point = (zone && ZONE_COORDS[zone]) || ZONE_COORDS["Carrefour Damas"];
-  const src = `https://staticmap.openstreetmap.de/staticmap.php?center=${point.lat},${point.lng}&zoom=14&size=240x180&maptype=mapnik`;
+  const fromZone = (zone && ZONE_COORDS[zone]) || null;
+  const point =
+    lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng)
+      ? { lat, lng }
+      : fromZone || ZONE_COORDS["Carrefour Damas"];
+  const zoom = lat != null && lng != null ? 16 : 14;
+  const src = `https://staticmap.openstreetmap.de/staticmap.php?center=${point.lat},${point.lng}&zoom=${zoom}&size=240x180&maptype=mapnik`;
   return (
     <div className={`overflow-hidden rounded-xl border-[3px] border-yellow shadow-sm ${className}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}

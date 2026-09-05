@@ -5,6 +5,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { AgeCategoryPicker } from "@/components/AgeCategoryPicker";
 import { CameraIcon, ImageIcon, PlayIcon } from "@/components/Icons";
+import { MoodPlacePicker, type PickedPlace } from "@/components/MoodPlacePicker";
 import { PrimaryButton, TextInput } from "@/components/ui";
 import { api, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -109,6 +110,7 @@ function Composer() {
   const [myEvents, setMyEvents] = useState<EventCardType[]>([]);
   const [companionId, setCompanionId] = useState("");
   const [contacts, setContacts] = useState<ContactItem[]>([]);
+  const [place, setPlace] = useState<PickedPlace | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -222,8 +224,12 @@ function Composer() {
             activity: activity || undefined,
             hours: Number(hours) || 12,
             visibility,
-            city: withLoc ? city : undefined,
-            zone: withLoc ? zone : undefined,
+            city: place?.city || undefined,
+            zone: place?.zone || undefined,
+            placeName: place?.placeName || undefined,
+            address: place?.address || undefined,
+            latitude: place?.latitude ?? undefined,
+            longitude: place?.longitude ?? undefined,
             eventId: eventId || undefined,
             companionId: companionId || undefined,
           }),
@@ -444,7 +450,11 @@ function Composer() {
         </div>
         </div>
       ) : null}
-      {kind !== "mood" || withLoc ? (
+      {kind === "mood" ? (
+        <div className="mt-3">
+          <MoodPlacePicker value={place} onChange={setPlace} />
+        </div>
+      ) : kind !== "post" || withLoc ? (
         <div className="mt-3 grid grid-cols-2 gap-2">
           <TextInput value={city} onChange={(e) => setCity(e.target.value)} placeholder="Ville" />
           <TextInput value={zone} onChange={(e) => setZone(e.target.value)} placeholder="Zone" />
