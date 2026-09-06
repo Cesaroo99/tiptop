@@ -151,6 +151,17 @@ async function migrateWithRetry(prismaBin) {
       return;
     } catch (err) {
       console.error("[render] migrate retry", i + 1, err);
+      // 20240906220000 ADD COLUMN sans IF NOT EXISTS : si les colonnes
+      // existent déjà, Prisma bloque toute la file. On la marque appliquée.
+      try {
+        await runOnce(
+          prismaBin,
+          ["migrate", "resolve", "--applied", "20240906220000_event_place_coords"],
+          apiDir,
+        );
+      } catch {
+        /* déjà résolue ou absente */
+      }
       await new Promise((r) => setTimeout(r, 3000));
     }
   }
@@ -176,10 +187,17 @@ async function boot() {
   } catch (err) {
     console.error("[render] migrate échoué, on continue avec ensure-schema", err);
   }
+  const ensureSql = resolve(apiDir, "prisma/ensure-schema.sql");
   try {
-    await runOnce(process.execPath, [resolve(root, "scripts/ensure-schema.mjs")]);
+    console.log("[render] ensure-schema.sql");
+    await runOnce(prismaBin, ["db", "execute", "--file", ensureSql], apiDir);
   } catch (err) {
-    console.error("[render] ensure-schema", err);
+    console.error("[render] prisma db execute", err);
+    try {
+      await runOnce(process.execPath, [resolve(root, "scripts/ensure-schema.mjs")]);
+    } catch (err2) {
+      console.error("[render] ensure-schema.mjs", err2);
+    }
   }
 
   run(tsxBin, ["src/main.ts"], { API_PORT: String(apiPort), PORT: String(apiPort) }, apiDir);
@@ -187,9 +205,18 @@ async function boot() {
   apiReady = true;
   console.log("[render] API prête");
 
-  void runOnce(tsxBin, ["prisma/seed.ts"], apiDir)
-    .then(() => console.log("[render] seed complet OK"))
-    .catch((err) => console.error("[render] seed complet ignoré :", err));
+  void (async () => {
+    for (let i = 0; i < 3; i += 1) {
+      try {
+        await runOnce(tsxBin, ["prisma/seed.ts"], apiDir);
+        console.log("[render] seed complet OK");
+        return;
+      } catch (err) {
+        console.error("[render] seed retry", i + 1, err);
+        await new Promise((r) => setTimeout(r, 4000));
+      }
+    }
+  })();
 
   run(
     "node",

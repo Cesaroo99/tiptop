@@ -170,14 +170,19 @@ export class EventsService {
             startsAt: { gt: now },
             ...(city ? { city } : {}),
           };
-    const rows = await this.prisma.event.findMany({
-      where,
-      orderBy: { startsAt: "asc" },
-      take: tab === "all" ? 80 : 40,
-      include: this.include(),
-    });
-    const items = await Promise.all(rows.map((e) => this.map(viewerId, e)));
-    return { items: tab === "all" ? dedupeSeriesOccurrences(items) : items };
+    try {
+      const rows = await this.prisma.event.findMany({
+        where,
+        orderBy: { startsAt: "asc" },
+        take: tab === "all" ? 80 : 40,
+        include: this.include(),
+      });
+      const items = await Promise.all(rows.map((e) => this.map(viewerId, e)));
+      return { items: tab === "all" ? dedupeSeriesOccurrences(items) : items };
+    } catch (err) {
+      console.error("[events.list]", err);
+      return { items: [] };
+    }
   }
 
   async get(viewerId: string, id: string) {

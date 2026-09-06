@@ -562,9 +562,21 @@ async function main() {
     });
   }
 
-  await enrichLivingWorld(prisma, { cesar, erica, mbelle, availableUntil });
-  await enrichMassCatalog(prisma, { availableUntil });
-  await enrichWorldCatalog(prisma);
+  try {
+    await enrichLivingWorld(prisma, { cesar, erica, mbelle, availableUntil });
+  } catch (err) {
+    console.error("[seed] living world", err);
+  }
+  try {
+    await enrichMassCatalog(prisma, { availableUntil });
+  } catch (err) {
+    console.error("[seed] mass catalog", err);
+  }
+  try {
+    await enrichWorldCatalog(prisma);
+  } catch (err) {
+    console.error("[seed] world catalog", err);
+  }
 
   console.log("Seed OK — OTP mock 1234, démo César admin +237 695 21 47 85");
 }
