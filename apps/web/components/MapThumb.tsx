@@ -4,6 +4,15 @@ import { cityCoords } from "@tiptop/domain";
 import { ZONE_COORDS } from "@/lib/time";
 import { PinIcon } from "./Icons";
 
+function lon2tile(lon: number, zoom: number) {
+  return Math.floor(((lon + 180) / 360) * 2 ** zoom);
+}
+
+function lat2tile(lat: number, zoom: number) {
+  const rad = (lat * Math.PI) / 180;
+  return Math.floor(((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2) * 2 ** zoom);
+}
+
 export function MapThumb({
   city,
   zone,
@@ -23,21 +32,21 @@ export function MapThumb({
       ? { lat, lng }
       : fromZone || cityCoords(city) || ZONE_COORDS["Carrefour Damas"];
   const zoom = lat != null && lng != null ? 16 : 14;
-  const src = `https://staticmap.openstreetmap.de/staticmap.php?center=${point.lat},${point.lng}&zoom=${zoom}&size=240x180&maptype=mapnik`;
+  const tile = `https://tile.openstreetmap.org/${zoom}/${lon2tile(point.lng, zoom)}/${lat2tile(point.lat, zoom)}.png`;
   return (
     <div className={`relative overflow-hidden rounded-xl border-[3px] border-yellow bg-accent-soft shadow-sm ${className}`}>
-      <span className="pointer-events-none absolute inset-0 grid place-items-center text-accent">
-        <PinIcon size={18} />
-      </span>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={src}
+        src={tile}
         alt={zone ? `${city ?? ""} ${zone}` : city ?? ""}
-        className="relative z-[1] h-full w-full object-cover"
+        className="h-full w-full object-cover"
         onError={(e) => {
           e.currentTarget.style.display = "none";
         }}
       />
+      <span className="pointer-events-none absolute inset-0 grid place-items-center text-accent drop-shadow-sm">
+        <PinIcon size={18} />
+      </span>
     </div>
   );
 }

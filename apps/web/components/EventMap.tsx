@@ -25,6 +25,7 @@ export function EventMap({
   address,
   latitude,
   longitude,
+  compact = false,
   className = "",
 }: {
   city?: string | null;
@@ -33,6 +34,7 @@ export function EventMap({
   address?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  compact?: boolean;
   className?: string;
 }) {
   const { messages } = useI18n();
@@ -54,7 +56,7 @@ export function EventMap({
         <iframe
           title={label || messages.world.moodOpenMap}
           src={osmEmbedUrl(point.lat, point.lng)}
-          className="h-48 w-full border-0"
+          className={`${compact ? "h-28" : "h-48"} w-full border-0`}
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
         />
