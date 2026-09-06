@@ -53,14 +53,14 @@ test.describe("Amies — cartes, distance, profil", () => {
     await expect(page.getByRole("button", { name: "Mis de côté", exact: true })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Ajouter comme amie" })).toBeVisible();
 
-    const heading = page.getByRole("heading", { level: 2 });
-    const name = (await heading.innerText()).trim();
+    const nameEl = page.locator("article h2 .type-h2");
+    const name = (await nameEl.innerText()).replace(/\s+/g, " ").trim();
     await page.getByRole("button", { name: "Ajouter comme amie" }).click();
     await expect(page.getByRole("button", { name: "Déjà amie" })).toBeVisible();
-    await expect(heading).toHaveText(name);
+    await expect(nameEl).toHaveText(name);
     await page.getByRole("button", { name: "Passer" }).click();
     await page.getByRole("button", { name: "Précédent" }).click();
-    await expect(heading).toHaveText(name);
+    await expect(nameEl).toHaveText(name);
     await expect(page.getByRole("button", { name: "Déjà amie" })).toBeVisible();
 
     const token = await fetchSessionToken();
