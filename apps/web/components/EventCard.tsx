@@ -13,7 +13,7 @@ import { FlagIcon, HeartIcon, InterestedIcon, LinkIcon, MoreIcon, ShareIcon } fr
 import { BookEventSheet } from "./BookEventSheet";
 import { EventPlaceLine } from "./EventPlaceLine";
 import { MapThumb } from "./MapThumb";
-import { SeatsLeftBadge, seatsLeftLabel, seatsRemainingOf } from "./SeatsLeftBadge";
+import { SeatsLeftBadge, seatsRemainingOf } from "./SeatsLeftBadge";
 import { OptionsSheet } from "./OptionsSheet";
 import { ReportModal } from "./ReportModal";
 import { IconButton, Modal } from "./ui";
@@ -97,7 +97,6 @@ export function EventCard({
   );
   const interactive = canInteractWithEvent(lifecycle.phase);
   const remaining = seatsRemainingOf(event.capacity, event.reservedCount ?? event.taken, event.remaining);
-  const seatsLabel = seatsLeftLabel(remaining, messages.world);
   const seriesLabel = recurrenceCaption(event.recurrence, messages.world);
   const eventFull = remaining != null && remaining <= 0;
   const showGuestCtas = !event.isHost && interactive && !event.wanted;
@@ -153,21 +152,19 @@ export function EventCard({
             {messages.world.sortie}
           </div>
         )}
-        <div className="absolute inset-x-3 top-3 flex items-center justify-between gap-2">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="type-caption rounded-pill bg-surface/90 px-3 py-1.5 font-bold text-ink backdrop-blur-sm">
-              {messages.world.sortie}
+        <div className="absolute left-2 top-2 flex flex-col items-start gap-1.5">
+          <SeatsLeftBadge remaining={remaining} />
+          {seriesLabel ? (
+            <span className="type-caption rounded-pill bg-accent px-3 py-1.5 font-bold text-on-primary">
+              {seriesLabel}
             </span>
-            {seriesLabel ? (
-              <span className="type-caption rounded-pill bg-accent px-3 py-1.5 font-bold text-on-primary">
-                {seriesLabel}
-              </span>
-            ) : null}
-          </div>
-          <div className="flex items-center gap-1.5">
-            <SeatsLeftBadge remaining={remaining} />
-            {phaseBadge}
-          </div>
+          ) : null}
+        </div>
+        <div className="absolute right-2 top-2 flex items-center gap-1.5">
+          <span className="type-caption rounded-pill bg-surface/90 px-3 py-1.5 font-bold text-ink backdrop-blur-sm">
+            {messages.world.sortie}
+          </span>
+          {phaseBadge}
         </div>
         <div className="absolute bottom-2 right-2 h-16 w-24 overflow-hidden rounded-md ring-2 ring-white/70">
           <MapThumb city={event.city} zone={event.zone} lat={event.latitude} lng={event.longitude} className="h-full w-full" />
@@ -219,11 +216,6 @@ export function EventCard({
           {" · "}
           {event.interestedCount ?? 0} {messages.world.interestedCount} · {event.hearts} {messages.world.heartEvent.toLowerCase()}
         </p>
-        {seatsLabel ? (
-          <p className="type-body-sm mt-1.5 font-extrabold text-ink">
-            <SeatsLeftBadge remaining={remaining} />
-          </p>
-        ) : null}
         {socialProofLabel ? (
           <p className="type-caption mt-1.5 font-medium text-accent">{socialProofLabel}</p>
         ) : null}

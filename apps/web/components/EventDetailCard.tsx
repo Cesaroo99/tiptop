@@ -318,7 +318,7 @@ export function EventDetailCard({
       ) : null}
 
       <div className="mt-3 flex items-center gap-2">
-        {event.isHost ? (
+        {hostView && event.isHost && !event.viewerTicketId ? (
           <Link
             href={`/events/${event.id}/scan`}
             className="tap-scale type-caption inline-flex items-center gap-2 rounded-pill border-2 border-accent px-3.5 py-2 font-bold uppercase tracking-wide text-accent"

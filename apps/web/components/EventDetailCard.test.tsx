@@ -117,13 +117,25 @@ describe("EventDetailCard", () => {
     expect(screen.queryByText("Valider ticket")).not.toBeInTheDocument();
   });
 
-  it("organisateur : le scanner est proposé", () => {
+  it("acheteur : aucun bouton Valider ticket, même sur la fiche", () => {
+    render(
+      <TestI18nProvider>
+        <EventDetailCard
+          event={{ ...baseEvent, isHost: false, viewerReserved: true, viewerTicketId: "t1", canBook: true }}
+        />
+      </TestI18nProvider>,
+    );
+    expect(screen.queryByText("Valider ticket")).not.toBeInTheDocument();
+    expect(screen.getByText("Voir le ticket")).toBeInTheDocument();
+  });
+
+  it("organisateur sur la fiche publique : pas de scanner — seulement Gérer / manage", () => {
     render(
       <TestI18nProvider>
         <EventDetailCard event={{ ...baseEvent, isHost: true, canBook: false }} />
       </TestI18nProvider>,
     );
-    expect(screen.getByRole("link", { name: /Valider ticket/i })).toHaveAttribute("href", "/events/evt_1/scan");
+    expect(screen.queryByText("Valider ticket")).not.toBeInTheDocument();
   });
 
   it("déjà réservé : Réserver pour un autre + prochaines dates de série", () => {

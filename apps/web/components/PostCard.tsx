@@ -29,7 +29,7 @@ import { EventPlaceLine } from "./EventPlaceLine";
 import { LikeTimeBadge } from "./LikeTimeBadge";
 import { LikeDialogs, likeErrorKind } from "./LikeDialogs";
 import { MapThumb } from "./MapThumb";
-import { SeatsLeftBadge, seatsLeftLabel, seatsRemainingOf } from "./SeatsLeftBadge";
+import { SeatsLeftBadge, seatsRemainingOf } from "./SeatsLeftBadge";
 import { OptionsSheet } from "./OptionsSheet";
 import { ReportModal } from "./ReportModal";
 import { IconButton, Modal } from "./ui";
@@ -233,7 +233,6 @@ export function PostCard({
     `${formatCompactCount(post.commentsCount)} ${messages.social.comments}`,
     `${formatCompactCount(shares)} ${messages.social.shares}`,
     isEvent && event ? `${formatCompactCount(event.reservedCount)} ${messages.world.reservationsCount}` : null,
-    isEvent && event ? seatsLeftLabel(remaining, messages.world) : null,
     isEvent && event ? `${formatCompactCount(event.interestedCount)} ${messages.world.interestedCount}` : null,
   ].filter(Boolean);
 
