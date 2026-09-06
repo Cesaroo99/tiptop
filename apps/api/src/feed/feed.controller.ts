@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Req, UseGuards } from "@nestjs/common";
+import { Controller, Get, Inject, Query, Req, UseGuards } from "@nestjs/common";
 import type { Request } from "express";
 import { SessionGuard } from "../auth/session.guard";
 import type { PublicUser } from "../auth/auth.service";
@@ -10,7 +10,18 @@ export class FeedController {
   constructor(@Inject(FeedService) private readonly feed: FeedService) {}
 
   @Get()
-  list(@Req() req: Request & { user: PublicUser }) {
-    return this.feed.list(req.user.id);
+  list(
+    @Req() req: Request & { user: PublicUser },
+    @Query("cursor") cursor?: string,
+    @Query("exclude") exclude?: string,
+  ) {
+    const excludeIds = exclude
+      ? exclude
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean)
+          .slice(0, 80)
+      : [];
+    return this.feed.list(req.user.id, { cursor, excludeIds });
   }
 }

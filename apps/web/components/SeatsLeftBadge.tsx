@@ -27,10 +27,11 @@ export function SeatsLeftBadge({
   const label = seatsLeftLabel(remaining, messages.world);
   if (!label) return null;
   const full = remaining != null && remaining <= 0;
+  const low = remaining != null && remaining > 0 && remaining <= 5;
   return (
     <span
-      className={`type-caption rounded-pill px-2.5 py-1 font-bold shadow-sm ${
-        full ? "bg-danger text-white" : remaining != null && remaining <= 5 ? "bg-yellow text-ink" : "bg-accent text-on-primary"
+      className={`type-body-sm rounded-pill px-3 py-1.5 font-extrabold tracking-tight shadow-md ring-2 ring-white ${
+        full ? "bg-danger text-white" : low ? "bg-yellow text-ink" : "bg-ink text-white"
       } ${className}`}
     >
       {label}

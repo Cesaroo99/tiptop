@@ -9,8 +9,9 @@ import { useMoney } from "@/lib/money";
 import { recurrenceCaption } from "@/lib/event-series";
 import { eventCountdown, formatEventWhen, formatRelative } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
-import { FlagIcon, HeartIcon, InterestedIcon, LinkIcon, MoreIcon, PinIcon, ShareIcon } from "./Icons";
+import { FlagIcon, HeartIcon, InterestedIcon, LinkIcon, MoreIcon, ShareIcon } from "./Icons";
 import { BookEventSheet } from "./BookEventSheet";
+import { EventPlaceLine } from "./EventPlaceLine";
 import { MapThumb } from "./MapThumb";
 import { SeatsLeftBadge, seatsLeftLabel, seatsRemainingOf } from "./SeatsLeftBadge";
 import { OptionsSheet } from "./OptionsSheet";
@@ -198,14 +199,16 @@ export function EventCard({
         <p className="type-body-sm mt-3 inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 text-ink">
           <span className="font-semibold">{formatEventWhen(event.startsAt, locale)}</span>
           <span className="text-muted">·</span>
-          <span className="inline-flex items-center gap-1 text-muted">
-            <PinIcon size={13} />
-            {event.city}
-            {event.zone ? ` - ${event.zone}` : ""}
-          </span>
-          <span className="text-muted">·</span>
           <span className={price === messages.world.free ? "font-semibold text-success" : "font-semibold text-ink"}>{price}</span>
         </p>
+        <EventPlaceLine
+          city={event.city}
+          zone={event.zone}
+          venue={event.venue}
+          address={event.address}
+          latitude={event.latitude}
+          longitude={event.longitude}
+        />
         {event.paymentRule === "PAY_REQUIRED" && event.priceXaf > 0 ? (
           <p className="type-caption mt-1 font-semibold text-accent">{messages.world.paymentRequired}</p>
         ) : event.paymentRule === "PAY_FIRST" && event.priceXaf > 0 ? (
@@ -213,10 +216,14 @@ export function EventCard({
         ) : null}
         <p className="type-caption mt-2 text-muted">
           {event.reservedCount ?? event.taken} {messages.world.reservationsCount}
-          {seatsLabel ? ` · ${seatsLabel}` : ""}
           {" · "}
           {event.interestedCount ?? 0} {messages.world.interestedCount} · {event.hearts} {messages.world.heartEvent.toLowerCase()}
         </p>
+        {seatsLabel ? (
+          <p className="type-body-sm mt-1.5 font-extrabold text-ink">
+            <SeatsLeftBadge remaining={remaining} />
+          </p>
+        ) : null}
         {socialProofLabel ? (
           <p className="type-caption mt-1.5 font-medium text-accent">{socialProofLabel}</p>
         ) : null}

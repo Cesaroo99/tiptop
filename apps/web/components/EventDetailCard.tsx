@@ -10,7 +10,7 @@ import { useSession } from "@/lib/session";
 import { recurrenceCaption } from "@/lib/event-series";
 import { formatCompactCount, formatCountdownLabel, formatEventWhen, formatFcfa, formatRelative, splitPostLead } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
-import { EventMap } from "./EventMap";
+import { EventMap, resolveEventPoint } from "./EventMap";
 import { BookEventSheet } from "./BookEventSheet";
 import { CommentThread } from "./CommentThread";
 import {
@@ -29,7 +29,7 @@ import {
 import { MapThumb } from "./MapThumb";
 import { OptionsSheet } from "./OptionsSheet";
 import { ReportModal } from "./ReportModal";
-import { seatsRemainingOf } from "./SeatsLeftBadge";
+import { SeatsLeftBadge, seatsRemainingOf } from "./SeatsLeftBadge";
 import { IconButton, Modal, TextInput } from "./ui";
 
 export function EventDetailCard({
@@ -125,13 +125,19 @@ export function EventDetailCard({
         ? formatFcfa(event.priceXaf)
         : messages.world.paid.replace("{amount}", formatFcfa(event.priceXaf))
       : messages.world.free;
+  const point = resolveEventPoint({
+    city: event.city,
+    zone: event.zone,
+    latitude: event.latitude,
+    longitude: event.longitude,
+  });
   const mapsUrl = mapsDirectionsUrl({
     city: event.city,
     zone: event.zone,
     placeName: event.venue,
     address: event.address,
-    latitude: event.latitude,
-    longitude: event.longitude,
+    latitude: point?.lat ?? event.latitude,
+    longitude: point?.lng ?? event.longitude,
   });
   const stats = hostView
     ? [
@@ -221,11 +227,14 @@ export function EventDetailCard({
             {event.title}
           </div>
         )}
-        {seriesLabel ? (
-          <span className="type-caption absolute left-2 top-2 rounded-pill bg-accent px-2.5 py-1 font-bold text-on-primary shadow-sm">
-            {seriesLabel}
-          </span>
-        ) : null}
+        <div className="absolute left-2 top-2 flex flex-col items-start gap-1.5">
+          <SeatsLeftBadge remaining={seatsRemainingOf(event.capacity, event.reservedCount ?? event.taken, event.remaining)} />
+          {seriesLabel ? (
+            <span className="type-caption rounded-pill bg-accent px-2.5 py-1 font-bold text-on-primary shadow-sm">
+              {seriesLabel}
+            </span>
+          ) : null}
+        </div>
         <span className="type-caption absolute right-2 top-2 rounded-lg bg-accent px-2.5 py-1 font-bold text-white shadow-sm">
           {priceLabel}
         </span>
@@ -254,6 +263,16 @@ export function EventDetailCard({
         latitude={event.latitude}
         longitude={event.longitude}
       />
+      {mapsUrl ? (
+        <a
+          href={mapsUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="tap-scale mt-3 flex h-12 items-center justify-center rounded-full bg-accent px-4 font-bold text-on-primary shadow-sm"
+        >
+          {messages.world.goThere}
+        </a>
+      ) : null}
 
       <p className="type-caption mt-3 text-muted">{stats.join(" · ")}</p>
       {socialProofLabel ? <p className="type-caption mt-1.5 font-medium text-accent">{socialProofLabel}</p> : null}

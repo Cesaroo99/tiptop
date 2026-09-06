@@ -8,6 +8,7 @@ import { viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { Avatar } from "./Avatar";
 import { HeartIcon } from "./Icons";
+import { useLiveLikeLabel } from "./LikeTimeBadge";
 
 export function FeedMoodCard({
   mood,
@@ -20,6 +21,9 @@ export function FeedMoodCard({
   const { placement, ready, refresh } = useLikePlacement();
   const [busy, setBusy] = useState(false);
   const liked = viewerLikeActive(placement, "mood", mood.id, Boolean(mood.likedByMe), ready);
+  const [loadedAt] = useState(() => Date.now());
+  const vie = useLiveLikeLabel(mood.likeTime, loadedAt);
+  const showVie = (mood.likeTime?.totalSeconds ?? 0) > 0 || (mood.likeTime?.activeCount ?? 0) > 0;
 
   async function like() {
     if (busy) return;
@@ -66,21 +70,24 @@ export function FeedMoodCard({
               <p className="type-caption mt-1 line-clamp-2 text-white/85">{mood.activity || mood.body}</p>
             ) : null}
           </div>
-          <button
-            type="button"
-            disabled={busy}
-            aria-label={liked ? messages.social.likeHere : messages.social.likePlace}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              void like();
-            }}
-            className={`tap-scale grid h-10 w-10 shrink-0 place-items-center rounded-full ${
-              liked ? "bg-accent text-on-primary" : "bg-white/20 text-white"
-            }`}
-          >
-            <HeartIcon size={18} filled={liked} />
-          </button>
+          <div className="flex shrink-0 flex-col items-center">
+            <button
+              type="button"
+              disabled={busy}
+              aria-label={liked ? messages.social.likeHere : messages.social.likePlace}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                void like();
+              }}
+              className={`tap-scale grid h-10 w-10 place-items-center rounded-full ${
+                liked ? "bg-accent text-on-primary" : "bg-white/20 text-white"
+              }`}
+            >
+              <HeartIcon size={18} filled={liked} />
+            </button>
+            {showVie ? <p className="type-caption mt-1 max-w-[4.5rem] text-center font-semibold text-white">{vie}</p> : null}
+          </div>
         </div>
       </Link>
     </article>

@@ -11,7 +11,7 @@ import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { SocialInviteModal } from "@/components/SocialInviteModal";
 import { Chip, EmptyState, ErrorBanner, Skeleton } from "@/components/ui";
 import { api, ApiError, type PersonCard } from "@/lib/api";
-import { useViewerGeo } from "@/lib/geo";
+import { useViewerLocation } from "@/lib/viewer-location";
 import { useI18n } from "@/lib/i18n";
 import { viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
@@ -46,7 +46,7 @@ function PeopleCarousel() {
   const { messages } = useI18n();
   const { user } = useSession();
   const { placement, ready, refresh: refreshPlacement } = useLikePlacement();
-  const { coords, status: geoStatus, retry: retryGeo } = useViewerGeo();
+  const { origin: coords, status: geoStatus, mode: locationMode, retry: retryGeo } = useViewerLocation(user ?? undefined);
   const [items, setItems] = useState<PersonCard[] | null>(null);
   const [circle, setCircle] = useState<Circle>("NEARBY");
   const [index, setIndex] = useState(0);
@@ -428,10 +428,13 @@ function PeopleCarousel() {
             <p className="type-caption inline-flex max-w-full items-center justify-center gap-1.5 text-muted">
               <RouteIcon size={13} />
               <span className="truncate">
-                {distanceText ?? (geoStatus === "idle" ? messages.world.locating : messages.world.approximate)}
+                {distanceText ??
+                  (geoStatus === "idle" && locationMode === "CURRENT"
+                    ? messages.world.locating
+                    : messages.world.approximate)}
               </span>
             </p>
-            {geoStatus === "denied" || geoStatus === "unsupported" ? (
+            {locationMode === "CURRENT" && (geoStatus === "denied" || geoStatus === "unsupported") ? (
               <button type="button" onClick={retryGeo} className="type-caption font-semibold text-accent">
                 {messages.world.retryGeo}
               </button>

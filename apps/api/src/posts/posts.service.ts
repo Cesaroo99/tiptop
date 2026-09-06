@@ -16,6 +16,10 @@ const POST_INCLUDE = {
       minAge: true,
       city: true,
       zone: true,
+      venue: true,
+      address: true,
+      latitude: true,
+      longitude: true,
       capacity: true,
       requiresReservation: true,
       priceXaf: true,
@@ -64,6 +68,10 @@ export class PostsService {
         minAge: number | null;
         city?: string | null;
         zone?: string | null;
+        venue?: string | null;
+        address?: string | null;
+        latitude?: number | null;
+        longitude?: number | null;
         capacity?: number | null;
         requiresReservation?: boolean;
         priceXaf?: number;
@@ -105,6 +113,10 @@ export class PostsService {
           minAge: p.event.minAge,
           city: p.event.city ?? p.city,
           zone: p.event.zone ?? p.zone,
+          venue: p.event.venue ?? null,
+          address: p.event.address ?? null,
+          latitude: p.event.latitude ?? null,
+          longitude: p.event.longitude ?? null,
           capacity: p.event.capacity ?? null,
           remaining,
           interestedCount: p.event.participants.filter((x) => x.status === "INTERESTED").length,
@@ -197,6 +209,10 @@ export class PostsService {
         minAge: number | null;
         city?: string | null;
         zone?: string | null;
+        venue?: string | null;
+        address?: string | null;
+        latitude?: number | null;
+        longitude?: number | null;
         capacity?: number | null;
         requiresReservation?: boolean;
         priceXaf?: number;

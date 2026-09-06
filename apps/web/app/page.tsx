@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PostCard } from "@/components/PostCard";
 import { EventCard } from "@/components/EventCard";
@@ -10,11 +10,28 @@ import { Avatar } from "@/components/Avatar";
 import { PlusIcon } from "@/components/Icons";
 import { CardSkeleton, EmptyState, ErrorBanner } from "@/components/ui";
 import { api, ApiError, type EventCard as EventCardType, type FeedItem, type MoodItem, type PersonCard } from "@/lib/api";
-import { mixHomeFeed } from "@/lib/feed-mix";
+import { mixHomeFeed, type MixedFeedEntry } from "@/lib/feed-mix";
+import {
+  captureFeedScroll,
+  readFeedCache,
+  rebuildStream,
+  restoreFeedScroll,
+  writeFeedCache,
+} from "@/lib/feed-session";
 import { applySoleLike, releaseViewerLike, replaceFeedItem } from "@/lib/like-feed";
 import { useI18n } from "@/lib/i18n";
 import { useLikePlacement } from "@/lib/like-placement";
 import Link from "next/link";
+
+type FeedResponse = {
+  items: FeedItem[];
+  events?: EventCardType[];
+  moods: MoodItem[];
+  reels?: MoodItem[];
+  people?: PersonCard[];
+  nextCursor?: string | null;
+  hasMore?: boolean;
+};
 
 export default function HomePage() {
   return (
@@ -27,28 +44,75 @@ export default function HomePage() {
 function HomeFeed() {
   const { messages } = useI18n();
   const { placement, ready } = useLikePlacement();
-  const [items, setItems] = useState<FeedItem[] | null>(null);
-  const [events, setEvents] = useState<EventCardType[]>([]);
-  const [people, setPeople] = useState<PersonCard[]>([]);
-  const [reels, setReels] = useState<MoodItem[]>([]);
-  const [moods, setMoods] = useState<MoodItem[]>([]);
+  const cached = typeof window !== "undefined" ? readFeedCache() : null;
+  const [items, setItems] = useState<FeedItem[] | null>(cached?.items ?? null);
+  const [events, setEvents] = useState<EventCardType[]>(cached?.events ?? []);
+  const [people, setPeople] = useState<PersonCard[]>(cached?.people ?? []);
+  const [reels, setReels] = useState<MoodItem[]>(cached?.reels ?? []);
+  const [moods, setMoods] = useState<MoodItem[]>(cached?.moods ?? []);
+  const [stream, setStream] = useState<MixedFeedEntry[]>(cached ? rebuildStream(cached) : []);
+  const [nextCursor, setNextCursor] = useState<string | null>(cached?.nextCursor ?? null);
+  const [hasMore, setHasMore] = useState(cached?.hasMore ?? true);
   const [error, setError] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinel = useRef<HTMLDivElement>(null);
+  const restored = useRef(Boolean(cached));
 
-  async function load() {
+  const persist = useCallback(
+    (next: {
+      items: FeedItem[];
+      events: EventCardType[];
+      people: PersonCard[];
+      reels: MoodItem[];
+      moods: MoodItem[];
+      stream: MixedFeedEntry[];
+      nextCursor: string | null;
+      hasMore: boolean;
+    }) => {
+      writeFeedCache({
+        items: next.items,
+        events: next.events,
+        people: next.people,
+        reels: next.reels,
+        moods: next.moods,
+        order: next.stream.map((row) => ({ kind: row.kind, id: row.id })),
+        nextCursor: next.nextCursor,
+        hasMore: next.hasMore,
+        scrollTop: captureFeedScroll(),
+        at: Date.now(),
+      });
+    },
+    [],
+  );
+
+  async function loadFirst() {
     setError(null);
     try {
-      const data = await api<{
-        items: FeedItem[];
-        events?: EventCardType[];
-        moods: MoodItem[];
-        reels?: MoodItem[];
-        people?: PersonCard[];
-      }>("/feed");
+      const data = await api<FeedResponse>("/feed");
+      const mixed = mixHomeFeed({
+        posts: data.items,
+        events: data.events ?? [],
+        people: data.people ?? [],
+        moods: data.reels ?? [],
+      });
       setItems(data.items);
       setEvents(data.events ?? []);
       setMoods(data.moods ?? []);
       setReels(data.reels ?? []);
       setPeople(data.people ?? []);
+      setStream(mixed);
+      setNextCursor(data.nextCursor ?? null);
+      setHasMore(Boolean(data.hasMore));
+      persist({
+        items: data.items,
+        events: data.events ?? [],
+        people: data.people ?? [],
+        reels: data.reels ?? [],
+        moods: data.moods ?? [],
+        stream: mixed,
+        nextCursor: data.nextCursor ?? null,
+        hasMore: Boolean(data.hasMore),
+      });
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         setError(messages.auth.connect);
@@ -57,14 +121,77 @@ function HomeFeed() {
       } else {
         setError(messages.auth.networkError);
       }
-      setItems([]);
+      if (!items) setItems([]);
+    }
+  }
+
+  async function loadMore() {
+    if (loadingMore || !hasMore || !items?.length) return;
+    setLoadingMore(true);
+    try {
+      const exclude = items.map((p) => p.id).join(",");
+      const params = new URLSearchParams();
+      if (nextCursor) params.set("cursor", nextCursor);
+      if (exclude) params.set("exclude", exclude);
+      const data = await api<FeedResponse>(`/feed?${params.toString()}`);
+      if (!data.items.length) {
+        setHasMore(false);
+        return;
+      }
+      const extra = mixHomeFeed({
+        posts: data.items,
+        events: [],
+        people: [],
+        moods: [],
+      });
+      const nextItems = [...items, ...data.items.filter((p) => !items.some((cur) => cur.id === p.id))];
+      const nextStream = [...stream, ...extra];
+      setItems(nextItems);
+      setStream(nextStream);
+      setNextCursor(data.nextCursor ?? null);
+      setHasMore(Boolean(data.hasMore));
+      persist({
+        items: nextItems,
+        events,
+        people,
+        reels,
+        moods,
+        stream: nextStream,
+        nextCursor: data.nextCursor ?? null,
+        hasMore: Boolean(data.hasMore),
+      });
+    } catch {
+      setHasMore(false);
+    } finally {
+      setLoadingMore(false);
     }
   }
 
   useEffect(() => {
-    void load();
+    if (cached) {
+      restoreFeedScroll(cached.scrollTop);
+      return;
+    }
+    void loadFirst();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!restored.current) return;
+    restoreFeedScroll(cached?.scrollTop ?? captureFeedScroll());
+  }, [cached?.scrollTop, stream.length]);
+
+  useEffect(() => {
+    function save() {
+      if (!items) return;
+      persist({ items, events, people, reels, moods, stream, nextCursor, hasMore });
+    }
+    window.addEventListener("pagehide", save);
+    return () => {
+      save();
+      window.removeEventListener("pagehide", save);
+    };
+  }, [items, events, people, reels, moods, stream, nextCursor, hasMore, persist]);
 
   useEffect(() => {
     if (!ready) return;
@@ -75,6 +202,16 @@ function HomeFeed() {
       }
       return cur.map(releaseViewerLike);
     });
+    setStream((cur) =>
+      cur.map((row) => {
+        if (row.kind !== "post") return row;
+        const post =
+          placement?.targetType === "post" && row.post.id === placement.targetId
+            ? row.post
+            : releaseViewerLike(row.post);
+        return { ...row, post };
+      }),
+    );
     setPeople((cur) =>
       cur.map((p) => ({
         ...p,
@@ -89,10 +226,18 @@ function HomeFeed() {
     );
   }, [ready, placement?.targetType, placement?.targetId]);
 
-  const stream = useMemo(
-    () => mixHomeFeed({ posts: items ?? [], events, people, moods: reels }),
-    [items, events, people, reels],
-  );
+  useEffect(() => {
+    const node = sentinel.current;
+    if (!node || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) void loadMore();
+      },
+      { root: document.getElementById("tiptop-scroll"), rootMargin: "600px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  });
 
   return (
     <div className="space-y-4 px-4 py-3">
@@ -134,7 +279,7 @@ function HomeFeed() {
         </div>
       </section>
 
-      {error ? <ErrorBanner message={error} onRetry={() => void load()} /> : null}
+      {error ? <ErrorBanner message={error} onRetry={() => void loadFirst()} /> : null}
       {items === null && !error ? (
         <div className="space-y-3">
           <CardSkeleton />
@@ -150,12 +295,15 @@ function HomeFeed() {
             <PostCard
               key={row.id}
               post={row.post}
-              onChanged={(next, meta) =>
+              onChanged={(next, meta) => {
                 setItems((cur) => {
                   if (!cur) return cur;
                   return meta?.soleLike ? applySoleLike(cur, next) : replaceFeedItem(cur, next);
-                })
-              }
+                });
+                setStream((cur) =>
+                  cur.map((row) => (row.kind === "post" && row.post.id === next.id ? { ...row, post: next } : row)),
+                );
+              }}
             />
           );
         }
@@ -164,7 +312,12 @@ function HomeFeed() {
             <EventCard
               key={row.id}
               event={row.event}
-              onChanged={(next) => setEvents((cur) => cur.map((e) => (e.id === next.id ? next : e)))}
+              onChanged={(next) => {
+                setEvents((cur) => cur.map((e) => (e.id === next.id ? next : e)));
+                setStream((cur) =>
+                  cur.map((row) => (row.kind === "event" && row.event.id === next.id ? { ...row, event: next } : row)),
+                );
+              }}
             />
           );
         }
@@ -173,7 +326,12 @@ function HomeFeed() {
             <FeedPersonCard
               key={row.id}
               person={row.person}
-              onChanged={(next) => setPeople((cur) => cur.map((p) => (p.id === next.id ? next : p)))}
+              onChanged={(next) => {
+                setPeople((cur) => cur.map((p) => (p.id === next.id ? next : p)));
+                setStream((cur) =>
+                  cur.map((row) => (row.kind === "person" && row.person.id === next.id ? { ...row, person: next } : row)),
+                );
+              }}
             />
           );
         }
@@ -181,10 +339,17 @@ function HomeFeed() {
           <FeedMoodCard
             key={row.id}
             mood={row.mood}
-            onChanged={(next) => setReels((cur) => cur.map((m) => (m.id === next.id ? next : m)))}
+            onChanged={(next) => {
+              setReels((cur) => cur.map((m) => (m.id === next.id ? next : m)));
+              setStream((cur) =>
+                cur.map((row) => (row.kind === "mood" && row.mood.id === next.id ? { ...row, mood: next } : row)),
+              );
+            }}
           />
         );
       })}
+      <div ref={sentinel} className="h-8" aria-hidden />
+      {loadingMore ? <CardSkeleton /> : null}
     </div>
   );
 }

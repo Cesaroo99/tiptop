@@ -381,6 +381,13 @@ export type Messages = {
     ttlHint: string;
     zoneTitle: string;
     zoneBody: string;
+    useCurrentLocation: string;
+    currentLocation: string;
+    locationFixed: string;
+    locationLiveHint: string;
+    locationFixedHint: string;
+    fromYou: string;
+    goThere: string;
     precision: string;
     precisionExact: string;
     precisionZone: string;
@@ -1331,6 +1338,13 @@ export const fr: Messages = {
     ttlHint: "Visible 4 heures, puis tu disparais du carousel.",
     zoneTitle: "Ta zone",
     zoneBody: "La zone filtre les personnes et les sorties près de toi. Le GPS propose, il ne force pas.",
+    useCurrentLocation: "Utiliser ma position actuelle",
+    currentLocation: "Position actuelle",
+    locationFixed: "Position figée",
+    locationLiveHint: "Les distances utilisent ta position réelle.",
+    locationFixedHint: "Les distances utilisent l’endroit que tu as choisi.",
+    fromYou: "de vous",
+    goThere: "S’y rendre",
     precision: "Précision de localisation",
     precisionExact: "Exacte",
     precisionZone: "Zone",
@@ -2281,6 +2295,13 @@ export const en: Messages = {
     ttlHint: "Visible for 4 hours, then you leave the carousel.",
     zoneTitle: "Your area",
     zoneBody: "The area filters people and meetups near you. GPS suggests, it does not force.",
+    useCurrentLocation: "Use my current location",
+    currentLocation: "Current location",
+    locationFixed: "Pinned location",
+    locationLiveHint: "Distances use your real position.",
+    locationFixedHint: "Distances use the place you chose.",
+    fromYou: "from you",
+    goThere: "Get directions",
     precision: "Location precision",
     precisionExact: "Exact",
     precisionZone: "Area",

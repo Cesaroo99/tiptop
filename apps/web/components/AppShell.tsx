@@ -2,7 +2,9 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
+import { useViewerLocation } from "@/lib/viewer-location";
 import { useLikePlacement } from "@/lib/like-placement";
 import { BottomNav } from "./Nav";
 import { AppHeader } from "./AppHeader";
@@ -21,7 +23,9 @@ export function AppShell({
   chrome?: "full" | "nav" | "none";
 }) {
   const { user, loading } = useSession();
+  const { messages } = useI18n();
   const { placement } = useLikePlacement();
+  const { mode, label: liveLabel, status } = useViewerLocation(user ?? undefined);
   const router = useRouter();
   const mainPad = placement ? "pb-36" : "pb-24";
 
@@ -41,7 +45,12 @@ export function AppShell({
     );
   }
 
-  const location = [user.city, user.zone].filter(Boolean).join(" - ");
+  const location =
+    mode === "FIXED" && liveLabel
+      ? liveLabel
+      : mode === "CURRENT" && status === "live"
+        ? messages.world.currentLocation
+        : [user.city, user.zone].filter(Boolean).join(" - ");
 
   if (chrome === "none") {
     return (
@@ -69,7 +78,9 @@ export function AppShell({
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       {chrome === "full" ? <AppHeader location={location} /> : <div className="phone-safe-top" />}
-      <main className={`min-h-0 flex-1 overflow-y-auto ${mainPad}`}>{children}</main>
+      <main id="tiptop-scroll" className={`min-h-0 flex-1 overflow-y-auto ${mainPad}`}>
+        {children}
+      </main>
       <LikeMilestoneCelebration />
       <BottomNav />
     </div>

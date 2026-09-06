@@ -431,12 +431,21 @@ export class BookingService {
     };
   }
 
-  async scan(actorId: string, token: string) {
+  async scan(actorId: string, token: string, eventId?: string) {
     const parsed = verifyTicketQr({
       token,
       expectedSig: this.sigForToken(token),
     });
     if (!parsed.ok) throw new BadRequestException({ code: `QR_${parsed.reason}` });
+    if (eventId) {
+      const ticket = await this.prisma.ticket.findUnique({
+        where: { id: parsed.ticketId },
+        select: { eventId: true },
+      });
+      if (!ticket || ticket.eventId !== eventId) {
+        throw new ForbiddenException({ code: "NOT_HOST" });
+      }
+    }
     return this.consume(actorId, parsed.ticketId);
   }
 

@@ -435,6 +435,10 @@ export type FeedItem = {
     minAge: number | null;
     city?: string | null;
     zone?: string | null;
+    venue?: string | null;
+    address?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
     interestedCount: number;
     reservedCount: number;
     capacity?: number | null;

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, ApiError, type FeedItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -25,6 +25,8 @@ import {
   TrashIcon,
 } from "./Icons";
 import { BookEventSheet } from "./BookEventSheet";
+import { EventPlaceLine } from "./EventPlaceLine";
+import { LikeTimeBadge } from "./LikeTimeBadge";
 import { LikeDialogs, likeErrorKind } from "./LikeDialogs";
 import { MapThumb } from "./MapThumb";
 import { SeatsLeftBadge, seatsLeftLabel, seatsRemainingOf } from "./SeatsLeftBadge";
@@ -85,6 +87,11 @@ export function PostCard({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleted, setDeleted] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
+  const [loadedAt, setLoadedAt] = useState(() => Date.now());
+  useEffect(() => {
+    setLoadedAt(Date.now());
+  }, [post.likeTime?.totalSeconds, post.likeTime?.activeCount]);
+  const showVie = (post.likeTime?.totalSeconds ?? 0) > 0 || (post.likeTime?.activeCount ?? 0) > 0;
   const mine = user?.id === post.author.id;
   const event = post.event ?? null;
   const isEvent = Boolean(event);
@@ -315,21 +322,40 @@ export function PostCard({
                     aria-label={messages.world.sortie}
                     className="absolute bottom-2 right-2 h-[4.25rem] w-[6.25rem]"
                   >
-                    <MapThumb city={mapCity} zone={mapZone} className="h-full w-full" />
+                    <MapThumb
+                      city={mapCity}
+                      zone={mapZone}
+                      lat={event.latitude}
+                      lng={event.longitude}
+                      className="h-full w-full"
+                    />
                   </Link>
                 </>
               ) : null}
             </div>
           ) : null}
+          {isEvent && event ? (
+            <EventPlaceLine
+              city={event.city ?? post.city}
+              zone={event.zone ?? post.zone}
+              venue={event.venue}
+              address={event.address}
+              latitude={event.latitude}
+              longitude={event.longitude}
+            />
+          ) : null}
           <p className="type-caption mt-3 text-muted">{stats.join(" . ")}</p>
           <div className="mt-3 flex items-center gap-2">
-            <ActionCircle
-              label={liked ? messages.social.likeHere : messages.social.likePlace}
-              active={liked}
-              onClick={() => void like()}
-            >
-              <HeartIcon size={17} filled={liked} />
-            </ActionCircle>
+            <div className="flex flex-col items-center gap-0.5">
+              <ActionCircle
+                label={liked ? messages.social.likeHere : messages.social.likePlace}
+                active={liked}
+                onClick={() => void like()}
+              >
+                <HeartIcon size={17} filled={liked} />
+              </ActionCircle>
+              {showVie ? <LikeTimeBadge time={post.likeTime} loadedAt={loadedAt} className="max-w-[4.5rem] text-center" /> : null}
+            </div>
             <ActionCircle href={`/posts/${post.id}`} label={messages.social.comments}>
               <CommentIcon size={17} />
             </ActionCircle>
