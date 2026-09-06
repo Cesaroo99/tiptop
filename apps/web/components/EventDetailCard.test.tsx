@@ -13,6 +13,11 @@ vi.mock("@/lib/session", () => ({
   useSession: () => ({ user: { id: "viewer", profileCompleted: true }, loading: false }),
 }));
 
+vi.stubGlobal(
+  "fetch",
+  vi.fn(async () => ({ ok: true, json: async () => ({ items: [] }) })),
+);
+
 const baseEvent: EventCardType = {
   id: "evt_1",
   title: "Piscine party - Odza, Yaoundé",
@@ -107,8 +112,18 @@ describe("EventDetailCard", () => {
     expect(screen.getByLabelText("Commentaires")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Intéressé" })).toBeInTheDocument();
     expect(screen.getByText("Réserver")).toBeInTheDocument();
-    expect(screen.getByText("Y aller")).toBeInTheDocument();
-    expect(screen.getByTitle(/Villa Odza/)).toBeInTheDocument();
+    expect(screen.getByText("S’y rendre")).toBeInTheDocument();
+    expect(screen.getByText(/Villa Odza/)).toBeInTheDocument();
+    expect(screen.queryByText("Valider ticket")).not.toBeInTheDocument();
+  });
+
+  it("organisateur : le scanner est proposé", () => {
+    render(
+      <TestI18nProvider>
+        <EventDetailCard event={{ ...baseEvent, isHost: true, canBook: false }} />
+      </TestI18nProvider>,
+    );
+    expect(screen.getByRole("link", { name: /Valider ticket/i })).toHaveAttribute("href", "/events/evt_1/scan");
   });
 
   it("déjà réservé : Réserver pour un autre + prochaines dates de série", () => {

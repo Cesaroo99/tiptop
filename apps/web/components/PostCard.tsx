@@ -345,6 +345,11 @@ export function PostCard({
             />
           ) : null}
           <p className="type-caption mt-3 text-muted">{stats.join(" . ")}</p>
+          {showVie ? (
+            <p className="type-body-sm mt-2 font-extrabold text-ink">
+              <LikeTimeBadge time={post.likeTime} loadedAt={loadedAt} className="text-ink" />
+            </p>
+          ) : null}
           <div className="mt-3 flex items-center gap-2">
             <div className="flex flex-col items-center gap-0.5">
               <ActionCircle
@@ -354,7 +359,6 @@ export function PostCard({
               >
                 <HeartIcon size={17} filled={liked} />
               </ActionCircle>
-              {showVie ? <LikeTimeBadge time={post.likeTime} loadedAt={loadedAt} className="max-w-[4.5rem] text-center" /> : null}
             </div>
             <ActionCircle href={`/posts/${post.id}`} label={messages.social.comments}>
               <CommentIcon size={17} />

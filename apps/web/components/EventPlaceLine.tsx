@@ -13,6 +13,7 @@ export function EventPlaceLine({
   address,
   latitude,
   longitude,
+  showDistance = true,
 }: {
   city?: string | null;
   zone?: string | null;
@@ -20,12 +21,13 @@ export function EventPlaceLine({
   address?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  showDistance?: boolean;
 }) {
   const { messages } = useI18n();
   const { user } = useSession();
   const { origin } = useViewerLocation(user);
   const place = eventPlaceLabel({ venue, address, city, zone });
-  const distance = eventDistanceLabel(origin, { city, zone, latitude, longitude });
+  const distance = showDistance ? eventDistanceLabel(origin, { city, zone, latitude, longitude }) : null;
   if (!place && !distance) return null;
   return (
     <p className="type-body-sm mt-2 flex flex-col gap-0.5 text-ink">

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { eventDistanceLabel, eventPlaceLabel } from "./event-place";
+import { eventDirectionsUrl, eventDistanceLabel, eventPlaceLabel, hasExactCoords } from "./event-place";
 
 describe("event place", () => {
   it("préfère le lieu nommé à la seule ville", () => {
@@ -20,5 +20,26 @@ describe("event place", () => {
 
   it("sans origine : pas de distance inventée", () => {
     expect(eventDistanceLabel(null, { latitude: 3.89, longitude: 11.512 })).toBeNull();
+  });
+
+  it("itinéraire : coords exactes, sinon adresse — jamais le centroïde de zone", () => {
+    expect(hasExactCoords(3.89, 11.512)).toBe(true);
+    expect(hasExactCoords(null, 11.512)).toBe(false);
+    const withCoords = eventDirectionsUrl({
+      city: "Yaoundé",
+      zone: "Bastos",
+      venue: "Rooftop 237",
+      latitude: 3.891,
+      longitude: 11.515,
+    });
+    expect(withCoords).toContain("3.891,11.515");
+    const addressOnly = eventDirectionsUrl({
+      city: "Yaoundé",
+      zone: "Bastos",
+      venue: "Centre Bell",
+      address: "1234 Rue X, Montréal",
+    });
+    expect(addressOnly).toContain(encodeURIComponent("1234 Rue X, Montréal"));
+    expect(addressOnly).not.toMatch(/3\.89,11\.512/);
   });
 });

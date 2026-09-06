@@ -86,7 +86,7 @@ export function FeedMoodCard({
             >
               <HeartIcon size={18} filled={liked} />
             </button>
-            {showVie ? <p className="type-caption mt-1 max-w-[4.5rem] text-center font-semibold text-white">{vie}</p> : null}
+            {showVie ? <p className="type-caption mt-1 max-w-[7.5rem] text-center font-bold text-white">{vie}</p> : null}
           </div>
         </div>
       </Link>

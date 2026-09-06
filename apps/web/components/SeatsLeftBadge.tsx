@@ -34,6 +34,7 @@ export function SeatsLeftBadge({
         full ? "bg-danger text-white" : low ? "bg-yellow text-ink" : "bg-ink text-white"
       } ${className}`}
     >
+      {!full && remaining != null && remaining > 0 ? "🔥 " : ""}
       {label}
     </span>
   );

@@ -12,10 +12,11 @@ import { CardSkeleton, EmptyState, ErrorBanner } from "@/components/ui";
 import { api, ApiError, type EventCard as EventCardType, type FeedItem, type MoodItem, type PersonCard } from "@/lib/api";
 import { mixHomeFeed, type MixedFeedEntry } from "@/lib/feed-mix";
 import {
-  captureFeedScroll,
+  captureFeedAnchor,
+  leftoverFeedEntries,
   readFeedCache,
   rebuildStream,
-  restoreFeedScroll,
+  restoreFeedAnchor,
   writeFeedCache,
 } from "@/lib/feed-session";
 import { applySoleLike, releaseViewerLike, replaceFeedItem } from "@/lib/like-feed";
@@ -44,7 +45,8 @@ export default function HomePage() {
 function HomeFeed() {
   const { messages } = useI18n();
   const { placement, ready } = useLikePlacement();
-  const cached = typeof window !== "undefined" ? readFeedCache() : null;
+  const boot = useRef(typeof window !== "undefined" ? readFeedCache() : null);
+  const cached = boot.current;
   const [items, setItems] = useState<FeedItem[] | null>(cached?.items ?? null);
   const [events, setEvents] = useState<EventCardType[]>(cached?.events ?? []);
   const [people, setPeople] = useState<PersonCard[]>(cached?.people ?? []);
@@ -53,10 +55,13 @@ function HomeFeed() {
   const [stream, setStream] = useState<MixedFeedEntry[]>(cached ? rebuildStream(cached) : []);
   const [nextCursor, setNextCursor] = useState<string | null>(cached?.nextCursor ?? null);
   const [hasMore, setHasMore] = useState(cached?.hasMore ?? true);
+  const [serverHasMore, setServerHasMore] = useState(cached?.hasMore ?? true);
   const [error, setError] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const sentinel = useRef<HTMLDivElement>(null);
-  const restored = useRef(Boolean(cached));
+  const restored = useRef(false);
+  const loadMoreRef = useRef<() => Promise<void>>(async () => undefined);
+  const lastContinueAt = useRef(0);
 
   const persist = useCallback(
     (next: {
@@ -78,7 +83,7 @@ function HomeFeed() {
         order: next.stream.map((row) => ({ kind: row.kind, id: row.id })),
         nextCursor: next.nextCursor,
         hasMore: next.hasMore,
-        scrollTop: captureFeedScroll(),
+        ...captureFeedAnchor(),
         at: Date.now(),
       });
     },
@@ -102,7 +107,8 @@ function HomeFeed() {
       setPeople(data.people ?? []);
       setStream(mixed);
       setNextCursor(data.nextCursor ?? null);
-      setHasMore(Boolean(data.hasMore));
+      setHasMore(true);
+      setServerHasMore(Boolean(data.hasMore));
       persist({
         items: data.items,
         events: data.events ?? [],
@@ -111,7 +117,7 @@ function HomeFeed() {
         moods: data.moods ?? [],
         stream: mixed,
         nextCursor: data.nextCursor ?? null,
-        hasMore: Boolean(data.hasMore),
+        hasMore: true,
       });
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -125,61 +131,96 @@ function HomeFeed() {
     }
   }
 
+  function appendLocalContinuation(currentStream: MixedFeedEntry[]) {
+    if (Date.now() - lastContinueAt.current < 1200) return;
+    lastContinueAt.current = Date.now();
+    const leftover = leftoverFeedEntries(currentStream, { events, people, moods: reels });
+    const extra =
+      leftover.length > 0
+        ? leftover
+        : mixHomeFeed({
+            posts: items ?? [],
+            events,
+            people,
+            moods: reels,
+          });
+    if (!extra.length) {
+      setHasMore(false);
+      return;
+    }
+    const nextStream = [...currentStream, ...extra];
+    setStream(nextStream);
+    setHasMore(true);
+    persist({
+      items: items ?? [],
+      events,
+      people,
+      reels,
+      moods,
+      stream: nextStream,
+      nextCursor,
+      hasMore: true,
+    });
+  }
+
   async function loadMore() {
     if (loadingMore || !hasMore || !items?.length) return;
     setLoadingMore(true);
     try {
-      const exclude = items.map((p) => p.id).join(",");
-      const params = new URLSearchParams();
-      if (nextCursor) params.set("cursor", nextCursor);
-      if (exclude) params.set("exclude", exclude);
-      const data = await api<FeedResponse>(`/feed?${params.toString()}`);
-      if (!data.items.length) {
-        setHasMore(false);
-        return;
+      if (serverHasMore) {
+        const exclude = items.map((p) => p.id).join(",");
+        const params = new URLSearchParams();
+        if (nextCursor) params.set("cursor", nextCursor);
+        if (exclude) params.set("exclude", exclude);
+        const data = await api<FeedResponse>(`/feed?${params.toString()}`);
+        if (data.items.length) {
+          const extra = mixHomeFeed({
+            posts: data.items,
+            events: [],
+            people: [],
+            moods: [],
+          });
+          const nextItems = [...items, ...data.items.filter((p) => !items.some((cur) => cur.id === p.id))];
+          const nextStream = [...stream, ...extra];
+          setItems(nextItems);
+          setStream(nextStream);
+          setNextCursor(data.nextCursor ?? null);
+          setServerHasMore(Boolean(data.hasMore));
+          setHasMore(true);
+          persist({
+            items: nextItems,
+            events,
+            people,
+            reels,
+            moods,
+            stream: nextStream,
+            nextCursor: data.nextCursor ?? null,
+            hasMore: true,
+          });
+          return;
+        }
+        setServerHasMore(false);
       }
-      const extra = mixHomeFeed({
-        posts: data.items,
-        events: [],
-        people: [],
-        moods: [],
-      });
-      const nextItems = [...items, ...data.items.filter((p) => !items.some((cur) => cur.id === p.id))];
-      const nextStream = [...stream, ...extra];
-      setItems(nextItems);
-      setStream(nextStream);
-      setNextCursor(data.nextCursor ?? null);
-      setHasMore(Boolean(data.hasMore));
-      persist({
-        items: nextItems,
-        events,
-        people,
-        reels,
-        moods,
-        stream: nextStream,
-        nextCursor: data.nextCursor ?? null,
-        hasMore: Boolean(data.hasMore),
-      });
+      appendLocalContinuation(stream);
     } catch {
-      setHasMore(false);
+      setServerHasMore(false);
+      appendLocalContinuation(stream);
     } finally {
       setLoadingMore(false);
     }
   }
 
   useEffect(() => {
-    if (cached) {
-      restoreFeedScroll(cached.scrollTop);
-      return;
-    }
+    if (cached) return;
     void loadFirst();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (!restored.current) return;
-    restoreFeedScroll(cached?.scrollTop ?? captureFeedScroll());
-  }, [cached?.scrollTop, stream.length]);
+    if (!cached || restored.current || stream.length === 0) return;
+    restoreFeedAnchor(cached.scrollTop, cached.lastVisibleId);
+    restored.current = true;
+  }, [cached, stream.length]);
 
   useEffect(() => {
     function save() {
@@ -226,18 +267,20 @@ function HomeFeed() {
     );
   }, [ready, placement?.targetType, placement?.targetId]);
 
+  loadMoreRef.current = () => loadMore();
+
   useEffect(() => {
     const node = sentinel.current;
     if (!node || typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) void loadMore();
+        if (entries.some((entry) => entry.isIntersecting)) void loadMoreRef.current();
       },
-      { root: document.getElementById("tiptop-scroll"), rootMargin: "600px 0px" },
+      { root: document.getElementById("tiptop-scroll"), rootMargin: "800px 0px" },
     );
     observer.observe(node);
     return () => observer.disconnect();
-  });
+  }, [hasMore, stream.length]);
 
   return (
     <div className="space-y-4 px-4 py-3">
@@ -289,11 +332,12 @@ function HomeFeed() {
       {items && stream.length === 0 && !error ? (
         <EmptyState title={messages.home.emptyTitle} body={messages.home.emptyBody} />
       ) : null}
-      {stream.map((row) => {
+      {stream.map((row, index) => {
+        const feedKey = `${row.id}:${index}`;
         if (row.kind === "post") {
           return (
+            <div key={feedKey} data-feed-key={feedKey}>
             <PostCard
-              key={row.id}
               post={row.post}
               onChanged={(next, meta) => {
                 setItems((cur) => {
@@ -305,12 +349,13 @@ function HomeFeed() {
                 );
               }}
             />
+            </div>
           );
         }
         if (row.kind === "event") {
           return (
+            <div key={feedKey} data-feed-key={feedKey}>
             <EventCard
-              key={row.id}
               event={row.event}
               onChanged={(next) => {
                 setEvents((cur) => cur.map((e) => (e.id === next.id ? next : e)));
@@ -319,12 +364,13 @@ function HomeFeed() {
                 );
               }}
             />
+            </div>
           );
         }
         if (row.kind === "person") {
           return (
+            <div key={feedKey} data-feed-key={feedKey}>
             <FeedPersonCard
-              key={row.id}
               person={row.person}
               onChanged={(next) => {
                 setPeople((cur) => cur.map((p) => (p.id === next.id ? next : p)));
@@ -333,11 +379,12 @@ function HomeFeed() {
                 );
               }}
             />
+            </div>
           );
         }
         return (
+          <div key={feedKey} data-feed-key={feedKey}>
           <FeedMoodCard
-            key={row.id}
             mood={row.mood}
             onChanged={(next) => {
               setReels((cur) => cur.map((m) => (m.id === next.id ? next : m)));
@@ -346,6 +393,7 @@ function HomeFeed() {
               );
             }}
           />
+          </div>
         );
       })}
       <div ref={sentinel} className="h-8" aria-hidden />

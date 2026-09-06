@@ -61,7 +61,7 @@ describe("EventCard (#23-25)", () => {
     expect(screen.getByText("Afterwork Bastos")).toBeInTheDocument();
     expect(screen.getAllByText(/Bastos/).length).toBeGreaterThan(0);
     expect(screen.getByText("Gratuit")).toBeInTheDocument();
-    expect(screen.getAllByText("35 places restantes").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/35 places restantes/).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Intéressé" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Réserver" })).toBeInTheDocument();
   });

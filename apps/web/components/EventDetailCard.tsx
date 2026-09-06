@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ageCategoryLabel, canInteractWithEvent, eventLifecycle, eventSocialProof, mapsDirectionsUrl } from "@tiptop/domain";
+import { ageCategoryLabel, canInteractWithEvent, eventLifecycle, eventSocialProof } from "@tiptop/domain";
 import { api, ApiError, type CommentItem, type EventCard as EventCardType } from "@/lib/api";
+import { useEventDestination } from "@/lib/event-destination";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { recurrenceCaption } from "@/lib/event-series";
 import { formatCompactCount, formatCountdownLabel, formatEventWhen, formatFcfa, formatRelative, splitPostLead } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
-import { EventMap, resolveEventPoint } from "./EventMap";
+import { EventMap } from "./EventMap";
+import { EventPlaceLine } from "./EventPlaceLine";
 import { BookEventSheet } from "./BookEventSheet";
 import { CommentThread } from "./CommentThread";
 import {
@@ -125,20 +127,15 @@ export function EventDetailCard({
         ? formatFcfa(event.priceXaf)
         : messages.world.paid.replace("{amount}", formatFcfa(event.priceXaf))
       : messages.world.free;
-  const point = resolveEventPoint({
+  const destination = useEventDestination({
     city: event.city,
     zone: event.zone,
+    venue: event.venue,
+    address: event.address,
     latitude: event.latitude,
     longitude: event.longitude,
   });
-  const mapsUrl = mapsDirectionsUrl({
-    city: event.city,
-    zone: event.zone,
-    placeName: event.venue,
-    address: event.address,
-    latitude: point?.lat ?? event.latitude,
-    longitude: point?.lng ?? event.longitude,
-  });
+  const mapsUrl = destination.mapsUrl;
   const stats = hostView
     ? [
         `${formatCompactCount(event.commentsCount ?? 0)} ${messages.social.comments}`,
@@ -254,15 +251,29 @@ export function EventDetailCard({
           </div>
         )}
       </div>
-      <EventMap
-        className="mt-3"
+      <EventPlaceLine
         city={event.city}
         zone={event.zone}
         venue={event.venue}
         address={event.address}
         latitude={event.latitude}
         longitude={event.longitude}
+        showDistance={false}
       />
+      {destination.point ? (
+        <EventMap
+          className="mt-3"
+          city={event.city}
+          zone={event.zone}
+          venue={event.venue}
+          address={event.address}
+          latitude={destination.point.lat}
+          longitude={destination.point.lng}
+          mapsUrl={mapsUrl}
+          showCta={false}
+          compact
+        />
+      ) : null}
       {mapsUrl ? (
         <a
           href={mapsUrl}
@@ -307,7 +318,7 @@ export function EventDetailCard({
       ) : null}
 
       <div className="mt-3 flex items-center gap-2">
-        {hostView ? (
+        {event.isHost ? (
           <Link
             href={`/events/${event.id}/scan`}
             className="tap-scale type-caption inline-flex items-center gap-2 rounded-pill border-2 border-accent px-3.5 py-2 font-bold uppercase tracking-wide text-accent"
@@ -315,7 +326,8 @@ export function EventDetailCard({
             <CameraIcon size={16} />
             {messages.booking.validateTicket}
           </Link>
-        ) : (
+        ) : null}
+        {!hostView ? (
           <>
         <button
           type="button"
@@ -367,7 +379,7 @@ export function EventDetailCard({
           </Link>
         ) : null}
           </>
-        )}
+        ) : null}
         {countdown && lifecycle.phase !== "ended" && lifecycle.phase !== "cancelled" ? (
           <span className="ml-auto flex items-center gap-1.5">
             <span className="type-caption whitespace-nowrap text-muted">{messages.world.eventInLabel}</span>

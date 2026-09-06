@@ -71,7 +71,7 @@ describe("BookEventSheet", () => {
     );
     expect(await screen.findByRole("dialog", { name: "Réserver l'évènement" })).toBeInTheDocument();
     expect(await screen.findByText("11,49 $ CA")).toBeInTheDocument();
-    expect(await screen.findByText("12 places restantes")).toBeInTheDocument();
+    expect(await screen.findByText(/12 places restantes/)).toBeInTheDocument();
     expect(screen.getByText("Pour moi même")).toBeInTheDocument();
     expect(screen.getByText("Inviter des amis")).toBeInTheDocument();
     expect(screen.getByText(/Défile les profils/)).toBeInTheDocument();

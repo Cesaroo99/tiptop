@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rebuildStream, type FeedCache } from "./feed-session";
+import { leftoverFeedEntries, rebuildStream, type FeedCache } from "./feed-session";
 import type { FeedItem } from "./api";
 
 function post(id: string): FeedItem {
@@ -32,10 +32,22 @@ describe("feed session", () => {
       nextCursor: p1.createdAt,
       hasMore: true,
       scrollTop: 420,
+      lastVisibleId: "post:p1",
       at: Date.now(),
     };
     const stream = rebuildStream(cache);
     expect(stream).toHaveLength(1);
     expect(stream[0]).toMatchObject({ kind: "post", id: "post:p1" });
+  });
+});
+
+describe("leftoverFeedEntries", () => {
+  it("ajoute les événements encore absents du flux", () => {
+    const leftover = leftoverFeedEntries([{ kind: "post", id: "post:p1", post: post("p1") }], {
+      events: [{ id: "e1" } as never],
+      people: [],
+      moods: [],
+    });
+    expect(leftover[0]).toMatchObject({ kind: "event", id: "event:e1" });
   });
 });

@@ -74,7 +74,7 @@ describe("PostCard — publication vs événement", () => {
     expect(screen.getByText("-18")).toBeInTheDocument();
     expect(screen.getByText("Un tour au Black&White :")).toBeInTheDocument();
     expect(screen.getByText("3.4k Commentaires . 46 Partages . 35 Réservations . 5 places restantes . 3 Intéressés")).toBeInTheDocument();
-    expect(screen.getAllByText("5 places restantes").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/5 places restantes/).length).toBeGreaterThan(0);
     expect(screen.getByLabelText("Ma vie est ici")).toBeInTheDocument();
     expect(screen.getByText(/de vie/)).toBeInTheDocument();
     expect(screen.getByLabelText("Commentaires")).toHaveAttribute("href", "/posts/p1");

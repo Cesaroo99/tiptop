@@ -14,6 +14,11 @@ vi.mock("@/lib/session", () => ({
   useSession: () => ({ user: { id: "host", profileCompleted: true }, loading: false }),
 }));
 
+vi.stubGlobal(
+  "fetch",
+  vi.fn(async () => ({ ok: true, json: async () => ({ items: [] }) })),
+);
+
 const event: EventCardType = {
   id: "evt_1",
   title: "Piscine party - Odza, Yaoundé",

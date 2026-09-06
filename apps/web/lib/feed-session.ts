@@ -11,6 +11,7 @@ export type FeedCache = {
   nextCursor: string | null;
   hasMore: boolean;
   scrollTop: number;
+  lastVisibleId?: string | null;
   at: number;
 };
 
@@ -50,11 +51,61 @@ export function captureFeedScroll(): number {
 }
 
 export function restoreFeedScroll(top: number) {
+  restoreFeedAnchor(top, null);
+}
+
+export function captureFeedAnchor(): { scrollTop: number; lastVisibleId: string | null } {
   const root = feedScrollRoot();
-  if (!root || !Number.isFinite(top)) return;
+  const scrollTop = root?.scrollTop ?? 0;
+  if (!root) return { scrollTop, lastVisibleId: null };
+  const nodes = [...root.querySelectorAll<HTMLElement>("[data-feed-key]")];
+  const mid = root.getBoundingClientRect().top + 24;
+  let lastVisibleId: string | null = null;
+  for (const node of nodes) {
+    if (node.getBoundingClientRect().top <= mid + 8) {
+      lastVisibleId = node.dataset.feedKey ?? null;
+    } else {
+      break;
+    }
+  }
+  return { scrollTop, lastVisibleId };
+}
+
+export function restoreFeedAnchor(scrollTop: number, lastVisibleId?: string | null) {
+  const root = feedScrollRoot();
+  if (!root) return;
   requestAnimationFrame(() => {
-    root.scrollTop = top;
+    if (lastVisibleId) {
+      const escaped = typeof CSS !== "undefined" && CSS.escape ? CSS.escape(lastVisibleId) : lastVisibleId;
+      const el = root.querySelector<HTMLElement>(`[data-feed-key="${escaped}"]`);
+      if (el) {
+        root.scrollTop = el.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop;
+        return;
+      }
+    }
+    if (Number.isFinite(scrollTop)) root.scrollTop = scrollTop;
   });
+}
+
+export function leftoverFeedEntries(
+  stream: MixedFeedEntry[],
+  extras: { events: EventCard[]; people: PersonCard[]; moods: MoodItem[] },
+): MixedFeedEntry[] {
+  const seen = new Set(stream.map((row) => row.id));
+  const out: MixedFeedEntry[] = [];
+  for (const event of extras.events) {
+    const id = `event:${event.id}`;
+    if (!seen.has(id)) out.push({ kind: "event", id, event });
+  }
+  for (const person of extras.people) {
+    const id = `person:${person.id}`;
+    if (!seen.has(id)) out.push({ kind: "person", id, person });
+  }
+  for (const mood of extras.moods) {
+    const id = `mood:${mood.id}`;
+    if (!seen.has(id)) out.push({ kind: "mood", id, mood });
+  }
+  return out;
 }
 
 export function rebuildStream(
