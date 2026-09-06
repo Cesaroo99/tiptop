@@ -20,10 +20,8 @@ export function InterestedBadge({
   if (variant === "stamp") {
     return (
       <span
-        className={`type-caption inline-flex items-center gap-1 rounded-pill px-2.5 py-1 font-bold shadow-sm ring-1 ${
-          active
-            ? "bg-yellow text-ink ring-yellow"
-            : "bg-white/92 text-ink ring-black/5 backdrop-blur-sm"
+        className={`type-caption inline-flex items-center gap-1 rounded-pill px-2.5 py-1 font-extrabold shadow-sm ${
+          active ? "bg-ink text-yellow" : "bg-yellow text-ink"
         }`}
       >
         <InterestedIcon size={13} />
@@ -31,7 +29,7 @@ export function InterestedBadge({
         {count != null && count > 0 ? (
           <span
             className={`grid min-w-[1.15rem] place-items-center rounded-full px-1 text-[10px] font-extrabold ${
-              active ? "bg-ink text-yellow" : "bg-yellow text-ink"
+              active ? "bg-yellow text-ink" : "bg-ink text-yellow"
             }`}
           >
             {count}

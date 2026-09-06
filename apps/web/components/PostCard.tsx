@@ -318,51 +318,53 @@ export function PostCard({
             </div>
           ) : null}
           <p className="type-caption mt-3 text-muted">{stats.join(" . ")}</p>
-          <div className="mt-3 flex items-center gap-2">
-            <ActionCircle
-              label={liked ? messages.social.likeHere : messages.social.likePlace}
-              active={liked}
-              onClick={() => void like(false)}
-            >
-              <HeartIcon size={17} filled={liked} />
-            </ActionCircle>
-            <ActionCircle href={`/posts/${post.id}`} label={messages.social.comments}>
-              <CommentIcon size={17} />
-            </ActionCircle>
-            {isEvent && event && !mine ? (
-              <>
-                <InterestedBadge
-                  active={interested}
-                  count={event.interestedCount}
-                  onClick={() => void toggleInterested()}
-                />
-                <button
-                  type="button"
-                  aria-label={reserved ? messages.booking.reserveOthers : messages.booking.reserve}
-                  disabled={eventFull}
-                  onClick={() => setBookOpen(true)}
-                  className="tap-scale type-caption inline-flex h-10 items-center gap-1.5 rounded-pill bg-accent px-3.5 font-semibold text-on-primary shadow-sm disabled:opacity-40"
-                >
-                  <CalendarPlusIcon size={15} />
-                  {reserved ? messages.booking.reserveOthers : messages.booking.reserve}
-                </button>
-                {eventFull ? (
-                  <span className="type-caption rounded-pill bg-danger-soft px-2.5 py-2 font-bold text-danger">
-                    {messages.world.seatsFull}
-                  </span>
-                ) : null}
-              </>
-            ) : null}
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <ActionCircle
+                label={liked ? messages.social.likeHere : messages.social.likePlace}
+                active={liked}
+                onClick={() => void like(false)}
+              >
+                <HeartIcon size={17} filled={liked} />
+              </ActionCircle>
+              <ActionCircle href={`/posts/${post.id}`} label={messages.social.comments}>
+                <CommentIcon size={17} />
+              </ActionCircle>
+              {isEvent && event && !mine ? (
+                <>
+                  <InterestedBadge
+                    active={interested}
+                    count={event.interestedCount}
+                    onClick={() => void toggleInterested()}
+                  />
+                  <button
+                    type="button"
+                    aria-label={reserved ? messages.booking.reserveOthers : messages.booking.reserve}
+                    disabled={eventFull}
+                    onClick={() => setBookOpen(true)}
+                    className="tap-scale type-caption inline-flex h-10 items-center gap-1.5 rounded-pill bg-accent px-3.5 font-semibold text-on-primary shadow-sm disabled:opacity-40"
+                  >
+                    <CalendarPlusIcon size={15} />
+                    {reserved ? messages.booking.reserveOthers : messages.booking.reserve}
+                  </button>
+                  {eventFull ? (
+                    <span className="type-caption rounded-pill bg-danger-soft px-2.5 py-2 font-bold text-danger">
+                      {messages.world.seatsFull}
+                    </span>
+                  ) : null}
+                </>
+              ) : null}
+            </div>
             {isEvent && (countdown || seriesLabel) ? (
-              <span className="ml-auto flex min-w-0 flex-col items-end gap-1">
+              <div className="flex flex-wrap items-center justify-end gap-1.5">
                 {seriesLabel ? <span className="type-caption font-semibold text-accent">{seriesLabel}</span> : null}
                 {countdown ? (
-                  <span className="flex min-w-0 items-center gap-1.5">
+                  <span className="flex items-center gap-1.5">
                     <span className="type-caption whitespace-nowrap text-muted">{messages.world.eventInLabel}</span>
                     <span className="type-caption shrink-0 rounded-full bg-yellow px-2.5 py-1 font-bold text-ink">{countdown}</span>
                   </span>
                 ) : null}
-              </span>
+              </div>
             ) : null}
           </div>
           {copied ? <p className="type-caption mt-2 text-accent">{messages.social.copied}</p> : null}

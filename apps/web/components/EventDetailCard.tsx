@@ -262,7 +262,7 @@ export function EventDetailCard({
         </p>
       ) : null}
 
-      <div className="mt-3 flex items-center gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         {hostView ? (
           <Link
             href={`/events/${event.id}/scan`}
@@ -319,7 +319,7 @@ export function EventDetailCard({
           </>
         )}
         {countdown && lifecycle.phase !== "ended" && lifecycle.phase !== "cancelled" ? (
-          <span className="ml-auto flex min-w-0 items-center gap-1.5">
+          <span className="ml-auto flex items-center gap-1.5">
             <span className="type-caption whitespace-nowrap text-muted">{messages.world.eventInLabel}</span>
             <span className="type-caption shrink-0 rounded-full bg-yellow px-2.5 py-1 font-bold text-ink">{countdown}</span>
           </span>
