@@ -28,7 +28,7 @@ test.describe("Profil — visiteur et soi", () => {
     await page.getByRole("button", { name: "Envies" }).click();
     await expect(page.getByText(/À offrir à Erica|Tes envies/)).toBeVisible();
     await page.getByRole("button", { name: "Liés" }).click();
-    await expect(page.getByText(/Tous voir|Pas de sortie ici|participants/)).toBeVisible();
+    await expect(page.getByRole("link", { name: /Expo photo|Afterwork|Tous voir/ }).first()).toBeVisible();
   });
 
   test("inconnue : demander amie, pas de message", async ({ page }) => {
@@ -47,5 +47,10 @@ test.describe("Profil — visiteur et soi", () => {
     await expect(page.getByRole("button", { name: "Message" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Ajouter comme amie" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Créer une envie d’événement" })).toBeVisible();
+    await page.getByRole("button", { name: "Créer une envie d’événement" }).click();
+    await page.getByPlaceholder("Ex. brunch jazz à Bastos").fill("Session photo Bastos");
+    await page.getByRole("button", { name: "Ajouter" }).click();
+    await expect(page.getByText("Session photo Bastos")).toBeVisible();
+    await expect(page.getByText("Ton envie").first()).toBeVisible();
   });
 });
