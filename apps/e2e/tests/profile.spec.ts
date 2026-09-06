@@ -48,9 +48,10 @@ test.describe("Profil — visiteur et soi", () => {
     await expect(page.getByRole("button", { name: "Ajouter comme amie" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Créer une envie d’événement" })).toBeVisible();
     await page.getByRole("button", { name: "Créer une envie d’événement" }).click();
-    await page.getByPlaceholder("Ex. brunch jazz à Bastos").fill("Session photo Bastos");
+    const wantedTitle = `Session photo ${Date.now()}`;
+    await page.getByPlaceholder("Ex. brunch jazz à Bastos").fill(wantedTitle);
     await page.getByRole("button", { name: "Ajouter" }).click();
-    await expect(page.getByText("Session photo Bastos")).toBeVisible();
+    await expect(page.getByText(wantedTitle).first()).toBeVisible();
     await expect(page.getByText("Ton envie").first()).toBeVisible();
   });
 });
