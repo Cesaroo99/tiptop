@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AppShell } from "@/components/AppShell";
+import { Avatar, CertifiedMark } from "@/components/Avatar";
 import { EmptyState, ScreenHeader, TextInput } from "@/components/ui";
 import { api, type ConversationItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -14,9 +16,18 @@ type Contact = {
   certified: boolean;
   profession: string | null;
   city: string | null;
+  avatarUrl?: string | null;
 };
 
 export default function Page() {
+  return (
+    <AppShell chrome="none">
+      <NewChat />
+    </AppShell>
+  );
+}
+
+function NewChat() {
   const { messages } = useI18n();
   const router = useRouter();
   const [q, setQ] = useState("");
@@ -44,20 +55,24 @@ export default function Page() {
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-4 py-4">
       <ScreenHeader title={messages.chat.newTitle} onBack={() => router.back()} />
-      <TextInput value={q} onChange={(e) => setQ(e.target.value)} placeholder={messages.chat.searchContact} />
+      <TextInput value={q} onChange={(e) => setQ(e.target.value)} placeholder={messages.chat.searchContact} className="!rounded-full" />
       {filtered.length === 0 ? <EmptyState title={messages.chat.newTitle} body={messages.world.contactsEmpty} /> : null}
-      <div className="mt-4 space-y-2">
+      <div className="mt-4 space-y-1">
         {filtered.map((c) => (
           <button
             key={c.id}
             type="button"
             onClick={() => void open(c.id)}
-            className="block w-full rounded-card bg-surface p-4 text-left shadow-card"
+            className="flex w-full items-center gap-3 rounded-[22px] px-3 py-3 text-left"
           >
-            <p className="font-semibold text-accent">
-              {c.firstName} {c.lastName} {c.certified ? "✓" : ""}
-            </p>
-            <p className="text-sm text-muted">{c.profession || c.city}</p>
+            <Avatar src={c.avatarUrl} firstName={c.firstName} lastName={c.lastName} size="md" />
+            <div className="min-w-0">
+              <p className="type-body-sm flex items-center gap-1 font-semibold text-ink">
+                {c.firstName} {c.lastName}
+                {c.certified ? <CertifiedMark /> : null}
+              </p>
+              <p className="type-caption text-muted">{c.profession || c.city}</p>
+            </div>
           </button>
         ))}
       </div>

@@ -411,16 +411,30 @@ export type LikeWallet = {
   }>;
 };
 
+export type ConversationMember = {
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  certified: boolean;
+  avatarUrl?: string | null;
+  host?: boolean;
+  online?: boolean;
+};
+
 export type ConversationItem = {
   id: string;
   kind: "DIRECT" | "GROUP" | "EVENT";
   title: string;
   channel: string | null;
   eventId: string | null;
+  imageUrl: string | null;
   unreadCount: number;
   online: boolean;
-  peer: { id: string; username: string; firstName: string; lastName: string; certified: boolean; avatarUrl?: string | null } | null;
-  members: Array<{ id: string; username: string; firstName: string; lastName: string; certified: boolean; avatarUrl?: string | null }>;
+  onlineCount: number;
+  lastMessageSeen: boolean;
+  peer: ConversationMember | null;
+  members: ConversationMember[];
   lastMessage: { body: string; kind: string; createdAt: string; senderId: string } | null;
   updatedAt: string;
 };

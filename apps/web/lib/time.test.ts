@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { formatCompactCount, formatCountdownLabel, formatEventDateBadge, formatFcfa, splitPostLead } from "./time";
+import {
+  formatCompactCount,
+  formatCountdownLabel,
+  formatEventDateBadge,
+  formatFcfa,
+  formatInboxClock,
+  splitPostLead,
+} from "./time";
 
 describe("formatCompactCount", () => {
   it("garde les petits nombres et compacte les milliers", () => {
@@ -36,5 +43,16 @@ describe("formatCountdownLabel", () => {
   it("affiche les minutes comme sur la maquette", () => {
     const soon = new Date(Date.now() + 13 * 60_000).toISOString();
     expect(formatCountdownLabel(soon)).toBe("13min");
+  });
+});
+
+describe("formatInboxClock", () => {
+  it("affiche l’heure du jour et Hier", () => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 16, 4).toISOString();
+    expect(formatInboxClock(today, "fr", "Hier")).toMatch(/\d{2}\.\d{2}/);
+    const y = new Date(now);
+    y.setDate(now.getDate() - 1);
+    expect(formatInboxClock(y.toISOString(), "fr", "Hier")).toBe("Hier");
   });
 });

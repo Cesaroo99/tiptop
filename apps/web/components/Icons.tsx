@@ -342,6 +342,14 @@ export function MusicIcon({ size = 16, className }: IconProps) {
   );
 }
 
+export function PaperclipIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <path d="M21.4 11.6 12 21a5 5 0 0 1-7.1-7.1l9.9-9.9a3.2 3.2 0 1 1 4.5 4.5l-9.2 9.2a1.4 1.4 0 0 1-2-2l8.1-8.1" />
+    </svg>
+  );
+}
+
 export function SmileIcon({ size = 16, className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
