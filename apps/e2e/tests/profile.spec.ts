@@ -1,5 +1,14 @@
 import { expect, test } from "@playwright/test";
-import { loginOnPage } from "../helpers/auth";
+import { fetchSessionToken, loginOnPage } from "../helpers/auth";
+
+const apiBase = () => process.env.E2E_API_URL ?? "http://localhost:3001";
+
+async function unlinkFriend(username: string) {
+  const token = await fetchSessionToken();
+  const headers = { Authorization: `Bearer ${token}` };
+  const profile = (await (await fetch(`${apiBase()}/api/profiles/${username}`, { headers })).json()) as { id?: string };
+  if (profile.id) await fetch(`${apiBase()}/api/contacts/${profile.id}`, { method: "DELETE", headers });
+}
 
 test.describe("Profil — visiteur et soi", () => {
   test.beforeEach(async ({ page }) => {
@@ -18,6 +27,7 @@ test.describe("Profil — visiteur et soi", () => {
   });
 
   test("inconnue : demander amie, pas de message", async ({ page }) => {
+    await unlinkFriend("william.ekani");
     await page.goto("/u/william.ekani");
     await expect(page.getByRole("heading", { name: "William Ekani" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Ajouter comme amie" })).toBeVisible();
