@@ -52,9 +52,10 @@ test.describe("Mood — maquette Reels / like-time", () => {
       expect(commentsBox.height).toBeLessThan(phoneBox.height * 0.78);
     }
     await expect(comments.getByPlaceholder("Ajouter un commentaire")).toBeVisible();
-    await comments.getByPlaceholder("Ajouter un commentaire").fill("Super rooftop");
+    const note = `Super rooftop ${Date.now()}`;
+    await comments.getByPlaceholder("Ajouter un commentaire").fill(note);
     await comments.getByRole("button", { name: "Ajouter un commentaire" }).click();
-    await expect(comments.getByText("Super rooftop")).toBeVisible();
+    await expect(comments.getByText(note)).toBeVisible();
     await comments.getByText("Fermer", { exact: true }).click();
     await expect(page.getByRole("dialog", { name: "Commentaires" })).toHaveCount(0);
   });
