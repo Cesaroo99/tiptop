@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { CalendarIcon, HeartIcon, PinIcon, PlusIcon, TicketIcon } from "@/components/Icons";
+import { SearchEntry } from "@/components/SearchEntry";
 import { CardSkeleton, Chip, EmptyState, ErrorBanner } from "@/components/ui";
 import { api, type EventCard as EventCardType, type InvitationItem } from "@/lib/api";
 import { formatEventWhen } from "@/lib/time";
@@ -54,11 +55,15 @@ function EventsHub() {
 
   return (
     <div className="px-4 py-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="type-h1 text-ink">{messages.nav.events}</h1>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h1 className="type-h1 min-w-0 flex-1 truncate text-ink">{messages.nav.events}</h1>
+        <SearchEntry
+          href="/search?type=events"
+          className="tap-scale grid h-11 w-11 shrink-0 place-items-center rounded-full bg-surface-sunken text-muted transition hover:brightness-95"
+        />
         <Link
           href="/compose?type=event"
-          className="tap-scale type-button flex items-center gap-1.5 rounded-pill bg-accent px-4 py-2.5 text-on-primary shadow-sm transition hover:bg-accent-hover"
+          className="tap-scale type-button flex shrink-0 items-center gap-1.5 rounded-pill bg-accent px-4 py-2.5 text-on-primary shadow-sm transition hover:bg-accent-hover"
         >
           <PlusIcon size={15} />
           {messages.world.createEvent}

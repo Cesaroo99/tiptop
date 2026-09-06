@@ -187,6 +187,8 @@ export type Messages = {
     events: string;
     all: string;
     applySearch: string;
+    searchSuggestions: string;
+    searchAround: string;
     markAllRead: string;
     notifNew: string;
     notifEarlier: string;
@@ -1060,6 +1062,8 @@ export const fr: Messages = {
     events: "Événements",
     all: "Tout",
     applySearch: "Appliquer la recherche",
+    searchSuggestions: "Suggestions près de toi",
+    searchAround: "Autour de {place}",
     markAllRead: "Tout marquer comme lu",
     notifNew: "Nouveau",
     notifEarlier: "Plus tôt",
@@ -1933,6 +1937,8 @@ export const en: Messages = {
     events: "Events",
     all: "All",
     applySearch: "Apply search",
+    searchSuggestions: "Suggestions near you",
+    searchAround: "Around {place}",
     markAllRead: "Mark all as read",
     notifNew: "New",
     notifEarlier: "Earlier",

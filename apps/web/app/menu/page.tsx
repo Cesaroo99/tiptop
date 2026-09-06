@@ -38,6 +38,7 @@ export default function MenuPage() {
 
   const groups: Array<Array<{ href: string; label: string; fresh?: boolean }>> = [
     [
+      { href: "/search", label: messages.common.search },
       { href: "/wishes", label: messages.menu.wishes },
       { href: "/invitations", label: messages.menu.invitations, fresh: true },
       { href: "/likes", label: messages.menu.likes },
