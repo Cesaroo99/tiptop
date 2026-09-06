@@ -360,9 +360,19 @@ export class LikesService {
         where: { id },
         select: { body: true, postId: true },
       });
+      if (comment) {
+        return {
+          label: likePlacementLabel("comment", { body: comment.body }),
+          href: likePlacementHref("comment", { id, postId: comment.postId }),
+        };
+      }
+      const moodComment = await this.prisma.moodComment.findUnique({
+        where: { id },
+        select: { body: true, moodId: true },
+      });
       return {
-        label: likePlacementLabel("comment", { body: comment?.body }),
-        href: likePlacementHref("comment", { id, postId: comment?.postId }),
+        label: likePlacementLabel("comment", { body: moodComment?.body }),
+        href: likePlacementHref("comment", { id, moodId: moodComment?.moodId }),
       };
     }
     if (kind === "mood") {
@@ -974,8 +984,10 @@ export class LikesService {
     }
     if (target.type === "comment") {
       const c = await this.prisma.comment.findUnique({ where: { id: target.id } });
-      if (!c) throw new BadRequestException({ code: "COMMENT_NOT_FOUND" });
-      return { beneficiaryUserId: c.authorId };
+      if (c) return { beneficiaryUserId: c.authorId };
+      const moodComment = await this.prisma.moodComment.findUnique({ where: { id: target.id } });
+      if (!moodComment) throw new BadRequestException({ code: "COMMENT_NOT_FOUND" });
+      return { beneficiaryUserId: moodComment.authorId };
     }
     if (target.type === "mood") {
       const m = await this.prisma.mood.findUnique({ where: { id: target.id } });

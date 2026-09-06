@@ -46,7 +46,7 @@ function HomeFeed() {
     <div className="space-y-4 px-4 py-3">
       <section>
         <div className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
-          <Link href="/compose?type=mood" className="tap-scale flex w-[72px] shrink-0 flex-col items-center gap-1.5">
+          <Link href="/mood/create" className="tap-scale flex w-[72px] shrink-0 flex-col items-center gap-1.5">
             <div className="grid h-[68px] w-[68px] place-items-center rounded-full bg-accent text-on-primary shadow-sm">
               <span className="grid h-[58px] w-[58px] place-items-center rounded-full border-[1.5px] border-dashed border-white/90">
                 <PlusIcon size={22} />

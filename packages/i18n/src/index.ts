@@ -147,6 +147,8 @@ export type Messages = {
     comments: string;
     shares: string;
     addComment: string;
+    reply: string;
+    replyTo: string;
     follow: string;
     following: string;
     unfollow: string;
@@ -389,7 +391,21 @@ export type Messages = {
     moodMore: string;
     moodActions: string;
     moodAudioOriginal: string;
+    moodAudioNamed: string;
     moodCommentsEmpty: string;
+    moodRetake: string;
+    moodAddText: string;
+    moodAddSound: string;
+    moodSoundTitle: string;
+    moodSoundOriginal: string;
+    moodSoundOff: string;
+    moodSoundPulse: string;
+    moodSoundNight: string;
+    moodSoundGlow: string;
+    moodFlip: string;
+    moodStopRecord: string;
+    moodCameraDenied: string;
+    moodCameraHint: string;
     moodPlay: string;
     moodPause: string;
     moodEmpty: string;
@@ -884,6 +900,8 @@ export const fr: Messages = {
     comments: "Commentaires",
     shares: "Partages",
     addComment: "Ajouter un commentaire",
+    reply: "Répondre",
+    replyTo: "Répondre à {name}",
     follow: "Suivre",
     following: "Abonné",
     unfollow: "Ne plus suivre",
@@ -1126,7 +1144,21 @@ export const fr: Messages = {
     moodMore: "Plus",
     moodActions: "Autres actions",
     moodAudioOriginal: "Audio • Original",
+    moodAudioNamed: "Audio • {name}",
     moodCommentsEmpty: "Sois le premier à commenter.",
+    moodRetake: "Reprendre",
+    moodAddText: "Texte",
+    moodAddSound: "Son",
+    moodSoundTitle: "Choisir un son",
+    moodSoundOriginal: "Son original",
+    moodSoundOff: "Sans son",
+    moodSoundPulse: "Pulse Yaoundé",
+    moodSoundNight: "Nuit douce",
+    moodSoundGlow: "Glow",
+    moodFlip: "Retourner",
+    moodStopRecord: "Stop",
+    moodCameraDenied: "Caméra indisponible. Importe une vidéo ou choisis un modèle.",
+    moodCameraHint: "Filme, puis ajoute un son, un lieu ou du texte.",
     moodPlay: "Lire",
     moodPause: "Mettre en pause",
     moodEmpty: "Aucun mood actif",
@@ -1621,6 +1653,8 @@ export const en: Messages = {
     comments: "Comments",
     shares: "Shares",
     addComment: "Add a comment",
+    reply: "Reply",
+    replyTo: "Reply to {name}",
     follow: "Follow",
     following: "Following",
     unfollow: "Unfollow",
@@ -1863,7 +1897,21 @@ export const en: Messages = {
     moodMore: "More",
     moodActions: "More actions",
     moodAudioOriginal: "Audio • Original",
+    moodAudioNamed: "Audio • {name}",
     moodCommentsEmpty: "Be the first to comment.",
+    moodRetake: "Retake",
+    moodAddText: "Text",
+    moodAddSound: "Sound",
+    moodSoundTitle: "Pick a sound",
+    moodSoundOriginal: "Original sound",
+    moodSoundOff: "No sound",
+    moodSoundPulse: "Pulse Yaoundé",
+    moodSoundNight: "Soft night",
+    moodSoundGlow: "Glow",
+    moodFlip: "Flip",
+    moodStopRecord: "Stop",
+    moodCameraDenied: "Camera unavailable. Import a video or pick a template.",
+    moodCameraHint: "Film, then add a sound, a place or some text.",
     moodPlay: "Play",
     moodPause: "Pause",
     moodEmpty: "No active mood",

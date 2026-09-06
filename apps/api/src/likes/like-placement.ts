@@ -22,11 +22,15 @@ export function postLeadLabel(body: string): string {
 
 export function likePlacementHref(
   kind: LikePlacementKind,
-  ids: { id: string; username?: string | null; eventId?: string | null; postId?: string | null },
+  ids: { id: string; username?: string | null; eventId?: string | null; postId?: string | null; moodId?: string | null },
 ): string {
   if (kind === "user") return ids.username ? `/u/${ids.username}` : "/likes";
   if (kind === "post") return ids.eventId ? `/events/${ids.eventId}` : `/posts/${ids.id}`;
-  if (kind === "comment") return ids.postId ? `/posts/${ids.postId}` : "/likes";
+  if (kind === "comment") {
+    if (ids.postId) return `/posts/${ids.postId}`;
+    if (ids.moodId) return `/mood?start=${ids.moodId}`;
+    return "/likes";
+  }
   if (kind === "mood") return `/mood/${ids.id}`;
   return "/wishes";
 }

@@ -1138,6 +1138,28 @@ async function enrichLivingWorld(
     }
   }
 
+  const foodMood = await db.mood.findFirst({
+    where: { authorId: amina.id, videoUrl: "/seed/moods/video-food.mp4" },
+  });
+  if (foodMood) {
+    const root = await db.moodComment.findFirst({
+      where: { moodId: foodMood.id, body: "Ça donne trop faim 🔥", parentId: null },
+    });
+    const parent =
+      root ??
+      (await db.moodComment.create({
+        data: { moodId: foodMood.id, authorId: erica.id, body: "Ça donne trop faim 🔥" },
+      }));
+    const replyHit = await db.moodComment.findFirst({
+      where: { moodId: foodMood.id, parentId: parent.id, authorId: cesar.id },
+    });
+    if (!replyHit) {
+      await db.moodComment.create({
+        data: { moodId: foodMood.id, authorId: cesar.id, parentId: parent.id, body: "On y va ce soir ?" },
+      });
+    }
+  }
+
   const blackPost = await db.post.findFirst({ where: { authorId: cesar.id, body: { contains: "Black" } } });
   if (blackPost) {
     const comments = [
