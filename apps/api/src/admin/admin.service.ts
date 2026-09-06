@@ -35,11 +35,12 @@ export class AdminService {
   ) {}
 
   async overview() {
-    const [users, blocked, posts, hiddenPosts, events, payments, openReports] = await Promise.all([
+    const [users, blocked, posts, hiddenPosts, moods, events, payments, openReports] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.user.count({ where: { status: "BLOCKED" } }),
       this.prisma.post.count({ where: { hiddenAt: null } }),
       this.prisma.post.count({ where: { hiddenAt: { not: null } } }),
+      this.prisma.mood.count({ where: { hiddenAt: null } }),
       this.prisma.event.count({ where: { status: "PUBLISHED" } }),
       this.prisma.payment.count({ where: { status: "SUCCEEDED" } }),
       this.prisma.report.count({ where: { status: "OPEN" } }),
@@ -57,6 +58,7 @@ export class AdminService {
       blocked,
       posts,
       hiddenPosts,
+      moods,
       events,
       payments,
       openReports,

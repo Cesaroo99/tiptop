@@ -50,7 +50,7 @@ test.describe("CTA Intéressé / Réserver + série", () => {
     await page.getByRole("button", { name: "Afterwork" }).click();
     await page.getByPlaceholder("Titre de la sortie").fill(`Afterwork série ${Date.now()}`);
     await page.getByRole("button", { name: "Publier" }).first().click();
-    await expect(page.getByText("Votre mood !")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Ton statut")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Toutes les semaines").first()).toBeVisible();
   });
 });

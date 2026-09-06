@@ -11,6 +11,7 @@ type Overview = {
   blocked: number;
   posts: number;
   hiddenPosts: number;
+  moods?: number;
   events: number;
   payments: number;
   openReports: number;
@@ -32,6 +33,7 @@ export default function Page() {
         { href: "/admin/users", label: messages.admin.blockedCount, value: data.blocked },
         { href: "/admin/posts", label: messages.admin.postsCount, value: data.posts },
         { href: "/admin/posts", label: messages.admin.hiddenCount, value: data.hiddenPosts },
+        { href: "/admin/moods", label: messages.admin.moods, value: data.moods ?? 0 },
         { href: "/admin/events", label: messages.admin.eventsCount, value: data.events },
         { href: "/admin/payments", label: messages.admin.paymentsCount, value: data.payments },
         { href: "/admin/reports", label: messages.admin.openReports, value: data.openReports },

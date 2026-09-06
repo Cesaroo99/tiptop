@@ -8,6 +8,7 @@ import { PostCard } from "@/components/PostCard";
 import { EmptyState, ErrorBanner, ScreenHeader, Skeleton, TextInput } from "@/components/ui";
 import { api, type CommentItem, type FeedItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { viewerAwareLikeTime, viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 
 export default function PostPage() {
@@ -22,7 +23,7 @@ function Thread() {
   const { id } = useParams<{ id: string }>();
   const { messages } = useI18n();
   const router = useRouter();
-  const { refresh: refreshPlacement } = useLikePlacement();
+  const { refresh: refreshPlacement, placement, ready } = useLikePlacement();
   const [post, setPost] = useState<FeedItem | null>(null);
   const [comments, setComments] = useState<CommentItem[] | null>(null);
   const [text, setText] = useState("");
@@ -78,12 +79,18 @@ function Thread() {
           </p>
           <p className="text-sm text-ink">{c.body}</p>
           <div className="mt-2 flex items-center justify-between">
-            <LikeTimeBadge time={c.likeTime} loadedAt={loadedAt} />
+            <LikeTimeBadge
+              time={viewerAwareLikeTime(
+                c.likeTime,
+                viewerLikeActive(placement, "comment", c.id, c.likeTime?.likedByMe ?? false, ready),
+              )}
+              loadedAt={loadedAt}
+            />
             <button
               type="button"
-              className={`rounded-full px-3 py-1 text-sm ${c.likeTime?.likedByMe ? "bg-accent text-white" : "bg-[var(--border)]"}`}
+              className={`rounded-full px-3 py-1 text-sm ${viewerLikeActive(placement, "comment", c.id, c.likeTime?.likedByMe ?? false, ready) ? "bg-accent text-white" : "bg-[var(--border)]"}`}
               onClick={async () => {
-                if (c.likeTime?.likedByMe) {
+                if (viewerLikeActive(placement, "comment", c.id, c.likeTime?.likedByMe ?? false, ready)) {
                   await api("/likes", {
                     method: "DELETE",
                     body: JSON.stringify({ targetType: "comment", targetId: c.id }),

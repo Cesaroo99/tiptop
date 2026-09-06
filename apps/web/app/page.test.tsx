@@ -260,6 +260,7 @@ describe("Accueil — maquette pulse", () => {
       </TestI18nProvider>,
     );
     expect(await screen.findByText("Léa est dispo")).toBeInTheDocument();
+    expect(screen.queryByText("Disponible près de toi")).toBeNull();
     expect(document.querySelector("[data-kind=invite]")).toBeTruthy();
     expect(document.querySelector("[data-kind=person]")).toBeTruthy();
   });

@@ -17,7 +17,7 @@ import { EmptyState, Modal, Skeleton } from "@/components/ui";
 import { moodSoundSrc } from "@tiptop/domain";
 import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { viewerLikeActive } from "@/lib/like-feed";
+import { applyPlacementToMood, releaseViewerMoodLike, viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { useSession } from "@/lib/session";
 import { sheetOverlayClass, useSheetPortal } from "@/lib/sheet-portal";
@@ -85,8 +85,21 @@ function MoodFeed() {
     el?.scrollIntoView({ block: "start" });
   }, [startId, items]);
 
+  const { placement, ready } = useLikePlacement();
+
+  useEffect(() => {
+    if (!ready) return;
+    setItems((cur) => cur?.map((m) => applyPlacementToMood(m, placement)) ?? cur);
+  }, [ready, placement?.targetType, placement?.targetId]);
+
   function updateMood(id: string, patch: Partial<MoodItem>) {
-    setItems((cur) => cur?.map((m) => (m.id === id ? { ...m, ...patch } : m)) ?? cur);
+    setItems(
+      (cur) =>
+        cur?.map((m) => {
+          if (m.id === id) return { ...m, ...patch };
+          return patch.likedByMe ? releaseViewerMoodLike(m) : m;
+        }) ?? cur,
+    );
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
@@ -233,7 +246,13 @@ function MoodSlide({
       onChange({
         likedByMe: true,
         likeTime: mood.likeTime
-          ? { ...mood.likeTime, likedByMe: true, activeCount: mood.likeTime.activeCount + 1 }
+          ? {
+              ...mood.likeTime,
+              likedByMe: true,
+              activeCount: mood.likeTime.likedByMe
+                ? mood.likeTime.activeCount
+                : (mood.likeTime.activeCount ?? 0) + 1,
+            }
           : undefined,
       });
       await refreshPlacement();

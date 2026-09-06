@@ -14,7 +14,7 @@ import { SocialInviteModal } from "@/components/SocialInviteModal";
 import { ErrorBanner, IconButton, ScreenHeader, TextInput } from "@/components/ui";
 import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { viewerLikeActive } from "@/lib/like-feed";
+import { applyPlacementToMood, viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { useSession } from "@/lib/session";
 
@@ -61,11 +61,22 @@ function MoodViewer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  useEffect(() => {
+    if (!ready || !mood) return;
+    setMood((cur) => (cur ? applyPlacementToMood(cur, placement) : cur));
+  }, [ready, placement?.targetType, placement?.targetId, mood?.id]);
+
   async function like(confirmTransfer = true) {
     if (!mood) return;
-    const liked = mood.likeTime?.likedByMe ?? mood.likedByMe ?? false;
+    const likedNow = viewerLikeActive(
+      placement,
+      "mood",
+      mood.id,
+      mood.likeTime?.likedByMe ?? mood.likedByMe ?? false,
+      ready,
+    );
     try {
-      if (liked) {
+      if (likedNow) {
         await api("/likes", {
           method: "DELETE",
           body: JSON.stringify({ targetType: "mood", targetId: mood.id }),
@@ -94,7 +105,9 @@ function MoodViewer() {
         likeTime: {
           ...mood.likeTime,
           totalSeconds: mood.likeTime?.totalSeconds ?? 0,
-          activeCount: (mood.likeTime?.activeCount ?? 0) + 1,
+          activeCount: mood.likeTime?.likedByMe
+            ? (mood.likeTime.activeCount ?? 1)
+            : (mood.likeTime?.activeCount ?? 0) + 1,
           likedByMe: true,
           label: mood.likeTime?.label ?? "0 s",
         },

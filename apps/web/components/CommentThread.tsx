@@ -8,7 +8,7 @@ import { LikeDialogs, likeErrorKind } from "./LikeDialogs";
 import { useLiveLikeSeconds } from "./LikeTimeBadge";
 import { api, ApiError, type CommentItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { viewerLikeActive } from "@/lib/like-feed";
+import { viewerAwareLikeTime, viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 
 function groupComments(items: CommentItem[]) {
@@ -101,9 +101,10 @@ function CommentLike({ comment, onChange }: { comment: CommentItem; onChange: (n
     comment.likeTime?.likedByMe ?? comment.likedByMe ?? false,
     ready,
   );
-  const live = useLiveLikeSeconds(comment.likeTime, loadedAt);
-  const extra = Math.max(0, live - (comment.likeTime?.totalSeconds ?? 0));
-  const label = formatLikeDurationShort((comment.likeTime?.totalSeconds ?? 0) + extra, loc);
+  const shown = viewerAwareLikeTime(comment.likeTime, liked);
+  const live = useLiveLikeSeconds(shown, loadedAt);
+  const extra = Math.max(0, live - (shown?.totalSeconds ?? 0));
+  const label = formatLikeDurationShort((shown?.totalSeconds ?? 0) + extra, loc);
 
   async function like(confirmTransfer = true) {
     try {

@@ -41,7 +41,7 @@ export function AvailableInviteCard({
           {messages.home.justAvailable.replace("{name}", person.firstName)}
         </p>
         <p className="type-caption mt-0.5 truncate text-accent">
-          {why ?? (distance ? `${distance} ${messages.world.fromYou}` : messages.world.whyNearbyAvailable)}
+          {why ?? (distance ? `${distance} ${messages.world.fromYou}` : messages.home.justAvailableBody)}
         </p>
         <p className="type-caption mt-0.5 truncate text-muted">{hint}</p>
       </div>

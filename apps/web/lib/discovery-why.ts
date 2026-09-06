@@ -18,7 +18,7 @@ export function whyCaption(
       ? messages.world.whySharedInterestsOne
       : messages.world.whySharedInterests.replace("{count}", String(count));
   }
-  if (reason.key === "nearby_available") return messages.world.whyNearbyAvailable;
+  if (reason.key === "nearby_available") return null;
   if (reason.key === "mood") return messages.world.whyMood;
   return null;
 }

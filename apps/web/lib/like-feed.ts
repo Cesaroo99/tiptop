@@ -90,3 +90,13 @@ export function applyPlacementToMood(
   }
   return releaseViewerMoodLike(mood);
 }
+
+/** Affichage : si mon like n’est plus ici, le décompte ne doit plus avancer. */
+export function viewerAwareLikeTime<T extends { likedByMe?: boolean; activeCount: number }>(
+  time: T | null | undefined,
+  likedByViewer: boolean,
+): T | null | undefined {
+  if (!time || likedByViewer) return time;
+  if (!time.likedByMe) return time;
+  return { ...time, likedByMe: false, activeCount: Math.max(0, time.activeCount - 1) };
+}

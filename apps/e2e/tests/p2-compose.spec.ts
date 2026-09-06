@@ -12,7 +12,7 @@ test.describe("P2 — publication → feed", () => {
     await expect(page.getByText("Publication").first()).toBeVisible();
     await page.locator("textarea").fill(body);
     await page.getByRole("button", { name: "Publier" }).first().click();
-    await expect(page.getByText("Votre mood !")).toBeVisible();
+    await expect(page.getByText("Ton statut")).toBeVisible();
     await expect(page.getByText(body)).toBeVisible();
   });
 });

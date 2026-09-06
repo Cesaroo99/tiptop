@@ -4,6 +4,7 @@ import {
   applySoleLike,
   applySoleMoodLike,
   releaseViewerLike,
+  viewerAwareLikeTime,
   viewerLikeActive,
 } from "./like-feed";
 import type { FeedItem } from "./api";
@@ -123,6 +124,14 @@ describe("like unique dans le fil", () => {
     const kept = applyPlacementToMood(a, { targetType: "mood", targetId: "m1" });
     expect(kept.likedByMe).toBe(true);
     expect(kept.likeTime?.activeCount).toBe(1);
+  });
+
+  it("le décompte affiché s’arrête dès que le like n’est plus là", () => {
+    const ticking = { totalSeconds: 10, activeCount: 1, likedByMe: true, label: "10 s" };
+    const frozen = viewerAwareLikeTime(ticking, false);
+    expect(frozen?.activeCount).toBe(0);
+    expect(frozen?.likedByMe).toBe(false);
+    expect(viewerAwareLikeTime(ticking, true)?.activeCount).toBe(1);
   });
 
   it("un like mood/commentaire éteint le like de la publication", () => {
