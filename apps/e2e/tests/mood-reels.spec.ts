@@ -31,7 +31,7 @@ test.describe("Mood — maquette Reels / like-time", () => {
     await sheet.getByRole("button", { name: "Fermer" }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
 
-    await page.locator("section").nth(1).getByText("Ajouter un commentaire").click();
+    await page.locator("section").nth(1).getByRole("button", { name: "Commentaires" }).click();
     const comments = page.getByRole("dialog", { name: "Commentaires" });
     await expect(comments).toBeVisible();
     await expect(comments.getByPlaceholder("Ajouter un commentaire")).toBeVisible();

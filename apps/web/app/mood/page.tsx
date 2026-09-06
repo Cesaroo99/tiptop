@@ -165,7 +165,8 @@ function MoodSlide({
 }) {
   const { messages } = useI18n();
   const { user } = useSession();
-  const { refresh: refreshPlacement } = useLikePlacement();
+  const { refresh: refreshPlacement, placement } = useLikePlacement();
+  const dock = Boolean(placement);
   const [transfer, setTransfer] = useState<string | null>(null);
   const [buy, setBuy] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
@@ -240,7 +241,7 @@ function MoodSlide({
   }
 
   return (
-    <section ref={registerRef} className="relative h-full w-full snap-start snap-always">
+    <section ref={registerRef} className="relative h-full min-h-full w-full shrink-0 snap-start snap-always">
       {mood.videoUrl ? (
         <MoodVideo src={mood.videoUrl} muted={muted} />
       ) : mood.imageUrl ? (
@@ -253,7 +254,7 @@ function MoodSlide({
       )}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/75" />
 
-      <div className="absolute bottom-[max(8.75rem,calc(8.25rem+env(safe-area-inset-bottom)))] right-2.5 z-10">
+      <div className={`absolute right-2.5 z-10 ${dock ? "bottom-[max(11.75rem,calc(11.25rem+env(safe-area-inset-bottom)))]" : "bottom-[max(8.9rem,calc(8.4rem+env(safe-area-inset-bottom)))]"}`}>
         <MoodLikeRail
           liked={liked}
           likeTime={mood.likeTime}
@@ -266,7 +267,7 @@ function MoodSlide({
         />
       </div>
 
-      <div className="absolute inset-x-0 bottom-[max(8.75rem,calc(8.25rem+env(safe-area-inset-bottom)))] z-10 px-4 pr-[4.75rem] text-white">
+      <div className={`absolute inset-x-0 z-10 px-4 pr-[4.75rem] text-white ${dock ? "bottom-[max(11.75rem,calc(11.25rem+env(safe-area-inset-bottom)))]" : "bottom-[max(8.9rem,calc(8.4rem+env(safe-area-inset-bottom)))]"}`}>
         {place ? (
           <div className="mb-1.5">
             <MoodPlaceTag place={place} onOpen={() => setPlaceOpen(true)} />
@@ -318,7 +319,7 @@ function MoodSlide({
         {copied ? <p className="type-caption mt-2 font-semibold">{messages.social.copied}</p> : null}
       </div>
 
-      <div className="absolute inset-x-0 bottom-[max(5.35rem,calc(4.85rem+env(safe-area-inset-bottom)))] z-10 px-4">
+      <div className={`absolute inset-x-0 z-10 px-4 ${dock ? "bottom-[max(8.35rem,calc(7.85rem+env(safe-area-inset-bottom)))]" : "bottom-[max(5.6rem,calc(5.1rem+env(safe-area-inset-bottom)))]"}`}>
         <button
           type="button"
           onClick={() => setCommentsOpen(true)}
