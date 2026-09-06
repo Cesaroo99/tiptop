@@ -157,7 +157,7 @@ function PeopleCarousel() {
 
   const filterForm = filtersOpen ? (
     <form
-      className="mb-4 space-y-3 rounded-card bg-surface p-4 text-center shadow-card"
+      className="mb-3 space-y-2.5 rounded-card bg-surface p-3 text-center shadow-card"
       onSubmit={(e) => {
         e.preventDefault();
         applyFilters(draft);
@@ -190,23 +190,23 @@ function PeopleCarousel() {
         onChange={(e) => setDraft((cur) => ({ ...cur, maxKm: e.target.value }))}
         placeholder={messages.world.maxDistance}
         inputMode="numeric"
-        className="h-11 w-full rounded-full bg-surface-sunken px-4 text-center type-body-sm text-ink outline-none"
+        className="h-10 w-full rounded-full bg-surface-sunken px-4 text-center type-body-sm text-ink outline-none"
       />
       <input
         value={draft.profession}
         onChange={(e) => setDraft((cur) => ({ ...cur, profession: e.target.value }))}
         placeholder={messages.world.professionFilter}
-        className="h-11 w-full rounded-full bg-surface-sunken px-4 text-center type-body-sm text-ink outline-none"
+        className="h-10 w-full rounded-full bg-surface-sunken px-4 text-center type-body-sm text-ink outline-none"
       />
       <div className="grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => applyFilters(EMPTY_FILTERS)}
-          className="type-button tap-scale h-10 rounded-full bg-surface-sunken text-ink"
+          className="type-button tap-scale h-9 rounded-full bg-surface-sunken text-ink"
         >
           {messages.world.clearFilters}
         </button>
-        <button type="submit" className="type-button tap-scale h-10 rounded-full bg-accent text-on-primary">
+        <button type="submit" className="type-button tap-scale h-9 rounded-full bg-accent text-on-primary">
           {messages.world.applyFilters}
         </button>
       </div>
