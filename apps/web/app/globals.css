@@ -560,23 +560,27 @@ body {
 
 .splash-glow {
   background: radial-gradient(circle, rgba(5, 199, 242, 0.32) 0%, rgba(242, 226, 5, 0.12) 46%, transparent 72%);
-  animation: splash-glow-pulse 3.2s var(--ease-standard) both;
+  animation: splash-glow-pulse 3.6s var(--ease-standard) both;
+}
+.splash-globe,
+.splash-ball-g {
+  transform-box: view-box;
+  transform-origin: 40px 40px;
 }
 .splash-globe {
-  transform-origin: 40px 40px;
-  animation: splash-globe-spin 3.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: splash-globe-spin 3.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .splash-globe-line {
   fill: none;
-  stroke: #00c2e8;
-  stroke-width: 1.35;
+  stroke: #7ee8ff;
+  stroke-width: 1.6;
   stroke-linecap: round;
   opacity: 0;
 }
 .splash-globe-rim {
   stroke-dasharray: 164;
   stroke-dashoffset: 164;
-  animation: splash-globe-draw 3.2s var(--ease-standard) both;
+  animation: splash-globe-draw 3.6s var(--ease-standard) both;
 }
 .splash-globe-m1,
 .splash-globe-m2,
@@ -585,7 +589,7 @@ body {
 .splash-globe-p3 {
   stroke-dasharray: 140;
   stroke-dashoffset: 140;
-  animation: splash-globe-draw 3.2s var(--ease-standard) both;
+  animation: splash-globe-draw 3.6s var(--ease-standard) both;
 }
 .splash-globe-m1 { animation-delay: 80ms; }
 .splash-globe-m2 { animation-delay: 140ms; }
@@ -600,27 +604,24 @@ body {
   opacity: 0;
 }
 .splash-orbit-a {
-  animation: splash-logo-draw 3.2s var(--ease-standard) both;
+  animation: splash-logo-draw 3.6s var(--ease-standard) both;
 }
 .splash-orbit-b {
-  animation: splash-logo-draw 3.2s var(--ease-standard) 90ms both;
+  animation: splash-logo-draw 3.6s var(--ease-standard) 90ms both;
 }
 
-.splash-ball-g {
-  transform-origin: 40px 40px;
-}
 .splash-ball-g-lime {
-  animation: splash-ball-lime 3.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: splash-ball-lime 3.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .splash-ball-g-green {
-  animation: splash-ball-green 3.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: splash-ball-green 3.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .splash-ball-g-cyan {
-  animation: splash-ball-cyan 3.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: splash-ball-cyan 3.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .splash-name {
-  animation: splash-name-in 3.2s var(--ease-standard) both;
+  animation: splash-name-in 3.6s var(--ease-standard) both;
 }
 
 @keyframes splash-glow-pulse {
@@ -746,11 +747,11 @@ body {
 }
 @keyframes splash-name-in {
   0%,
-  72% {
+  58% {
     opacity: 0;
     transform: translateY(12px);
   }
-  88%,
+  72%,
   100% {
     opacity: 1;
     transform: translateY(0);

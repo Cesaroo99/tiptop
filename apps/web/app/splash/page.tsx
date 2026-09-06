@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/session";
 
-const SPLASH_MS = 3400;
+const SPLASH_MS = 4000;
 
 export default function SplashPage() {
   const router = useRouter();
@@ -25,10 +25,10 @@ export default function SplashPage() {
       data-testid="splash-screen"
       className="relative flex h-full flex-col items-center justify-center overflow-hidden bg-ink"
     >
-      <div className="splash-glow absolute h-56 w-56 rounded-full" />
+      <div className="splash-glow pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full" />
       <div className="relative z-10 flex flex-col items-center">
         <SplashMark />
-        <p className="splash-name mt-5 text-[34px] font-semibold tracking-tight text-[#00BAF2]">TipTop</p>
+        <p className="splash-name mt-4 text-[34px] font-semibold tracking-tight text-[#00BAF2]">TipTop</p>
       </div>
     </main>
   );
@@ -37,7 +37,7 @@ export default function SplashPage() {
 function SplashMark() {
   return (
     <svg
-      className="splash-mark h-[168px] w-[168px]"
+      className="splash-mark h-[200px] w-[200px]"
       viewBox="0 0 80 80"
       fill="none"
       aria-hidden
@@ -63,6 +63,10 @@ function SplashMark() {
         <ellipse className="splash-globe-line splash-globe-p1" cx="40" cy="28" rx="22" ry="6" />
         <ellipse className="splash-globe-line splash-globe-p2" cx="40" cy="40" rx="26" ry="7" />
         <ellipse className="splash-globe-line splash-globe-p3" cx="40" cy="52" rx="22" ry="6" />
+        <path
+          className="splash-globe-line splash-globe-p2"
+          d="M22 34c6-4 12-2 16 3 5 6 12 5 20-2"
+        />
       </g>
 
       <path
