@@ -15,8 +15,8 @@ const TYPES: Record<string, string> = {
   avi: "video/x-msvideo",
 };
 
-export async function GET(_request: Request, ctx: { params: Promise<{ file: string }> | { file: string } }) {
-  const params = await Promise.resolve(ctx.params);
+export async function GET(_request: Request, ctx: { params: Promise<{ file: string }> }) {
+  const params = await ctx.params;
   const file = safeUploadName(params.file);
   if (!file) return NextResponse.json({ code: "NOT_FOUND" }, { status: 404 });
   try {
