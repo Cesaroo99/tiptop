@@ -285,6 +285,13 @@ export class AdminService {
       create: { key: PLATFORM_FEE_CONFIG_KEY, value: next },
       update: { value: next },
     });
+    try {
+      await this.prisma.$executeRawUnsafe(
+        `ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'SETTINGS_UPDATE'`,
+      );
+    } catch {
+      /* déjà présent, ou hors transaction */
+    }
     await this.audit(actor.id, "SETTINGS_UPDATE", "AppConfig", PLATFORM_FEE_CONFIG_KEY, {
       previous,
       next,
