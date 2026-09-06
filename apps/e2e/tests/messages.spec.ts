@@ -11,17 +11,17 @@ test.describe("Messagerie — inbox et conversation", () => {
     await expect(page.getByRole("heading", { name: "Mes messages" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Nouvelle conversation" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Home" })).toBeVisible();
-    await expect(page.getByText("Erica Sinclair")).toBeVisible();
-    await expect(page.getByText("Amina Ngo")).toBeVisible();
-    await expect(page.getByText("Soirée Black & White")).toBeVisible();
+    await expect(page.locator('main a[href^="/messages/"]').filter({ hasText: "Erica Sinclair" })).toBeVisible();
+    await expect(page.locator('main a[href^="/messages/"]').filter({ hasText: "Amina Ngo" })).toBeVisible();
+    await expect(page.locator('main a[href^="/messages/"]').filter({ hasText: "Soirée Black & White" })).toBeVisible();
 
     await page.getByRole("button", { name: "Rechercher une conversation" }).click();
     await page.getByPlaceholder("Rechercher une conversation").fill("Amina");
-    await expect(page.getByText("Amina Ngo")).toBeVisible();
-    await expect(page.getByText("Erica Sinclair")).toHaveCount(0);
+    await expect(page.locator('main a[href^="/messages/"]').filter({ hasText: "Amina Ngo" })).toBeVisible();
+    await expect(page.locator('main a[href^="/messages/"]').filter({ hasText: "Erica Sinclair" })).toHaveCount(0);
 
     await page.getByPlaceholder("Rechercher une conversation").fill("");
-    await page.getByText("Soirée Black & White").click();
+    await page.locator('main a[href^="/messages/"]').filter({ hasText: "Soirée Black & White" }).click();
     await expect(page.getByRole("heading", { name: "Soirée Black & White" })).toBeVisible();
     await expect(page.getByRole("link", { name: "# Général" })).toBeVisible();
     await expect(page.getByText("On a parlé du plan — Black & White à Damas.")).toBeVisible();
@@ -30,7 +30,7 @@ test.describe("Messagerie — inbox et conversation", () => {
     await page.getByRole("button", { name: "Retour" }).click();
     await expect(page.getByRole("heading", { name: "Mes messages" })).toBeVisible();
 
-    await page.getByRole("link", { name: /Erica Sinclair/ }).click();
+    await page.locator('main a[href^="/messages/"]').filter({ hasText: "Erica Sinclair" }).click();
     await expect(page.getByText("On se retrouve à Bastos ?")).toBeVisible();
     const note = `E2E MSG ${Date.now()}`;
     await page.getByPlaceholder("Écrire un message").fill(note);
@@ -43,7 +43,7 @@ test.describe("Messagerie — inbox et conversation", () => {
 
   test("retour inbox mène à l’accueil, pas au fil précédent", async ({ page }) => {
     await page.goto("/messages");
-    await page.getByRole("link", { name: /Erica Sinclair/ }).click();
+    await page.locator('main a[href^="/messages/"]').filter({ hasText: "Erica Sinclair" }).click();
     await expect(page.getByText("On se retrouve à Bastos ?")).toBeVisible();
     await page.getByRole("button", { name: "Retour" }).click();
     await expect(page.getByRole("heading", { name: "Mes messages" })).toBeVisible();

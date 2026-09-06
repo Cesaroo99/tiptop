@@ -9,8 +9,8 @@ test.describe("P6 — chat 1:1", () => {
   test("inbox seed Erica puis envoi d’un message", async ({ page }) => {
     await page.goto("/messages");
     await expect(page.getByRole("heading", { name: "Mes messages" })).toBeVisible();
-    await expect(page.getByText("Erica Sinclair")).toBeVisible();
-    await page.getByText("Erica Sinclair").click();
+    await expect(page.locator('main a[href^="/messages/"]').filter({ hasText: "Erica Sinclair" })).toBeVisible();
+    await page.locator('main a[href^="/messages/"]').filter({ hasText: "Erica Sinclair" }).click();
     await expect(page.getByText("On se retrouve à Bastos ?")).toBeVisible();
     const note = `E2E P6 ${Date.now()}`;
     await page.getByPlaceholder("Écrire un message").fill(note);
