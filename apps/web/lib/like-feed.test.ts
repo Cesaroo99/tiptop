@@ -124,6 +124,12 @@ describe("like unique dans le fil", () => {
     const kept = applyPlacementToMood(a, { targetType: "mood", targetId: "m1" });
     expect(kept.likedByMe).toBe(true);
     expect(kept.likeTime?.activeCount).toBe(1);
+    const cold = applyPlacementToMood(
+      { ...a, likedByMe: false, likeTime: { totalSeconds: 10, activeCount: 0, likedByMe: false, label: "10 s" } },
+      { targetType: "mood", targetId: "m1" },
+    );
+    expect(cold.likeTime?.activeCount).toBe(1);
+    expect(cold.likeTime?.likedByMe).toBe(true);
   });
 
   it("le décompte affiché s’arrête dès que le like n’est plus là", () => {

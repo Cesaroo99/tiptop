@@ -13,6 +13,7 @@ import { LinkIcon, MoreIcon } from "./Icons";
 import { OptionsSheet } from "./OptionsSheet";
 import { IconButton, Modal } from "./ui";
 import { recurrenceCaption } from "@/lib/event-series";
+import { MapThumb } from "./MapThumb";
 import { SeatsLeftBadge, seatsRemainingOf } from "./SeatsLeftBadge";
 
 export function SearchPersonCard({ person }: { person: SearchPerson }) {
@@ -128,15 +129,18 @@ export function SearchEventCard({
             </div>
           )}
         </Link>
-        <div className="absolute left-3 top-3 z-[1] flex flex-wrap items-center gap-1.5">
-          <SeatsLeftBadge remaining={seatsRemainingOf(event.capacity, event.taken, event.remaining)} />
+        <div className="absolute left-2 top-2 z-[1] flex flex-wrap items-center gap-1.5">
+          <SeatsLeftBadge remaining={seatsRemainingOf(event.capacity, event.reservedCount ?? event.taken, event.remaining)} />
           {seriesLabel ? (
             <span className="type-caption rounded-pill bg-accent px-2.5 py-1 font-bold text-on-primary shadow-sm">
               {seriesLabel}
             </span>
           ) : null}
         </div>
-        <EventPriceBadge amount={event.priceXaf} className="absolute right-3 top-3 z-[1] rounded-lg bg-accent px-2.5 py-1 font-bold text-white shadow-sm" />
+        <EventPriceBadge amount={event.priceXaf} className="absolute right-2 top-2 z-[1] rounded-lg bg-accent px-2.5 py-1 font-bold text-white shadow-sm" />
+        <div className="absolute bottom-2 right-2 z-[1] h-16 w-24 overflow-hidden rounded-md ring-2 ring-white/70">
+          <MapThumb city={event.city} zone={event.zone} lat={event.latitude} lng={event.longitude} className="h-full w-full" />
+        </div>
         <Link
           href={`/events/${event.id}`}
           className="absolute inset-x-3 bottom-3 rounded-2xl bg-white/95 px-3 py-2.5 shadow-sm backdrop-blur-sm"
@@ -174,9 +178,13 @@ export function SearchEventCard({
         onClose={() => setBookOpen(false)}
         onBooked={(seats) => {
           if (seats <= 0) return;
+          const nextTaken = (event.reservedCount ?? event.taken) + seats;
+          const currentRemaining = seatsRemainingOf(event.capacity, event.reservedCount ?? event.taken, event.remaining);
           onChanged?.({
             ...event,
-            taken: event.taken + seats,
+            taken: nextTaken,
+            reservedCount: nextTaken,
+            remaining: currentRemaining != null ? Math.max(0, currentRemaining - seats) : seatsRemainingOf(event.capacity, nextTaken),
             viewerReserved: true,
           });
         }}

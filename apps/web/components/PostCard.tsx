@@ -139,7 +139,7 @@ export function PostCard({
           return;
         }
         if (kind === "transfer") {
-          setTransfer({ name: messages.social.transferGeneric });
+          setTransfer({ name: placement?.label || messages.social.transferGeneric });
         }
       }
     }

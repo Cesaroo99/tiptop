@@ -42,7 +42,7 @@ describe("FeedPersonCard", () => {
     );
     expect(screen.getByText("Léa Moreau")).toBeInTheDocument();
     expect(screen.getByText("DJ")).toBeInTheDocument();
-    expect(screen.getByText(/de vous/)).toBeInTheDocument();
+    expect(screen.getByText(/de toi/)).toBeInTheDocument();
     expect(screen.queryByText("Activer le GPS")).toBeNull();
     expect(screen.queryByText("Disponible près de toi")).toBeNull();
   });

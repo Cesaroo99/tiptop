@@ -236,8 +236,11 @@ export type SearchEvent = {
   priceXaf: number;
   currency?: string;
   taken: number;
+  reservedCount?: number;
   capacity?: number | null;
   remaining?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
   viewerHearted: boolean;
   interestedCount?: number;
   viewerInterested?: boolean;
@@ -550,6 +553,7 @@ export type LikeWallet = {
   total: number;
   packs: LikePack[];
   placedOn?: LikePerson | null;
+  placement?: LikePlacement | null;
   receivedFrom?: LikePerson[];
   production?: LikeProduction;
   likeTime?: {

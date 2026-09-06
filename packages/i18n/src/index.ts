@@ -1351,7 +1351,7 @@ export const fr: Messages = {
     locationFixed: "Position figée",
     locationLiveHint: "Les distances utilisent ta position réelle.",
     locationFixedHint: "Les distances utilisent l’endroit que tu as choisi.",
-    fromYou: "de vous",
+    fromYou: "de toi",
     goThere: "S’y rendre",
     precision: "Précision de localisation",
     precisionExact: "Exacte",

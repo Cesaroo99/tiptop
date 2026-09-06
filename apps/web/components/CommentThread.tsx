@@ -143,7 +143,7 @@ function CommentLike({ comment, onChange }: { comment: CommentItem; onChange: (n
           setBuy(true);
           return;
         }
-        if (kind === "transfer") setTransfer(messages.social.transferGeneric);
+        if (kind === "transfer") setTransfer(placement?.label || messages.social.transferGeneric);
       }
     }
   }

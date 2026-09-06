@@ -23,7 +23,13 @@ export function FeedMoodCard({
   const [busy, setBusy] = useState(false);
   const [transfer, setTransfer] = useState<string | null>(null);
   const [buy, setBuy] = useState(false);
-  const liked = viewerLikeActive(placement, "mood", mood.id, Boolean(mood.likedByMe), ready);
+  const liked = viewerLikeActive(
+    placement,
+    "mood",
+    mood.id,
+    mood.likeTime?.likedByMe ?? Boolean(mood.likedByMe),
+    ready,
+  );
   const [loadedAt, setLoadedAt] = useState(() => Date.now());
   const shown = liked ? mood : releaseViewerMoodLike(mood);
   const vie = useLiveLikeLabel(shown.likeTime, loadedAt);
@@ -77,7 +83,7 @@ export function FeedMoodCard({
           setBuy(true);
           return;
         }
-        if (kind === "transfer") setTransfer(`${mood.author.firstName} ${mood.author.lastName}`);
+        if (kind === "transfer") setTransfer(placement?.label || `${mood.author.firstName} ${mood.author.lastName}`);
       }
     } finally {
       setBusy(false);

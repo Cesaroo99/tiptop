@@ -123,7 +123,7 @@ function MoodViewer() {
           return;
         }
         if (kind === "transfer") {
-          setTransfer(messages.social.transferGeneric);
+          setTransfer(placement?.label || messages.social.transferGeneric);
         }
       }
     }

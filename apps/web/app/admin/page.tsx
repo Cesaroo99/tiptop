@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AdminShell } from "@/components/AdminShell";
+import { ErrorBanner, Skeleton } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 
@@ -20,11 +21,21 @@ type Overview = {
 export default function Page() {
   const { messages } = useI18n();
   const [data, setData] = useState<Overview | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  function load() {
+    setError(null);
     api<Overview>("/admin/overview")
       .then(setData)
-      .catch(() => setData(null));
+      .catch(() => {
+        setData(null);
+        setError(messages.common.error);
+      });
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const cards = data
@@ -42,6 +53,15 @@ export default function Page() {
 
   return (
     <AdminShell>
+      {error ? <ErrorBanner message={error} onRetry={() => load()} /> : null}
+      {!data && !error ? (
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton className="h-20" />
+          <Skeleton className="h-20" />
+          <Skeleton className="h-20" />
+          <Skeleton className="h-20" />
+        </div>
+      ) : null}
       <div className="grid grid-cols-2 gap-3">
         {cards.map((c) => (
           <Link key={c.label} href={c.href} className="rounded-card bg-surface p-4 shadow-card">

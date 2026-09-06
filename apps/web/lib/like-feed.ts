@@ -69,7 +69,14 @@ export function applyPlacementToPost(
     return {
       ...post,
       likedByMe: true,
-      likeTime: post.likeTime ? { ...post.likeTime, likedByMe: true } : post.likeTime,
+      likeTime: {
+        totalSeconds: post.likeTime?.totalSeconds ?? 0,
+        activeCount: post.likeTime?.likedByMe
+          ? (post.likeTime.activeCount ?? 1)
+          : (post.likeTime?.activeCount ?? 0) + 1,
+        likedByMe: true,
+        label: post.likeTime?.label ?? "0 s",
+      },
     };
   }
   return releaseViewerLike(post);
@@ -85,7 +92,14 @@ export function applyPlacementToMood(
     return {
       ...mood,
       likedByMe: true,
-      likeTime: mood.likeTime ? { ...mood.likeTime, likedByMe: true } : mood.likeTime,
+      likeTime: {
+        totalSeconds: mood.likeTime?.totalSeconds ?? 0,
+        activeCount: mood.likeTime?.likedByMe
+          ? (mood.likeTime.activeCount ?? 1)
+          : (mood.likeTime?.activeCount ?? 0) + 1,
+        likedByMe: true,
+        label: mood.likeTime?.label ?? "0 s",
+      },
     };
   }
   return releaseViewerMoodLike(mood);

@@ -432,6 +432,7 @@ export class LikesService {
       total: units.length,
       packs: [...LIKE_PACKS],
       placedOn: stats.placedOn,
+      placement: await this.currentPlacement(ownerId),
       receivedFrom: stats.receivedFrom,
       likeTime: stats.likeTime,
       production: {

@@ -245,15 +245,14 @@ function MoodSlide({
       });
       onChange({
         likedByMe: true,
-        likeTime: mood.likeTime
-          ? {
-              ...mood.likeTime,
-              likedByMe: true,
-              activeCount: mood.likeTime.likedByMe
-                ? mood.likeTime.activeCount
-                : (mood.likeTime.activeCount ?? 0) + 1,
-            }
-          : undefined,
+        likeTime: {
+          totalSeconds: mood.likeTime?.totalSeconds ?? 0,
+          activeCount: mood.likeTime?.likedByMe
+            ? (mood.likeTime.activeCount ?? 1)
+            : (mood.likeTime?.activeCount ?? 0) + 1,
+          likedByMe: true,
+          label: mood.likeTime?.label ?? "0 s",
+        },
       });
       await refreshPlacement();
       setTransfer(null);
@@ -265,7 +264,7 @@ function MoodSlide({
           setBuy(true);
           return;
         }
-        if (kind === "transfer") setTransfer(messages.social.transferGeneric);
+        if (kind === "transfer") setTransfer(placement?.label || messages.social.transferGeneric);
       }
     }
   }
