@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Inject, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
-import { IsBoolean, IsIn, IsOptional, IsString, MaxLength } from "class-validator";
+import { IsBoolean, IsIn, IsInt, IsOptional, IsString, MaxLength, Min } from "class-validator";
 import type { Request } from "express";
 import { SessionGuard } from "../auth/session.guard";
 import type { PublicUser } from "../auth/auth.service";
@@ -18,8 +18,8 @@ class EventDto {
 
 class SendDto {
   @IsOptional()
-  @IsIn(["TEXT", "IMAGE", "AUDIO"])
-  kind?: "TEXT" | "IMAGE" | "AUDIO";
+  @IsIn(["TEXT", "IMAGE", "AUDIO", "FILE", "STICKER", "INVITE"])
+  kind?: "TEXT" | "IMAGE" | "AUDIO" | "FILE" | "STICKER" | "INVITE";
 
   @IsOptional()
   @IsString()
@@ -29,6 +29,36 @@ class SendDto {
   @IsOptional()
   @IsString()
   imageUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  audioUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  fileUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(180)
+  fileName?: string;
+
+  @IsOptional()
+  @IsString()
+  mimeType?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  durationMs?: number;
+
+  @IsOptional()
+  @IsIn(["EVENT", "SOCIAL"])
+  inviteType?: "EVENT" | "SOCIAL";
+
+  @IsOptional()
+  @IsString()
+  inviteId?: string;
 }
 
 class DeviceDto {

@@ -10,6 +10,7 @@ test.describe("Messagerie — inbox et conversation", () => {
     await page.goto("/messages");
     await expect(page.getByRole("heading", { name: "Mes messages" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Nouvelle conversation" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Home" })).toBeVisible();
     await expect(page.getByText("Erica Sinclair")).toBeVisible();
     await expect(page.getByText("Amina Ngo")).toBeVisible();
     await expect(page.getByText("Soirée Black & White")).toBeVisible();
@@ -35,5 +36,18 @@ test.describe("Messagerie — inbox et conversation", () => {
     await page.getByPlaceholder("Écrire un message").fill(note);
     await page.getByRole("button", { name: "Envoyer" }).click();
     await expect(page.getByText(note)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Accueil" })).toBeVisible();
+    await page.getByRole("button", { name: "Accueil" }).click();
+    await expect(page).toHaveURL("/");
+  });
+
+  test("retour inbox mène à l’accueil, pas au fil précédent", async ({ page }) => {
+    await page.goto("/messages");
+    await page.getByRole("link", { name: /Erica Sinclair/ }).click();
+    await expect(page.getByText("On se retrouve à Bastos ?")).toBeVisible();
+    await page.getByRole("button", { name: "Retour" }).click();
+    await expect(page.getByRole("heading", { name: "Mes messages" })).toBeVisible();
+    await page.getByRole("button", { name: "Retour" }).click();
+    await expect(page).toHaveURL("/");
   });
 });

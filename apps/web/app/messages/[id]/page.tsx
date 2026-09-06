@@ -5,16 +5,25 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Avatar } from "@/components/Avatar";
-import { ArrowLeftIcon, MicIcon, MoreIcon, PaperclipIcon, SendIcon, SmileIcon } from "@/components/Icons";
+import { EventInvitationSheet } from "@/components/EventInvitationSheet";
+import { SocialInviteSheet } from "@/components/SocialInviteSheet";
+import {
+  ArrowLeftIcon,
+  HomeIcon,
+  MicIcon,
+  MoreIcon,
+  PaperclipIcon,
+  SendIcon,
+  SmileIcon,
+} from "@/components/Icons";
 import { ReportModal } from "@/components/ReportModal";
-import { api, ApiError, type ChatMessage, type ConversationItem } from "@/lib/api";
-import { readImageForChat } from "@/lib/chat-image";
+import { api, ApiError, type ChatMessage, type ConversationItem, type InvitationItem, type SocialInviteItem } from "@/lib/api";
+import { EMOJI_GROUPS, STICKERS } from "@/lib/chat-stickers";
+import { uploadChatFile } from "@/lib/chat-upload";
 import { useI18n } from "@/lib/i18n";
 import { realtimeEmit, useRealtime } from "@/lib/realtime";
 import { useSession } from "@/lib/session";
-import { formatBubbleClock } from "@/lib/time";
-
-const EMOJIS = ["😀", "😍", "😂", "🔥", "👏", "❤️", "😮", "🎉", "⚡", "🙌"];
+import { formatBubbleClock, formatLastSeen } from "@/lib/time";
 
 export default function Page() {
   return (
@@ -35,11 +44,20 @@ function Thread() {
   const [typingIds, setTypingIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [picker, setPicker] = useState<"off" | "emoji" | "sticker">("off");
   const [reportMessageId, setReportMessageId] = useState<string | null>(null);
+  const [eventInvite, setEventInvite] = useState<InvitationItem | null>(null);
+  const [socialInvite, setSocialInvite] = useState<SocialInviteItem | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [recMs, setRecMs] = useState(0);
   const bottom = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const typingTimers = useRef<Record<string, number>>({});
+  const mediaRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const recTimer = useRef<number>(0);
+  const recStarted = useRef(0);
 
   async function load() {
     const [c, m] = await Promise.all([
@@ -53,7 +71,11 @@ function Thread() {
   useEffect(() => {
     void load().catch(() => setError(messages.common.error));
     realtimeEmit("join", { conversationId: id });
-    return () => realtimeEmit("leave", { conversationId: id });
+    return () => {
+      realtimeEmit("leave", { conversationId: id });
+      stopRecTimer();
+      mediaRef.current?.stop();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -88,21 +110,15 @@ function Thread() {
     });
   });
 
-  async function send(kind: "TEXT" | "IMAGE" | "AUDIO" = "TEXT", imageUrl?: string) {
+  async function send(payload: Record<string, unknown>) {
     setError(null);
     try {
       const msg = await api<ChatMessage>(`/conversations/${id}/messages`, {
         method: "POST",
-        body: JSON.stringify(
-          kind === "TEXT"
-            ? { kind, body: text }
-            : kind === "IMAGE"
-              ? { kind, imageUrl }
-              : { kind: "AUDIO" },
-        ),
+        body: JSON.stringify(payload),
       });
       setItems((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg]));
-      if (kind === "TEXT") setText("");
+      if (payload.kind === "TEXT") setText("");
     } catch (e) {
       setError(e instanceof ApiError && e.code === "BLOCKED" ? messages.chat.blockedPeer : messages.common.error);
     }
@@ -120,22 +136,85 @@ function Thread() {
     realtimeEmit("typing", { conversationId: id });
   }
 
-  async function onPickImage(file: File | undefined) {
+  async function onPickFile(file: File | undefined) {
     if (!file) return;
     try {
-      const imageUrl = await readImageForChat(file);
-      await send("IMAGE", imageUrl);
+      const up = await uploadChatFile(file);
+      if (up.kind === "IMAGE") await send({ kind: "IMAGE", imageUrl: up.url, mimeType: up.mime });
+      else if (up.kind === "AUDIO") await send({ kind: "AUDIO", audioUrl: up.url, mimeType: up.mime });
+      else await send({ kind: "FILE", fileUrl: up.url, fileName: up.name, mimeType: up.mime });
     } catch {
       setError(messages.chat.attachTooBig);
     }
   }
 
+  function stopRecTimer() {
+    window.clearInterval(recTimer.current);
+  }
+
+  async function toggleRecord() {
+    if (recording) {
+      mediaRef.current?.stop();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream);
+      chunksRef.current = [];
+      rec.ondataavailable = (e) => {
+        if (e.data.size) chunksRef.current.push(e.data);
+      };
+      rec.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setRecording(false);
+        stopRecTimer();
+        const blob = new Blob(chunksRef.current, { type: rec.mimeType || "audio/webm" });
+        const durationMs = Date.now() - recStarted.current;
+        if (blob.size < 800) return;
+        const file = new File([blob], "vocal.webm", { type: blob.type });
+        void uploadChatFile(file)
+          .then((up) => send({ kind: "AUDIO", audioUrl: up.url, mimeType: up.mime, durationMs }))
+          .catch(() => setError(messages.chat.attachTooBig));
+      };
+      mediaRef.current = rec;
+      recStarted.current = Date.now();
+      rec.start();
+      setRecording(true);
+      setRecMs(0);
+      recTimer.current = window.setInterval(() => setRecMs(Date.now() - recStarted.current), 200);
+    } catch {
+      setError(messages.common.error);
+    }
+  }
+
+  function cancelRecord() {
+    const rec = mediaRef.current;
+    if (!rec) return;
+    rec.onstop = () => {
+      rec.stream.getTracks().forEach((t) => t.stop());
+      setRecording(false);
+      stopRecTimer();
+    };
+    rec.stop();
+  }
+
+  async function openInvite(m: ChatMessage) {
+    if (!m.inviteId) return;
+    try {
+      if (m.inviteType === "SOCIAL") setSocialInvite(await api<SocialInviteItem>(`/social-invites/${m.inviteId}`));
+      else setEventInvite(await api<InvitationItem>(`/invitations/${m.inviteId}`));
+    } catch {
+      setError(messages.common.error);
+    }
+  }
+
   const title = conv?.title ?? messages.chat.inbox;
+  const lastSeen = formatLastSeen(conv?.peer?.lastSeenAt, locale, messages.chat);
   const subtitle =
     conv?.kind === "DIRECT"
       ? conv.online
         ? messages.chat.online
-        : ""
+        : lastSeen ?? ""
       : conv
         ? conv.onlineCount > 0
           ? messages.chat.onlineOf.replace("{online}", String(conv.onlineCount)).replace("{total}", String(conv.members.length))
@@ -150,7 +229,7 @@ function Thread() {
         <button
           type="button"
           aria-label="Retour"
-          onClick={() => router.push("/messages")}
+          onClick={() => router.replace("/messages")}
           className="tap-scale grid h-10 w-10 place-items-center rounded-full text-ink"
         >
           <ArrowLeftIcon size={20} />
@@ -167,6 +246,14 @@ function Thread() {
           <h1 className="type-body-sm truncate font-bold text-ink">{title}</h1>
           {subtitle ? <p className="type-caption truncate text-muted">{subtitle}</p> : null}
         </div>
+        <button
+          type="button"
+          aria-label={messages.chat.home}
+          onClick={() => router.replace("/")}
+          className="tap-scale grid h-10 w-10 place-items-center rounded-full text-ink"
+        >
+          <HomeIcon size={18} />
+        </button>
         <button
           type="button"
           aria-label={messages.chat.menu}
@@ -188,6 +275,9 @@ function Thread() {
               {messages.chat.seeEvent}
             </Link>
           ) : null}
+          <button type="button" className="block w-full rounded-xl px-3 py-2 text-left type-body-sm text-ink" onClick={() => router.replace("/")}>
+            {messages.chat.home}
+          </button>
           {conv.peer ? (
             <button type="button" className="block w-full rounded-xl px-3 py-2 text-left type-body-sm text-danger" onClick={() => void block()}>
               {messages.chat.block}
@@ -221,32 +311,45 @@ function Thread() {
                     {member?.host ? <span className="type-caption text-muted">{messages.chat.hostBadge}</span> : null}
                   </p>
                 ) : null}
-                <div
-                  className={`type-body-sm overflow-hidden rounded-[22px] px-3.5 py-2.5 ${
-                    mine ? "rounded-br-md bg-accent text-on-primary" : "rounded-bl-md bg-surface-sunken text-ink"
-                  }`}
-                >
-                  {m.kind === "IMAGE" && m.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={m.imageUrl} alt="" className="mb-1.5 max-h-48 w-full rounded-2xl object-cover" />
-                  ) : null}
-                  {m.kind === "AUDIO" ? (
-                    <span className="inline-flex items-center gap-1.5">
-                      <MicIcon size={14} />
-                      {messages.chat.voiceMock}
-                    </span>
-                  ) : null}
-                  {m.body ? <p>{m.body}</p> : null}
-                  <p className={`type-caption mt-1 text-right ${mine ? "text-on-primary/70" : "text-muted"}`}>
-                    {formatBubbleClock(m.createdAt, locale)}
-                  </p>
-                </div>
-                {!mine ? (
+                {m.kind === "INVITE" ? (
                   <button
                     type="button"
-                    className="type-caption mt-0.5 px-1 text-muted"
-                    onClick={() => setReportMessageId(m.id)}
+                    onClick={() => void openInvite(m)}
+                    className="w-full rounded-[22px] bg-surface p-3.5 text-left shadow-xs"
                   >
+                    <p className="type-caption font-semibold text-accent">{messages.chat.inviteCard}</p>
+                    <p className="type-body-sm mt-1 font-semibold text-ink">{m.body || messages.social.notifInviteConsult}</p>
+                    <p className="type-caption mt-2 font-semibold text-ink">{messages.social.notifInviteConsult}</p>
+                  </button>
+                ) : m.kind === "STICKER" ? (
+                  <p className="px-1 text-5xl leading-none">{m.body}</p>
+                ) : (
+                  <div
+                    className={`type-body-sm overflow-hidden rounded-[22px] px-3.5 py-2.5 ${
+                      mine ? "rounded-br-md bg-accent text-on-primary" : "rounded-bl-md bg-surface-sunken text-ink"
+                    }`}
+                  >
+                    {m.kind === "IMAGE" && m.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={m.imageUrl} alt="" className="mb-1.5 max-h-48 w-full rounded-2xl object-cover" />
+                    ) : null}
+                    {m.kind === "AUDIO" && m.audioUrl ? (
+                      <audio controls src={m.audioUrl} className="max-w-full" />
+                    ) : null}
+                    {m.kind === "FILE" && m.fileUrl ? (
+                      <a href={m.fileUrl} target="_blank" rel="noreferrer" className="underline">
+                        {m.fileName || messages.chat.file}
+                      </a>
+                    ) : null}
+                    {m.body && m.kind !== "AUDIO" ? <p>{m.body}</p> : null}
+                    <p className={`type-caption mt-1 text-right ${mine ? "text-on-primary/70" : "text-muted"}`}>
+                      {formatBubbleClock(m.createdAt, locale)}
+                      {m.durationMs ? ` · ${Math.max(1, Math.round(m.durationMs / 1000))}s` : ""}
+                    </p>
+                  </div>
+                )}
+                {!mine ? (
+                  <button type="button" className="type-caption mt-0.5 px-1 text-muted" onClick={() => setReportMessageId(m.id)}>
                     {messages.admin.report}
                   </button>
                 ) : null}
@@ -282,21 +385,46 @@ function Thread() {
         </div>
       ) : null}
 
-      {emojiOpen ? (
-        <div className="flex flex-wrap gap-1.5 px-4 pb-2">
-          {EMOJIS.map((e) => (
-            <button
-              key={e}
-              type="button"
-              className="grid h-9 w-9 place-items-center rounded-full bg-surface text-lg"
-              onClick={() => {
-                onType(text + e);
-                setEmojiOpen(false);
-              }}
-            >
-              {e}
+      {picker !== "off" ? (
+        <div className="max-h-44 overflow-y-auto border-t border-divider px-3 py-2">
+          <div className="mb-2 flex gap-2">
+            <button type="button" className={`type-caption rounded-full px-3 py-1 ${picker === "emoji" ? "bg-accent text-on-primary" : "bg-surface"}`} onClick={() => setPicker("emoji")}>
+              {messages.chat.emoji}
             </button>
-          ))}
+            <button type="button" className={`type-caption rounded-full px-3 py-1 ${picker === "sticker" ? "bg-accent text-on-primary" : "bg-surface"}`} onClick={() => setPicker("sticker")}>
+              {messages.chat.sticker}
+            </button>
+          </div>
+          {picker === "emoji"
+            ? EMOJI_GROUPS.map((g) => (
+                <div key={g.id} className="mb-1 flex flex-wrap gap-1">
+                  {g.items.map((e) => (
+                    <button key={e} type="button" className="grid h-9 w-9 place-items-center text-lg" onClick={() => onType(text + e)}>
+                      {e}
+                    </button>
+                  ))}
+                </div>
+              ))
+            : (
+              <div className="flex flex-wrap gap-2">
+                {STICKERS.map((s) => (
+                  <button key={s} type="button" className="grid h-14 w-14 place-items-center rounded-2xl bg-surface text-3xl" onClick={() => void send({ kind: "STICKER", body: s })}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+        </div>
+      ) : null}
+
+      {recording ? (
+        <div className="flex items-center justify-between gap-3 px-4 py-2">
+          <p className="type-body-sm font-semibold text-danger">
+            {messages.chat.recording} {Math.floor(recMs / 1000)}s
+          </p>
+          <button type="button" className="type-caption font-semibold text-muted" onClick={cancelRecord}>
+            {messages.chat.cancelRecord}
+          </button>
         </div>
       ) : null}
 
@@ -304,7 +432,7 @@ function Thread() {
         className="flex items-center gap-2 px-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] pt-1"
         onSubmit={(e) => {
           e.preventDefault();
-          if (text.trim()) void send("TEXT");
+          if (text.trim()) void send({ kind: "TEXT", body: text });
         }}
       >
         <div className="flex min-w-0 flex-1 items-center gap-1 rounded-full bg-surface px-2.5 shadow-xs">
@@ -312,7 +440,7 @@ function Thread() {
             type="button"
             aria-label={messages.chat.emoji}
             className="grid h-9 w-9 place-items-center text-muted"
-            onClick={() => setEmojiOpen((v) => !v)}
+            onClick={() => setPicker((v) => (v === "off" ? "emoji" : "off"))}
           >
             <SmileIcon size={18} />
           </button>
@@ -333,12 +461,12 @@ function Thread() {
           <input
             ref={fileRef}
             type="file"
-            accept="image/*"
+            accept="image/*,audio/*,video/*,.pdf,.txt,.zip,.doc,.docx"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
               e.target.value = "";
-              void onPickImage(file);
+              void onPickFile(file);
             }}
           />
         </div>
@@ -353,19 +481,72 @@ function Thread() {
         ) : (
           <button
             type="button"
-            aria-label={messages.chat.voice}
-            className="tap-scale grid h-12 w-12 shrink-0 place-items-center rounded-full bg-accent text-on-primary shadow-sm"
-            onClick={() => void send("AUDIO")}
+            aria-label={recording ? messages.chat.stopRecord : messages.chat.voice}
+            className={`tap-scale grid h-12 w-12 shrink-0 place-items-center rounded-full text-on-primary shadow-sm ${recording ? "bg-danger" : "bg-accent"}`}
+            onClick={() => void toggleRecord()}
           >
             <MicIcon size={18} />
           </button>
         )}
       </form>
-      <ReportModal
-        open={Boolean(reportMessageId)}
-        kind="MESSAGE"
-        messageId={reportMessageId ?? undefined}
-        onClose={() => setReportMessageId(null)}
+      <ReportModal open={Boolean(reportMessageId)} kind="MESSAGE" messageId={reportMessageId ?? undefined} onClose={() => setReportMessageId(null)} />
+      <EventInvitationSheet
+        invitation={eventInvite}
+        open={Boolean(eventInvite)}
+        canRespond={eventInvite?.status === "PENDING"}
+        busy={busy}
+        onClose={() => setEventInvite(null)}
+        onAccept={() => {
+          if (!eventInvite) return;
+          setBusy(true);
+          api<InvitationItem & { conversationId?: string; needsPayment?: boolean; reservation?: { id: string } }>(
+            `/invitations/${eventInvite.id}/accept`,
+            { method: "POST" },
+          )
+            .then((res) => {
+              setEventInvite(null);
+              if (res.needsPayment && res.reservation) router.push(`/events/${res.event.id}/pay?reservationId=${res.reservation.id}`);
+              else void load();
+            })
+            .finally(() => setBusy(false));
+        }}
+        onRefuse={() => {
+          if (!eventInvite) return;
+          setBusy(true);
+          api(`/invitations/${eventInvite.id}/refuse`, { method: "POST" })
+            .then(() => {
+              setEventInvite(null);
+              void load();
+            })
+            .finally(() => setBusy(false));
+        }}
+      />
+      <SocialInviteSheet
+        invitation={socialInvite}
+        open={Boolean(socialInvite)}
+        canRespond={socialInvite?.status === "SENT"}
+        busy={busy}
+        onClose={() => setSocialInvite(null)}
+        onAccept={() => {
+          if (!socialInvite) return;
+          setBusy(true);
+          api(`/social-invites/${socialInvite.id}/accept`, { method: "POST" })
+            .then(() => {
+              setSocialInvite(null);
+              void load();
+            })
+            .finally(() => setBusy(false));
+        }}
+        onRefuse={() => {
+          if (!socialInvite) return;
+          setBusy(true);
+          api(`/social-invites/${socialInvite.id}/refuse`, { method: "POST" })
+            .then(() => {
+              setSocialInvite(null);
+              void load();
+            })
+            .finally(() => setBusy(false));
+        }}
       />
     </main>
   );

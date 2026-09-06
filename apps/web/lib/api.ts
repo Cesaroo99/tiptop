@@ -420,6 +420,7 @@ export type ConversationMember = {
   avatarUrl?: string | null;
   host?: boolean;
   online?: boolean;
+  lastSeenAt?: string | null;
 };
 
 export type ConversationItem = {
@@ -444,6 +445,13 @@ export type ChatMessage = {
   kind: string;
   body: string;
   imageUrl: string | null;
+  audioUrl?: string | null;
+  fileUrl?: string | null;
+  fileName?: string | null;
+  mimeType?: string | null;
+  durationMs?: number | null;
+  inviteType?: "EVENT" | "SOCIAL" | string | null;
+  inviteId?: string | null;
   createdAt: string;
   sender: { id: string; username: string; firstName: string; lastName: string; certified: boolean; avatarUrl?: string | null };
 };

@@ -94,6 +94,24 @@ export function formatInboxClock(iso: string, locale: string, yesterdayLabel: st
   return d.toLocaleDateString(dateLocale(locale), { day: "numeric", month: "short" });
 }
 
+export function formatLastSeen(
+  iso: string | null | undefined,
+  locale: string,
+  labels: { lastSeenJustNow: string; lastSeenMinutes: string; lastSeenHours: string; lastSeenDay: string },
+) {
+  if (!iso) return null;
+  const diff = Date.now() - new Date(iso).getTime();
+  const min = Math.max(0, Math.round(diff / 60_000));
+  if (min < 2) return labels.lastSeenJustNow;
+  if (min < 60) return labels.lastSeenMinutes.replace("{n}", String(min));
+  const hours = Math.round(min / 60);
+  if (hours < 24) return labels.lastSeenHours.replace("{n}", String(hours));
+  return labels.lastSeenDay.replace(
+    "{day}",
+    new Date(iso).toLocaleDateString(dateLocale(locale), { weekday: "short", day: "numeric" }),
+  );
+}
+
 export function formatBubbleClock(iso: string, locale: string) {
   return new Date(iso).toLocaleTimeString(dateLocale(locale), { hour: "2-digit", minute: "2-digit" }).replace(":", ".");
 }

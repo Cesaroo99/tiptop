@@ -19,6 +19,7 @@ import {
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { BookingService } from "../booking/booking.service";
+import { ChatService } from "../chat/chat.service";
 
 @Injectable()
 export class InvitationsService {
@@ -26,6 +27,7 @@ export class InvitationsService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(NotificationsService) private readonly notifications: NotificationsService,
     @Inject(BookingService) private readonly booking: BookingService,
+    @Inject(ChatService) private readonly chat: ChatService,
   ) {}
 
   async relevantEvents(inviterId: string, inviteeId: string) {
@@ -153,6 +155,15 @@ export class InvitationsService {
       entityType: "invitation",
       entityId: invitation.id,
     });
+    try {
+      await this.chat.postDirectInvite(inviterId, inviteeId, {
+        inviteType: "EVENT",
+        inviteId: invitation.id,
+        body: event.title,
+      });
+    } catch {
+      /* le DM n’empêche pas l’invitation */
+    }
     const mapped = await this.mapOne(invitation.id);
     const holdUnpaid =
       event.priceXaf > 0 && payer === "HOST" && (!payAfterAccept || paymentRule === "HOLD");
@@ -303,7 +314,13 @@ export class InvitationsService {
         /* déjà un ticket */
       }
     }
-    return this.mapOne(id);
+    let conversationId: string | undefined;
+    try {
+      conversationId = (await this.chat.openDirect(actorId, inv.inviterId)).id;
+    } catch {
+      conversationId = undefined;
+    }
+    return { ...(await this.mapOne(id)), conversationId };
   }
 
   async refuse(actorId: string, id: string) {

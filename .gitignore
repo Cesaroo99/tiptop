@@ -19,6 +19,9 @@ uploads
 !apps/web/public/uploads/moods/
 apps/web/public/uploads/moods/*
 !apps/web/public/uploads/moods/.gitkeep
+!apps/web/public/uploads/chat/
+apps/web/public/uploads/chat/*
+!apps/web/public/uploads/chat/.gitkeep
 .idea
 .vscode
 apps/e2e/test-results

@@ -461,7 +461,10 @@ describe("chat", () => {
     expect(canSendMessage({ isMember: false, blocked: false, kind: "TEXT", body: "salut" })).toBe("NOT_MEMBER");
     expect(canSendMessage({ isMember: true, blocked: true, kind: "TEXT", body: "salut" })).toBe("BLOCKED");
     expect(canSendMessage({ isMember: true, blocked: false, kind: "TEXT", body: "  " })).toBe("EMPTY");
-    expect(canSendMessage({ isMember: true, blocked: false, kind: "AUDIO" })).toBe("OK");
+    expect(canSendMessage({ isMember: true, blocked: false, kind: "AUDIO" })).toBe("EMPTY");
+    expect(canSendMessage({ isMember: true, blocked: false, kind: "AUDIO", audioUrl: "/uploads/chat/a.webm" })).toBe("OK");
+    expect(canSendMessage({ isMember: true, blocked: false, kind: "FILE", fileUrl: "/uploads/chat/x.pdf" })).toBe("OK");
+    expect(canSendMessage({ isMember: true, blocked: false, kind: "INVITE" })).toBe("EMPTY");
     expect(pairIsBlocked([{ blockerId: "a", blockedId: "b" }], "b", "a")).toBe(true);
   });
 

@@ -1,7 +1,7 @@
 /** Chat 1:1 / groupes, présence, push (D26–D27). */
 
 export type ConversationKind = "DIRECT" | "GROUP" | "EVENT";
-export type MessageKind = "TEXT" | "IMAGE" | "AUDIO";
+export type MessageKind = "TEXT" | "IMAGE" | "AUDIO" | "FILE" | "STICKER" | "INVITE";
 export type PushCategory = "messages" | "social" | "events" | "invitations" | "mood";
 
 export const PRESENCE_WINDOW_MS = 90_000;
@@ -39,12 +39,19 @@ export function canSendMessage(input: {
   kind: MessageKind;
   body?: string | null;
   imageUrl?: string | null;
+  audioUrl?: string | null;
+  fileUrl?: string | null;
+  inviteId?: string | null;
   recentMessageCount?: number;
 }): "OK" | "NOT_MEMBER" | "BLOCKED" | "EMPTY" | "RATE_LIMITED" {
   if (!input.isMember) return "NOT_MEMBER";
   if (input.blocked) return "BLOCKED";
   if (input.kind === "TEXT" && !(input.body ?? "").trim()) return "EMPTY";
   if (input.kind === "IMAGE" && !input.imageUrl) return "EMPTY";
+  if (input.kind === "AUDIO" && !input.audioUrl) return "EMPTY";
+  if (input.kind === "FILE" && !input.fileUrl) return "EMPTY";
+  if (input.kind === "STICKER" && !(input.body ?? "").trim() && !input.imageUrl) return "EMPTY";
+  if (input.kind === "INVITE" && !input.inviteId) return "EMPTY";
   if ((input.recentMessageCount ?? 0) >= MESSAGE_RATE_LIMIT_PER_MINUTE) return "RATE_LIMITED";
   return "OK";
 }

@@ -59,7 +59,7 @@ function SocialInvitesScreen() {
       method: "POST",
     });
     if (action === "accept" && res.conversationId) {
-      router.push(`/messages/${res.conversationId}`);
+      router.replace(`/messages/${res.conversationId}`);
       return;
     }
     setNote(action === "accept" ? messages.socialInvite.accepted : messages.socialInvite.refused);

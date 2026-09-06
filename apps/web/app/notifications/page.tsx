@@ -91,13 +91,16 @@ export default function NotificationsPage() {
     if (!eventInvite) return;
     setBusy(true);
     try {
-      const res = await api<InvitationItem & { reservation?: { id: string }; needsPayment?: boolean; awaitingHostPay?: boolean }>(
-        `/invitations/${eventInvite.id}/accept`,
-        { method: "POST" },
-      );
+      const res = await api<
+        InvitationItem & { reservation?: { id: string }; needsPayment?: boolean; awaitingHostPay?: boolean; conversationId?: string }
+      >(`/invitations/${eventInvite.id}/accept`, { method: "POST" });
       setEventInvite(null);
       if (res.needsPayment && res.reservation) {
         router.push(`/events/${res.event.id}/pay?reservationId=${res.reservation.id}`);
+        return;
+      }
+      if (res.conversationId) {
+        router.replace(`/messages/${res.conversationId}`);
         return;
       }
       await load();

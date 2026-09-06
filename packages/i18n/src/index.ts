@@ -664,6 +664,17 @@ export type Messages = {
     seeEvent: string;
     menu: string;
     attachTooBig: string;
+    file: string;
+    sticker: string;
+    inviteCard: string;
+    recording: string;
+    stopRecord: string;
+    cancelRecord: string;
+    lastSeenJustNow: string;
+    lastSeenMinutes: string;
+    lastSeenHours: string;
+    lastSeenDay: string;
+    home: string;
     channel: string;
     eventGroup: string;
     blocked: string;
@@ -1439,7 +1450,18 @@ export const fr: Messages = {
     seeProfile: "Voir le profil",
     seeEvent: "Voir la sortie",
     menu: "Options",
-    attachTooBig: "Cette image est trop lourde.",
+    attachTooBig: "Cette pièce jointe est trop lourde.",
+    file: "Fichier",
+    sticker: "Stickers",
+    inviteCard: "Invitation",
+    recording: "Enregistrement…",
+    stopRecord: "Envoyer le vocal",
+    cancelRecord: "Annuler",
+    lastSeenJustNow: "Vu à l’instant",
+    lastSeenMinutes: "Vu il y a {n} min",
+    lastSeenHours: "Vu il y a {n} h",
+    lastSeenDay: "Vu {day}",
+    home: "Accueil",
     channel: "# Général",
     eventGroup: "Groupe de la sortie",
     blocked: "Tu as bloqué cette personne.",
@@ -2215,7 +2237,18 @@ export const en: Messages = {
     seeProfile: "See profile",
     seeEvent: "See the event",
     menu: "Options",
-    attachTooBig: "This image is too large.",
+    attachTooBig: "This attachment is too large.",
+    file: "File",
+    sticker: "Stickers",
+    inviteCard: "Invitation",
+    recording: "Recording…",
+    stopRecord: "Send voice",
+    cancelRecord: "Cancel",
+    lastSeenJustNow: "Seen just now",
+    lastSeenMinutes: "Seen {n} min ago",
+    lastSeenHours: "Seen {n} h ago",
+    lastSeenDay: "Seen {day}",
+    home: "Home",
     channel: "# General",
     eventGroup: "Meetup group",
     blocked: "You blocked this person.",
