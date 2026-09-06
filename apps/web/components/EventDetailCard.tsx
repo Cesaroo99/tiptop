@@ -7,9 +7,11 @@ import { ageCategoryLabel, canInteractWithEvent, eventLifecycle, mapsDirectionsU
 import { api, ApiError, type CommentItem, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
-import { formatCompactCount, formatCountdownLabel, formatFcfa, formatRelative, splitPostLead } from "@/lib/time";
+import { recurrenceCaption } from "@/lib/event-series";
+import { formatCompactCount, formatCountdownLabel, formatEventWhen, formatFcfa, formatRelative, splitPostLead } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
 import { BookEventSheet } from "./BookEventSheet";
+import { InterestedBadge } from "./InterestedBadge";
 import { CommentThread } from "./CommentThread";
 import {
   CalendarIcon,
@@ -42,7 +44,7 @@ export function EventDetailCard({
   onHostDuplicate?: () => void;
   onHostCancel?: () => void;
 }) {
-  const { messages } = useI18n();
+  const { locale, messages } = useI18n();
   const router = useRouter();
   const hostView = variant === "host";
   const [transfer, setTransfer] = useState<string | null>(null);
@@ -110,6 +112,9 @@ export function EventDetailCard({
   );
   const interactive = canInteractWithEvent(lifecycle.phase);
   const remaining = seatsRemainingOf(event.capacity, event.reservedCount ?? event.taken, event.remaining);
+  const seriesLabel = recurrenceCaption(event.recurrence, messages.world);
+  const eventFull = remaining != null && remaining <= 0;
+  const showGuestCtas = !event.isHost && interactive && !event.wanted;
   const countdown = formatCountdownLabel(event.startsAt);
   const body = event.description ? `${event.title} : ${event.description}` : event.title;
   const { lead, rest } = splitPostLead(body);
@@ -198,6 +203,14 @@ export function EventDetailCard({
             {event.title}
           </div>
         )}
+        <div className="absolute left-2 top-2 flex flex-col items-start gap-1.5">
+          <InterestedBadge variant="stamp" active={event.viewerInterested} count={event.interestedCount} />
+          {seriesLabel ? (
+            <span className="type-caption rounded-pill bg-accent px-2.5 py-1 font-bold text-on-primary shadow-sm">
+              {seriesLabel}
+            </span>
+          ) : null}
+        </div>
         <span className="type-caption absolute right-2 top-2 rounded-lg bg-accent px-2.5 py-1 font-bold text-white shadow-sm">
           {priceLabel}
         </span>
@@ -219,6 +232,24 @@ export function EventDetailCard({
       </div>
 
       <p className="type-caption mt-3 text-muted">{stats.join(" · ")}</p>
+      {event.occurrences && event.occurrences.length > 1 ? (
+        <div className="mt-3">
+          <p className="type-label text-subtle">{messages.world.nextDates}</p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {event.occurrences.slice(0, 6).map((occ) => (
+              <Link
+                key={occ.id}
+                href={`/events/${occ.id}`}
+                className={`type-caption rounded-pill px-2.5 py-1 font-semibold ${
+                  occ.id === event.id ? "bg-accent text-on-primary" : "bg-surface-sunken text-ink"
+                }`}
+              >
+                {formatEventWhen(occ.startsAt, locale)}
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
       {event.paymentRule === "PAY_REQUIRED" && event.priceXaf > 0 ? (
         <p className="type-caption mt-1 font-semibold text-accent">{messages.world.paymentRequired}</p>
       ) : event.paymentRule === "PAY_FIRST" && event.priceXaf > 0 ? (
@@ -260,22 +291,21 @@ export function EventDetailCard({
         >
           <CommentIcon size={17} />
         </button>
-        {!event.isHost && !event.canBook && interactive ? (
-          <button
-            type="button"
+        {showGuestCtas ? (
+          <InterestedBadge
+            active={event.viewerInterested}
+            count={event.interestedCount}
             onClick={() => void interested()}
-            className={`tap-scale type-caption rounded-pill px-3 py-2 font-semibold transition ${event.viewerInterested ? "bg-accent text-on-primary" : "border border-border bg-surface text-ink"}`}
-          >
-            {event.viewerInterested ? messages.world.notInterested : messages.world.interested}
-          </button>
+          />
         ) : null}
-        {event.canBook ? (
+        {showGuestCtas ? (
           <button
             type="button"
+            disabled={eventFull}
             onClick={() => setBookOpen(true)}
-            className="tap-scale type-caption rounded-pill bg-accent px-3.5 py-2 font-semibold text-on-primary shadow-sm"
+            className="tap-scale type-caption rounded-pill bg-accent px-3.5 py-2 font-semibold text-on-primary shadow-sm disabled:opacity-40"
           >
-            {messages.booking.reserve}
+            {event.viewerReserved ? messages.booking.reserveOthers : messages.booking.reserve}
           </button>
         ) : null}
         {event.viewerTicketId ? (
@@ -352,7 +382,8 @@ export function EventDetailCard({
             taken: nextTaken,
             reservedCount: nextTaken,
             remaining: nextRemaining,
-            canBook: nextRemaining == null || nextRemaining > 0 ? event.canBook : false,
+            viewerReserved: true,
+            canBook: nextRemaining == null || nextRemaining > 0,
           });
         }}
         preview={{

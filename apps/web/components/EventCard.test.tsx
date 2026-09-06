@@ -62,19 +62,18 @@ describe("EventCard (#23-25)", () => {
     expect(screen.getAllByText(/Bastos/).length).toBeGreaterThan(0);
     expect(screen.getByText("Gratuit")).toBeInTheDocument();
     expect(screen.getAllByText("35 places restantes").length).toBeGreaterThan(0);
-    // Sans réservation requise : CTA "Intéressé", jamais un faux "Réserver".
-    expect(screen.getByText("Intéressé")).toBeInTheDocument();
-    expect(screen.queryByText("Réserver")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Intéressé" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Réserver" })).toBeInTheDocument();
   });
 
-  it("affiche le CTA Réserver seulement quand la réservation est possible", () => {
+  it("garde Intéressé et Réserver ensemble, même déjà réservé", () => {
     render(
       <TestI18nProvider>
-        <EventCard event={{ ...baseEvent, canBook: true }} />
+        <EventCard event={{ ...baseEvent, canBook: true, viewerReserved: true, viewerTicketId: "t1" }} />
       </TestI18nProvider>,
     );
-    expect(screen.getByText("Réserver")).toBeInTheDocument();
-    expect(screen.queryByText("Intéressé")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Intéressé" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Réserver pour un autre" })).toBeInTheDocument();
   });
 
   it("affiche le badge « Terminé » pour un événement passé (#9, #25)", () => {
@@ -95,8 +94,8 @@ describe("EventCard (#23-25)", () => {
       </TestI18nProvider>,
     );
     expect(screen.getByText("Annulé")).toBeInTheDocument();
-    expect(screen.queryByText("Intéressé")).not.toBeInTheDocument();
-    expect(screen.queryByText("Réserver")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Intéressé" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Réserver" })).not.toBeInTheDocument();
     expect(screen.getByText(/a été annulé par l’organisateur/)).toBeInTheDocument();
   });
 

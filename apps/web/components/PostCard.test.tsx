@@ -86,14 +86,25 @@ describe("PostCard — publication vs événement", () => {
     expect(document.querySelector("[data-kind=event]")).toBeTruthy();
   });
 
-  it("événement complet : badge Complet, plus de bouton Réserver", () => {
+  it("événement complet : badge Complet, Réserver reste visible mais désactivé", () => {
     render(
       <TestI18nProvider>
         <PostCard post={{ ...post, event: { ...post.event!, remaining: 0, reservedCount: 40, capacity: 40, canBook: false } }} />
       </TestI18nProvider>,
     );
     expect(screen.getAllByText("Complet").length).toBeGreaterThan(0);
-    expect(screen.queryByLabelText("Réserver")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Réserver")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Intéressé" })).toBeInTheDocument();
+  });
+
+  it("déjà réservé : Réserver pour un autre reste visible", () => {
+    render(
+      <TestI18nProvider>
+        <PostCard post={{ ...post, event: { ...post.event!, viewerReserved: true } }} />
+      </TestI18nProvider>,
+    );
+    expect(screen.getByLabelText("Réserver pour un autre")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Intéressé" })).toBeInTheDocument();
   });
 
   it("publication : like + commentaire seulement, pas d’âge ni de timing d’événement", () => {

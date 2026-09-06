@@ -114,9 +114,7 @@ export class BookingService {
     if (!event) throw new NotFoundException({ code: "EVENT_NOT_FOUND" });
     if (event.status === "CANCELLED") throw new BadRequestException({ code: "EVENT_CANCELLED" });
     if (event.startsAt.getTime() <= Date.now()) throw new BadRequestException({ code: "EVENT_NOT_FUTURE" });
-    if (!event.requiresReservation && event.priceXaf <= 0 && !input.invitationId) {
-      throw new BadRequestException({ code: "RESERVATION_NOT_REQUIRED" });
-    }
+    void event.requiresReservation;
 
     if (input.invitationId) {
       const byInvite = await this.prisma.reservation.findUnique({
@@ -135,8 +133,11 @@ export class BookingService {
         include: { tickets: true, payment: true, event: true },
       });
       if (existing) {
-        if (existing.status === "CONFIRMED") throw new ConflictException({ code: "ALREADY_IN" });
-        return this.mapReservation(existing);
+        const bookingSelf = includeSelf && holders.includes(bookerId);
+        if (existing.status === "CONFIRMED" && bookingSelf && holders.length === 1) {
+          throw new ConflictException({ code: "ALREADY_IN" });
+        }
+        if (existing.status !== "CONFIRMED") return this.mapReservation(existing);
       }
     }
 

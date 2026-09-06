@@ -105,7 +105,31 @@ describe("EventDetailCard", () => {
     expect(screen.queryByText(/Partages/)).not.toBeInTheDocument();
     expect(screen.getByLabelText("Coup de cœur")).toBeInTheDocument();
     expect(screen.getByLabelText("Commentaires")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Intéressé" })).toBeInTheDocument();
     expect(screen.getByText("Réserver")).toBeInTheDocument();
+  });
+
+  it("déjà réservé : Réserver pour un autre + prochaines dates de série", () => {
+    render(
+      <TestI18nProvider>
+        <EventDetailCard
+          event={{
+            ...baseEvent,
+            viewerReserved: true,
+            viewerTicketId: "t1",
+            recurrence: "WEEKLY",
+            occurrences: [
+              { id: "evt_1", startsAt: baseEvent.startsAt },
+              { id: "evt_2", startsAt: new Date(Date.now() + 8 * 24 * 3600_000).toISOString() },
+            ],
+          }}
+        />
+      </TestI18nProvider>,
+    );
+    expect(screen.getByRole("button", { name: "Intéressé" })).toBeInTheDocument();
+    expect(screen.getByText("Réserver pour un autre")).toBeInTheDocument();
+    expect(screen.getByText("Prochaines dates")).toBeInTheDocument();
+    expect(screen.getByText("Toutes les semaines")).toBeInTheDocument();
   });
 
   it("n’affiche pas le statut brut HOST / INTERESTED dans la liste liée", () => {

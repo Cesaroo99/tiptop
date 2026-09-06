@@ -1,6 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
-import { isCurrentlyAvailable, seatedGuestCount, type AvailabilityStatus } from "@tiptop/domain";
+import { dedupeSeriesOccurrences, isCurrentlyAvailable, seatedGuestCount, type AvailabilityStatus } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 
 export type SearchType = "all" | "people" | "posts" | "events" | "wishes" | "moods" | "offers";
@@ -116,15 +116,15 @@ export class SearchService {
             ? { city: { equals: city, mode: Prisma.QueryMode.insensitive } }
             : {}),
       },
-      take: 20,
+      take: 40,
       orderBy: { startsAt: "asc" },
       include: {
         host: { include: { profile: { select: { avatarUrl: true } } } },
-        participants: { select: { status: true } },
+        participants: { select: { status: true, userId: true } },
         hearts: { where: { userId: viewerId, releasedAt: null }, select: { id: true } },
       },
     });
-    return rows.map((e) => ({
+    return dedupeSeriesOccurrences(rows).slice(0, 20).map((e) => ({
       id: e.id,
       title: e.title,
       imageUrl: e.imageUrl,
@@ -135,6 +135,13 @@ export class SearchService {
       currency: e.currency,
       taken: seatedGuestCount(e.participants),
       viewerHearted: e.hearts.length > 0,
+      interestedCount: e.participants.filter((p) => p.status === "INTERESTED").length,
+      viewerInterested: e.participants.some((p) => p.userId === viewerId && p.status === "INTERESTED"),
+      viewerReserved: e.participants.some(
+        (p) => p.userId === viewerId && ["RESERVED", "CONFIRMED", "PRESENT"].includes(p.status),
+      ),
+      recurrence: e.recurrence,
+      seriesId: e.seriesId,
       host: {
         username: e.host.username,
         firstName: e.host.firstName,

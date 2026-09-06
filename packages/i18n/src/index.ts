@@ -559,6 +559,21 @@ export type Messages = {
     hideOnProfile: string;
     participantsCount: string;
     participantsCountOne: string;
+    interestedBadge: string;
+    recurrenceLabel: string;
+    recurrenceNone: string;
+    recurrenceDaily: string;
+    recurrenceWeekly: string;
+    recurrenceMonthly: string;
+    recurrenceHint: string;
+    recursDaily: string;
+    recursWeekly: string;
+    recursMonthly: string;
+    nextDates: string;
+    formatAfterwork: string;
+    formatBrunch: string;
+    formatClub: string;
+    formatDaily: string;
     countryCM: string;
     moreActions: string;
     askFriend: string;
@@ -650,6 +665,8 @@ export type Messages = {
     bookPickSomeone: string;
     seatsPicking: string;
     bookAlready: string;
+    bookAlreadyOthers: string;
+    reserveOthers: string;
     bookHost: string;
     pay: string;
     paySuccess: string;
@@ -1435,6 +1452,21 @@ export const fr: Messages = {
     hideOnProfile: "Masqué du profil",
     participantsCount: "{n} participants",
     participantsCountOne: "1 participant",
+    interestedBadge: "Intéressé",
+    recurrenceLabel: "Cette sortie se répète",
+    recurrenceNone: "Une seule date",
+    recurrenceDaily: "Tous les jours",
+    recurrenceWeekly: "Toutes les semaines",
+    recurrenceMonthly: "Tous les mois",
+    recurrenceHint: "On crée les prochaines dates pour toi. Même lieu, même prix, même règles.",
+    recursDaily: "Tous les jours",
+    recursWeekly: "Toutes les semaines",
+    recursMonthly: "Tous les mois",
+    nextDates: "Prochaines dates",
+    formatAfterwork: "Afterwork",
+    formatBrunch: "Brunch",
+    formatClub: "Soirée club",
+    formatDaily: "Tous les jours",
     countryCM: "Cameroun",
     moreActions: "Plus",
     askFriend: "Amie",
@@ -1526,6 +1558,8 @@ export const fr: Messages = {
     bookPickSomeone: "Coche-toi ou au moins un ami.",
     seatsPicking: "{count} places restantes pour ce choix.",
     bookAlready: "Tu as déjà une place pour cette sortie.",
+    bookAlreadyOthers: "Tu as déjà une place. Tu peux encore réserver pour quelqu’un d’autre.",
+    reserveOthers: "Réserver pour un autre",
     bookHost: "C’est ta sortie — tu la gères, tu ne la réserves pas.",
     pay: "Payer",
     paySuccess: "Paiement réussi",
@@ -2311,6 +2345,21 @@ export const en: Messages = {
     hideOnProfile: "Hidden from profile",
     participantsCount: "{n} participants",
     participantsCountOne: "1 participant",
+    interestedBadge: "Interested",
+    recurrenceLabel: "This meetup repeats",
+    recurrenceNone: "One date only",
+    recurrenceDaily: "Every day",
+    recurrenceWeekly: "Every week",
+    recurrenceMonthly: "Every month",
+    recurrenceHint: "We create the next dates for you. Same place, same price, same rules.",
+    recursDaily: "Every day",
+    recursWeekly: "Every week",
+    recursMonthly: "Every month",
+    nextDates: "Upcoming dates",
+    formatAfterwork: "Afterwork",
+    formatBrunch: "Brunch",
+    formatClub: "Club night",
+    formatDaily: "Every day",
     countryCM: "Cameroon",
     moreActions: "More",
     askFriend: "Friend",
@@ -2402,6 +2451,8 @@ export const en: Messages = {
     bookPickSomeone: "Select yourself or at least one friend.",
     seatsPicking: "{count} seats left for this pick.",
     bookAlready: "You already have a seat for this meetup.",
+    bookAlreadyOthers: "You already have a seat. You can still book for someone else.",
+    reserveOthers: "Book for someone else",
     bookHost: "This is your meetup — you manage it, you don’t book it.",
     pay: "Pay",
     paySuccess: "Payment succeeded",

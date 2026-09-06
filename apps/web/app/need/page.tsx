@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { InterestedBadge } from "@/components/InterestedBadge";
 import { PinIcon, PlusIcon } from "@/components/Icons";
 import { CardSkeleton, EmptyState, ErrorBanner, TextInput } from "@/components/ui";
 import { api, type OfferItem } from "@/lib/api";
@@ -174,8 +175,13 @@ function NeedScreen() {
         {items?.map((offer) => (
           <Link key={offer.id} href={`/need/${offer.id}`} className="tap-scale block overflow-hidden rounded-card bg-surface shadow-card">
             {offer.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={offer.imageUrl} alt="" className="h-32 w-full object-cover" />
+              <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={offer.imageUrl} alt="" className="h-32 w-full object-cover" />
+                <span className="absolute left-2 top-2">
+                  <InterestedBadge variant="stamp" active={false} />
+                </span>
+              </div>
             ) : null}
             <div className="space-y-1.5 px-4 py-3.5">
               <div className="flex items-start justify-between gap-2">
@@ -184,6 +190,7 @@ function NeedScreen() {
                   {formatPrice(offer.priceXaf, offer.currency)}
                 </p>
               </div>
+              {!offer.imageUrl ? <InterestedBadge variant="stamp" active={false} /> : null}
               <p className="type-caption flex items-center gap-1 text-muted">
                 <PinIcon size={11} />
                 {offer.placeLabel || offer.city}

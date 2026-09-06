@@ -576,6 +576,10 @@ model Event {
   paymentRule         String      @default("HOLD")
   wanted              Boolean     @default(false)
   allowGroups         Boolean     @default(false)
+  recurrence          String      @default("NONE")
+  seriesId            String?
+  seriesParent        Event?      @relation("EventSeries", fields: [seriesId], references: [id], onDelete: SetNull)
+  seriesChildren      Event[]     @relation("EventSeries")
   status              EventStatus @default(PUBLISHED)
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
@@ -593,6 +597,7 @@ model Event {
 
   @@index([startsAt, status])
   @@index([city])
+  @@index([seriesId, startsAt])
 }
 
 model EventParticipant {

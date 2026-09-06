@@ -36,6 +36,9 @@ import {
   isEventParticipationPublic,
   remainingSeats,
   seatedGuestCount,
+  dedupeSeriesOccurrences,
+  occurrenceCount,
+  shiftOccurrence,
   moodExpiresAt,
 } from "../src/events";
 import { canConsumeTicket, canShowQr, isInEntryWindow, signTicketQr, verifyTicketQr } from "../src/tickets";
@@ -457,6 +460,22 @@ describe("invitations & moods", () => {
     expect(remainingSeats(40, 5)).toBe(35);
     expect(remainingSeats(40, 40)).toBe(0);
     expect(remainingSeats(null, 3)).toBeNull();
+  });
+
+  it("matérielise une série hebdomadaire et ne garde que la prochaine date", () => {
+    expect(occurrenceCount("WEEKLY")).toBe(8);
+    const start = new Date("2026-09-10T18:00:00.000Z");
+    expect(shiftOccurrence(start, "WEEKLY", 1).toISOString()).toBe("2026-09-17T18:00:00.000Z");
+    const now = new Date("2026-09-12T00:00:00.000Z");
+    const kept = dedupeSeriesOccurrences(
+      [
+        { id: "a", startsAt: start, recurrence: "WEEKLY" },
+        { id: "b", startsAt: shiftOccurrence(start, "WEEKLY", 1), seriesId: "a", recurrence: "WEEKLY" },
+        { id: "c", startsAt: new Date("2026-09-11T20:00:00.000Z") },
+      ],
+      now,
+    );
+    expect(kept.map((e) => e.id)).toEqual(["c", "b"]);
   });
 
   it("refuse une invitation expirée", () => {

@@ -946,7 +946,40 @@ async function enrichLivingWorld(
     paymentRule: "PAY_FIRST",
     participants: { create: { userId: koffi.id, status: "HOST" } },
   });
-  await db.event.update({ where: { id: live.id }, data: { paymentRule: "PAY_FIRST" } });
+  await db.event.update({
+    where: { id: live.id },
+    data: { paymentRule: "PAY_FIRST", recurrence: "WEEKLY" },
+  });
+  const liveKids = await db.event.count({ where: { seriesId: live.id } });
+  if (liveKids === 0) {
+    const liveSpan = live.endsAt ? live.endsAt.getTime() - live.startsAt.getTime() : 5 * 3600_000;
+    for (let i = 1; i <= 7; i += 1) {
+      const starts = new Date(live.startsAt);
+      starts.setDate(starts.getDate() + 7 * i);
+      await db.event.create({
+        data: {
+          hostId: live.hostId,
+          title: live.title,
+          description: live.description,
+          imageUrl: live.imageUrl,
+          city: live.city,
+          zone: live.zone,
+          venue: live.venue,
+          startsAt: starts,
+          endsAt: new Date(starts.getTime() + liveSpan),
+          priceXaf: live.priceXaf,
+          currency: live.currency,
+          capacity: live.capacity,
+          minAge: live.minAge,
+          requiresReservation: live.requiresReservation,
+          paymentRule: "PAY_FIRST",
+          recurrence: "WEEKLY",
+          seriesId: live.id,
+          participants: { create: { userId: live.hostId, status: "HOST" } },
+        },
+      });
+    }
+  }
   await ensureEvent("Expo photo Hilton", {
     hostId: erica.id,
     title: "Expo photo Hilton",

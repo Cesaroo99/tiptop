@@ -7,6 +7,7 @@ import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
+import { recurrenceCaption } from "@/lib/event-series";
 import { formatCompactCount, formatCountdownLabel, formatRelative, splitPostLead } from "@/lib/time";
 import { ageCategoryLabel } from "@tiptop/domain";
 import { Avatar, CertifiedMark } from "./Avatar";
@@ -16,7 +17,6 @@ import {
   FlagIcon,
   GlobeIcon,
   HeartIcon,
-  InterestedIcon,
   LinkIcon,
   MoreIcon,
   ShareIcon,
@@ -24,6 +24,7 @@ import {
   TrashIcon,
 } from "./Icons";
 import { BookEventSheet } from "./BookEventSheet";
+import { InterestedBadge } from "./InterestedBadge";
 import { LikeDialogs, likeErrorKind } from "./LikeDialogs";
 import { MapThumb } from "./MapThumb";
 import { SeatsLeftBadge, seatsLeftLabel, seatsRemainingOf } from "./SeatsLeftBadge";
@@ -96,7 +97,8 @@ export function PostCard({
   const interested = event?.viewerInterested ?? false;
   const remaining = event ? seatsRemainingOf(event.capacity, event.reservedCount, event.remaining) : null;
   const eventFull = remaining != null && remaining <= 0;
-  const canReserve = Boolean(event) && event?.canBook !== false && !eventFull;
+  const reserved = Boolean(event?.viewerReserved);
+  const seriesLabel = recurrenceCaption(event?.recurrence, messages.world);
   const { lead, rest } = splitPostLead(post.body);
   const age = isEvent ? ageCategoryLabel(event?.minAge) : null;
   const mapCity = event?.city ?? post.city;
@@ -296,7 +298,12 @@ export function PostCard({
               )}
               {isEvent && event ? (
                 <>
-                  <div className="absolute left-2 top-2">
+                  <div className="absolute left-2 top-2 flex flex-col items-start gap-1.5">
+                    <InterestedBadge
+                      variant="stamp"
+                      active={interested}
+                      count={event.interestedCount}
+                    />
                     <SeatsLeftBadge remaining={remaining} />
                   </div>
                   <Link
@@ -322,30 +329,39 @@ export function PostCard({
             <ActionCircle href={`/posts/${post.id}`} label={messages.social.comments}>
               <CommentIcon size={17} />
             </ActionCircle>
-            {isEvent && event ? (
+            {isEvent && event && !mine ? (
               <>
-                {canReserve ? (
-                  <ActionCircle label={messages.booking.reserve} onClick={() => setBookOpen(true)}>
-                    <CalendarPlusIcon size={17} />
-                  </ActionCircle>
-                ) : eventFull ? (
+                <InterestedBadge
+                  active={interested}
+                  count={event.interestedCount}
+                  onClick={() => void toggleInterested()}
+                />
+                <button
+                  type="button"
+                  aria-label={reserved ? messages.booking.reserveOthers : messages.booking.reserve}
+                  disabled={eventFull}
+                  onClick={() => setBookOpen(true)}
+                  className="tap-scale type-caption inline-flex h-10 items-center gap-1.5 rounded-pill bg-accent px-3.5 font-semibold text-on-primary shadow-sm disabled:opacity-40"
+                >
+                  <CalendarPlusIcon size={15} />
+                  {reserved ? messages.booking.reserveOthers : messages.booking.reserve}
+                </button>
+                {eventFull ? (
                   <span className="type-caption rounded-pill bg-danger-soft px-2.5 py-2 font-bold text-danger">
                     {messages.world.seatsFull}
                   </span>
                 ) : null}
-                <ActionCircle
-                  label={interested ? messages.world.notInterested : messages.world.interested}
-                  active={interested}
-                  onClick={() => void toggleInterested()}
-                >
-                  <InterestedIcon size={17} />
-                </ActionCircle>
               </>
             ) : null}
-            {isEvent && countdown ? (
-              <span className="ml-auto flex min-w-0 items-center gap-1.5">
-                <span className="type-caption whitespace-nowrap text-muted">{messages.world.eventInLabel}</span>
-                <span className="type-caption shrink-0 rounded-full bg-yellow px-2.5 py-1 font-bold text-ink">{countdown}</span>
+            {isEvent && (countdown || seriesLabel) ? (
+              <span className="ml-auto flex min-w-0 flex-col items-end gap-1">
+                {seriesLabel ? <span className="type-caption font-semibold text-accent">{seriesLabel}</span> : null}
+                {countdown ? (
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span className="type-caption whitespace-nowrap text-muted">{messages.world.eventInLabel}</span>
+                    <span className="type-caption shrink-0 rounded-full bg-yellow px-2.5 py-1 font-bold text-ink">{countdown}</span>
+                  </span>
+                ) : null}
               </span>
             ) : null}
           </div>
@@ -372,6 +388,7 @@ export function PostCard({
               ...event,
               reservedCount: nextTaken,
               remaining: nextRemaining,
+              viewerReserved: true,
               canBook: nextRemaining == null || nextRemaining > 0,
             },
           });
