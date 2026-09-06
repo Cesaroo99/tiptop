@@ -5,6 +5,23 @@ import { fetchSessionToken, loginOnPage } from "../helpers/auth";
 const api = () => process.env.E2E_API_URL ?? "http://localhost:3001";
 
 test.describe("Admin — smoke non destructif", () => {
+  test("César voit la commission TipTop à 0 % sur Paiements", async ({ page }) => {
+    await loginOnPage(page);
+    await page.goto("/menu");
+    await expect(page.getByText("Back-office")).toBeVisible({ timeout: 30_000 });
+    await page.getByText("Back-office").click();
+    await expect(page.getByRole("heading", { name: "Back-office" })).toBeVisible();
+    await page.getByRole("link", { name: "Paiements", exact: true }).click();
+    await expect(page.getByText("Monétisation")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/Phase initiale : 0 %/)).toBeVisible();
+    await expect(page.getByText(/prix du billet/)).toBeVisible();
+    await expect(page.getByRole("spinbutton", { name: /Commission TipTop/ })).toHaveValue("0");
+    await page.getByRole("button", { name: "Enregistrer" }).click();
+    await expect(page.getByText("Commission enregistrée.")).toBeVisible();
+    await expect(page.getByText(/Remboursement mock/)).toBeVisible();
+    await page.screenshot({ path: "/opt/cursor/artifacts/admin_monetization_0.png", fullPage: true });
+  });
+
   test("César ouvre le back-office", async ({ page }) => {
     await loginOnPage(page);
     await page.goto("/menu");
