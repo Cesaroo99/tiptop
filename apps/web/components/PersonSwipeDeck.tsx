@@ -102,7 +102,7 @@ export function PersonSwipeDeck<T>({
         </div>
       </div>
       {count > 1 ? (
-        <div className="mt-4 flex shrink-0 items-center justify-center gap-3">
+        <div className={`flex shrink-0 items-center justify-center gap-3 ${fill ? "mt-2 pb-1" : "mt-4"}`}>
           <button
             type="button"
             aria-label={messages.world.previousPerson}

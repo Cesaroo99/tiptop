@@ -116,7 +116,7 @@ export function NearbyPersonCard({
         layout === "fill" ? "flex h-full min-h-0 flex-col" : ""
       }`}
     >
-      <div className={layout === "fill" ? "relative min-h-[18rem] flex-1" : "relative"}>
+      <div className={layout === "fill" ? "relative min-h-0 flex-1" : "relative"}>
         <Link
           href={`/u/${person.username}`}
           className={`block bg-gradient-to-br from-accent/15 to-yellow/15 ${
@@ -129,9 +129,42 @@ export function NearbyPersonCard({
           ) : (
             <div className="grid h-full place-items-center type-display text-accent">{person.firstName[0]}</div>
           )}
-          <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-10">
-            <AvailabilityBadge presence={presence} compact />
-            <span className="type-caption rounded-full bg-white/15 px-2 py-0.5 font-semibold text-white">{circleLabel}</span>
+          <div
+            className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-3 ${
+              layout === "fill" ? "pb-3 pt-16" : "flex items-end justify-between gap-2 pb-2.5 pt-10"
+            }`}
+          >
+            <div className="flex items-end justify-between gap-2">
+              <AvailabilityBadge presence={presence} compact />
+              <span className="type-caption rounded-full bg-white/15 px-2 py-0.5 font-semibold text-white">{circleLabel}</span>
+            </div>
+            {layout === "fill" ? (
+              <div className="mt-2 min-w-0">
+                <p className="type-h2 line-clamp-1 text-white">
+                  {person.firstName} {person.lastName}
+                  {person.certified ? (
+                    <span className="ml-1 inline-block align-middle">
+                      <CertifiedMark />
+                    </span>
+                  ) : null}
+                </p>
+                <p className="type-caption mt-0.5 flex items-center gap-1.5 text-white/85">
+                  {person.age != null ? <span>{messages.world.age.replace("{age}", String(person.age))}</span> : null}
+                  {person.age != null && person.profession ? <span aria-hidden>·</span> : null}
+                  {person.profession ? <span className="truncate">{person.profession}</span> : null}
+                </p>
+                <p className="type-caption mt-0.5 flex items-center gap-1 font-semibold text-white">
+                  <RouteIcon size={13} />
+                  <span className="truncate">
+                    {distanceText
+                      ? `${distanceText} ${messages.world.fromYou}`
+                      : geoStatus === "idle" && locationMode === "CURRENT"
+                        ? messages.world.locating
+                        : person.locationLabel ?? messages.world.approximate}
+                  </span>
+                </p>
+              </div>
+            ) : null}
           </div>
         </Link>
         {person.circle !== "FRIEND" ? (
@@ -159,48 +192,54 @@ export function NearbyPersonCard({
           <HeartIcon size={16} filled={liked} />
         </button>
       </div>
-      <div className="shrink-0 space-y-2.5 px-4 pb-4 pt-3 text-center">
-        <h2 className="min-w-0">
-          <span className="type-h2 line-clamp-2 break-words text-ink">
-            {person.firstName} {person.lastName}
-            {person.certified ? (
-              <span className="ml-1 inline-block align-middle">
-                <CertifiedMark />
+      <div className={`shrink-0 text-center ${layout === "fill" ? "space-y-1.5 px-3 pb-2 pt-2" : "space-y-2.5 px-4 pb-4 pt-3"}`}>
+        {layout === "feed" ? (
+          <>
+            <h2 className="min-w-0">
+              <span className="type-h2 line-clamp-2 break-words text-ink">
+                {person.firstName} {person.lastName}
+                {person.certified ? (
+                  <span className="ml-1 inline-block align-middle">
+                    <CertifiedMark />
+                  </span>
+                ) : null}
               </span>
-            ) : null}
-          </span>
-          <span className="type-caption mt-1 flex min-w-0 items-center justify-center gap-1.5 text-muted">
-            {person.age != null ? <span className="shrink-0">{messages.world.age.replace("{age}", String(person.age))}</span> : null}
-            {person.age != null && person.profession ? <span aria-hidden>·</span> : null}
-            {person.profession ? (
-              <span className="inline-flex min-w-0 items-center gap-1 truncate">
-                <BriefcaseIcon size={13} />
-                <span className="truncate">{person.profession}</span>
+              <span className="type-caption mt-1 flex min-w-0 items-center justify-center gap-1.5 text-muted">
+                {person.age != null ? <span className="shrink-0">{messages.world.age.replace("{age}", String(person.age))}</span> : null}
+                {person.age != null && person.profession ? <span aria-hidden>·</span> : null}
+                {person.profession ? (
+                  <span className="inline-flex min-w-0 items-center gap-1 truncate">
+                    <BriefcaseIcon size={13} />
+                    <span className="truncate">{person.profession}</span>
+                  </span>
+                ) : null}
               </span>
-            ) : null}
-          </span>
-        </h2>
-        <p className="type-caption inline-flex max-w-full items-center justify-center gap-1.5 font-bold text-accent">
-          <RouteIcon size={13} />
-          <span className="truncate">
-            {distanceText
-              ? `${distanceText} ${messages.world.fromYou}`
-              : geoStatus === "idle" && locationMode === "CURRENT"
-                ? messages.world.locating
-                : person.locationLabel ?? messages.world.approximate}
-          </span>
-        </p>
+            </h2>
+            <p className="type-caption inline-flex max-w-full items-center justify-center gap-1.5 font-bold text-accent">
+              <RouteIcon size={13} />
+              <span className="truncate">
+                {distanceText
+                  ? `${distanceText} ${messages.world.fromYou}`
+                  : geoStatus === "idle" && locationMode === "CURRENT"
+                    ? messages.world.locating
+                    : person.locationLabel ?? messages.world.approximate}
+              </span>
+            </p>
+          </>
+        ) : null}
         {locationMode === "CURRENT" && (geoStatus === "denied" || geoStatus === "unsupported") ? (
           <button type="button" onClick={retryGeo} className="type-caption font-semibold text-accent">
             {messages.world.retryGeo}
           </button>
         ) : null}
-        {personWhyLines(person, messages).map((line) => (
-          <p key={line} className="type-caption mx-auto font-medium text-accent">
-            {line}
-          </p>
-        ))}
-        {person.activeMood ? (
+        {layout === "feed"
+          ? personWhyLines(person, messages).map((line) => (
+              <p key={line} className="type-caption mx-auto font-medium text-accent">
+                {line}
+              </p>
+            ))
+          : null}
+        {person.activeMood && layout === "feed" ? (
           <p className="type-caption mx-auto truncate rounded-lg bg-accent-soft px-3 py-1.5 font-medium text-accent">
             {person.activeMood.activity || person.activeMood.body}
           </p>
