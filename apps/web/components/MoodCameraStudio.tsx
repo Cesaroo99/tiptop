@@ -280,7 +280,7 @@ export function MoodCameraStudio() {
               {messages.world.videoRecord}
             </button>
           </div>
-          <div className="absolute inset-x-0 bottom-[7.2rem] z-10 px-4">
+          <div className="absolute inset-x-0 bottom-[6.4rem] z-10 px-4">
             <p className="type-caption mb-2 font-semibold text-white/80">{messages.world.moodPickVideo}</p>
             <div className="flex gap-2 overflow-x-auto pb-1">
               {TEMPLATES.map((t) => (

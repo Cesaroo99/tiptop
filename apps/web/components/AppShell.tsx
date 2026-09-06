@@ -17,8 +17,8 @@ export function AppShell({
   children: React.ReactNode;
   /** Écran plein cadre sans header (ex. flux Mood vertical immersif). Nav en overlay. */
   fullBleed?: boolean;
-  /** `nav` : barre basse seulement — écrans de création (maquettes 21-22). */
-  chrome?: "full" | "nav";
+  /** `nav` : barre basse seulement. `none` : caméra / studio sans chrome. */
+  chrome?: "full" | "nav" | "none";
 }) {
   const { user, loading } = useSession();
   const { placement } = useLikePlacement();
@@ -42,6 +42,15 @@ export function AppShell({
   }
 
   const location = [user.city, user.zone].filter(Boolean).join(" - ");
+
+  if (chrome === "none") {
+    return (
+      <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
+        <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
+        <LikeMilestoneCelebration />
+      </div>
+    );
+  }
 
   if (fullBleed) {
     return (

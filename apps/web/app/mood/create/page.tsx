@@ -5,7 +5,7 @@ import { MoodCameraStudio } from "@/components/MoodCameraStudio";
 
 export default function Page() {
   return (
-    <AppShell fullBleed>
+    <AppShell chrome="none">
       <MoodCameraStudio />
     </AppShell>
   );

@@ -10,7 +10,7 @@ test.describe("Mood — caméra puis son / texte / lieu", () => {
     await page.goto("/mood");
     await page.getByRole("link", { name: "Créer un mood" }).click();
     await expect(page).toHaveURL(/\/mood\/create/);
-    await expect(page.getByText(/Filme, puis ajoute un son/)).toBeVisible();
+    await expect(page.getByText(/Filme, puis ajoute un son/).first()).toBeVisible();
     await page.getByRole("button", { name: "Rooftop" }).click();
     await expect(page.getByRole("button", { name: "Publier" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Texte" })).toBeVisible();
