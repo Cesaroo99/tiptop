@@ -129,7 +129,7 @@ export function EventActionRow({
   endsAt,
   status,
   seriesLabel,
-  className = "mt-3 flex flex-wrap items-center gap-2",
+  className = "mt-3 flex items-center gap-2",
 }: {
   likeLabel: string;
   liked?: boolean;

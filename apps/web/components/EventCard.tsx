@@ -228,7 +228,7 @@ export function EventCard({
         ) : null}
 
         <EventActionRow
-          className="mt-4 flex flex-wrap items-center gap-2"
+          className="mt-4 flex items-center gap-2"
           likeLabel={messages.world.heartEvent}
           liked={event.viewerHearted}
           likeDisabled={!interactive}
