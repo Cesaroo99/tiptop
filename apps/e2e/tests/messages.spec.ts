@@ -27,8 +27,9 @@ test.describe("Messagerie — inbox et conversation", () => {
     await page.getByRole("button", { name: "Options" }).click();
     await expect(page.getByRole("link", { name: "Voir la sortie" })).toBeVisible();
     await page.getByRole("button", { name: "Retour" }).click();
+    await expect(page.getByRole("heading", { name: "Mes messages" })).toBeVisible();
 
-    await page.getByText("Erica Sinclair").click();
+    await page.getByRole("link", { name: /Erica Sinclair/ }).click();
     await expect(page.getByText("On se retrouve à Bastos ?")).toBeVisible();
     const note = `E2E MSG ${Date.now()}`;
     await page.getByPlaceholder("Écrire un message").fill(note);
