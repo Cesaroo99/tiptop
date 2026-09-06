@@ -5,12 +5,13 @@ import { AppShell } from "@/components/AppShell";
 import { PostCard } from "@/components/PostCard";
 import { EventCard } from "@/components/EventCard";
 import { FeedMoodCard } from "@/components/FeedMoodCard";
+import { AvailableInviteCard } from "@/components/AvailableInviteCard";
 import { FeedPeopleDeck } from "@/components/FeedPeopleDeck";
 import { Avatar } from "@/components/Avatar";
 import { PlusIcon } from "@/components/Icons";
 import { CardSkeleton, EmptyState, ErrorBanner } from "@/components/ui";
 import { api, ApiError, type EventCard as EventCardType, type FeedItem, type MoodItem, type PersonCard } from "@/lib/api";
-import { mixHomeFeed, type MixedFeedEntry } from "@/lib/feed-mix";
+import { mixHomeFeed, splitFeedPeople, type MixedFeedEntry } from "@/lib/feed-mix";
 import {
   captureFeedAnchor,
   leftoverFeedEntries,
@@ -94,10 +95,12 @@ function HomeFeed() {
     setError(null);
     try {
       const data = await api<FeedResponse>("/feed");
+      const { invitees, deck } = splitFeedPeople(data.people ?? []);
       const mixed = mixHomeFeed({
         posts: data.items,
         events: data.events ?? [],
-        people: data.people ?? [],
+        people: deck,
+        invitees,
         moods: data.reels ?? [],
       });
       setItems(data.items);
@@ -134,16 +137,9 @@ function HomeFeed() {
   function appendLocalContinuation(currentStream: MixedFeedEntry[]) {
     if (Date.now() - lastContinueAt.current < 1200) return;
     lastContinueAt.current = Date.now();
-    const leftover = leftoverFeedEntries(currentStream, { events, people, moods: reels });
-    const extra =
-      leftover.length > 0
-        ? leftover
-        : mixHomeFeed({
-            posts: items ?? [],
-            events,
-            people,
-            moods: reels,
-          });
+    const { invitees, deck } = splitFeedPeople(people);
+    const leftover = leftoverFeedEntries(currentStream, { events, people: deck, invitees, moods: reels });
+    const extra = leftover;
     if (!extra.length) {
       setHasMore(false);
       return;
@@ -239,20 +235,26 @@ function HomeFeed() {
     setItems((cur) => {
       if (!cur) return cur;
       if (placement?.targetType === "post") {
-        return cur.map((p) => (p.id === placement.targetId ? p : releaseViewerLike(p)));
+        return cur.map((p) => (p.id === placement.targetId ? { ...p, likedByMe: true } : releaseViewerLike(p)));
       }
       return cur.map(releaseViewerLike);
     });
-    setStream((cur) =>
-      cur.map((row) => {
+    setStream((cur) => {
+      let changed = false;
+      const next = cur.map((row) => {
         if (row.kind !== "post") return row;
-        const post =
-          placement?.targetType === "post" && row.post.id === placement.targetId
-            ? row.post
-            : releaseViewerLike(row.post);
-        return { ...row, post };
-      }),
-    );
+        const shouldLike = placement?.targetType === "post" && row.post.id === placement.targetId;
+        if (shouldLike) {
+          if (row.post.likedByMe && row.post.likeTime?.likedByMe) return row;
+          changed = true;
+          return { ...row, post: { ...row.post, likedByMe: true } };
+        }
+        if (!row.post.likedByMe && !row.post.likeTime?.likedByMe) return row;
+        changed = true;
+        return { ...row, post: releaseViewerLike(row.post) };
+      });
+      return changed ? next : cur;
+    });
     setPeople((cur) =>
       cur.map((p) => ({
         ...p,
@@ -266,6 +268,10 @@ function HomeFeed() {
       })),
     );
   }, [ready, placement?.targetType, placement?.targetId]);
+
+  const inviteIds = new Set(stream.filter((r) => r.kind === "invite").map((r) => r.person.id));
+  const firstPersonRowId = stream.find((r) => r.kind === "person")?.id;
+  const deckPeople = people.filter((p) => !inviteIds.has(p.id));
 
   loadMoreRef.current = () => loadMore();
 
@@ -340,9 +346,8 @@ function HomeFeed() {
       {items && stream.length === 0 && !error ? (
         <EmptyState title={messages.home.emptyTitle} body={messages.home.emptyBody} />
       ) : null}
-      {stream.map((row, index) => {
-        const feedKey = `${row.id}:${index}`;
-        const firstPersonIndex = stream.findIndex((r) => r.kind === "person");
+      {stream.map((row) => {
+        const feedKey = row.id;
         if (row.kind === "post") {
           return (
             <div key={feedKey} data-feed-key={feedKey}>
@@ -354,10 +359,23 @@ function HomeFeed() {
                   return meta?.soleLike ? applySoleLike(cur, next) : replaceFeedItem(cur, next);
                 });
                 setStream((cur) =>
-                  cur.map((row) => (row.kind === "post" && row.post.id === next.id ? { ...row, post: next } : row)),
+                  cur.map((entry) => {
+                    if (entry.kind !== "post") return entry;
+                    if (entry.post.id === next.id) return { ...entry, post: next };
+                    return meta?.soleLike ? { ...entry, post: releaseViewerLike(entry.post) } : entry;
+                  }),
                 );
               }}
             />
+            </div>
+          );
+        }
+        if (row.kind === "invite") {
+          return (
+            <div key={feedKey} data-feed-key={feedKey}>
+              <AvailableInviteCard
+                person={people.find((p) => p.id === row.person.id) ?? row.person}
+              />
             </div>
           );
         }
@@ -377,11 +395,11 @@ function HomeFeed() {
           );
         }
         if (row.kind === "person") {
-          if (index !== firstPersonIndex) return null;
+          if (row.id !== firstPersonRowId) return null;
           return (
             <div key={feedKey} data-feed-key={feedKey}>
             <FeedPeopleDeck
-              people={people}
+              people={deckPeople}
               onChanged={(next) => {
                 setPeople((cur) => cur.map((p) => (p.id === next.id ? next : p)));
                 setStream((cur) =>

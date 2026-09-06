@@ -41,6 +41,8 @@ export type Messages = {
     feedHintFollowed: string;
     feedHintLocal: string;
     feedHintAlive: string;
+    justAvailable: string;
+    justAvailableBody: string;
   };
   need: {
     title: string;
@@ -1000,6 +1002,8 @@ export const fr: Messages = {
     feedHintFollowed: "Vient de publier · tu la suis",
     feedHintLocal: "Près de toi",
     feedHintAlive: "Beaucoup de vie en ce moment",
+    justAvailable: "{name} est dispo",
+    justAvailableBody: "Propose-lui une sortie.",
   },
   need: {
     title: "Autour de moi",
@@ -1959,6 +1963,8 @@ export const en: Messages = {
     feedHintFollowed: "Just posted · you follow them",
     feedHintLocal: "Near you",
     feedHintAlive: "A lot of life right now",
+    justAvailable: "{name} is available",
+    justAvailableBody: "Invite them out.",
   },
   need: {
     title: "Around me",

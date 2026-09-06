@@ -20,9 +20,12 @@ import { SocialInviteModal } from "./SocialInviteModal";
 export function NearbyPersonCard({
   person,
   onChanged,
+  layout = "feed",
 }: {
   person: PersonCard;
   onChanged?: (next: PersonCard) => void;
+  /** `fill` : la photo prend tout l’espace restant (Amies). */
+  layout?: "feed" | "fill";
 }) {
   const { messages } = useI18n();
   const { user } = useSession();
@@ -109,10 +112,17 @@ export function NearbyPersonCard({
   return (
     <article
       data-kind="person"
-      className="fade-in overflow-hidden rounded-[26px] bg-surface shadow-elevated"
+      className={`fade-in overflow-hidden rounded-[26px] bg-surface shadow-elevated ${
+        layout === "fill" ? "flex h-full min-h-0 flex-col" : ""
+      }`}
     >
-      <div className="relative">
-        <Link href={`/u/${person.username}`} className="relative block h-52 bg-gradient-to-br from-accent/15 to-yellow/15">
+      <div className={layout === "fill" ? "relative min-h-[18rem] flex-1" : "relative"}>
+        <Link
+          href={`/u/${person.username}`}
+          className={`block bg-gradient-to-br from-accent/15 to-yellow/15 ${
+            layout === "fill" ? "absolute inset-0" : "relative h-72"
+          }`}
+        >
           {person.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={person.avatarUrl} alt="" draggable={false} className="h-full w-full object-cover" />
@@ -149,7 +159,7 @@ export function NearbyPersonCard({
           <HeartIcon size={16} filled={liked} />
         </button>
       </div>
-      <div className="space-y-2.5 px-4 pb-4 pt-3 text-center">
+      <div className="shrink-0 space-y-2.5 px-4 pb-4 pt-3 text-center">
         <h2 className="min-w-0">
           <span className="type-h2 line-clamp-2 break-words text-ink">
             {person.firstName} {person.lastName}

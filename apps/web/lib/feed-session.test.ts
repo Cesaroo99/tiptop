@@ -50,4 +50,19 @@ describe("leftoverFeedEntries", () => {
     });
     expect(leftover[0]).toMatchObject({ kind: "event", id: "event:e1" });
   });
+
+  it("ajoute une invite sans dupliquer la personne du deck", () => {
+    const leftover = leftoverFeedEntries(
+      [{ kind: "person", id: "person:u1", person: { id: "u1" } as never }],
+      {
+        events: [],
+        people: [{ id: "u1" } as never, { id: "u2" } as never],
+        invitees: [{ id: "u2" } as never],
+        moods: [],
+      },
+    );
+    expect(leftover).toEqual([
+      expect.objectContaining({ kind: "invite", id: "invite:u2" }),
+    ]);
+  });
 });

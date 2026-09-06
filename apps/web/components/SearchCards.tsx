@@ -13,6 +13,7 @@ import { LinkIcon, MoreIcon } from "./Icons";
 import { OptionsSheet } from "./OptionsSheet";
 import { IconButton, Modal } from "./ui";
 import { recurrenceCaption } from "@/lib/event-series";
+import { SeatsLeftBadge, seatsRemainingOf } from "./SeatsLeftBadge";
 
 export function SearchPersonCard({ person }: { person: SearchPerson }) {
   const { messages } = useI18n();
@@ -127,12 +128,8 @@ export function SearchEventCard({
             </div>
           )}
         </Link>
-        <div className="absolute left-3 top-3 flex flex-wrap items-center gap-1.5">
-          <span className="type-caption rounded-pill bg-white/90 px-3 py-1.5 font-bold text-ink shadow-sm backdrop-blur-sm">
-            {event.taken === 1
-              ? messages.world.participantsCountOne
-              : messages.world.participantsCount.replace("{n}", String(event.taken))}
-          </span>
+        <div className="absolute left-3 top-3 z-[1] flex flex-wrap items-center gap-1.5">
+          <SeatsLeftBadge remaining={seatsRemainingOf(event.capacity, event.taken, event.remaining)} />
           {seriesLabel ? (
             <span className="type-caption rounded-pill bg-accent px-2.5 py-1 font-bold text-on-primary shadow-sm">
               {seriesLabel}

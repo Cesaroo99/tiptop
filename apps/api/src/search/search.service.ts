@@ -1,6 +1,12 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
-import { dedupeSeriesOccurrences, isCurrentlyAvailable, seatedGuestCount, type AvailabilityStatus } from "@tiptop/domain";
+import {
+  dedupeSeriesOccurrences,
+  isCurrentlyAvailable,
+  remainingSeats,
+  seatedGuestCount,
+  type AvailabilityStatus,
+} from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 
 export type SearchType = "all" | "people" | "posts" | "events" | "wishes" | "moods" | "offers";
@@ -124,7 +130,9 @@ export class SearchService {
         hearts: { where: { userId: viewerId, releasedAt: null }, select: { id: true } },
       },
     });
-    return dedupeSeriesOccurrences(rows).slice(0, query ? 20 : 40).map((e) => ({
+    return dedupeSeriesOccurrences(rows).slice(0, query ? 20 : 40).map((e) => {
+      const taken = seatedGuestCount(e.participants);
+      return {
       id: e.id,
       title: e.title,
       imageUrl: e.imageUrl,
@@ -133,7 +141,9 @@ export class SearchService {
       zone: e.zone,
       priceXaf: e.priceXaf,
       currency: e.currency,
-      taken: seatedGuestCount(e.participants),
+      capacity: e.capacity,
+      taken,
+      remaining: remainingSeats(e.capacity, taken),
       viewerHearted: e.hearts.length > 0,
       interestedCount: e.participants.filter((p) => p.status === "INTERESTED").length,
       viewerInterested: e.participants.some((p) => p.userId === viewerId && p.status === "INTERESTED"),
@@ -148,7 +158,8 @@ export class SearchService {
         lastName: e.host.lastName,
         avatarUrl: e.host.profile?.avatarUrl ?? null,
       },
-    }));
+    };
+    });
   }
 
   private async wishes(query: string) {

@@ -210,28 +210,32 @@ function PeopleCarousel() {
   }
 
   return (
-    <div className="px-4 py-3">
+    <div className="flex min-h-[calc(100dvh-11rem)] flex-col px-4 py-3">
       {chrome}
       {filterForm}
-      <PersonSwipeDeck
-        items={filtered}
-        index={Math.min(index, filtered.length - 1)}
-        onIndexChange={setIndex}
-        peekSrc={(p) => p.avatarUrl}
-      >
-        {(current) => (
-          <NearbyPersonCard
-            person={current}
-            onChanged={(next) => {
-              setItems((cur) => {
-                if (!cur) return cur;
-                return cur.map((p) => (p.id === next.id ? next : p));
-              });
-              if (circle === "LATER" && next.circle !== "LATER") setIndex(0);
-            }}
-          />
-        )}
-      </PersonSwipeDeck>
+      <div className="min-h-0 flex-1">
+        <PersonSwipeDeck
+          items={filtered}
+          index={Math.min(index, filtered.length - 1)}
+          onIndexChange={setIndex}
+          peekSrc={(p) => p.avatarUrl}
+          fill
+        >
+          {(current) => (
+            <NearbyPersonCard
+              layout="fill"
+              person={current}
+              onChanged={(next) => {
+                setItems((cur) => {
+                  if (!cur) return cur;
+                  return cur.map((p) => (p.id === next.id ? next : p));
+                });
+                if (circle === "LATER" && next.circle !== "LATER") setIndex(0);
+              }}
+            />
+          )}
+        </PersonSwipeDeck>
+      </div>
     </div>
   );
 }

@@ -15,7 +15,7 @@ export type FeedCache = {
   at: number;
 };
 
-const KEY = "tiptop.home.feed.v1";
+const KEY = "tiptop.home.feed.v2";
 const TTL_MS = 30 * 60 * 1000;
 let memory: FeedCache | null = null;
 
@@ -38,6 +38,15 @@ export function writeFeedCache(cache: FeedCache) {
     sessionStorage.setItem(KEY, JSON.stringify(cache));
   } catch {
     /* ignore quota */
+  }
+}
+
+export function clearFeedCache() {
+  memory = null;
+  try {
+    sessionStorage.removeItem(KEY);
+  } catch {
+    /* ignore */
   }
 }
 
@@ -89,17 +98,27 @@ export function restoreFeedAnchor(scrollTop: number, lastVisibleId?: string | nu
 
 export function leftoverFeedEntries(
   stream: MixedFeedEntry[],
-  extras: { events: EventCard[]; people: PersonCard[]; moods: MoodItem[] },
+  extras: { events: EventCard[]; people: PersonCard[]; invitees?: PersonCard[]; moods: MoodItem[] },
 ): MixedFeedEntry[] {
   const seen = new Set(stream.map((row) => row.id));
+  const seenPeople = new Set(
+    stream.flatMap((row) => (row.kind === "person" || row.kind === "invite" ? [row.person.id] : [])),
+  );
   const out: MixedFeedEntry[] = [];
   for (const event of extras.events) {
     const id = `event:${event.id}`;
     if (!seen.has(id)) out.push({ kind: "event", id, event });
   }
+  for (const person of extras.invitees ?? []) {
+    const id = `invite:${person.id}`;
+    if (!seen.has(id) && !seenPeople.has(person.id)) {
+      out.push({ kind: "invite", id, person });
+      seenPeople.add(person.id);
+    }
+  }
   for (const person of extras.people) {
     const id = `person:${person.id}`;
-    if (!seen.has(id)) out.push({ kind: "person", id, person });
+    if (!seen.has(id) && !seenPeople.has(person.id)) out.push({ kind: "person", id, person });
   }
   for (const mood of extras.moods) {
     const id = `mood:${mood.id}`;
@@ -126,6 +145,10 @@ export function rebuildStream(
     } else if (row.kind === "person") {
       const person = people.get(row.id);
       if (person) out.push({ kind: "person", id: row.id, person });
+    } else if (row.kind === "invite") {
+      const rawId = row.id.startsWith("invite:") ? row.id.slice("invite:".length) : row.id;
+      const person = people.get(`person:${rawId}`) ?? [...people.values()].find((p) => p.id === rawId);
+      if (person) out.push({ kind: "invite", id: row.id, person });
     } else {
       const mood = moods.get(row.id);
       if (mood) out.push({ kind: "mood", id: row.id, mood });

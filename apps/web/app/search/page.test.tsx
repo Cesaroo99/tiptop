@@ -62,6 +62,8 @@ vi.mock("@/lib/api", async () => {
               priceXaf: 5000,
               currency: "XAF",
               taken: 4,
+              capacity: 40,
+              remaining: 36,
               viewerHearted: false,
               host: {
                 username: "alex.moullion",
@@ -102,7 +104,7 @@ describe("Écran recherche", () => {
     expect(await screen.findByText("Erica Sinclair")).toBeInTheDocument();
     expect(screen.getByText("Téléconseillère")).toBeInTheDocument();
     expect(screen.getByText("Piscine party - Odza, Yaoundé")).toBeInTheDocument();
-    expect(screen.getByText("4 participants")).toBeInTheDocument();
+    expect(screen.getByText(/36 places restantes/)).toBeInTheDocument();
     expect(screen.getByText(/Autour de Yaoundé/)).toBeInTheDocument();
   });
 
