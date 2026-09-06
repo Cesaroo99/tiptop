@@ -331,9 +331,16 @@ export type Messages = {
   world: {
     available: string;
     unavailable: string;
+    unsure: string;
     availableUntil: string;
     goAvailable: string;
     goHidden: string;
+    goUnsure: string;
+    myStatus: string;
+    seeProfile: string;
+    locating: string;
+    geoDenied: string;
+    retryGeo: string;
     ttlHint: string;
     zoneTitle: string;
     zoneBody: string;
@@ -1117,10 +1124,17 @@ export const fr: Messages = {
   },
   world: {
     available: "Disponible",
-    unavailable: "Masqué",
+    unavailable: "Indisponible",
+    unsure: "Je ne sais pas",
     availableUntil: "Dispo jusqu’à {time}",
     goAvailable: "Je suis dispo",
-    goHidden: "Masquer ma dispo",
+    goHidden: "Indisponible",
+    goUnsure: "Je ne sais pas",
+    myStatus: "Mon état",
+    seeProfile: "Voir le profil",
+    locating: "Distance depuis ta position…",
+    geoDenied: "Distance depuis ta zone — active le GPS pour plus de précision",
+    retryGeo: "Activer le GPS",
     ttlHint: "Visible 4 heures, puis tu disparais du carousel.",
     zoneTitle: "Ta zone",
     zoneBody: "La zone filtre les personnes et les sorties près de toi. Le GPS propose, il ne force pas.",
@@ -1130,9 +1144,9 @@ export const fr: Messages = {
     precisionCity: "Ville",
     precisionHidden: "Masquée",
     approximate: "Zone approximative",
-    peopleTitle: "Personnes autour de moi",
-    peopleNearby: "Personnes autour de moi",
-    peopleEmpty: "Personne dans ta zone",
+    peopleTitle: "Amies disponibles",
+    peopleNearby: "Amies disponibles",
+    peopleEmpty: "Personne dispo dans ta zone",
     peopleEmptyBody: "Élargis tes filtres ou déclare-toi disponible. TipTop ne remplit pas ce carousel avec le monde entier.",
     invite: "Inviter",
     inviteJoin: "Inviter à me rejoindre",
@@ -1904,10 +1918,17 @@ export const en: Messages = {
   },
   world: {
     available: "Available",
-    unavailable: "Hidden",
+    unavailable: "Unavailable",
+    unsure: "I don't know",
     availableUntil: "Available until {time}",
     goAvailable: "I'm available",
-    goHidden: "Hide availability",
+    goHidden: "Unavailable",
+    goUnsure: "I don't know",
+    myStatus: "My status",
+    seeProfile: "View profile",
+    locating: "Distance from your position…",
+    geoDenied: "Distance from your area — turn on GPS for a better reading",
+    retryGeo: "Enable GPS",
     ttlHint: "Visible for 4 hours, then you leave the carousel.",
     zoneTitle: "Your area",
     zoneBody: "The area filters people and meetups near you. GPS suggests, it does not force.",
@@ -1917,9 +1938,9 @@ export const en: Messages = {
     precisionCity: "City",
     precisionHidden: "Hidden",
     approximate: "Approximate area",
-    peopleTitle: "People nearby",
-    peopleNearby: "People nearby",
-    peopleEmpty: "Nobody in your area",
+    peopleTitle: "Friends nearby",
+    peopleNearby: "Friends nearby",
+    peopleEmpty: "Nobody available in your area",
     peopleEmptyBody: "Widen your filters or go available. TipTop will not fill this with the whole world.",
     invite: "Invite",
     inviteJoin: "Invite to join me",

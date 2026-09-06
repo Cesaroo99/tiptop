@@ -7,6 +7,7 @@ import {
   formatLikeDuration,
   haversineKm,
   isCurrentlyAvailable,
+  presenceState,
   publicCoords,
   roundDistanceKm,
   sumLikeSeconds,
@@ -23,6 +24,8 @@ export type NearbyFilters = {
   availableOnly?: boolean;
   profession?: string;
   wishCategory?: string;
+  lat?: number;
+  lng?: number;
 };
 
 @Injectable()
@@ -63,10 +66,15 @@ export class DiscoveryService {
         },
       },
     });
+    const gps =
+      filters.lat != null && filters.lng != null && Number.isFinite(filters.lat) && Number.isFinite(filters.lng)
+        ? { latitude: filters.lat, longitude: filters.lng }
+        : null;
     const origin =
-      viewer?.profile?.latitude != null && viewer.profile.longitude != null
+      gps ??
+      (viewer?.profile?.latitude != null && viewer.profile.longitude != null
         ? { latitude: viewer.profile.latitude, longitude: viewer.profile.longitude }
-        : findZone(viewer?.profile?.city, viewer?.profile?.zone) ?? findZone(filterCity, filters.zone);
+        : findZone(viewer?.profile?.city, viewer?.profile?.zone) ?? findZone(filterCity, filters.zone));
 
     const ids = rows.map((u) => u.id);
     const periods = ids.length
@@ -92,11 +100,13 @@ export class DiscoveryService {
 
     const items = rows
       .map((u) => {
-        const available = isCurrentlyAvailable({
-          availability: u.profile?.availability ?? "HIDDEN",
+        const declared = {
+          availability: (u.profile?.availability ?? "HIDDEN") as "HIDDEN" | "BUSY" | "AVAILABLE",
           availabilityUntil: u.profile?.availabilityUntil ?? null,
           now,
-        });
+        };
+        const available = isCurrentlyAvailable(declared);
+        const presence = presenceState(declared);
         const precision = u.profile?.locationPrecision ?? "ZONE";
         const loc = displayLocation({
           precision,
@@ -138,7 +148,8 @@ export class DiscoveryService {
           zone: precision === "ZONE" || precision === "EXACT" ? u.profile?.zone ?? null : null,
           sameZone,
           available,
-          availability: available ? "AVAILABLE" : (u.profile?.availability ?? "HIDDEN"),
+          availability: presence === "AVAILABLE" ? "AVAILABLE" : presence === "UNSURE" ? "BUSY" : "HIDDEN",
+          presence,
           likeTime: {
             totalSeconds: likeSum.totalSeconds,
             label: formatLikeDuration(likeSum.totalSeconds, "fr"),

@@ -25,7 +25,11 @@ export class DiscoveryController {
     @Query("available") available?: string,
     @Query("profession") profession?: string,
     @Query("wishCategory") wishCategory?: string,
+    @Query("lat") lat?: string,
+    @Query("lng") lng?: string,
   ) {
+    const latitude = lat != null ? Number(lat) : undefined;
+    const longitude = lng != null ? Number(lng) : undefined;
     return this.discovery.people(req.user.id, {
       city,
       zone,
@@ -35,6 +39,8 @@ export class DiscoveryController {
       availableOnly: available === "1" || available === "true",
       profession,
       wishCategory,
+      lat: Number.isFinite(latitude) ? latitude : undefined,
+      lng: Number.isFinite(longitude) ? longitude : undefined,
     });
   }
 }

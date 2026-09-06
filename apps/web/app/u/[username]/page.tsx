@@ -20,6 +20,7 @@ import { applySoleLike, replaceFeedItem } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { useI18n } from "@/lib/i18n";
 import { formatEventWhen } from "@/lib/time";
+import { presenceState } from "@tiptop/domain";
 
 type EventPreview = {
   id: string;
@@ -47,6 +48,7 @@ type Profile = {
   zone: string | null;
   website: string | null;
   availability: string;
+  availabilityUntil?: string | null;
   isSelf: boolean;
   following: boolean;
   followersCount: number;
@@ -167,7 +169,13 @@ function ProfileView() {
   if (error) return <ErrorBanner message={error} onRetry={() => void load()} />;
   if (!profile) return <Skeleton className="mx-4 mt-4 h-80" />;
 
-  const available = profile.availability === "AVAILABLE";
+  const presence = presenceState({
+    availability: (profile.availability === "BUSY" || profile.availability === "AVAILABLE" ? profile.availability : "HIDDEN") as
+      | "HIDDEN"
+      | "BUSY"
+      | "AVAILABLE",
+    availabilityUntil: profile.availabilityUntil ? new Date(profile.availabilityUntil) : null,
+  });
 
   return (
     <div className="pb-8">
@@ -192,7 +200,7 @@ function ProfileView() {
         <p className="type-body-sm text-muted">@{profile.username}</p>
 
         <div className="mt-3 flex justify-center">
-          <AvailabilityBadge available={available} compact />
+          <AvailabilityBadge presence={presence} compact />
         </div>
 
         {profile.profession ? <p className="type-body-sm mt-2 text-ink">{profile.profession}</p> : null}
