@@ -211,7 +211,7 @@ function PeopleCarousel() {
 
       <div className="relative mx-auto max-w-sm">
         {prev ? (
-          <div className="pointer-events-none absolute -left-8 top-12 h-64 w-12 overflow-hidden rounded-[22px] opacity-30 blur-[1px]">
+          <div className="pointer-events-none absolute -left-8 top-10 h-52 w-12 overflow-hidden rounded-[22px] opacity-30 blur-[1px]">
             {prev.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={prev.avatarUrl} alt="" className="h-full w-full object-cover" />
@@ -219,7 +219,7 @@ function PeopleCarousel() {
           </div>
         ) : null}
         {next ? (
-          <div className="pointer-events-none absolute -right-8 top-12 h-64 w-12 overflow-hidden rounded-[22px] opacity-30 blur-[1px]">
+          <div className="pointer-events-none absolute -right-8 top-10 h-52 w-12 overflow-hidden rounded-[22px] opacity-30 blur-[1px]">
             {next.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={next.avatarUrl} alt="" className="h-full w-full object-cover" />
@@ -247,7 +247,7 @@ function PeopleCarousel() {
               {messages.world.previousPerson}
             </span>
           ) : null}
-          <Link href={`/u/${person.username}`} className="relative block h-72 bg-gradient-to-br from-accent/15 to-yellow/15">
+          <Link href={`/u/${person.username}`} className="relative block h-56 bg-gradient-to-br from-accent/15 to-yellow/15">
             {person.avatarUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={person.avatarUrl} alt="" draggable={false} className="h-full w-full object-cover" />
@@ -258,20 +258,20 @@ function PeopleCarousel() {
               <PresenceDot presence={presence} />
             </span>
           </Link>
-          <div className="space-y-3 px-5 pb-5 pt-4">
-            <div>
-              <h2 className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                <span className="type-h2 text-ink">
+          <div className="space-y-2.5 px-4 pb-4 pt-3">
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="min-w-0">
+                <span className="type-h2 block truncate text-ink">
                   {person.firstName} {person.lastName}
                 </span>
-                {person.age != null ? <span className="type-body-sm text-muted">{messages.world.age.replace("{age}", String(person.age))}</span> : null}
-                {person.certified ? <CertifiedMark /> : null}
+                <span className="type-caption mt-0.5 flex items-center gap-1.5 text-muted">
+                  {person.age != null ? <span>{messages.world.age.replace("{age}", String(person.age))}</span> : null}
+                  {person.certified ? <CertifiedMark /> : null}
+                </span>
               </h2>
-              <div className="mt-2">
-                <AvailabilityBadge presence={presence} compact />
-              </div>
+              <AvailabilityBadge presence={presence} compact />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               {person.profession ? (
                 <p className="type-body-sm grid grid-cols-[16px_1fr] items-center gap-2.5 text-muted">
                   <BriefcaseIcon size={15} />
@@ -295,23 +295,23 @@ function PeopleCarousel() {
                 {person.activeMood.activity || person.activeMood.body}
               </p>
             ) : null}
-            <div className="flex items-center gap-2 pt-1">
+            <div className="grid grid-cols-2 gap-2 pt-0.5">
               {presence === "AVAILABLE" ? (
                 <button
                   type="button"
                   onClick={() => setInviteOpen(true)}
-                  className="tap-scale type-caption h-10 flex-1 rounded-full bg-accent px-4 font-semibold text-on-primary shadow-xs"
+                  className="tap-scale type-caption h-9 truncate rounded-full bg-accent px-3 font-semibold text-on-primary shadow-xs"
                 >
                   {messages.world.inviteNamed.replace("{name}", person.firstName)}
                 </button>
               ) : (
-                <span className="type-caption grid h-10 flex-1 place-items-center rounded-full bg-surface-sunken font-semibold text-muted">
+                <span className="type-caption grid h-9 place-items-center rounded-full bg-surface-sunken font-semibold text-muted">
                   {messages.world.unavailable}
                 </span>
               )}
               <Link
                 href={`/u/${person.username}`}
-                className="tap-scale type-caption grid h-10 flex-1 place-items-center rounded-full bg-surface-sunken font-semibold text-ink"
+                className="tap-scale type-caption grid h-9 place-items-center rounded-full bg-surface-sunken px-3 font-semibold text-ink"
               >
                 {messages.world.seeProfile}
               </Link>
