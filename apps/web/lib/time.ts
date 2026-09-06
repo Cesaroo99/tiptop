@@ -80,6 +80,24 @@ export function formatCompactCount(n: number) {
   return `${rounded}M`;
 }
 
+/** Heure inbox type maquette : « 16.04 », « Hier », ou la date. */
+export function formatInboxClock(iso: string, locale: string, yesterdayLabel: string) {
+  const d = new Date(iso);
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startMsg = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const dayDiff = Math.round((startToday.getTime() - startMsg.getTime()) / 86_400_000);
+  if (dayDiff <= 0) {
+    return d.toLocaleTimeString(dateLocale(locale), { hour: "2-digit", minute: "2-digit" }).replace(":", ".");
+  }
+  if (dayDiff === 1) return yesterdayLabel;
+  return d.toLocaleDateString(dateLocale(locale), { day: "numeric", month: "short" });
+}
+
+export function formatBubbleClock(iso: string, locale: string) {
+  return new Date(iso).toLocaleTimeString(dateLocale(locale), { hour: "2-digit", minute: "2-digit" }).replace(":", ".");
+}
+
 export function splitPostLead(body: string): { lead: string; rest: string } {
   const idx = body.indexOf(":");
   if (idx > 0 && idx < 72) {

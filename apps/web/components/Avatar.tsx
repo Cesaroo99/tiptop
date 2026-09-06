@@ -30,6 +30,7 @@ export function Avatar({
   lastName,
   size = "md",
   online,
+  presence,
   ring,
   className = "",
 }: {
@@ -38,6 +39,8 @@ export function Avatar({
   lastName?: string;
   size?: number | AvatarSize;
   online?: boolean;
+  /** Affiche toujours le point : vert si en ligne, gris sinon. */
+  presence?: boolean;
   ring?: "accent" | "yellow" | "none";
   className?: string;
 }) {
@@ -60,7 +63,11 @@ export function Avatar({
           {initials(firstName, lastName)}
         </span>
       )}
-      {online ? (
+      {presence ? (
+        <span
+          className={`absolute bottom-0 right-0 h-3 w-3 rounded-full ring-2 ring-[var(--bg)] ${online ? "bg-success" : "bg-border"}`}
+        />
+      ) : online ? (
         <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-success ring-2 ring-[var(--bg)]" />
       ) : null}
     </span>

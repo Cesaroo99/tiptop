@@ -68,7 +68,7 @@ export class ChatService {
       include: {
         members: { include: { user: PERSON } },
         messages: { orderBy: { createdAt: "desc" }, take: 1 },
-        event: { select: { id: true, title: true } },
+        event: { select: { id: true, title: true, imageUrl: true, hostId: true } },
       },
     });
     const items = [];
@@ -90,11 +90,11 @@ export class ChatService {
     this.assertMember(row, userId);
     const items = await this.prisma.message.findMany({
       where: { conversationId: id },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
       take: 100,
       include: { sender: PERSON },
     });
-    return { items: items.map((m) => this.serializeMessage(m)) };
+    return { items: items.reverse().map((m) => this.serializeMessage(m)) };
   }
 
   async openDirect(actorId: string, peerId: string) {
@@ -159,9 +159,8 @@ export class ChatService {
           update: {},
         });
       }
-      conv = await this.load(conv.id);
     }
-    return this.serializeList(conv, actorId);
+    return this.serializeList(await this.load(conv.id), actorId);
   }
 
   async send(
@@ -270,7 +269,7 @@ export class ChatService {
       include: {
         members: { include: { user: PERSON } },
         messages: { orderBy: { createdAt: "desc" }, take: 1 },
-        event: { select: { id: true, title: true } },
+        event: { select: { id: true, title: true, imageUrl: true, hostId: true } },
       },
     });
     if (!row) throw new NotFoundException({ code: "CONVERSATION_NOT_FOUND" });
@@ -310,7 +309,7 @@ export class ChatService {
       title: string | null;
       eventId: string | null;
       updatedAt: Date;
-      event: { id: string; title: string } | null;
+      event: { id: string; title: string; imageUrl?: string | null; hostId?: string } | null;
       members: Array<{
         userId: string;
         lastReadAt: Date;
@@ -338,14 +337,23 @@ export class ChatService {
     });
     const peer = row.kind === "DIRECT" ? row.members.find((m) => m.userId !== viewerId)?.user : null;
     const peerPublic = peer ? publicPerson(peer) : null;
-    let online = false;
-    if (peer) {
-      if (this.realtime.isConnected(peer.id)) online = true;
-      else {
-        const seen = await this.push.lastSeen(peer.id);
-        online = isRecentlyOnline(seen?.lastSeenAt ?? null);
-      }
+    const members = [];
+    let onlineCount = 0;
+    for (const m of row.members) {
+      const online = await this.isOnline(m.user.id);
+      if (online) onlineCount += 1;
+      members.push({
+        ...publicPerson(m.user),
+        host: Boolean(row.event?.hostId && row.event.hostId === m.user.id),
+        online,
+      });
     }
+    const lastFromMe = Boolean(last && last.senderId === viewerId);
+    const lastMessageSeen =
+      lastFromMe &&
+      row.members
+        .filter((m) => m.userId !== viewerId)
+        .every((m) => m.lastReadAt.getTime() >= (last?.createdAt.getTime() ?? 0));
     const title =
       row.kind === "DIRECT"
         ? peerPublic
@@ -358,15 +366,24 @@ export class ChatService {
       title,
       channel: row.kind === "EVENT" ? "# Général" : null,
       eventId: row.eventId,
+      imageUrl: row.event?.imageUrl ?? null,
       unreadCount,
-      online,
-      peer: peerPublic,
-      members: row.members.map((m) => publicPerson(m.user)),
+      online: peer ? Boolean(members.find((m) => m.id === peer.id)?.online) : onlineCount > 1,
+      onlineCount,
+      lastMessageSeen: Boolean(lastMessageSeen),
+      peer: peerPublic ? members.find((m) => m.id === peerPublic.id) ?? peerPublic : null,
+      members,
       lastMessage: last
         ? { body: last.body, kind: last.kind, createdAt: last.createdAt.toISOString(), senderId: last.senderId }
         : null,
       updatedAt: row.updatedAt.toISOString(),
     };
+  }
+
+  private async isOnline(userId: string) {
+    if (this.realtime.isConnected(userId)) return true;
+    const seen = await this.push.lastSeen(userId);
+    return isRecentlyOnline(seen?.lastSeenAt ?? null);
   }
 
   private serializeMessage(m: {

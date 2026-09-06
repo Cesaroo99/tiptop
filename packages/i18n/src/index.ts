@@ -644,15 +644,26 @@ export type Messages = {
     emptyBody: string;
     newTitle: string;
     searchContact: string;
+    searchInbox: string;
     send: string;
     placeholder: string;
     image: string;
+    attach: string;
+    emoji: string;
     voice: string;
     voiceMock: string;
     typing: string;
     typingMany: string;
+    typingOthers: string;
     online: string;
+    onlineOf: string;
     members: string;
+    hostBadge: string;
+    yesterday: string;
+    seeProfile: string;
+    seeEvent: string;
+    menu: string;
+    attachTooBig: string;
     channel: string;
     eventGroup: string;
     blocked: string;
@@ -1404,20 +1415,31 @@ export const fr: Messages = {
     contact: "Support démo : memolicesar1@gmail.com — aucun ticket inventé.",
   },
   chat: {
-    inbox: "Messages",
+    inbox: "Mes messages",
     empty: "Pas encore de conversation",
     emptyBody: "Écris à un contact, ou ouvre le groupe d’une sortie.",
     newTitle: "Nouvelle conversation",
     searchContact: "Chercher un contact",
+    searchInbox: "Rechercher une conversation",
     send: "Envoyer",
-    placeholder: "Message",
+    placeholder: "Écrire un message",
     image: "Image",
+    attach: "Joindre une image",
+    emoji: "Emoji",
     voice: "Vocale",
-    voiceMock: "Message vocal (mock)",
+    voiceMock: "Message vocal",
     typing: "écrit…",
     typingMany: "{count} écrivent…",
+    typingOthers: "+{count} autres écrivent",
     online: "En ligne",
-    members: "Membres",
+    onlineOf: "{online} en ligne, sur {total} personnes",
+    members: "personnes",
+    hostBadge: "hôte",
+    yesterday: "Hier",
+    seeProfile: "Voir le profil",
+    seeEvent: "Voir la sortie",
+    menu: "Options",
+    attachTooBig: "Cette image est trop lourde.",
     channel: "# Général",
     eventGroup: "Groupe de la sortie",
     blocked: "Tu as bloqué cette personne.",
@@ -2169,20 +2191,31 @@ export const en: Messages = {
     contact: "Demo support: memolicesar1@gmail.com — no invented tickets.",
   },
   chat: {
-    inbox: "Messages",
+    inbox: "My messages",
     empty: "No conversations yet",
     emptyBody: "Message a contact, or open a meetup group.",
     newTitle: "New conversation",
     searchContact: "Search a contact",
+    searchInbox: "Search a conversation",
     send: "Send",
-    placeholder: "Message",
+    placeholder: "Write a message",
     image: "Image",
+    attach: "Attach an image",
+    emoji: "Emoji",
     voice: "Voice",
-    voiceMock: "Voice message (mock)",
+    voiceMock: "Voice message",
     typing: "typing…",
     typingMany: "{count} typing…",
+    typingOthers: "+{count} others typing",
     online: "Online",
-    members: "Members",
+    onlineOf: "{online} online, of {total} people",
+    members: "people",
+    hostBadge: "host",
+    yesterday: "Yesterday",
+    seeProfile: "See profile",
+    seeEvent: "See the event",
+    menu: "Options",
+    attachTooBig: "This image is too large.",
     channel: "# General",
     eventGroup: "Meetup group",
     blocked: "You blocked this person.",

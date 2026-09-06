@@ -1254,6 +1254,79 @@ async function enrichLivingWorld(
     });
   }
 
+  const aminaUnread = await db.message.findFirst({
+    where: { senderId: amina.id, body: "Regarde les photos du rooftop ?" },
+  });
+  if (!aminaUnread) {
+    const aminaConv = await db.conversation.findUnique({ where: { directKey: dmAminaKey } });
+    if (aminaConv) {
+      await db.message.create({
+        data: {
+          conversationId: aminaConv.id,
+          senderId: amina.id,
+          kind: "TEXT",
+          body: "Regarde les photos du rooftop ?",
+        },
+      });
+      await db.conversation.update({ where: { id: aminaConv.id }, data: { updatedAt: new Date() } });
+      await db.conversationMember.update({
+        where: { conversationId_userId: { conversationId: aminaConv.id, userId: cesar.id } },
+        data: { lastReadAt: new Date(Date.now() - 2 * 3600_000) },
+      });
+    }
+  }
+
+  const blackNight = await db.event.findFirst({ where: { title: "Soirée Black & White" } });
+  if (blackNight) {
+    const group = await db.conversation.findUnique({ where: { eventId: blackNight.id } });
+    const extraMembers = [erica.id, amina.id, mbelle.id, onguene.id, koffi.id];
+    for (const userId of extraMembers) {
+      await db.eventParticipant.upsert({
+        where: { eventId_userId: { eventId: blackNight.id, userId } },
+        create: { eventId: blackNight.id, userId, status: "CONFIRMED" },
+        update: {},
+      });
+      if (group) {
+        await db.conversationMember.upsert({
+          where: { conversationId_userId: { conversationId: group.id, userId } },
+          create: { conversationId: group.id, userId },
+          update: {},
+        });
+      }
+    }
+    if (group) {
+      const rich = await db.message.findFirst({
+        where: { conversationId: group.id, body: "On a parlé du plan — Black & White à Damas." },
+      });
+      if (!rich) {
+        await db.message.createMany({
+          data: [
+            {
+              conversationId: group.id,
+              senderId: erica.id,
+              kind: "TEXT",
+              body: "On a parlé du plan — Black & White à Damas.",
+            },
+            {
+              conversationId: group.id,
+              senderId: erica.id,
+              kind: "IMAGE",
+              body: "",
+              imageUrl: "/seed/events/black-white.jpg",
+            },
+            {
+              conversationId: group.id,
+              senderId: cesar.id,
+              kind: "TEXT",
+              body: "Parfait. On se voit à l’entrée.",
+            },
+          ],
+        });
+        await db.conversation.update({ where: { id: group.id }, data: { updatedAt: new Date() } });
+      }
+    }
+  }
+
   const everyone = [cesar, erica, mbelle, onguene, amina, fouda, nadege, koffi, sarah, alex, rachel, william, mireille];
   for (const person of everyone) {
     await ensureOnePersonalLike(db, person.id);
