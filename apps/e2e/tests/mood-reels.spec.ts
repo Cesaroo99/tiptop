@@ -38,7 +38,7 @@ test.describe("Mood — maquette Reels / like-time", () => {
     await comments.getByPlaceholder("Ajouter un commentaire").fill("Super rooftop");
     await comments.getByRole("button", { name: "Ajouter un commentaire" }).click();
     await expect(comments.getByText("Super rooftop")).toBeVisible();
-    await comments.getByRole("button", { name: "Fermer" }).click();
+    await comments.getByText("Fermer", { exact: true }).click();
     await expect(page.getByRole("dialog", { name: "Commentaires" })).toHaveCount(0);
   });
 });
