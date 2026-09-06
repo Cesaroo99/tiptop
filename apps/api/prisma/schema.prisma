@@ -117,6 +117,9 @@ model User {
   pushPreference     PushPreference?
   eventReviews       EventReview[]
   offers             Offer[]
+  eventGroupsCreated EventGroup[]         @relation("EventGroupCreator")
+  eventGroupMembers  EventGroupMember[]
+  eventGroupInvites  EventGroupMember[]   @relation("EventGroupInviter")
 }
 
 model Profile {
@@ -572,10 +575,12 @@ model Event {
   requiresReservation Boolean     @default(false)
   paymentRule         String      @default("HOLD")
   wanted              Boolean     @default(false)
+  allowGroups         Boolean     @default(false)
   status              EventStatus @default(PUBLISHED)
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
   participants        EventParticipant[]
+  groups              EventGroup[]
   invitations         Invitation[]
   hearts              EventHeart[]
   moods               Mood[]
@@ -601,6 +606,50 @@ model EventParticipant {
   createdAt     DateTime          @default(now())
 
   @@unique([eventId, userId])
+}
+
+enum EventGroupRole {
+  HOST
+  ADMIN
+  MEMBER
+}
+
+enum EventGroupStatus {
+  INVITED
+  JOINED
+  DECLINED
+  LEFT
+}
+
+model EventGroup {
+  id             String             @id @default(cuid())
+  eventId        String
+  event          Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name           String
+  createdById    String
+  createdBy      User               @relation("EventGroupCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  conversationId String?            @unique
+  createdAt      DateTime           @default(now())
+  members        EventGroupMember[]
+
+  @@index([eventId])
+}
+
+model EventGroupMember {
+  id          String           @id @default(cuid())
+  groupId     String
+  group       EventGroup       @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        EventGroupRole   @default(MEMBER)
+  status      EventGroupStatus
+  invitedById String?
+  invitedBy   User?            @relation("EventGroupInviter", fields: [invitedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime         @default(now())
+  respondedAt DateTime?
+
+  @@unique([groupId, userId])
+  @@index([userId, status])
 }
 
 model Invitation {

@@ -221,6 +221,7 @@ export type Messages = {
     notifEventCancelled: string;
     notifEventTimeChanged: string;
     notifEventPlaceChanged: string;
+    notifGroupInvite: string;
     share: string;
     copied: string;
     copyLink: string;
@@ -410,6 +411,26 @@ export type Messages = {
     eventCapacity: string;
     eventMinAge: string;
     eventReserve: string;
+    allowGroups: string;
+    allowGroupsHint: string;
+    enableGroups: string;
+    groupsTitle: string;
+    groupsEmpty: string;
+    createGroup: string;
+    groupNamePlaceholder: string;
+    inviteToGroup: string;
+    acceptGroup: string;
+    declineGroup: string;
+    leaveGroup: string;
+    makeAdmin: string;
+    removeAdmin: string;
+    groupAdmin: string;
+    groupHost: string;
+    membersCount: string;
+    openGroupChat: string;
+    groupCandidatesEmpty: string;
+    groupInvited: string;
+    deleteGroup: string;
     paymentHold: string;
     paymentFirst: string;
     paymentRequired: string;
@@ -1059,6 +1080,7 @@ export const fr: Messages = {
     notifEventCancelled: "Un événement auquel tu participes a été annulé.",
     notifEventTimeChanged: "L'heure d'un événement auquel tu participes a changé.",
     notifEventPlaceChanged: "Le lieu d'un événement auquel tu participes a changé.",
+    notifGroupInvite: "t’invite dans un groupe de cette sortie",
     share: "Partager",
     copied: "Lien copié",
     copyLink: "Copier le lien",
@@ -1248,6 +1270,26 @@ export const fr: Messages = {
     eventCapacity: "Capacité (optionnel)",
     eventMinAge: "Âge minimum (ex. 18)",
     eventReserve: "Réservation obligatoire même si gratuit",
+    allowGroups: "Autoriser les groupes de participants",
+    allowGroupsHint: "Les gens peuvent former une équipe pour cette sortie. Toi tu l’administres, et tu peux ajouter d’autres admins.",
+    enableGroups: "Activer les groupes",
+    groupsTitle: "Groupes",
+    groupsEmpty: "Pas encore de groupe pour cette sortie.",
+    createGroup: "Créer un groupe",
+    groupNamePlaceholder: "Ex. Table 4, Voiture A",
+    inviteToGroup: "Inviter",
+    acceptGroup: "Rejoindre",
+    declineGroup: "Refuser",
+    leaveGroup: "Quitter",
+    makeAdmin: "Ajouter comme admin",
+    removeAdmin: "Retirer l’admin",
+    groupAdmin: "Admin",
+    groupHost: "Créateur",
+    membersCount: "{n} membres",
+    openGroupChat: "Ouvrir le groupe",
+    groupCandidatesEmpty: "Personne à inviter pour l’instant.",
+    groupInvited: "Invité",
+    deleteGroup: "Supprimer le groupe",
     paymentHold: "On peut tenir une place en attente de paiement",
     paymentFirst: "Pas de réservation sans paiement",
     paymentRequired: "Il faut payer tout de suite pour réserver",
@@ -1897,6 +1939,7 @@ export const en: Messages = {
     notifEventCancelled: "An event you're part of was cancelled.",
     notifEventTimeChanged: "The time of an event you're part of changed.",
     notifEventPlaceChanged: "The place of an event you're part of changed.",
+    notifGroupInvite: "invited you to a group for this meetup",
     share: "Share",
     copied: "Link copied",
     copyLink: "Copy link",
@@ -2086,6 +2129,26 @@ export const en: Messages = {
     eventCapacity: "Capacity (optional)",
     eventMinAge: "Minimum age (e.g. 18)",
     eventReserve: "Require a reservation even if free",
+    allowGroups: "Allow participant groups",
+    allowGroupsHint: "People can form a crew for this meetup. You administer it, and you can add other admins.",
+    enableGroups: "Enable groups",
+    groupsTitle: "Groups",
+    groupsEmpty: "No group for this meetup yet.",
+    createGroup: "Create a group",
+    groupNamePlaceholder: "e.g. Table 4, Car A",
+    inviteToGroup: "Invite",
+    acceptGroup: "Join",
+    declineGroup: "Decline",
+    leaveGroup: "Leave",
+    makeAdmin: "Make admin",
+    removeAdmin: "Remove admin",
+    groupAdmin: "Admin",
+    groupHost: "Creator",
+    membersCount: "{n} members",
+    openGroupChat: "Open group",
+    groupCandidatesEmpty: "Nobody to invite yet.",
+    groupInvited: "Invited",
+    deleteGroup: "Delete group",
     paymentHold: "Seats can be held pending payment",
     paymentFirst: "No reservation without payment",
     paymentRequired: "Pay now to book — no waiting",

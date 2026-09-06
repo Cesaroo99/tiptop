@@ -286,11 +286,12 @@ async function main() {
         minAge: 18,
         requiresReservation: true,
         paymentRule: "PAY_REQUIRED",
+        allowGroups: true,
         participants: { create: { userId: erica.id, status: "HOST" } },
       },
     });
   } else {
-    await prisma.event.update({ where: { id: paid.id }, data: { paymentRule: "PAY_REQUIRED" } });
+    await prisma.event.update({ where: { id: paid.id }, data: { paymentRule: "PAY_REQUIRED", allowGroups: true } });
   }
 
   let picnic = await prisma.event.findFirst({ where: { hostId: mbelle.id, title: "Brunch Odza" } });

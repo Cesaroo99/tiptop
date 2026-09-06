@@ -105,6 +105,7 @@ function Composer() {
   const [capacity, setCapacity] = useState("");
   const [minAge, setMinAge] = useState(0);
   const [requiresReservation, setRequiresReservation] = useState(false);
+  const [allowGroups, setAllowGroups] = useState(false);
   const [paymentRule, setPaymentRule] = useState<"HOLD" | "PAY_FIRST" | "PAY_REQUIRED">("HOLD");
   const [hours, setHours] = useState("12");
   const [visibility, setVisibility] = useState("ZONE");
@@ -203,6 +204,7 @@ function Composer() {
             capacity: capacity ? Number(capacity) : undefined,
             minAge: minAge > 0 ? minAge : undefined,
             requiresReservation,
+            allowGroups,
             paymentRule: Number(priceXaf) > 0 ? paymentRule : undefined,
             imageUrl: imageUrl || undefined,
           }),
@@ -343,6 +345,18 @@ function Composer() {
           <label className="flex items-center gap-2 text-sm text-ink">
             <input type="checkbox" checked={requiresReservation} onChange={(e) => setRequiresReservation(e.target.checked)} />
             {messages.world.eventReserve}
+          </label>
+          <label className="flex items-start gap-2 text-sm text-ink">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={allowGroups}
+              onChange={(e) => setAllowGroups(e.target.checked)}
+            />
+            <span>
+              <span className="block font-semibold">{messages.world.allowGroups}</span>
+              <span className="type-caption block text-muted">{messages.world.allowGroupsHint}</span>
+            </span>
           </label>
           {Number(priceXaf) > 0 ? (
             <div className="space-y-2">

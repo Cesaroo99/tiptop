@@ -7,6 +7,7 @@ export * from "./wallet";
 export * from "./availability";
 export * from "./location";
 export * from "./events";
+export * from "./event-groups";
 export * from "./tickets";
 export * from "./payments";
 export * from "./money";

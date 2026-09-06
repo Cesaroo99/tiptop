@@ -71,6 +71,10 @@ class CreateEventDto {
   @IsOptional()
   @IsBoolean()
   wanted?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  allowGroups?: boolean;
 }
 
 class HeartDto {
@@ -123,6 +127,10 @@ class UpdateEventDto {
   @Min(1)
   @Max(99)
   minAge?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  allowGroups?: boolean;
 }
 
 class DuplicateEventDto {

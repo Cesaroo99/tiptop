@@ -35,6 +35,7 @@ function EditEventView() {
   const [startsAt, setStartsAt] = useState("");
   const [capacity, setCapacity] = useState("");
   const [minAge, setMinAge] = useState(0);
+  const [allowGroups, setAllowGroups] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -51,6 +52,7 @@ function EditEventView() {
         setStartsAt(toLocalInputValue(e.startsAt));
         setCapacity(e.capacity ? String(e.capacity) : "");
         setMinAge(e.minAge ?? 0);
+        setAllowGroups(Boolean(e.allowGroups));
       })
       .catch(() => setError(messages.common.error));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -72,6 +74,7 @@ function EditEventView() {
           startsAt: new Date(startsAt).toISOString(),
           capacity: capacity ? Number(capacity) : undefined,
           minAge,
+          allowGroups,
         }),
       });
       setSaved(true);
@@ -119,6 +122,13 @@ function EditEventView() {
         <Field label={messages.world.eventMinAge}>
           <AgeCategoryPicker minAge={minAge} onChange={setMinAge} />
         </Field>
+        <label className="flex items-start gap-2 text-sm text-ink">
+          <input type="checkbox" className="mt-1" checked={allowGroups} onChange={(e) => setAllowGroups(e.target.checked)} />
+          <span>
+            <span className="block font-semibold">{messages.world.allowGroups}</span>
+            <span className="type-caption block text-muted">{messages.world.allowGroupsHint}</span>
+          </span>
+        </label>
         {error ? <p className="type-body-sm text-danger">{error}</p> : null}
         {saved ? <p className="type-body-sm font-semibold text-success">{messages.account.saved}</p> : null}
         <PrimaryButton loading={saving} onClick={() => void save()}>

@@ -66,6 +66,7 @@ export function notifLabel(
       notifEventCancelled: string;
       notifEventTimeChanged: string;
       notifEventPlaceChanged: string;
+      notifGroupInvite: string;
     };
   },
 ) {
@@ -100,6 +101,9 @@ export function notifLabel(
     if (n.entityType === "event_cancelled") return messages.social.notifEventCancelled;
     if (n.entityType === "event_time_changed") return messages.social.notifEventTimeChanged;
     if (n.entityType === "event_place_changed") return messages.social.notifEventPlaceChanged;
+    if (n.entityType === "event_group_invite") {
+      return `${name} ${messages.social.notifGroupInvite}`;
+    }
     return messages.social.notifEventUpdate;
   }
   return `${name} ${messages.social.notifFollow}`;

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
 import { EventCard } from "@/components/EventCard";
+import { EventGroups } from "@/components/EventGroups";
 import { MapThumb } from "@/components/MapThumb";
 import { MessageIcon, PlayIcon } from "@/components/Icons";
 import { CardSkeleton, ErrorBanner, PrimaryButton, SecondaryButton } from "@/components/ui";
@@ -56,6 +57,7 @@ function EventDetail() {
       </div>
       {event.description ? <p className="type-body leading-6 text-ink">{event.description}</p> : null}
       <EventMoods eventId={event.id} />
+      <EventGroups eventId={event.id} isHost={event.isHost} />
       {event.people?.length ? (
         <section className="rounded-card bg-surface p-4 shadow-card">
           <p className="type-heading text-ink">{messages.world.peopleLinked}</p>
