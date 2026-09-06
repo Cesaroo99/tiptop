@@ -20,12 +20,22 @@ test.describe("Notifications — inbox fonctionnelle", () => {
     await invite.click();
     const sheet = page.getByRole("dialog", { name: "Invitation" });
     await expect(sheet).toBeVisible();
-    await expect(sheet.getByText("Brunch Odza")).toBeVisible();
     await expect(sheet.getByRole("link", { name: "Voir la sortie" })).toBeVisible();
     await expect(sheet.getByRole("button", { name: "Accepter" })).toBeVisible();
     await expect(sheet.getByRole("button", { name: "Refuser" })).toBeVisible();
     await sheet.getByRole("button", { name: "Fermer" }).click();
     await expect(page.getByRole("dialog", { name: "Invitation" })).toHaveCount(0);
+
+    const social = page.getByRole("button", { name: /t’a proposé une sortie|t'a proposé une sortie/ }).first();
+    await expect(social).toBeVisible();
+    await expect(social.getByText("Consulter l’invitation")).toBeVisible();
+    await social.click();
+    const socialSheet = page.getByRole("dialog", { name: "Proposition de sortie" });
+    await expect(socialSheet).toBeVisible();
+    await expect(socialSheet.getByText("Sushi House Bastos")).toBeVisible();
+    await expect(socialSheet.getByRole("button", { name: "Accepter" })).toBeVisible();
+    await expect(socialSheet.getByRole("button", { name: "Refuser" })).toBeVisible();
+    await socialSheet.getByRole("button", { name: "Fermer" }).click();
 
     const follow = page.getByRole("button", { name: /t’a suivi|t'a suivi/ }).first();
     await follow.click();

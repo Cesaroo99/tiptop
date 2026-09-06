@@ -99,9 +99,11 @@ export function EventInvitationSheet({
             </div>
             {invitation.status !== "PENDING" ? (
               <p className="type-body-sm mt-3 font-semibold text-muted">
-                {invitation.status === "EXPIRED" || invitation.status === "REFUSED"
-                  ? messages.social.notifInviteExpired
-                  : invitation.status}
+                {invitation.status === "ACCEPTED"
+                  ? messages.world.accepted
+                  : invitation.status === "REFUSED"
+                    ? messages.world.refused
+                    : messages.social.notifInviteExpired}
               </p>
             ) : null}
             {canRespond && invitation.status === "PENDING" ? (

@@ -43,6 +43,15 @@ describe("notifAction / notifLabel", () => {
     expect(notifLabel(like, fr)).not.toMatch(/ont aimé|likes/);
   });
 
+  it("ouvre une invitation sociale à consulter", () => {
+    expect(
+      notifAction(n({ type: "SOCIAL_INVITE", entityType: "social_invite_sent", entityId: "s1" })),
+    ).toEqual({ kind: "social-invite", id: "s1" });
+    expect(notifLabel(n({ type: "SOCIAL_INVITE", entityType: "social_invite_sent", entityId: "s1" }), fr)).toContain(
+      "t’a proposé une sortie",
+    );
+  });
+
   it("envoie un commentaire mood vers la vidéo", () => {
     expect(notifAction(n({ type: "COMMENT", entityType: "mood", entityId: "m9" }))).toEqual({
       kind: "href",
