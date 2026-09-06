@@ -75,6 +75,10 @@ class CreateEventDto {
   @IsOptional()
   @IsBoolean()
   allowGroups?: boolean;
+
+  @IsOptional()
+  @IsIn(["NONE", "DAILY", "WEEKLY", "MONTHLY"])
+  recurrence?: "NONE" | "DAILY" | "WEEKLY" | "MONTHLY";
 }
 
 class HeartDto {

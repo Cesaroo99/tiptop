@@ -228,6 +228,55 @@ export function evaluateInvite(input: {
   return "OK";
 }
 
+export const EVENT_RECURRENCES = ["NONE", "DAILY", "WEEKLY", "MONTHLY"] as const;
+export type EventRecurrence = (typeof EVENT_RECURRENCES)[number];
+
+export function isEventRecurrence(value: string | null | undefined): value is EventRecurrence {
+  return Boolean(value && (EVENT_RECURRENCES as readonly string[]).includes(value));
+}
+
+export function occurrenceCount(recurrence: EventRecurrence): number {
+  if (recurrence === "DAILY") return 7;
+  if (recurrence === "WEEKLY") return 8;
+  if (recurrence === "MONTHLY") return 4;
+  return 1;
+}
+
+export function shiftOccurrence(start: Date, recurrence: EventRecurrence, index: number): Date {
+  const next = new Date(start.getTime());
+  if (recurrence === "DAILY") next.setDate(next.getDate() + index);
+  else if (recurrence === "WEEKLY") next.setDate(next.getDate() + 7 * index);
+  else if (recurrence === "MONTHLY") next.setMonth(next.getMonth() + index);
+  return next;
+}
+
+export function seriesGroupKey(event: { id: string; seriesId?: string | null; recurrence?: string | null }): string {
+  if (event.seriesId) return event.seriesId;
+  if (event.recurrence && event.recurrence !== "NONE") return event.id;
+  return `one:${event.id}`;
+}
+
+export function dedupeSeriesOccurrences<
+  T extends { id: string; startsAt: Date | string; seriesId?: string | null; recurrence?: string | null },
+>(items: T[], now = new Date()): T[] {
+  const groups = new Map<string, T[]>();
+  for (const item of items) {
+    const key = seriesGroupKey(item);
+    const list = groups.get(key) ?? [];
+    list.push(item);
+    groups.set(key, list);
+  }
+  const picked: T[] = [];
+  for (const list of groups.values()) {
+    const future = list
+      .filter((e) => new Date(e.startsAt).getTime() > now.getTime())
+      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+    const fallback = [...list].sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime())[0];
+    picked.push(future[0] ?? fallback!);
+  }
+  return picked.sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+}
+
 export function canAcceptInvitation(input: {
   status: string;
   expiresAt: Date;

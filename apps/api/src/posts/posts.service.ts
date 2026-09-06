@@ -20,6 +20,8 @@ const POST_INCLUDE = {
       requiresReservation: true,
       priceXaf: true,
       hostId: true,
+      recurrence: true,
+      seriesId: true,
       participants: { select: { status: true, userId: true } },
     },
   },
@@ -66,6 +68,8 @@ export class PostsService {
         requiresReservation?: boolean;
         priceXaf?: number;
         hostId?: string;
+        recurrence?: string;
+        seriesId?: string | null;
         participants: Array<{ status: string; userId?: string }>;
       } | null;
     },
@@ -108,11 +112,10 @@ export class PostsService {
           viewerInterested: p.event.participants.some(
             (x) => x.userId === extra.viewerId && x.status === "INTERESTED",
           ),
-          canBook:
-            !isHost &&
-            Boolean(p.event.requiresReservation || (p.event.priceXaf ?? 0) > 0) &&
-            !seated &&
-            !eventIsFull(p.event.capacity, taken),
+          canBook: !isHost && !eventIsFull(p.event.capacity, taken),
+          viewerReserved: seated && !isHost,
+          recurrence: p.event.recurrence ?? "NONE",
+          seriesId: p.event.seriesId ?? null,
         }
       : null;
     return {
@@ -198,6 +201,8 @@ export class PostsService {
         requiresReservation?: boolean;
         priceXaf?: number;
         hostId?: string;
+        recurrence?: string;
+        seriesId?: string | null;
         participants: Array<{ status: string; userId?: string }>;
       } | null;
     }>,

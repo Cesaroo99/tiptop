@@ -9,6 +9,7 @@ import { Avatar, CertifiedMark } from "./Avatar";
 import { HeartIcon, LinkIcon, MoreIcon } from "./Icons";
 import { OptionsSheet } from "./OptionsSheet";
 import { IconButton, Modal } from "./ui";
+import { recurrenceCaption } from "@/lib/event-series";
 
 export function SearchPersonCard({ person }: { person: SearchPerson }) {
   const { messages } = useI18n();
@@ -75,6 +76,7 @@ export function SearchEventCard({
   const [transfer, setTransfer] = useState<string | null>(null);
   const place = [event.city, event.zone].filter(Boolean).join(", ");
   const overlayTitle = event.title.includes(event.city) ? event.title : `${event.title}${place ? ` — ${place}` : ""}`;
+  const seriesLabel = recurrenceCaption(event.recurrence, messages.world);
 
   async function heart(confirmTransfer = false) {
     try {
@@ -110,11 +112,18 @@ export function SearchEventCard({
             </div>
           )}
         </Link>
-        <span className="type-caption absolute left-3 top-3 rounded-pill bg-white/90 px-3 py-1.5 font-bold text-ink shadow-sm backdrop-blur-sm">
-          {event.taken === 1
-            ? messages.world.participantsCountOne
-            : messages.world.participantsCount.replace("{n}", String(event.taken))}
-        </span>
+        <div className="absolute left-3 top-3 flex flex-wrap items-center gap-1.5">
+          <span className="type-caption rounded-pill bg-white/90 px-3 py-1.5 font-bold text-ink shadow-sm backdrop-blur-sm">
+            {event.taken === 1
+              ? messages.world.participantsCountOne
+              : messages.world.participantsCount.replace("{n}", String(event.taken))}
+          </span>
+          {seriesLabel ? (
+            <span className="type-caption rounded-pill bg-accent px-2.5 py-1 font-bold text-on-primary shadow-sm">
+              {seriesLabel}
+            </span>
+          ) : null}
+        </div>
         <button
           type="button"
           aria-label={messages.world.heartEvent}

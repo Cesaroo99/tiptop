@@ -36,6 +36,8 @@ export class FeedService {
             requiresReservation: true,
             priceXaf: true,
             hostId: true,
+            recurrence: true,
+            seriesId: true,
             participants: { select: { status: true, userId: true } },
           },
         },

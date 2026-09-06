@@ -44,6 +44,9 @@ export type EventCard = {
   status: string;
   wanted?: boolean;
   allowGroups?: boolean;
+  recurrence?: "NONE" | "DAILY" | "WEEKLY" | "MONTHLY" | string;
+  seriesId?: string | null;
+  occurrences?: Array<{ id: string; startsAt: string }>;
   phase?: "upcoming" | "startingSoon" | "ongoing" | "ended" | "cancelled";
   hearts: number;
   viewerHearted: boolean;
@@ -51,6 +54,7 @@ export type EventCard = {
   viewerStatus: string | null;
   isHost: boolean;
   canBook?: boolean;
+  viewerReserved?: boolean;
   viewerTicketId?: string | null;
   canChatGroup?: boolean;
   host: {
@@ -220,6 +224,10 @@ export type SearchEvent = {
   currency?: string;
   taken: number;
   viewerHearted: boolean;
+  interestedCount?: number;
+  viewerInterested?: boolean;
+  viewerReserved?: boolean;
+  recurrence?: string | null;
   host: {
     username: string;
     firstName: string;
@@ -416,6 +424,9 @@ export type FeedItem = {
     remaining?: number | null;
     viewerInterested?: boolean;
     canBook?: boolean;
+    viewerReserved?: boolean;
+    recurrence?: string;
+    seriesId?: string | null;
   } | null;
 };
 

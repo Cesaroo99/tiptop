@@ -8,16 +8,21 @@ import {
 } from "@nestjs/common";
 import {
   canInteractWithEvent,
+  dedupeSeriesOccurrences,
   eventIsFull,
   eventLifecycle,
   isCurrentlyAvailable,
   isEventParticipationPublic,
+  isEventRecurrence,
   normalizePaymentRule,
+  occurrenceCount,
   planHeartTransfer,
   remainingSeats,
   resolveUserCurrency,
   seatedGuestCount,
+  shiftOccurrence,
   type AvailabilityStatus,
+  type EventRecurrence,
 } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -38,6 +43,7 @@ export type CreateEventInput = {
   paymentRule?: string;
   wanted?: boolean;
   allowGroups?: boolean;
+  recurrence?: string;
 };
 
 @Injectable()
@@ -87,9 +93,41 @@ export class EventsService {
         paymentRule,
         wanted,
         allowGroups: Boolean(input.allowGroups),
+        recurrence: isEventRecurrence(input.recurrence) ? input.recurrence : "NONE",
         participants: { create: { userId: hostId, status: "HOST" } },
       },
     });
+    const recurrence = (event.recurrence as EventRecurrence) ?? "NONE";
+    if (!wanted && recurrence !== "NONE") {
+      const span = event.endsAt ? event.endsAt.getTime() - event.startsAt.getTime() : null;
+      const extra = occurrenceCount(recurrence) - 1;
+      for (let i = 1; i <= extra; i += 1) {
+        const starts = shiftOccurrence(event.startsAt, recurrence, i);
+        await this.prisma.event.create({
+          data: {
+            hostId,
+            title: event.title,
+            description: event.description,
+            imageUrl: event.imageUrl,
+            city: event.city,
+            zone: event.zone,
+            venue: event.venue,
+            startsAt: starts,
+            endsAt: span != null ? new Date(starts.getTime() + span) : null,
+            priceXaf: event.priceXaf,
+            currency: event.currency,
+            capacity: event.capacity,
+            minAge: event.minAge,
+            requiresReservation: event.requiresReservation,
+            paymentRule: event.paymentRule,
+            allowGroups: event.allowGroups,
+            recurrence,
+            seriesId: event.id,
+            participants: { create: { userId: hostId, status: "HOST" } },
+          },
+        });
+      }
+    }
     if (wanted) return this.get(hostId, event.id);
     const description = (input.description ?? "").trim();
     await this.prisma.post.create({
@@ -125,10 +163,11 @@ export class EventsService {
     const rows = await this.prisma.event.findMany({
       where,
       orderBy: { startsAt: "asc" },
-      take: 40,
+      take: tab === "all" ? 80 : 40,
       include: this.include(),
     });
-    return { items: await Promise.all(rows.map((e) => this.map(viewerId, e))) };
+    const items = await Promise.all(rows.map((e) => this.map(viewerId, e)));
+    return { items: tab === "all" ? dedupeSeriesOccurrences(items) : items };
   }
 
   async get(viewerId: string, id: string) {
@@ -422,6 +461,8 @@ export class EventsService {
       paymentRule?: string;
       wanted?: boolean;
       allowGroups?: boolean;
+      recurrence?: string;
+      seriesId?: string | null;
       status: string;
       createdAt: Date;
       host: {
@@ -466,6 +507,20 @@ export class EventsService {
     const isHost = e.hostId === viewerId;
     const seated = ["CONFIRMED", "RESERVED", "HOST", "PRESENT"].includes(mine?.status ?? "");
     const phase = eventLifecycle(e.startsAt, e.endsAt, new Date(), e.status).phase;
+    const seriesRoot = e.seriesId ?? (e.recurrence && e.recurrence !== "NONE" ? e.id : null);
+    const occurrenceRows = seriesRoot
+      ? await this.prisma.event.findMany({
+          where: {
+            status: "PUBLISHED",
+            wanted: false,
+            startsAt: { gt: new Date() },
+            OR: [{ id: seriesRoot }, { seriesId: seriesRoot }],
+          },
+          orderBy: { startsAt: "asc" },
+          take: 8,
+          select: { id: true, startsAt: true },
+        })
+      : [];
     return {
       id: e.id,
       title: e.title,
@@ -487,6 +542,9 @@ export class EventsService {
       status: e.status,
       wanted: Boolean(e.wanted),
       allowGroups: Boolean(e.allowGroups),
+      recurrence: e.recurrence ?? "NONE",
+      seriesId: e.seriesId ?? null,
+      occurrences: occurrenceRows.map((row) => ({ id: row.id, startsAt: row.startsAt.toISOString() })),
       phase,
       createdAt: e.createdAt.toISOString(),
       hearts: e._count.hearts,
@@ -497,10 +555,9 @@ export class EventsService {
       canBook:
         !Boolean(e.wanted) &&
         !isHost &&
-        (e.requiresReservation || e.priceXaf > 0) &&
-        !seated &&
         !eventIsFull(e.capacity, taken) &&
         canInteractWithEvent(phase),
+      viewerReserved: seated && !isHost,
       viewerTicketId: ticket?.id ?? null,
       canChatGroup: seated,
       interestedCount: e.participants.filter((p) => p.status === "INTERESTED").length,

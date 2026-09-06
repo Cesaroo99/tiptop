@@ -7,6 +7,7 @@ import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
+import { recurrenceCaption } from "@/lib/event-series";
 import { formatCompactCount, formatCountdownLabel, formatRelative, splitPostLead } from "@/lib/time";
 import { ageCategoryLabel } from "@tiptop/domain";
 import { Avatar, CertifiedMark } from "./Avatar";
@@ -36,17 +37,19 @@ function ActionCircle({
   label,
   onClick,
   active,
+  disabled,
   children,
 }: {
   href?: string;
   label: string;
   onClick?: () => void;
   active?: boolean;
+  disabled?: boolean;
   children: React.ReactNode;
 }) {
   const cls = `tap-scale grid h-10 w-10 shrink-0 place-items-center rounded-full transition hover:brightness-95 ${
     active ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
-  }`;
+  } ${disabled ? "opacity-40" : ""}`;
   if (href) {
     return (
       <Link href={href} aria-label={label} className={cls}>
@@ -55,7 +58,7 @@ function ActionCircle({
     );
   }
   return (
-    <button type="button" aria-label={label} onClick={onClick} className={cls}>
+    <button type="button" aria-label={label} disabled={disabled} onClick={onClick} className={cls}>
       {children}
     </button>
   );
@@ -96,7 +99,8 @@ export function PostCard({
   const interested = event?.viewerInterested ?? false;
   const remaining = event ? seatsRemainingOf(event.capacity, event.reservedCount, event.remaining) : null;
   const eventFull = remaining != null && remaining <= 0;
-  const canReserve = Boolean(event) && event?.canBook !== false && !eventFull;
+  const reserved = Boolean(event?.viewerReserved);
+  const seriesLabel = recurrenceCaption(event?.recurrence, messages.world);
   const { lead, rest } = splitPostLead(post.body);
   const age = isEvent ? ageCategoryLabel(event?.minAge) : null;
   const mapCity = event?.city ?? post.city;
@@ -324,11 +328,14 @@ export function PostCard({
             </ActionCircle>
             {isEvent && event ? (
               <>
-                {canReserve ? (
-                  <ActionCircle label={messages.booking.reserve} onClick={() => setBookOpen(true)}>
-                    <CalendarPlusIcon size={17} />
-                  </ActionCircle>
-                ) : eventFull ? (
+                <ActionCircle
+                  label={reserved ? messages.booking.reserveOthers : messages.booking.reserve}
+                  disabled={eventFull}
+                  onClick={() => setBookOpen(true)}
+                >
+                  <CalendarPlusIcon size={17} />
+                </ActionCircle>
+                {eventFull ? (
                   <span className="type-caption rounded-pill bg-danger-soft px-2.5 py-2 font-bold text-danger">
                     {messages.world.seatsFull}
                   </span>
@@ -342,10 +349,15 @@ export function PostCard({
                 </ActionCircle>
               </>
             ) : null}
-            {isEvent && countdown ? (
-              <span className="ml-auto flex min-w-0 items-center gap-1.5">
-                <span className="type-caption whitespace-nowrap text-muted">{messages.world.eventInLabel}</span>
-                <span className="type-caption shrink-0 rounded-full bg-yellow px-2.5 py-1 font-bold text-ink">{countdown}</span>
+            {isEvent && (countdown || seriesLabel) ? (
+              <span className="ml-auto flex min-w-0 flex-col items-end gap-0.5">
+                {seriesLabel ? <span className="type-caption font-semibold text-accent">{seriesLabel}</span> : null}
+                {countdown ? (
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span className="type-caption whitespace-nowrap text-muted">{messages.world.eventInLabel}</span>
+                    <span className="type-caption shrink-0 rounded-full bg-yellow px-2.5 py-1 font-bold text-ink">{countdown}</span>
+                  </span>
+                ) : null}
               </span>
             ) : null}
           </div>
@@ -372,6 +384,7 @@ export function PostCard({
               ...event,
               reservedCount: nextTaken,
               remaining: nextRemaining,
+              viewerReserved: true,
               canBook: nextRemaining == null || nextRemaining > 0,
             },
           });

@@ -112,7 +112,10 @@ export function BookEventSheet({
     setStep("browse");
     setIntent("PAY_NOW");
     api<EventCard>(`/events/${preview.eventId}`)
-      .then(setEvent)
+      .then((data) => {
+        setEvent(data);
+        if (data.viewerReserved || data.viewerTicketId) setIncludeSelf(false);
+      })
       .catch(() => setEvent(null));
     void loadPool();
   }, [open, preview]);
@@ -172,7 +175,6 @@ export function BookEventSheet({
   const canSubmit =
     (includeSelf || picked.length > 0) &&
     !event?.isHost &&
-    event?.canBook !== false &&
     !eventFull &&
     !overCapacity;
   const { lead, rest } = splitPostLead(preview?.body ?? event?.description ?? "");
@@ -293,7 +295,9 @@ export function BookEventSheet({
         ? messages.booking.guestPaysCta
         : price > 0 && seatsNow > 0
           ? messages.booking.goToPayment
-          : messages.booking.reserve;
+          : event?.viewerReserved
+            ? messages.booking.reserveOthers
+            : messages.booking.reserve;
   const tabs: { id: Circle; label: string; count: number }[] = [
     { id: "friends", label: messages.booking.inviteCircleFriends, count: pool.friends.filter((p) => p.id !== hostId).length },
     { id: "nearby", label: messages.booking.inviteCircleNearby, count: pool.nearby.filter((p) => p.id !== hostId).length },
@@ -663,9 +667,9 @@ export function BookEventSheet({
             {messages.booking.seatsPicking.replace("{count}", String(leftover))}
           </p>
         ) : null}
-        {event && !event.isHost && event.canBook === false && !eventFull ? (
+        {event && !event.isHost && event.viewerReserved ? (
           <p className="type-caption mt-3 text-muted">
-            {messages.booking.bookAlready}{" "}
+            {messages.booking.bookAlreadyOthers}{" "}
             {event.viewerTicketId ? (
               <Link href={`/tickets/${event.viewerTicketId}`} className="font-semibold text-accent">
                 {messages.booking.seeTicket}

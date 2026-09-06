@@ -35,6 +35,8 @@ vi.mock("@/lib/api", async () => {
           startsAt: "2026-10-12T18:00:00.000Z",
           isHost: false,
           canBook: true,
+          viewerReserved: String(path).includes("reserved"),
+          viewerTicketId: String(path).includes("reserved") ? "t1" : null,
           host: { id: "host-1", firstName: "Alex", lastName: "Moullion", avatarUrl: null, certified: true },
         };
       }
@@ -81,6 +83,21 @@ describe("BookEventSheet", () => {
     expect(screen.getByRole("button", { name: "Passer au paiement" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Liste" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cartes" })).toBeInTheDocument();
+  });
+
+  it("déjà réservé : invite quelqu’un d’autre, soi-même décoché", async () => {
+    render(
+      <TestI18nProvider>
+        <BookEventSheet
+          open
+          preview={{ ...preview, eventId: "evt-reserved" }}
+          onClose={() => undefined}
+        />
+      </TestI18nProvider>,
+    );
+    expect(await screen.findByText(/Tu as déjà une place/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Réserver pour un autre" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Pour moi même" })).not.toBeChecked();
   });
 
   it("fait défiler les profils, puis propose d’attendre l’acceptation avant de payer", async () => {

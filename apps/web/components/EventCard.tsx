@@ -6,9 +6,10 @@ import { ageCategoryLabel, canInteractWithEvent, eventLifecycle } from "@tiptop/
 import { api, ApiError, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useMoney } from "@/lib/money";
+import { recurrenceCaption } from "@/lib/event-series";
 import { eventCountdown, formatEventWhen, formatRelative } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
-import { FlagIcon, HeartIcon, LinkIcon, MoreIcon, PinIcon, ShareIcon } from "./Icons";
+import { FlagIcon, HeartIcon, InterestedIcon, LinkIcon, MoreIcon, PinIcon, ShareIcon } from "./Icons";
 import { BookEventSheet } from "./BookEventSheet";
 import { MapThumb } from "./MapThumb";
 import { SeatsLeftBadge, seatsLeftLabel, seatsRemainingOf } from "./SeatsLeftBadge";
@@ -96,6 +97,9 @@ export function EventCard({
   const interactive = canInteractWithEvent(lifecycle.phase);
   const remaining = seatsRemainingOf(event.capacity, event.reservedCount ?? event.taken, event.remaining);
   const seatsLabel = seatsLeftLabel(remaining, messages.world);
+  const seriesLabel = recurrenceCaption(event.recurrence, messages.world);
+  const eventFull = remaining != null && remaining <= 0;
+  const showGuestCtas = !event.isHost && interactive && !event.wanted;
 
   const phaseBadge =
     lifecycle.phase === "cancelled" ? (
@@ -135,9 +139,16 @@ export function EventCard({
           </div>
         )}
         <div className="absolute inset-x-3 top-3 flex items-center justify-between gap-2">
-          <span className="type-caption rounded-pill bg-surface/90 px-3 py-1.5 font-bold text-ink backdrop-blur-sm">
-            {messages.world.sortie}
-          </span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="type-caption rounded-pill bg-surface/90 px-3 py-1.5 font-bold text-ink backdrop-blur-sm">
+              {messages.world.sortie}
+            </span>
+            {seriesLabel ? (
+              <span className="type-caption rounded-pill bg-accent px-3 py-1.5 font-bold text-on-primary">
+                {seriesLabel}
+              </span>
+            ) : null}
+          </div>
           <div className="flex items-center gap-1.5">
             <SeatsLeftBadge remaining={remaining} />
             {phaseBadge}
@@ -211,23 +222,24 @@ export function EventCard({
           <IconButton label={messages.social.share} onClick={() => void share()}>
             <ShareIcon size={15} />
           </IconButton>
-          <div className="ml-auto flex items-center gap-2">
-            {!event.isHost && !event.canBook && interactive ? (
+          {showGuestCtas ? (
+            <IconButton
+              label={event.viewerInterested ? messages.world.notInterested : messages.world.interested}
+              tone={event.viewerInterested ? "accent" : "neutral"}
+              onClick={() => void interested()}
+            >
+              <InterestedIcon size={17} />
+            </IconButton>
+          ) : null}
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            {showGuestCtas ? (
               <button
                 type="button"
-                onClick={() => void interested()}
-                className={`tap-scale type-button rounded-pill px-4 py-2.5 transition ${event.viewerInterested ? "bg-accent text-on-primary" : "border border-border bg-surface text-ink hover:bg-surface-sunken"}`}
-              >
-                {event.viewerInterested ? messages.world.notInterested : messages.world.interested}
-              </button>
-            ) : null}
-            {event.canBook ? (
-              <button
-                type="button"
+                disabled={eventFull}
                 onClick={() => setBookOpen(true)}
-                className="tap-scale type-button rounded-pill bg-accent px-5 py-2.5 text-on-primary shadow-sm transition hover:bg-accent-hover"
+                className="tap-scale type-button rounded-pill bg-accent px-5 py-2.5 text-on-primary shadow-sm transition hover:bg-accent-hover disabled:opacity-40"
               >
-                {messages.booking.reserve}
+                {event.viewerReserved ? messages.booking.reserveOthers : messages.booking.reserve}
               </button>
             ) : null}
             {event.viewerTicketId ? (
@@ -276,7 +288,8 @@ export function EventCard({
             taken: nextTaken,
             reservedCount: nextTaken,
             remaining: nextRemaining,
-            canBook: nextRemaining == null || nextRemaining > 0 ? event.canBook : false,
+            viewerReserved: true,
+            canBook: nextRemaining == null || nextRemaining > 0,
           });
         }}
         preview={{

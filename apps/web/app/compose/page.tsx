@@ -106,6 +106,8 @@ function Composer() {
   const [minAge, setMinAge] = useState(0);
   const [requiresReservation, setRequiresReservation] = useState(false);
   const [allowGroups, setAllowGroups] = useState(false);
+  const [recurrence, setRecurrence] = useState<"NONE" | "DAILY" | "WEEKLY" | "MONTHLY">("NONE");
+  const [formatId, setFormatId] = useState<"afterwork" | "brunch" | "club" | "daily" | null>(null);
   const [paymentRule, setPaymentRule] = useState<"HOLD" | "PAY_FIRST" | "PAY_REQUIRED">("HOLD");
   const [hours, setHours] = useState("12");
   const [visibility, setVisibility] = useState("ZONE");
@@ -205,6 +207,7 @@ function Composer() {
             minAge: minAge > 0 ? minAge : undefined,
             requiresReservation,
             allowGroups,
+            recurrence,
             paymentRule: Number(priceXaf) > 0 ? paymentRule : undefined,
             imageUrl: imageUrl || undefined,
           }),
@@ -333,6 +336,48 @@ function Composer() {
       {kind === "event" ? (
         <div className="space-y-3">
           <TextInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder={messages.world.eventTitle} />
+          <div className="no-scrollbar flex gap-2 overflow-x-auto">
+            {(
+              [
+                ["afterwork", messages.world.formatAfterwork, "WEEKLY", 18] as const,
+                ["brunch", messages.world.formatBrunch, "WEEKLY", 11] as const,
+                ["club", messages.world.formatClub, "WEEKLY", 22] as const,
+                ["daily", messages.world.formatDaily, "DAILY", 10] as const,
+              ]
+            ).map(([id, label, freq, hour]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => {
+                  setFormatId(id);
+                  setRecurrence(freq);
+                  const next = new Date();
+                  next.setDate(next.getDate() + (freq === "DAILY" ? 1 : 7));
+                  next.setHours(hour, 0, 0, 0);
+                  const pad = (n: number) => String(n).padStart(2, "0");
+                  setStartsAt(
+                    `${next.getFullYear()}-${pad(next.getMonth() + 1)}-${pad(next.getDate())}T${pad(next.getHours())}:${pad(next.getMinutes())}`,
+                  );
+                  if (!title.trim() || formatId != null) {
+                    setTitle(
+                      id === "afterwork"
+                        ? "Afterwork"
+                        : id === "brunch"
+                          ? "Brunch"
+                          : id === "club"
+                            ? "Soirée club"
+                            : messages.world.formatDaily,
+                    );
+                  }
+                }}
+                className={`type-caption tap-scale shrink-0 rounded-pill px-3.5 py-2 font-semibold ${
+                  formatId === id ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <TextInput value={startsAt} onChange={(e) => setStartsAt(e.target.value)} type="datetime-local" />
           <TextInput value={venue} onChange={(e) => setVenue(e.target.value)} placeholder={messages.world.eventVenue} />
           <TextInput value={priceXaf} onChange={(e) => setPriceXaf(e.target.value)} type="number" min={0} placeholder={messages.world.eventPrice.replace("{currency}", viewerCurrency)} />
@@ -346,6 +391,34 @@ function Composer() {
             <input type="checkbox" checked={requiresReservation} onChange={(e) => setRequiresReservation(e.target.checked)} />
             {messages.world.eventReserve}
           </label>
+          <div>
+            <p className="type-label mb-2 text-subtle">{messages.world.recurrenceLabel}</p>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  ["NONE", messages.world.recurrenceNone],
+                  ["WEEKLY", messages.world.recurrenceWeekly],
+                  ["DAILY", messages.world.recurrenceDaily],
+                  ["MONTHLY", messages.world.recurrenceMonthly],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    setRecurrence(value);
+                    if (value === "NONE") setFormatId(null);
+                  }}
+                  className={`type-caption tap-scale rounded-pill px-3 py-2 font-semibold ${
+                    recurrence === value ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {recurrence !== "NONE" ? <p className="type-caption mt-2 text-muted">{messages.world.recurrenceHint}</p> : null}
+          </div>
           <label className="flex items-start gap-2 text-sm text-ink">
             <input
               type="checkbox"
