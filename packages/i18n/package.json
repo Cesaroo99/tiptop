@@ -1,0 +1,13 @@
+{
+  "name": "@tiptop/i18n",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./fr": "./src/fr.ts",
+    "./en": "./src/en.ts"
+  },
+  "scripts": {
+    "test": "node -e \"require('fs').accessSync('src/fr.ts')\""
+  }
+}

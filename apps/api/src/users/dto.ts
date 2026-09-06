@@ -1,0 +1,101 @@
+import { IsIn, IsNumber, IsOptional, IsString, Length, Matches, Max, MaxLength, Min } from "class-validator";
+import { CURRENCY_CODES } from "@tiptop/domain";
+
+export class UpdateMeDto {
+  @IsOptional()
+  @IsString()
+  @Length(1, 40)
+  firstName?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 40)
+  lastName?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(2, 30)
+  @Matches(/^[a-zA-Z0-9._]+$/)
+  username?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 80)
+  profession?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(2, 5)
+  locale?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^(light|dark)$/)
+  theme?: string;
+
+  @IsOptional()
+  @IsIn([...CURRENCY_CODES])
+  currency?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 80)
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(0, 80)
+  zone?: string;
+
+  @IsOptional()
+  @IsIn(["HIDDEN", "BUSY", "AVAILABLE"])
+  availability?: "HIDDEN" | "BUSY" | "AVAILABLE";
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(24)
+  ttlHours?: number;
+
+  @IsOptional()
+  @IsIn(["EXACT", "ZONE", "CITY", "HIDDEN"])
+  locationPrecision?: "EXACT" | "ZONE" | "CITY" | "HIDDEN";
+
+  @IsOptional()
+  @IsNumber()
+  latitude?: number;
+
+  @IsOptional()
+  @IsNumber()
+  longitude?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(280)
+  bio?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  website?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^$|^\/seed\/avatars\/[a-z0-9._-]+\.(jpe?g|png|webp)$/i)
+  avatarUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^$|^\/seed\/covers\/[a-z0-9._-]+\.(jpe?g|png|webp)$/i)
+  coverUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^$|^\d{4}-\d{2}-\d{2}$/)
+  birthDate?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^$|^[A-Za-z]{2}$/)
+  country?: string;
+}

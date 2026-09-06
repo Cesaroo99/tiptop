@@ -1,0 +1,13 @@
+{
+  "name": "@tiptop/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test:e2e": "playwright test",
+    "install:browsers": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "typescript": "^5.8.3"
+  }
+}

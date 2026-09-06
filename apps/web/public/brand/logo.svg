@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80" fill="none">
+  <defs>
+    <linearGradient id="g" x1="8" y1="8" x2="72" y2="72">
+      <stop stop-color="#E5F022"/>
+      <stop offset="1" stop-color="#00B5E2"/>
+    </linearGradient>
+  </defs>
+  <path d="M40 12c18 0 28 12 28 28S54 68 36 68 12 56 12 40 22 12 40 12" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M18 28c12-16 36-16 50 0 10 12 6 32-8 40" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="22" cy="24" r="6" fill="#C8F04A"/>
+  <circle cx="58" cy="40" r="7" fill="#7EE08A"/>
+  <circle cx="34" cy="62" r="4" fill="#00C2E8"/>
+  <text x="92" y="52" font-family="Inter, system-ui, sans-serif" font-size="36" font-weight="600" fill="#00BAF2">TipTop</text>
+</svg>

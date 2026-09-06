@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 220">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="1" y1="0" y2="1">
+      <stop stop-color="#0b1c28"/>
+      <stop offset="1" stop-color="#1b3344"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="220" rx="24" fill="url(#sky)"/>
+  <text x="28" y="120" fill="#fff" font-size="28" font-family="Inter,sans-serif">Black White</text>
+  <text x="28" y="160" fill="#00BAF2" font-size="18" font-family="Inter,sans-serif">Sensation</text>
+</svg>

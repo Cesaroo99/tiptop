@@ -1,20 +1,17 @@
-# Lu par Render sur la branche par défaut (main).
-# Le code de l’app est sur cursor/tiptop-render-apk-5897 — pas sur main.
+# Blueprint Render — tout le code est sur main.
+# URL : https://tiptop-phone.onrender.com
 
 databases:
   - name: tiptop-db
     plan: free
-    postgresMajorVersion: "16"
     databaseName: tiptop
     user: tiptop
 
 services:
   - type: web
     runtime: node
-    name: tiptop-cesar99
+    name: tiptop-phone
     plan: free
-    region: frankfurt
-    branch: cursor/tiptop-render-apk-5897
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @tiptop/api exec prisma generate && pnpm --filter @tiptop/web build
     startCommand: node scripts/render-start.mjs
     healthCheckPath: /api/health

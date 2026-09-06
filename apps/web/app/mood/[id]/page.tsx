@@ -1,0 +1,273 @@
+"use client";
+
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { AppShell } from "@/components/AppShell";
+import { Avatar, CertifiedMark } from "@/components/Avatar";
+import { CommentThread } from "@/components/CommentThread";
+import { ClockIcon, FlagIcon, HeartIcon, SparklesIcon } from "@/components/Icons";
+import { MoodPlaceChip, MoodPlaceSheet, moodPlaceFromItem } from "@/components/MoodPlace";
+import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
+import { ReportModal } from "@/components/ReportModal";
+import { SocialInviteModal } from "@/components/SocialInviteModal";
+import { ErrorBanner, IconButton, ScreenHeader, TextInput } from "@/components/ui";
+import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
+import { viewerLikeActive } from "@/lib/like-feed";
+import { useLikePlacement } from "@/lib/like-placement";
+import { useSession } from "@/lib/session";
+
+export default function Page() {
+  return (
+    <AppShell chrome="nav">
+      <MoodViewer />
+    </AppShell>
+  );
+}
+
+function MoodViewer() {
+  const { id } = useParams<{ id: string }>();
+  const { messages } = useI18n();
+  const router = useRouter();
+  const { user } = useSession();
+  const { refresh: refreshPlacement, placement, ready } = useLikePlacement();
+  const [mood, setMood] = useState<MoodItem | null>(null);
+  const [comments, setComments] = useState<CommentItem[]>([]);
+  const [body, setBody] = useState("");
+  const [replyTo, setReplyTo] = useState<CommentItem | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [transfer, setTransfer] = useState<string | null>(null);
+  const [buy, setBuy] = useState(false);
+  const [joinOpen, setJoinOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [placeOpen, setPlaceOpen] = useState(false);
+
+  async function load() {
+    try {
+      const [m, c] = await Promise.all([
+        api<MoodItem>(`/moods/${id}`),
+        api<{ items: CommentItem[] }>(`/moods/${id}/comments`),
+      ]);
+      setMood(m);
+      setComments(c.items);
+    } catch {
+      setError(messages.world.moodExpired);
+    }
+  }
+
+  useEffect(() => {
+    void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  async function like(confirmTransfer = false) {
+    if (!mood) return;
+    const liked = mood.likeTime?.likedByMe ?? mood.likedByMe ?? false;
+    try {
+      if (liked) {
+        await api("/likes", {
+          method: "DELETE",
+          body: JSON.stringify({ targetType: "mood", targetId: mood.id }),
+        });
+        setMood({
+          ...mood,
+          likedByMe: false,
+          likeTime: {
+            ...mood.likeTime,
+            totalSeconds: mood.likeTime?.totalSeconds ?? 0,
+            activeCount: Math.max(0, (mood.likeTime?.activeCount ?? 1) - 1),
+            likedByMe: false,
+            label: mood.likeTime?.label ?? "0 s",
+          },
+        });
+        await refreshPlacement();
+        return;
+      }
+      await api("/likes", {
+        method: "POST",
+        body: JSON.stringify({ targetType: "mood", targetId: mood.id, confirmTransfer }),
+      });
+      setMood({
+        ...mood,
+        likedByMe: true,
+        likeTime: {
+          ...mood.likeTime,
+          totalSeconds: mood.likeTime?.totalSeconds ?? 0,
+          activeCount: (mood.likeTime?.activeCount ?? 0) + 1,
+          likedByMe: true,
+          label: mood.likeTime?.label ?? "0 s",
+        },
+      });
+      await refreshPlacement();
+      setTransfer(null);
+      setBuy(false);
+    } catch (e) {
+      if (e instanceof ApiError) {
+        const kind = likeErrorKind(String(e.code));
+        if (kind === "buy") {
+          setBuy(true);
+          return;
+        }
+        if (kind === "transfer") {
+          setTransfer(messages.social.transferGeneric);
+        }
+      }
+    }
+  }
+
+  async function send() {
+    if (!body.trim()) return;
+    const c = await api<CommentItem>(`/moods/${id}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ body, parentId: replyTo?.id }),
+    });
+    setComments((cur) => [...cur, c]);
+    setBody("");
+    setReplyTo(null);
+  }
+
+  if (error) {
+    return (
+      <div>
+        <ScreenHeader title={messages.social.moodsTab} onBack={() => router.back()} />
+        <ErrorBanner message={error} />
+      </div>
+    );
+  }
+  if (!mood) {
+    return (
+      <div>
+        <ScreenHeader title={messages.social.moodsTab} onBack={() => router.back()} />
+        <p className="p-4 text-sm text-muted">{messages.common.loading}</p>
+      </div>
+    );
+  }
+
+  const liked = viewerLikeActive(
+    placement,
+    "mood",
+    mood.id,
+    mood.likeTime?.likedByMe ?? mood.likedByMe ?? false,
+    ready,
+  );
+
+  return (
+    <div>
+      <ScreenHeader title={messages.social.moodsTab} onBack={() => router.back()} />
+      <div className="px-4 pb-4">
+      <div className="overflow-hidden rounded-card bg-surface shadow-card">
+        {mood.videoUrl ? (
+          <video src={mood.videoUrl} controls loop muted playsInline className="h-56 w-full object-cover" />
+        ) : mood.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={mood.imageUrl} alt="" className="h-56 w-full object-cover" />
+        ) : (
+          <div className="grid h-40 place-items-center bg-gradient-to-br from-accent/15 to-yellow/15 type-h3 text-accent">
+            {messages.world.typeMood}
+          </div>
+        )}
+        <div className="p-4">
+          <div className="flex items-center gap-2.5">
+            <Link href={`/u/${mood.author.username}`} className="flex items-center gap-2.5">
+              <Avatar src={mood.author.avatarUrl} firstName={mood.author.firstName} lastName={mood.author.lastName} size="sm" ring="accent" />
+              <span className="type-body-sm flex items-center gap-1 font-semibold text-ink">
+                {mood.author.firstName} {mood.author.lastName}
+                {mood.author.certified ? <CertifiedMark /> : null}
+              </span>
+            </Link>
+            {mood.companion ? (
+              <Link href={`/u/${mood.companion.username}`} className="type-body-sm font-semibold text-muted">
+                · {messages.world.moodWith.replace("{name}", mood.companion.firstName)}
+              </Link>
+            ) : null}
+          </div>
+          {mood.activity ? (
+            <p className="type-body-sm mt-3 inline-flex rounded-lg bg-accent-soft px-2.5 py-1.5 font-semibold text-accent">
+              {mood.activity}
+            </p>
+          ) : null}
+          <p className="type-body mt-2 text-ink">{mood.body}</p>
+          {moodPlaceFromItem(mood) ? (
+            <div className="mt-2">
+              <MoodPlaceChip place={mood} onOpen={() => setPlaceOpen(true)} tone="surface" />
+            </div>
+          ) : null}
+          {mood.event ? (
+            <Link href={`/events/${mood.event.id}`} className="type-body-sm mt-2 block font-semibold text-accent">
+              {mood.event.title}
+            </Link>
+          ) : null}
+          <p className="type-caption mt-2 inline-flex items-center gap-1.5 text-muted">
+            {mood.likeTime
+              ? messages.likeTime.ofDuration.replace("{duration}", mood.likeTime.label)
+              : messages.social.likesNow.replace("{n}", String(mood.authorActiveLikes))}
+            <span className="text-border">·</span>
+            <ClockIcon size={12} />
+            {messages.world.availableUntil.replace("{time}", new Date(mood.expiresAt).toLocaleTimeString())}
+          </p>
+          <div className="mt-4 flex items-center gap-2">
+            <IconButton label={liked ? messages.social.likeHere : messages.social.likePlace} tone={liked ? "accent" : "neutral"} onClick={() => void like(false)}>
+              <HeartIcon size={17} filled={liked} />
+            </IconButton>
+            {user && user.id !== mood.author.id ? (
+              <button
+                type="button"
+                onClick={() => setJoinOpen(true)}
+                className="tap-scale type-button flex items-center gap-1.5 rounded-pill bg-accent px-4 py-2.5 text-on-primary shadow-sm transition hover:bg-accent-hover"
+              >
+                <SparklesIcon size={15} />
+                {messages.socialInvite.joinNow}
+              </button>
+            ) : null}
+            {user && user.id !== mood.author.id ? (
+              <IconButton label={messages.admin.report} tone="danger" onClick={() => setReportOpen(true)}>
+                <FlagIcon size={14} />
+              </IconButton>
+            ) : null}
+          </div>
+        </div>
+      </div>
+      <div className="mt-4 rounded-card bg-surface px-3 py-2 shadow-card">
+        <CommentThread
+          items={comments}
+          onChange={(next) => setComments((cur) => cur.map((c) => (c.id === next.id ? next : c)))}
+          onReply={setReplyTo}
+        />
+      </div>
+      {replyTo ? (
+        <p className="mt-2 type-caption text-muted">{messages.social.replyTo.replace("{name}", replyTo.author.firstName)}</p>
+      ) : null}
+      <div className="mt-4 flex gap-2">
+        <TextInput
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder={replyTo ? messages.social.replyTo.replace("{name}", replyTo.author.firstName) : messages.social.addComment}
+          className="flex-1"
+        />
+        <button type="button" onClick={() => void send()} className="tap-scale type-button rounded-pill bg-accent px-5 text-on-primary transition hover:bg-accent-hover">
+          OK
+        </button>
+      </div>
+      <LikeDialogs
+        transferName={transfer}
+        buyOpen={buy}
+        onCloseTransfer={() => setTransfer(null)}
+        onConfirmTransfer={() => void like(true)}
+        onCloseBuy={() => setBuy(false)}
+      />
+      {mood ? (
+        <SocialInviteModal
+          open={joinOpen}
+          inviteeId={mood.author.id}
+          defaultContext="MEETUP"
+          defaultLabel={mood.activity ?? ""}
+          onClose={() => setJoinOpen(false)}
+        />
+      ) : null}
+      <ReportModal open={reportOpen} kind="MOOD" moodId={id} onClose={() => setReportOpen(false)} />
+      <MoodPlaceSheet place={moodPlaceFromItem(mood)} open={placeOpen} onClose={() => setPlaceOpen(false)} />
+      </div>
+    </div>
+  );
+}
