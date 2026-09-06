@@ -1,5 +1,12 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { isMoodActive, moodExpiresAt, moodHasPlace, moodPlaceLabel, validateMoodCoords } from "@tiptop/domain";
+import {
+  isMoodActive,
+  isMoodSoundKey,
+  moodExpiresAt,
+  moodHasPlace,
+  moodPlaceLabel,
+  validateMoodCoords,
+} from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { LikesService } from "../likes/likes.service";
@@ -29,6 +36,8 @@ export class MoodsService {
       companionId?: string;
       visibility?: string;
       hours?: number;
+      soundKey?: string;
+      soundLabel?: string;
     },
   ) {
     const body = (input.body ?? "").trim();
@@ -78,6 +87,8 @@ export class MoodsService {
       latitude: coords?.latitude,
       longitude: coords?.longitude,
     });
+    const soundKey = isMoodSoundKey(input.soundKey) ? input.soundKey : null;
+    const soundLabel = soundKey && soundKey !== "original" ? input.soundLabel?.trim().slice(0, 80) || null : null;
     const mood = await this.prisma.mood.create({
       data: {
         authorId,
@@ -85,6 +96,8 @@ export class MoodsService {
         imageUrl,
         videoUrl,
         activity,
+        soundKey,
+        soundLabel,
         city: explicitPlace ? input.city?.trim() || null : null,
         zone: explicitPlace ? input.zone?.trim() || null : null,
         placeName: explicitPlace ? placeName : null,
@@ -164,36 +177,38 @@ export class MoodsService {
     return this.map(mood, extras, likeTimes.get(mood.id), Boolean(follow));
   }
 
-  async comments(moodId: string) {
+  async comments(viewerId: string, moodId: string) {
     const mood = await this.prisma.mood.findUnique({ where: { id: moodId } });
     if (!mood) throw new NotFoundException({ code: "MOOD_NOT_FOUND" });
     const rows = await this.prisma.moodComment.findMany({
       where: { moodId },
       orderBy: { createdAt: "asc" },
-      include: {
-        author: { select: { id: true, firstName: true, lastName: true, username: true, certified: true } },
-      },
+      include: { author: { include: { profile: { select: { avatarUrl: true } } } } },
     });
-    return {
-      items: rows.map((c) => ({
-        id: c.id,
-        body: c.body,
-        createdAt: c.createdAt.toISOString(),
-        author: c.author,
-      })),
-    };
+    const likeTimes = await this.likes.snapshots(
+      viewerId,
+      "comment",
+      rows.map((c) => c.id),
+    );
+    return { items: rows.map((c) => this.mapComment(c, likeTimes.get(c.id))) };
   }
 
-  async addComment(authorId: string, moodId: string, body: string) {
+  async addComment(authorId: string, moodId: string, body: string, parentId?: string) {
     const text = body.trim();
     if (!text) throw new BadRequestException({ code: "COMMENT_EMPTY" });
     const mood = await this.prisma.mood.findUnique({ where: { id: moodId } });
     if (!mood) throw new NotFoundException({ code: "MOOD_NOT_FOUND" });
+    let parent: { id: string; authorId: string } | null = null;
+    if (parentId) {
+      parent = await this.prisma.moodComment.findFirst({
+        where: { id: parentId, moodId },
+        select: { id: true, authorId: true },
+      });
+      if (!parent) throw new BadRequestException({ code: "COMMENT_PARENT_NOT_FOUND" });
+    }
     const comment = await this.prisma.moodComment.create({
-      data: { moodId, authorId, body: text.slice(0, 1000) },
-      include: {
-        author: { select: { id: true, firstName: true, lastName: true, username: true, certified: true } },
-      },
+      data: { moodId, authorId, parentId: parent?.id ?? null, body: text.slice(0, 1000) },
+      include: { author: { include: { profile: { select: { avatarUrl: true } } } } },
     });
     await this.notifications.create({
       userId: mood.authorId,
@@ -202,11 +217,62 @@ export class MoodsService {
       entityType: "mood",
       entityId: moodId,
     });
+    if (parent && parent.authorId !== authorId && parent.authorId !== mood.authorId) {
+      await this.notifications.create({
+        userId: parent.authorId,
+        actorId: authorId,
+        type: "COMMENT",
+        entityType: "mood",
+        entityId: moodId,
+      });
+    }
+    return this.mapComment(comment);
+  }
+
+  private mapComment(
+    c: {
+      id: string;
+      body: string;
+      parentId?: string | null;
+      createdAt: Date;
+      author: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        username: string;
+        certified: boolean;
+        profile?: { avatarUrl: string | null } | null;
+      };
+    },
+    likeTime?: {
+      totalSeconds: number;
+      activeCount: number;
+      likedByMe: boolean;
+      label: string;
+    },
+  ) {
     return {
-      id: comment.id,
-      body: comment.body,
-      createdAt: comment.createdAt.toISOString(),
-      author: comment.author,
+      id: c.id,
+      body: c.body,
+      parentId: c.parentId ?? null,
+      createdAt: c.createdAt.toISOString(),
+      likedByMe: likeTime?.likedByMe ?? false,
+      likeTime: likeTime
+        ? {
+            totalSeconds: likeTime.totalSeconds,
+            activeCount: likeTime.activeCount,
+            likedByMe: likeTime.likedByMe,
+            label: likeTime.label,
+          }
+        : { totalSeconds: 0, activeCount: 0, likedByMe: false, label: "0 s" },
+      author: {
+        id: c.author.id,
+        firstName: c.author.firstName,
+        lastName: c.author.lastName,
+        username: c.author.username,
+        certified: c.author.certified,
+        avatarUrl: c.author.profile?.avatarUrl ?? null,
+      },
     };
   }
 
@@ -245,6 +311,8 @@ export class MoodsService {
       expiresAt: Date;
       createdAt: Date;
       visibility: string;
+      soundKey?: string | null;
+      soundLabel?: string | null;
       event: { id: string; title: string } | null;
       companion: {
         id: string;
@@ -300,6 +368,8 @@ export class MoodsService {
         longitude: m.longitude,
       }),
       visibility: m.visibility,
+      soundKey: m.soundKey ?? null,
+      soundLabel: m.soundLabel ?? null,
       expiresAt: m.expiresAt.toISOString(),
       createdAt: m.createdAt.toISOString(),
       commentsCount: m._count.comments,

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
+import { CommentThread } from "@/components/CommentThread";
 import { ClockIcon, FlagIcon, HeartIcon, SparklesIcon } from "@/components/Icons";
 import { MoodPlaceChip, MoodPlaceSheet, moodPlaceFromItem } from "@/components/MoodPlace";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
@@ -32,6 +33,7 @@ function MoodViewer() {
   const [mood, setMood] = useState<MoodItem | null>(null);
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [body, setBody] = useState("");
+  const [replyTo, setReplyTo] = useState<CommentItem | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [transfer, setTransfer] = useState<string | null>(null);
   const [buy, setBuy] = useState(false);
@@ -116,10 +118,11 @@ function MoodViewer() {
     if (!body.trim()) return;
     const c = await api<CommentItem>(`/moods/${id}/comments`, {
       method: "POST",
-      body: JSON.stringify({ body }),
+      body: JSON.stringify({ body, parentId: replyTo?.id }),
     });
     setComments((cur) => [...cur, c]);
     setBody("");
+    setReplyTo(null);
   }
 
   if (error) return <ErrorBanner message={error} />;
@@ -201,15 +204,23 @@ function MoodViewer() {
           </div>
         </div>
       </div>
-      <div className="mt-4 space-y-2">
-        {comments.map((c) => (
-          <p key={c.id} className="type-body-sm rounded-lg bg-surface px-3.5 py-2.5 shadow-xs">
-            <span className="font-semibold text-accent">{c.author.firstName}</span> {c.body}
-          </p>
-        ))}
+      <div className="mt-4 rounded-card bg-surface px-3 py-2 shadow-card">
+        <CommentThread
+          items={comments}
+          onChange={(next) => setComments((cur) => cur.map((c) => (c.id === next.id ? next : c)))}
+          onReply={setReplyTo}
+        />
       </div>
+      {replyTo ? (
+        <p className="mt-2 type-caption text-muted">{messages.social.replyTo.replace("{name}", replyTo.author.firstName)}</p>
+      ) : null}
       <div className="mt-4 flex gap-2">
-        <TextInput value={body} onChange={(e) => setBody(e.target.value)} placeholder={messages.social.addComment} className="flex-1" />
+        <TextInput
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder={replyTo ? messages.social.replyTo.replace("{name}", replyTo.author.firstName) : messages.social.addComment}
+          className="flex-1"
+        />
         <button type="button" onClick={() => void send()} className="tap-scale type-button rounded-pill bg-accent px-5 text-on-primary transition hover:bg-accent-hover">
           OK
         </button>

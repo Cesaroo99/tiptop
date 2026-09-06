@@ -41,12 +41,14 @@ function fromHit(hit: GeocodeHit): PickedPlace {
 export function MoodPlacePicker({
   value,
   onChange,
+  alwaysOpen = false,
 }: {
   value: PickedPlace | null;
   onChange: (next: PickedPlace | null) => void;
+  alwaysOpen?: boolean;
 }) {
   const { messages } = useI18n();
-  const [open, setOpen] = useState(Boolean(value));
+  const [open, setOpen] = useState(Boolean(value) || alwaysOpen);
   const [query, setQuery] = useState(value?.placeName ?? "");
   const [hits, setHits] = useState<GeocodeHit[]>([]);
   const [searching, setSearching] = useState(false);
@@ -147,7 +149,7 @@ export function MoodPlacePicker({
     );
   }
 
-  if (!open) {
+  if (!open && !alwaysOpen) {
     return (
       <button
         type="button"
@@ -170,7 +172,7 @@ export function MoodPlacePicker({
         <button
           type="button"
           onClick={() => {
-            setOpen(false);
+            if (!alwaysOpen) setOpen(false);
             setQuery("");
             setHits([]);
             setGeoError(null);

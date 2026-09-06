@@ -6,6 +6,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AppShell } from "@/components/AppShell";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
+import { CommentThread } from "@/components/CommentThread";
 import { CameraIcon, MusicIcon, PlayIcon, SearchIcon, SendIcon, SmileIcon, SparklesIcon } from "@/components/Icons";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { MoodLikeRail } from "@/components/MoodLikeRail";
@@ -13,6 +14,7 @@ import { MoodPlaceSheet, MoodPlaceTag, moodPlaceFromItem } from "@/components/Mo
 import { ReportModal } from "@/components/ReportModal";
 import { SocialInviteModal } from "@/components/SocialInviteModal";
 import { EmptyState, Modal, Skeleton } from "@/components/ui";
+import { moodSoundSrc } from "@tiptop/domain";
 import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useLikePlacement } from "@/lib/like-placement";
@@ -97,7 +99,7 @@ function MoodFeed() {
           title={messages.world.moodEmpty}
           body={messages.world.moodEmptyBody}
           action={
-            <Link href="/compose?type=mood" className="type-body-sm font-semibold text-accent">
+            <Link href="/mood/create" className="type-body-sm font-semibold text-accent">
               {messages.world.moodCreate}
             </Link>
           }
@@ -112,7 +114,7 @@ function MoodFeed() {
         <p className="text-[22px] font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">{messages.nav.mood}</p>
         <div className="pointer-events-auto flex items-center gap-2.5">
           <Link
-            href="/compose?type=mood"
+            href="/mood/create"
             aria-label={messages.world.moodCreate}
             className="tap-scale flex items-center gap-1.5 rounded-pill bg-white px-3.5 py-2 text-ink shadow-sm"
           >
@@ -244,7 +246,11 @@ function MoodSlide({
   return (
     <section ref={registerRef} className="relative h-full min-h-full w-full shrink-0 snap-start snap-always">
       {mood.videoUrl ? (
-        <MoodVideo src={mood.videoUrl} muted={muted} />
+        <MoodVideo
+          src={mood.videoUrl}
+          muted={muted || mood.soundKey === "off" || Boolean(moodSoundSrc(mood.soundKey))}
+          soundSrc={moodSoundSrc(mood.soundKey)}
+        />
       ) : mood.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={mood.imageUrl} alt="" className="h-full w-full object-cover" />
@@ -311,7 +317,7 @@ function MoodSlide({
             ) : null}
           </div>
         ) : null}
-        {mood.videoUrl ? (
+        {mood.videoUrl && mood.soundKey !== "off" ? (
           <button
             type="button"
             onClick={() => setMuted((v) => !v)}
@@ -321,7 +327,9 @@ function MoodSlide({
             <span className="grid h-5 w-5 place-items-center rounded-full bg-white/15">
               <MusicIcon size={11} />
             </span>
-            {messages.world.moodAudioOriginal}
+            {mood.soundLabel
+              ? messages.world.moodAudioNamed.replace("{name}", mood.soundLabel)
+              : messages.world.moodAudioOriginal}
           </button>
         ) : null}
         {copied ? <p className="type-caption mt-2 font-semibold">{messages.social.copied}</p> : null}
@@ -402,7 +410,7 @@ function MoodSlide({
 }
 
 /** Vidéo en boucle : joue dès qu’elle est visible, tap pour pause / lecture. */
-function MoodVideo({ src, muted }: { src: string; muted: boolean }) {
+function MoodVideo({ src, muted, soundSrc }: { src: string; muted: boolean; soundSrc?: string | null }) {
   const { messages } = useI18n();
   const ref = useRef<HTMLVideoElement>(null);
   const pausedRef = useRef(false);
@@ -455,6 +463,7 @@ function MoodVideo({ src, muted }: { src: string; muted: boolean }) {
         className="h-full w-full object-cover"
         onClick={toggle}
       />
+      {soundSrc ? <audio src={soundSrc} loop autoPlay muted={muted} /> : null}
       {hint ? (
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
           <span className="grid h-16 w-16 place-items-center rounded-full bg-black/45 text-white">
@@ -531,12 +540,14 @@ function MoodComments({
   const portal = useSheetPortal();
   const [comments, setComments] = useState<CommentItem[] | null>(null);
   const [body, setBody] = useState("");
+  const [replyTo, setReplyTo] = useState<CommentItem | null>(null);
   const [sending, setSending] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
     setComments(null);
+    setReplyTo(null);
     api<{ items: CommentItem[] }>(`/moods/${moodId}/comments`)
       .then((d) => setComments(d.items))
       .catch(() => setComments([]));
@@ -548,9 +559,13 @@ function MoodComments({
     if (!body.trim() || sending) return;
     setSending(true);
     try {
-      const c = await api<CommentItem>(`/moods/${moodId}/comments`, { method: "POST", body: JSON.stringify({ body }) });
+      const c = await api<CommentItem>(`/moods/${moodId}/comments`, {
+        method: "POST",
+        body: JSON.stringify({ body, parentId: replyTo?.id }),
+      });
       setComments((cur) => [...(cur ?? []), c]);
       setBody("");
+      setReplyTo(null);
       onSent();
     } finally {
       setSending(false);
@@ -588,16 +603,26 @@ function MoodComments({
           ) : comments.length === 0 ? (
             <p className="type-body-sm py-6 text-center text-muted">{messages.world.moodCommentsEmpty}</p>
           ) : (
-            comments.map((c) => (
-              <div key={c.id} className="flex gap-2.5 py-1.5">
-                <Avatar src={c.author.avatarUrl} firstName={c.author.firstName} lastName={c.author.lastName} size={32} />
-                <p className="type-body-sm min-w-0 flex-1 text-ink">
-                  <span className="font-semibold">{c.author.firstName}</span> {c.body}
-                </p>
-              </div>
-            ))
+            <CommentThread
+              items={comments}
+              onChange={(next) => setComments((cur) => cur?.map((c) => (c.id === next.id ? next : c)) ?? cur)}
+              onReply={(c) => {
+                setReplyTo(c);
+                window.setTimeout(() => inputRef.current?.focus(), 40);
+              }}
+            />
           )}
         </div>
+        {replyTo ? (
+          <div className="mt-2 flex items-center justify-between rounded-xl bg-surface-sunken px-3 py-2">
+            <p className="type-caption text-muted">
+              {messages.social.replyTo.replace("{name}", replyTo.author.firstName)}
+            </p>
+            <button type="button" onClick={() => setReplyTo(null)} className="type-caption font-semibold text-ink">
+              {messages.common.close}
+            </button>
+          </div>
+        ) : null}
         <form
           className="mt-3 flex items-center gap-2 border-t border-divider pt-3"
           onSubmit={(e) => {
@@ -609,7 +634,7 @@ function MoodComments({
             ref={inputRef}
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder={messages.social.addComment}
+            placeholder={replyTo ? messages.social.replyTo.replace("{name}", replyTo.author.firstName) : messages.social.addComment}
             className="type-body-sm h-11 flex-1 rounded-full bg-surface-sunken px-4 text-ink outline-none"
           />
           <button

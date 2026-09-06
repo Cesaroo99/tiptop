@@ -75,12 +75,26 @@ class CreateMoodDto {
   @Min(1)
   @Max(24)
   hours?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  soundKey?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  soundLabel?: string;
 }
 
 class CreateCommentDto {
   @IsString()
   @MaxLength(1000)
   body!: string;
+
+  @IsOptional()
+  @IsString()
+  parentId?: string;
 }
 
 @Controller("moods")
@@ -99,8 +113,8 @@ export class MoodsController {
   }
 
   @Get(":id/comments")
-  comments(@Param("id") id: string) {
-    return this.moods.comments(id);
+  comments(@Req() req: Request & { user: PublicUser }, @Param("id") id: string) {
+    return this.moods.comments(req.user.id, id);
   }
 
   @Post(":id/comments")
@@ -109,7 +123,7 @@ export class MoodsController {
     @Param("id") id: string,
     @Body() body: CreateCommentDto,
   ) {
-    return this.moods.addComment(req.user.id, id, body.body);
+    return this.moods.addComment(req.user.id, id, body.body, body.parentId);
   }
 
   @Get(":id")

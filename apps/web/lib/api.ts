@@ -111,6 +111,8 @@ export type MoodItem = {
   commentsCount: number;
   likedAuthor: boolean;
   following?: boolean;
+  soundKey?: string | null;
+  soundLabel?: string | null;
   likedByMe?: boolean;
   authorActiveLikes: number;
   likeTime?: LikeTimeSnap;
@@ -293,6 +295,7 @@ export type FeedItem = {
 export type CommentItem = {
   id: string;
   body: string;
+  parentId?: string | null;
   createdAt: string;
   likedByMe?: boolean;
   likeTime?: LikeTimeSnap;

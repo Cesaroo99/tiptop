@@ -653,6 +653,8 @@ model Mood {
   companionId String?
   companion   User?         @relation("MoodCompanion", fields: [companionId], references: [id], onDelete: SetNull)
   visibility MoodVisibility @default(ZONE)
+  soundKey   String?
+  soundLabel String?
   expiresAt  DateTime
   createdAt  DateTime       @default(now())
   comments   MoodComment[]
@@ -662,13 +664,18 @@ model Mood {
 }
 
 model MoodComment {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   moodId    String
-  mood      Mood     @relation(fields: [moodId], references: [id], onDelete: Cascade)
+  mood      Mood          @relation(fields: [moodId], references: [id], onDelete: Cascade)
   authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    MoodComment?  @relation("MoodCommentThread", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   MoodComment[] @relation("MoodCommentThread")
   body      String
-  createdAt DateTime @default(now())
+  createdAt DateTime      @default(now())
+
+  @@index([moodId, parentId])
 }
 
 model Contact {

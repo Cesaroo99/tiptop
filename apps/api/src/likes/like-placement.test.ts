@@ -14,6 +14,7 @@ describe("like placement meta", () => {
     expect(likePlacementHref("user", { id: "u1", username: "cesar_memoli" })).toBe("/u/cesar_memoli");
     expect(likePlacementHref("mood", { id: "m1" })).toBe("/mood/m1");
     expect(likePlacementHref("comment", { id: "c1", postId: "p1" })).toBe("/posts/p1");
+    expect(likePlacementHref("comment", { id: "c2", moodId: "m1" })).toBe("/mood?start=m1");
   });
 
   it("prend le titre d’événement ou l’accroche avant « : »", () => {
