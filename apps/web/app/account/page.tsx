@@ -2,10 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { PresencePicker } from "@/components/PresencePicker";
 import { PrimaryButton, ScreenHeader, TextInput } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
+import { presenceFromDeclared } from "@tiptop/domain";
 
 export default function AccountPage() {
   const { messages } = useI18n();
@@ -17,8 +19,22 @@ export default function AccountPage() {
   const [username, setUsername] = useState(user?.username ?? "");
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [statusBusy, setStatusBusy] = useState(false);
 
   if (!user) return null;
+
+  async function setMyPresence(availability: "AVAILABLE" | "BUSY" | "HIDDEN") {
+    setStatusBusy(true);
+    try {
+      await api("/users/me", {
+        method: "PATCH",
+        body: JSON.stringify({ availability, ttlHours: 4 }),
+      });
+      await refresh();
+    } finally {
+      setStatusBusy(false);
+    }
+  }
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -45,6 +61,15 @@ export default function AccountPage() {
         <TextInput value={username} onChange={(e) => setUsername(e.target.value)} placeholder={messages.account.username} />
         <TextInput value={profession} onChange={(e) => setProfession(e.target.value)} placeholder={messages.account.profession} />
         <TextInput value={user.phoneE164} disabled />
+        <div className="space-y-2 text-center">
+          <p className="type-caption font-semibold text-muted">{messages.account.status}</p>
+          <PresencePicker
+            value={presenceFromDeclared(user.availability)}
+            busy={statusBusy}
+            onChange={(k) => void setMyPresence(k)}
+          />
+          <p className="type-caption leading-5 text-muted">{messages.account.statusHint}</p>
+        </div>
         {saved ? <p className="text-sm text-success">{messages.account.saved}</p> : null}
         <PrimaryButton type="submit" loading={loading}>
           {messages.account.save}

@@ -22,6 +22,7 @@ export type NearbyFilters = {
   minAge?: number;
   maxAge?: number;
   availableOnly?: boolean;
+  presence?: "AVAILABLE" | "UNSURE" | "UNAVAILABLE";
   profession?: string;
   wishCategory?: string;
   lat?: number;
@@ -198,7 +199,8 @@ export class DiscoveryService {
         };
       })
       .filter((a) => {
-        if (filters.availableOnly && !a.available) return false;
+        const wanted = filters.presence ?? (filters.availableOnly ? "AVAILABLE" : undefined);
+        if (wanted && a.presence !== wanted) return false;
         if (filters.maxKm != null && a.distanceKm != null && a.distanceKm > filters.maxKm) return false;
         if (filters.minAge != null && (a.age == null || a.age < filters.minAge)) return false;
         if (filters.maxAge != null && (a.age == null || a.age > filters.maxAge)) return false;

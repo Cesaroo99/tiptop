@@ -106,6 +106,8 @@ export type Messages = {
     username: string;
     save: string;
     saved: string;
+    status: string;
+    statusHint: string;
   };
   onboarding: {
     title: string;
@@ -352,6 +354,8 @@ export type Messages = {
     approximate: string;
     peopleTitle: string;
     peopleNearby: string;
+    peopleAvailableAround: string;
+    peopleFriendsAvailable: string;
     peopleEmpty: string;
     peopleEmptyBody: string;
     peopleFriends: string;
@@ -368,6 +372,11 @@ export type Messages = {
     previousPerson: string;
     passPerson: string;
     filters: string;
+    filtersActive: string;
+    applyFilters: string;
+    clearFilters: string;
+    presenceAll: string;
+    presenceFilter: string;
     onlyAvailable: string;
     maxDistance: string;
     minAge: string;
@@ -909,6 +918,8 @@ export const fr: Messages = {
     username: "Identifiant",
     save: "Enregistrer les modifications",
     saved: "Modifications enregistrées",
+    status: "Ton état",
+    statusHint: "Tu le choisis ici. Les autres le voient sur ton profil et autour d’elles — elles ne peuvent pas le changer.",
   },
   onboarding: {
     title: "Complète ton profil",
@@ -1139,7 +1150,7 @@ export const fr: Messages = {
     goAvailable: "Je suis dispo",
     goHidden: "Indisponible",
     goUnsure: "Je ne sais pas",
-    myStatus: "Mon état",
+    myStatus: "Ton état",
     seeProfile: "Voir le profil",
     locating: "Distance depuis ta position…",
     geoDenied: "Distance depuis ta zone — active le GPS pour plus de précision",
@@ -1153,10 +1164,12 @@ export const fr: Messages = {
     precisionCity: "Ville",
     precisionHidden: "Masquée",
     approximate: "Zone approximative",
-    peopleTitle: "Amies disponibles",
-    peopleNearby: "Amies disponibles",
-    peopleEmpty: "Personne dispo dans ta zone",
-    peopleEmptyBody: "Élargis tes filtres ou déclare-toi disponible. TipTop ne remplit pas ce carousel avec le monde entier.",
+    peopleTitle: "Autour de moi",
+    peopleNearby: "Autour de moi",
+    peopleAvailableAround: "Disponibles autour",
+    peopleFriendsAvailable: "Amies disponibles",
+    peopleEmpty: "Personne ici",
+    peopleEmptyBody: "Élargis tes filtres ou change d’onglet. TipTop ne remplit pas ce carousel avec le monde entier.",
     peopleFriends: "Amies",
     peopleAround: "Autour",
     peopleLater: "Mis de côté",
@@ -1171,6 +1184,11 @@ export const fr: Messages = {
     previousPerson: "Précédent",
     passPerson: "Passer",
     filters: "Filtres",
+    filtersActive: "Filtres · {n}",
+    applyFilters: "Appliquer",
+    clearFilters: "Effacer",
+    presenceAll: "Tous les états",
+    presenceFilter: "État",
     onlyAvailable: "Disponibles seulement",
     maxDistance: "Distance max (km)",
     minAge: "Âge min",
@@ -1712,6 +1730,8 @@ export const en: Messages = {
     username: "Username",
     save: "Save changes",
     saved: "Changes saved",
+    status: "Your status",
+    statusHint: "You set it here. Others see it on your profile and around them — they cannot change it.",
   },
   onboarding: {
     title: "Complete your profile",
@@ -1956,9 +1976,11 @@ export const en: Messages = {
     precisionCity: "City",
     precisionHidden: "Hidden",
     approximate: "Approximate area",
-    peopleTitle: "Friends nearby",
-    peopleNearby: "Friends nearby",
-    peopleEmpty: "Nobody available in your area",
+    peopleTitle: "Around me",
+    peopleNearby: "Around me",
+    peopleAvailableAround: "Available around",
+    peopleFriendsAvailable: "Available friends",
+    peopleEmpty: "Nobody here",
     peopleFriends: "Friends",
     peopleAround: "Nearby",
     peopleLater: "Saved",
@@ -1968,12 +1990,17 @@ export const en: Messages = {
     circleFriend: "Friend",
     circleAround: "Nearby",
     circleLater: "Saved",
-    peopleEmptyBody: "Widen your filters or go available. TipTop will not fill this with the whole world.",
+    peopleEmptyBody: "Widen your filters or switch tab. TipTop will not fill this with the whole world.",
     invite: "Invite",
     inviteJoin: "Invite to join me",
     previousPerson: "Previous",
     passPerson: "Skip",
     filters: "Filters",
+    filtersActive: "Filters · {n}",
+    applyFilters: "Apply",
+    clearFilters: "Clear",
+    presenceAll: "All statuses",
+    presenceFilter: "Status",
     onlyAvailable: "Available only",
     maxDistance: "Max distance (km)",
     minAge: "Min age",

@@ -23,6 +23,7 @@ export class DiscoveryController {
     @Query("minAge") minAge?: string,
     @Query("maxAge") maxAge?: string,
     @Query("available") available?: string,
+    @Query("presence") presence?: string,
     @Query("profession") profession?: string,
     @Query("wishCategory") wishCategory?: string,
     @Query("lat") lat?: string,
@@ -37,6 +38,8 @@ export class DiscoveryController {
       minAge: minAge ? Number(minAge) : undefined,
       maxAge: maxAge ? Number(maxAge) : undefined,
       availableOnly: available === "1" || available === "true",
+      presence:
+        presence === "AVAILABLE" || presence === "UNSURE" || presence === "UNAVAILABLE" ? presence : undefined,
       profession,
       wishCategory,
       lat: Number.isFinite(latitude) ? latitude : undefined,

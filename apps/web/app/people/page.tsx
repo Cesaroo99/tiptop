@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { presenceFromDeclared, type PresenceState } from "@tiptop/domain";
 import { AppShell } from "@/components/AppShell";
-import { AvailabilityBadge, PresenceDot } from "@/components/AvailabilityBadge";
+import { AvailabilityBadge } from "@/components/AvailabilityBadge";
 import { BriefcaseIcon, ChevronLeftIcon, ChevronRightIcon, HeartIcon, RouteIcon } from "@/components/Icons";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { SocialInviteModal } from "@/components/SocialInviteModal";
@@ -18,6 +18,19 @@ import { useSession } from "@/lib/session";
 import { CertifiedMark } from "@/components/Avatar";
 
 type Circle = "FRIEND" | "NEARBY" | "LATER";
+type PresenceFilter = "ALL" | "AVAILABLE" | "UNSURE" | "UNAVAILABLE";
+
+type PeopleFilters = {
+  presence: PresenceFilter;
+  maxKm: string;
+  profession: string;
+};
+
+const EMPTY_FILTERS: PeopleFilters = { presence: "ALL", maxKm: "", profession: "" };
+
+function filterCount(f: PeopleFilters) {
+  return (f.presence !== "ALL" ? 1 : 0) + (f.maxKm.trim() ? 1 : 0) + (f.profession.trim() ? 1 : 0);
+}
 
 export default function Page() {
   return (
@@ -29,7 +42,7 @@ export default function Page() {
 
 function PeopleCarousel() {
   const { messages } = useI18n();
-  const { user, refresh } = useSession();
+  const { user } = useSession();
   const { placement, ready, refresh: refreshPlacement } = useLikePlacement();
   const { coords, status: geoStatus, retry: retryGeo } = useViewerGeo();
   const [items, setItems] = useState<PersonCard[] | null>(null);
@@ -38,9 +51,8 @@ function PeopleCarousel() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [availableOnly, setAvailableOnly] = useState(false);
-  const [maxKm, setMaxKm] = useState("");
-  const [profession, setProfession] = useState("");
+  const [applied, setApplied] = useState<PeopleFilters>(EMPTY_FILTERS);
+  const [draft, setDraft] = useState<PeopleFilters>(EMPTY_FILTERS);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [transfer, setTransfer] = useState<string | null>(null);
   const [buy, setBuy] = useState(false);
@@ -49,14 +61,14 @@ function PeopleCarousel() {
   const dragStart = useRef<{ x: number; id: number } | null>(null);
   const SWIPE_THRESHOLD = 90;
 
-  async function load() {
+  async function load(next = applied) {
     try {
       const params = new URLSearchParams();
       params.set("city", user?.city ?? "Yaoundé");
       if (user?.zone) params.set("zone", user.zone);
-      if (availableOnly) params.set("available", "1");
-      if (maxKm) params.set("maxKm", maxKm);
-      if (profession.trim()) params.set("profession", profession.trim());
+      if (next.presence !== "ALL") params.set("presence", next.presence);
+      if (next.maxKm.trim()) params.set("maxKm", next.maxKm.trim());
+      if (next.profession.trim()) params.set("profession", next.profession.trim());
       if (coords) {
         params.set("lat", String(coords.latitude));
         params.set("lng", String(coords.longitude));
@@ -72,30 +84,27 @@ function PeopleCarousel() {
   useEffect(() => {
     if (user) void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.city, user?.zone, availableOnly, coords?.latitude, coords?.longitude]);
+  }, [user?.city, user?.zone, applied.presence, applied.maxKm, applied.profession, coords?.latitude, coords?.longitude]);
 
   const filtered = useMemo(() => {
     if (!items) return null;
-    return items.filter((p) => (p.circle ?? "NEARBY") === circle);
-  }, [items, circle]);
-
-  async function setMyPresence(availability: "AVAILABLE" | "BUSY" | "HIDDEN") {
-    setBusy(true);
-    try {
-      await api("/users/me", {
-        method: "PATCH",
-        body: JSON.stringify({ availability, ttlHours: 4 }),
-      });
-      await refresh();
-    } catch {
-      setError(messages.common.error);
-    } finally {
-      setBusy(false);
-    }
-  }
+    return items.filter((p) => {
+      if ((p.circle ?? "NEARBY") !== circle) return false;
+      if (applied.presence === "ALL") return true;
+      const presence = (p.presence ?? presenceFromDeclared(p.availability)) as PresenceState;
+      return presence === applied.presence;
+    });
+  }, [items, circle, applied.presence]);
 
   function setCircleTab(next: Circle) {
     setCircle(next);
+    setIndex(0);
+  }
+
+  function applyFilters(next: PeopleFilters) {
+    setApplied(next);
+    setDraft(next);
+    setFiltersOpen(false);
     setIndex(0);
   }
 
@@ -103,14 +112,25 @@ function PeopleCarousel() {
   if (!items || !filtered) return <Skeleton className="mx-4 mt-6 h-96" />;
 
   const person = filtered[index];
+  const activeFilters = filterCount(applied);
   const title =
-    circle === "FRIEND" ? messages.world.peopleFriends : circle === "LATER" ? messages.world.peopleLater : messages.world.peopleNearby;
-  const empty =
     circle === "FRIEND"
-      ? messages.world.peopleFriendsEmpty
+      ? applied.presence === "AVAILABLE"
+        ? messages.world.peopleFriendsAvailable
+        : messages.world.peopleFriends
       : circle === "LATER"
-        ? messages.world.peopleLaterEmpty
-        : messages.world.peopleAroundEmpty;
+        ? messages.world.peopleLater
+        : applied.presence === "AVAILABLE"
+          ? messages.world.peopleAvailableAround
+          : messages.world.peopleNearby;
+  const empty =
+    activeFilters > 0
+      ? messages.world.peopleEmptyBody
+      : circle === "FRIEND"
+        ? messages.world.peopleFriendsEmpty
+        : circle === "LATER"
+          ? messages.world.peopleLaterEmpty
+          : messages.world.peopleAroundEmpty;
 
   const counts = {
     FRIEND: items.filter((p) => p.circle === "FRIEND").length,
@@ -118,20 +138,86 @@ function PeopleCarousel() {
     LATER: items.filter((p) => p.circle === "LATER").length,
   };
 
+  const chrome = (
+    <PeopleChrome
+      title={title}
+      circle={circle}
+      counts={counts}
+      filtersOpen={filtersOpen}
+      filterCount={activeFilters}
+      onToggleFilters={() => {
+        setFiltersOpen((v) => {
+          if (!v) setDraft(applied);
+          return !v;
+        });
+      }}
+      onCircle={setCircleTab}
+    />
+  );
+
+  const filterForm = filtersOpen ? (
+    <form
+      className="mb-4 space-y-3 rounded-card bg-surface p-4 text-center shadow-card"
+      onSubmit={(e) => {
+        e.preventDefault();
+        applyFilters(draft);
+      }}
+    >
+      <p className="type-caption font-semibold text-muted">{messages.world.presenceFilter}</p>
+      <div className="flex flex-wrap justify-center gap-1.5">
+        {(
+          [
+            ["ALL", messages.world.presenceAll],
+            ["AVAILABLE", messages.world.available],
+            ["UNSURE", messages.world.unsure],
+            ["UNAVAILABLE", messages.world.unavailable],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setDraft((cur) => ({ ...cur, presence: key }))}
+            className={`type-caption rounded-full px-2.5 py-1.5 font-semibold ${
+              draft.presence === key ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <input
+        value={draft.maxKm}
+        onChange={(e) => setDraft((cur) => ({ ...cur, maxKm: e.target.value }))}
+        placeholder={messages.world.maxDistance}
+        inputMode="numeric"
+        className="h-11 w-full rounded-full bg-surface-sunken px-4 text-center type-body-sm text-ink outline-none"
+      />
+      <input
+        value={draft.profession}
+        onChange={(e) => setDraft((cur) => ({ ...cur, profession: e.target.value }))}
+        placeholder={messages.world.professionFilter}
+        className="h-11 w-full rounded-full bg-surface-sunken px-4 text-center type-body-sm text-ink outline-none"
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => applyFilters(EMPTY_FILTERS)}
+          className="type-button tap-scale h-10 rounded-full bg-surface-sunken text-ink"
+        >
+          {messages.world.clearFilters}
+        </button>
+        <button type="submit" className="type-button tap-scale h-10 rounded-full bg-accent text-on-primary">
+          {messages.world.applyFilters}
+        </button>
+      </div>
+    </form>
+  ) : null;
+
   if (!person) {
     return (
       <div className="px-4 py-3">
-        <PeopleChrome
-          title={title}
-          circle={circle}
-          counts={counts}
-          filtersOpen={filtersOpen}
-          setFiltersOpen={setFiltersOpen}
-          onCircle={setCircleTab}
-          mine={presenceFromDeclared(user?.availability)}
-          busy={busy}
-          onPresence={(k) => void setMyPresence(k)}
-        />
+        {chrome}
+        {filterForm}
         <EmptyState title={title} body={empty} />
       </div>
     );
@@ -140,7 +226,6 @@ function PeopleCarousel() {
   const prev = filtered[index - 1];
   const next = filtered[index + 1];
   const presence = (person.presence ?? presenceFromDeclared(person.availability)) as PresenceState;
-  const mine = presenceFromDeclared(user?.availability);
   const count = filtered.length;
   const liked = viewerLikeActive(placement, "user", person.id, Boolean(person.likedByMe), ready);
 
@@ -238,47 +323,8 @@ function PeopleCarousel() {
 
   return (
     <div className="px-4 py-3">
-      <PeopleChrome
-        title={title}
-        circle={circle}
-        counts={counts}
-        filtersOpen={filtersOpen}
-        setFiltersOpen={setFiltersOpen}
-        onCircle={setCircleTab}
-        mine={mine}
-        busy={busy}
-        onPresence={(k) => void setMyPresence(k)}
-      />
-
-      {filtersOpen ? (
-        <form
-          className="mb-4 space-y-3 rounded-card bg-surface p-4 shadow-card"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void load();
-          }}
-        >
-          <label className="type-body-sm flex items-center gap-2 text-ink">
-            <input type="checkbox" checked={availableOnly} onChange={(e) => setAvailableOnly(e.target.checked)} />
-            {messages.world.onlyAvailable}
-          </label>
-          <input
-            value={maxKm}
-            onChange={(e) => setMaxKm(e.target.value)}
-            placeholder={messages.world.maxDistance}
-            className="h-11 w-full rounded-full bg-surface-sunken px-4 type-body-sm text-ink outline-none"
-          />
-          <input
-            value={profession}
-            onChange={(e) => setProfession(e.target.value)}
-            placeholder={messages.world.professionFilter}
-            className="h-11 w-full rounded-full bg-surface-sunken px-4 type-body-sm text-ink outline-none"
-          />
-          <button type="submit" className="type-button tap-scale h-10 w-full rounded-full bg-accent text-on-primary">
-            {messages.common.apply}
-          </button>
-        </form>
-      ) : null}
+      {chrome}
+      {filterForm}
 
       <div className="relative mx-auto max-w-sm">
         {prev?.avatarUrl ? (
@@ -317,41 +363,39 @@ function PeopleCarousel() {
               <span className="type-caption rounded-full bg-white/15 px-2 py-0.5 font-semibold text-white">{circleLabel}</span>
             </div>
           </Link>
-          <div className="space-y-2.5 px-4 pb-4 pt-3">
-            <div className="flex items-start gap-3">
-              <h2 className="min-w-0 flex-1">
-                <span className="type-h2 line-clamp-2 break-words text-ink">
-                  {person.firstName} {person.lastName}
-                  {person.certified ? (
-                    <span className="ml-1 inline-block align-middle">
-                      <CertifiedMark />
-                    </span>
-                  ) : null}
-                </span>
-                <span className="type-caption mt-1 flex min-w-0 items-center gap-1.5 text-muted">
-                  {person.age != null ? <span className="shrink-0">{messages.world.age.replace("{age}", String(person.age))}</span> : null}
-                  {person.age != null && person.profession ? <span aria-hidden>·</span> : null}
-                  {person.profession ? (
-                    <span className="inline-flex min-w-0 items-center gap-1 truncate">
-                      <BriefcaseIcon size={13} />
-                      <span className="truncate">{person.profession}</span>
-                    </span>
-                  ) : null}
-                </span>
-              </h2>
-              <button
-                type="button"
-                disabled={busy}
-                aria-label={liked ? messages.social.likeHere : messages.social.likePlace}
-                onClick={() => void likePerson(false)}
-                className={`tap-scale grid h-10 w-10 shrink-0 place-items-center rounded-full ${
-                  liked ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
-                }`}
-              >
-                <HeartIcon size={17} filled={liked} />
-              </button>
-            </div>
-            <p className="type-caption inline-flex max-w-full items-center gap-1.5 text-muted">
+          <div className="space-y-2.5 px-4 pb-4 pt-3 text-center">
+            <h2 className="min-w-0">
+              <span className="type-h2 line-clamp-2 break-words text-ink">
+                {person.firstName} {person.lastName}
+                {person.certified ? (
+                  <span className="ml-1 inline-block align-middle">
+                    <CertifiedMark />
+                  </span>
+                ) : null}
+              </span>
+              <span className="type-caption mt-1 flex min-w-0 items-center justify-center gap-1.5 text-muted">
+                {person.age != null ? <span className="shrink-0">{messages.world.age.replace("{age}", String(person.age))}</span> : null}
+                {person.age != null && person.profession ? <span aria-hidden>·</span> : null}
+                {person.profession ? (
+                  <span className="inline-flex min-w-0 items-center gap-1 truncate">
+                    <BriefcaseIcon size={13} />
+                    <span className="truncate">{person.profession}</span>
+                  </span>
+                ) : null}
+              </span>
+            </h2>
+            <button
+              type="button"
+              disabled={busy}
+              aria-label={liked ? messages.social.likeHere : messages.social.likePlace}
+              onClick={() => void likePerson(false)}
+              className={`tap-scale mx-auto grid h-10 w-10 place-items-center rounded-full ${
+                liked ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
+              }`}
+            >
+              <HeartIcon size={17} filled={liked} />
+            </button>
+            <p className="type-caption inline-flex max-w-full items-center justify-center gap-1.5 text-muted">
               <RouteIcon size={13} />
               <span className="truncate">
                 {distanceText ?? (geoStatus === "idle" ? messages.world.locating : messages.world.approximate)}
@@ -363,7 +407,7 @@ function PeopleCarousel() {
               </button>
             ) : null}
             {person.activeMood ? (
-              <p className="type-caption truncate rounded-lg bg-accent-soft px-3 py-1.5 font-medium text-accent">
+              <p className="type-caption mx-auto truncate rounded-lg bg-accent-soft px-3 py-1.5 font-medium text-accent">
                 {person.activeMood.activity || person.activeMood.body}
               </p>
             ) : null}
@@ -450,21 +494,17 @@ function PeopleChrome({
   circle,
   counts,
   filtersOpen,
-  setFiltersOpen,
+  filterCount: active,
+  onToggleFilters,
   onCircle,
-  mine,
-  busy,
-  onPresence,
 }: {
   title: string;
   circle: Circle;
   counts: Record<Circle, number>;
   filtersOpen: boolean;
-  setFiltersOpen: (fn: (v: boolean) => boolean) => void;
+  filterCount: number;
+  onToggleFilters: () => void;
   onCircle: (c: Circle) => void;
-  mine: PresenceState;
-  busy: boolean;
-  onPresence: (k: "AVAILABLE" | "BUSY" | "HIDDEN") => void;
 }) {
   const { messages } = useI18n();
   const tabs: Array<[Circle, string]> = [
@@ -476,8 +516,8 @@ function PeopleChrome({
     <>
       <div className="mb-3 flex items-end justify-between gap-3">
         <h1 className="type-h1 text-accent">{title}</h1>
-        <Chip active={filtersOpen} onClick={() => setFiltersOpen((v) => !v)}>
-          {messages.world.filters}
+        <Chip active={filtersOpen || active > 0} onClick={onToggleFilters} tone={active > 0 ? "info" : "neutral"}>
+          {active > 0 ? messages.world.filtersActive.replace("{n}", String(active)) : messages.world.filters}
         </Chip>
       </div>
       <div className="mb-3 grid grid-cols-3 gap-1 rounded-full bg-surface-sunken p-1">
@@ -494,35 +534,6 @@ function PeopleChrome({
             {counts[key] ? ` ${counts[key]}` : ""}
           </button>
         ))}
-      </div>
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="type-caption font-semibold text-muted">{messages.world.myStatus}</p>
-        <div className="flex gap-1.5">
-          {(
-            [
-              ["AVAILABLE", messages.world.available],
-              ["BUSY", messages.world.unsure],
-              ["HIDDEN", messages.world.unavailable],
-            ] as const
-          ).map(([key, label]) => {
-            const active = mine === presenceFromDeclared(key);
-            return (
-              <button
-                key={key}
-                type="button"
-                disabled={busy}
-                aria-pressed={active}
-                onClick={() => onPresence(key)}
-                className={`type-caption inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold ${
-                  active ? "bg-surface text-ink shadow-xs" : "text-muted"
-                }`}
-              >
-                <PresenceDot presence={key} />
-                {label}
-              </button>
-            );
-          })}
-        </div>
       </div>
     </>
   );

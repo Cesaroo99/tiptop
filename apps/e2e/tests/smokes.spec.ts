@@ -8,7 +8,7 @@ test.describe("Smokes parcours 3–5, 8, 12", () => {
 
   test("P3 — découverte personnes (liste ou vide réel)", async ({ page }) => {
     await page.goto("/people");
-    await expect(page.getByText(/Amies disponibles|Personne dispo dans ta zone/)).toBeVisible();
+    await expect(page.getByText(/Autour de moi|Personne ici|Personne autour/)).toBeVisible();
   });
 
   test("P4 — liste des sorties", async ({ page }) => {

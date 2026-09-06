@@ -12,7 +12,7 @@ export function DesktopRail() {
   const { messages } = useI18n();
   const shortcuts = [
     { href: "/events", label: messages.nav.events },
-    { href: "/people", label: messages.world.peopleNearby },
+    { href: "/people", label: messages.nav.people },
     { href: "/wishes", label: messages.menu.wishes },
     { href: "/mood", label: messages.nav.mood },
     { href: "/search", label: messages.common.search },
