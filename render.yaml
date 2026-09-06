@@ -1,9 +1,13 @@
-# Blueprint Render — tout le code est sur main.
+# Blueprint Render — le code est sur main.
 # URL : https://tiptop-phone.onrender.com
+#
+# Si « create web service failed » : Dashboard → supprimer tiptop-phone,
+# tiptop-cesar99 et le Postgres free tiptop-db, puis New → Blueprint → main.
 
 databases:
   - name: tiptop-db
     plan: free
+    postgresMajorVersion: "16"
     databaseName: tiptop
     user: tiptop
 
@@ -12,7 +16,7 @@ services:
     runtime: node
     name: tiptop-phone
     plan: free
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @tiptop/api exec prisma generate && pnpm --filter @tiptop/web build
+    buildCommand: bash scripts/render-build.sh
     startCommand: node scripts/render-start.mjs
     healthCheckPath: /api/health
     envVars:

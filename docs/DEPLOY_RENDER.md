@@ -1,30 +1,40 @@
 # Déployer TipTop sur Render + installer l’APK
 
-## 1. Héberger sur Render (gratuit)
+## 1. Nettoyer les essais ratés
 
-1. Crée un compte sur [render.com](https://render.com) (GitHub autorisé).
+Le Blueprint **échoue à créer** le service si un Postgres free ou un service du même nom existe déjà (un seul Postgres gratuit par compte).
+
+Dans [dashboard.render.com](https://dashboard.render.com) → **supprime** s’ils existent :
+
+- services web `tiptop-cesar99`, `tiptop-phone`
+- base `tiptop-db`
+- l’ancien Blueprint TipTop
+
+Attends que la suppression soit **terminée** (plus de ligne grise).
+
+## 2. Héberger (gratuit)
+
+1. Compte [render.com](https://render.com) lié à GitHub.
 2. **New → Blueprint**.
-3. Choisis le repo `Cesaroo99/tiptop` et la branche qui contient `render.yaml` (cette PR, ou `main` après merge).
-4. Apply. Render crée :
-   - Postgres gratuit `tiptop-db` (expire au bout de 30 jours sur le plan free)
-   - le service web `tiptop-phone`
-5. Attends le premier deploy (build + seed, 5–10 min). Le service free s’endort après 15 min : le premier chargement peut prendre ~1 min.
+3. Repo `Cesaroo99/tiptop`, branche **`main`**.
+4. Apply. Render crée Postgres `tiptop-db` (30 jours) + le web `tiptop-phone`.
+5. Premier deploy : 5–10 min. Le free s’endort après 15 min.
 
 **URL :** [https://tiptop-phone.onrender.com](https://tiptop-phone.onrender.com)
 
 **Compte démo :** `+237 695 21 47 85` / OTP `1234`
 
-Si le nom `tiptop-phone` est déjà pris, change `name:` dans `render.yaml` et l’URL dans `apps/android/app/src/main/res/values/strings.xml`.
+Si le nom `tiptop-phone` est pris mondialement, change `name:` dans `render.yaml` et l’URL dans `apps/android/app/src/main/res/values/strings.xml`.
 
-## 2. APK téléphone
+## 3. APK téléphone
 
-L’APK est une WebView qui ouvre l’URL Render (plein écran, caméra / localisation autorisées).
+WebView plein écran vers l’URL Render (caméra / localisation autorisées).
 
-- Artifact de cette session : `tiptop.apk`
+- Artifact session : `tiptop.apk`
 - Ou GitHub → Actions → **APK TipTop** → artifact `tiptop-apk`
 
-Sur le téléphone : autorise « sources inconnues », installe, ouvre TipTop. Au premier lancement le serveur Render peut encore dormir.
+Sur le téléphone : autorise « sources inconnues », installe, ouvre TipTop. Au réveil Render, le premier chargement peut prendre ~1 min.
 
-## 3. Sans APK
+## 4. Sans APK
 
-Depuis Chrome Android, ouvre l’URL → menu → **Ajouter à l’écran d’accueil** (PWA).
+Chrome Android → l’URL → menu → **Ajouter à l’écran d’accueil** (PWA).
