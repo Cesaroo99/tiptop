@@ -125,6 +125,16 @@ export function CalendarIcon({ size = 16, className }: IconProps) {
   );
 }
 
+export function UserPlusIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+      <circle cx="9" cy="8" r="3" />
+      <path d="M4 18c.4-2.7 2.4-4.5 5-4.5s4.6 1.8 5 4.5" />
+      <path d="M17 8v6M14 11h6" />
+    </svg>
+  );
+}
+
 export function UsersIcon({ size = 16, className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>

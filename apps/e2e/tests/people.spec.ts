@@ -43,6 +43,15 @@ test.describe("Amies — cartes, distance, profil", () => {
     await expect(page.getByText("Tu le choisis ici")).toHaveCount(0);
   });
 
+  test("mis de côté : Retirer + ajouter comme amie", async ({ page }) => {
+    await page.goto("/people");
+    await page.getByRole("button", { name: /Mis de côté/ }).click();
+    await expect(page.getByRole("heading", { name: "Mis de côté" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Retirer" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Mis de côté", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Ajouter comme amie" })).toBeVisible();
+  });
+
   test("profil soi : régler l’état, pas les actions visiteur", async ({ page }) => {
     await page.goto("/u/cesar_memoli");
     await expect(page.getByText("Ton état")).toBeVisible();

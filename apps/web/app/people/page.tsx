@@ -5,7 +5,7 @@ import Link from "next/link";
 import { presenceFromDeclared, type PresenceState } from "@tiptop/domain";
 import { AppShell } from "@/components/AppShell";
 import { AvailabilityBadge } from "@/components/AvailabilityBadge";
-import { BriefcaseIcon, ChevronLeftIcon, ChevronRightIcon, HeartIcon, RouteIcon } from "@/components/Icons";
+import { BriefcaseIcon, ChevronLeftIcon, ChevronRightIcon, HeartIcon, RouteIcon, UserPlusIcon } from "@/components/Icons";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { SocialInviteModal } from "@/components/SocialInviteModal";
 import { Chip, EmptyState, ErrorBanner, Skeleton } from "@/components/ui";
@@ -301,6 +301,19 @@ function PeopleCarousel() {
     }
   }
 
+  async function addFriend() {
+    setBusy(true);
+    try {
+      await api(`/contacts/${person.id}`, { method: "POST" });
+      setItems((cur) => cur?.map((p) => (p.id === person.id ? { ...p, circle: "FRIEND" } : p)) ?? cur);
+      if (circle !== "FRIEND") setIndex(0);
+    } catch {
+      setError(messages.common.error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function toggleLater() {
     setBusy(true);
     try {
@@ -364,6 +377,17 @@ function PeopleCarousel() {
                 <span className="type-caption rounded-full bg-white/15 px-2 py-0.5 font-semibold text-white">{circleLabel}</span>
               </div>
             </Link>
+            {person.circle !== "FRIEND" ? (
+              <button
+                type="button"
+                disabled={busy}
+                aria-label={messages.world.addFriend}
+                onClick={() => void addFriend()}
+                className="tap-scale absolute left-2.5 top-2.5 z-10 grid h-9 w-9 place-items-center rounded-full bg-black/45 text-white shadow-sm backdrop-blur-sm"
+              >
+                <UserPlusIcon size={16} />
+              </button>
+            ) : null}
             <button
               type="button"
               disabled={busy}
@@ -441,7 +465,7 @@ function PeopleCarousel() {
                 onClick={() => void toggleLater()}
                 className="type-caption w-full py-0.5 text-center font-medium text-muted"
               >
-                {person.circle === "LATER" ? messages.world.savedForLater : messages.world.saveForLater}
+                {person.circle === "LATER" ? messages.world.removeFromLater : messages.world.saveForLater}
               </button>
             ) : null}
           </div>
