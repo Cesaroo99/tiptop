@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ageCategoryLabel, canInteractWithEvent, eventLifecycle, eventSocialProof } from "@tiptop/domain";
+import { canInteractWithEvent, eventLifecycle, eventSocialProof } from "@tiptop/domain";
+import { AgeBadge } from "./AgeBadge";
 import { api, ApiError, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { recurrenceCaption } from "@/lib/event-series";
@@ -32,6 +33,7 @@ export function EventCard({
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
+  const [interestBusy, setInterestBusy] = useState(false);
 
   async function heart(confirmTransfer = false) {
     try {
@@ -57,12 +59,31 @@ export function EventCard({
   }
 
   async function interested() {
-    const res = await api<{ interested: boolean }>(`/events/${event.id}/interested`, { method: "POST" });
+    if (interestBusy || !canInterest) return;
+    const was = Boolean(event.viewerInterested);
+    const next = !was;
+    setInterestBusy(true);
     onChanged?.({
       ...event,
-      viewerInterested: res.interested,
-      interestedCount: Math.max(0, (event.interestedCount ?? 0) + (res.interested ? 1 : -1)),
+      viewerInterested: next,
+      interestedCount: Math.max(0, (event.interestedCount ?? 0) + (next ? 1 : -1)),
     });
+    try {
+      const res = await api<{ interested: boolean }>(`/events/${event.id}/interested`, { method: "POST" });
+      onChanged?.({
+        ...event,
+        viewerInterested: res.interested,
+        interestedCount: Math.max(0, (event.interestedCount ?? 0) + (res.interested === was ? 0 : res.interested ? 1 : -1)),
+      });
+    } catch {
+      onChanged?.({
+        ...event,
+        viewerInterested: was,
+        interestedCount: event.interestedCount,
+      });
+    } finally {
+      setInterestBusy(false);
+    }
   }
 
   async function share() {
@@ -174,11 +195,7 @@ export function EventCard({
               {event.host.certified ? <CertifiedMark /> : null} · {relative}
             </p>
           </div>
-          {ageCategoryLabel(event.minAge) ? (
-            <span className="type-caption shrink-0 rounded-full bg-danger-soft px-2 py-0.5 font-bold text-danger">
-              {ageCategoryLabel(event.minAge)}
-            </span>
-          ) : null}
+          <AgeBadge minAge={event.minAge} />
           <IconButton label={messages.social.share} onClick={() => void share()} size={32}>
             <ShareIcon size={15} />
           </IconButton>
@@ -227,7 +244,7 @@ export function EventCard({
           onReserve={() => setBookOpen(true)}
           interestedLabel={event.viewerInterested ? messages.world.notInterested : messages.world.interested}
           interested={event.viewerInterested}
-          interestedDisabled={!canInterest}
+          interestedDisabled={!canInterest || interestBusy}
           onInterested={() => void interested()}
           startsAt={event.startsAt}
           endsAt={event.endsAt}

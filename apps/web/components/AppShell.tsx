@@ -36,6 +36,9 @@ export function AppShell({
   }, [loading, user, router]);
 
   if (loading || !user || !user.profileCompleted) {
+    if (fullBleed) {
+      return <div className="h-full min-h-0 bg-ink" />;
+    }
     return (
       <div className="space-y-4 p-4 pt-12">
         <Skeleton className="h-10" />

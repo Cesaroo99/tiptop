@@ -46,20 +46,36 @@ function MoodFeed() {
   const slideRefs = useRef(new Map<string, HTMLElement>());
 
   useEffect(() => {
-    api<{ items: MoodItem[] }>("/moods")
-      .then(async (d) => {
-        if (startId && !d.items.some((m) => m.id === startId)) {
-          try {
-            const single = await api<MoodItem>(`/moods/${startId}`);
-            setItems([single, ...d.items]);
-            return;
-          } catch {
-            /* Mood expiré : on garde le flux. */
-          }
+    let cancelled = false;
+    async function load() {
+      if (startId) {
+        try {
+          const single = await api<MoodItem>(`/moods/${startId}`);
+          if (!cancelled) setItems([single]);
+        } catch {
+          /* Mood expiré : on charge le flux. */
         }
-        setItems(d.items);
-      })
-      .catch(() => setItems([]));
+      }
+      try {
+        const d = await api<{ items: MoodItem[] }>("/moods");
+        if (cancelled) return;
+        if (startId) {
+          const rest = d.items.filter((m) => m.id !== startId);
+          setItems((cur) => {
+            const first = cur?.find((m) => m.id === startId) ?? d.items.find((m) => m.id === startId);
+            return first ? [first, ...rest] : d.items;
+          });
+        } else {
+          setItems(d.items);
+        }
+      } catch {
+        if (!cancelled) setItems((cur) => cur ?? []);
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startId]);
 
@@ -255,6 +271,7 @@ function MoodSlide({
       {mood.videoUrl ? (
         <MoodVideo
           src={mood.videoUrl}
+          poster={mood.imageUrl}
           muted={muted || mood.soundKey === "off" || Boolean(moodSoundSrc(mood.soundKey))}
           soundSrc={moodSoundSrc(mood.soundKey)}
         />
@@ -417,7 +434,7 @@ function MoodSlide({
 }
 
 /** Vidéo en boucle : joue dès qu’elle est visible, tap pour pause / lecture. */
-function MoodVideo({ src, muted, soundSrc }: { src: string; muted: boolean; soundSrc?: string | null }) {
+function MoodVideo({ src, poster, muted, soundSrc }: { src: string; poster?: string | null; muted: boolean; soundSrc?: string | null }) {
   const { messages } = useI18n();
   const ref = useRef<HTMLVideoElement>(null);
   const pausedRef = useRef(false);
@@ -462,12 +479,13 @@ function MoodVideo({ src, muted, soundSrc }: { src: string; muted: boolean; soun
       <video
         ref={ref}
         src={src}
+        poster={poster ?? undefined}
         muted={muted}
         loop
         playsInline
         autoPlay
         preload="auto"
-        className="h-full w-full object-cover"
+        className="h-full w-full bg-ink object-cover"
         onClick={toggle}
       />
       {soundSrc ? <audio src={soundSrc} loop autoPlay muted={muted} /> : null}

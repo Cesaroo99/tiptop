@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ageCategoryLabel, canInteractWithEvent, eventLifecycle, eventSocialProof } from "@tiptop/domain";
+import { canInteractWithEvent, eventLifecycle, eventSocialProof } from "@tiptop/domain";
+import { AgeBadge } from "./AgeBadge";
+import { ExpandableText } from "./ExpandableText";
 import { api, ApiError, type CommentItem, type EventCard as EventCardType } from "@/lib/api";
 import { useEventDestination } from "@/lib/event-destination";
 import { useI18n } from "@/lib/i18n";
@@ -55,6 +57,7 @@ export function EventDetailCard({
   const [reportOpen, setReportOpen] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [interestBusy, setInterestBusy] = useState(false);
 
   async function heart(confirmTransfer = false) {
     try {
@@ -80,8 +83,31 @@ export function EventDetailCard({
   }
 
   async function interested() {
-    await api<{ interested: boolean }>(`/events/${event.id}/interested`, { method: "POST" });
-    onChanged?.(await api<EventCardType>(`/events/${event.id}`));
+    if (interestBusy || !canInterest) return;
+    const was = Boolean(event.viewerInterested);
+    const next = !was;
+    setInterestBusy(true);
+    onChanged?.({
+      ...event,
+      viewerInterested: next,
+      interestedCount: Math.max(0, (event.interestedCount ?? 0) + (next ? 1 : -1)),
+    });
+    try {
+      const res = await api<{ interested: boolean }>(`/events/${event.id}/interested`, { method: "POST" });
+      onChanged?.({
+        ...event,
+        viewerInterested: res.interested,
+        interestedCount: Math.max(0, (event.interestedCount ?? 0) + (res.interested === was ? 0 : res.interested ? 1 : -1)),
+      });
+    } catch {
+      onChanged?.({
+        ...event,
+        viewerInterested: was,
+        interestedCount: event.interestedCount,
+      });
+    } finally {
+      setInterestBusy(false);
+    }
   }
 
   async function share() {
@@ -139,7 +165,6 @@ export function EventDetailCard({
         `${formatCompactCount(event.reservedCount ?? event.taken)} ${messages.world.reservationsCount}`,
         `${formatCompactCount(event.interestedCount ?? 0)} ${messages.world.interestedCount}`,
       ];
-  const age = ageCategoryLabel(event.minAge);
   const socialProof = eventSocialProof({
     friendsGoing: event.friendsGoing ?? 0,
     networkGoing: event.networkGoing ?? 0,
@@ -173,11 +198,7 @@ export function EventDetailCard({
               {event.host.firstName} {event.host.lastName}
             </Link>
             {event.host.certified ? <CertifiedMark /> : null}
-            {age ? (
-              <span className="type-caption shrink-0 rounded-full bg-danger px-2 py-0.5 font-bold leading-none text-white">
-                {age}
-              </span>
-            ) : null}
+            <AgeBadge minAge={event.minAge} />
           </div>
           <p className="type-caption mt-0.5 flex items-center gap-1 text-muted">
             <GlobeIcon size={12} />
@@ -192,16 +213,7 @@ export function EventDetailCard({
         </IconButton>
       </div>
 
-      <p className="type-body-sm mt-3 text-ink">
-        {lead ? (
-          <>
-            <span className="font-bold">{lead}</span>
-            {rest ? ` ${rest}` : null}
-          </>
-        ) : (
-          event.title
-        )}
-      </p>
+      <ExpandableText text={body} lead={lead} rest={rest || undefined} />
 
       <div className="relative mt-3">
         {event.imageUrl ? (
@@ -325,7 +337,7 @@ export function EventDetailCard({
         onReserve={() => setBookOpen(true)}
         interestedLabel={event.viewerInterested ? messages.world.notInterested : messages.world.interested}
         interested={event.viewerInterested}
-        interestedDisabled={!canInterest}
+        interestedDisabled={!canInterest || interestBusy}
         onInterested={() => void interested()}
         startsAt={event.startsAt}
         endsAt={event.endsAt}

@@ -216,6 +216,7 @@ export type SearchPost = {
   id: string;
   body: string;
   imageUrl: string | null;
+  imageUrls?: string[];
   createdAt: string;
   author: {
     username: string;
@@ -412,6 +413,7 @@ export type FeedItem = {
   id: string;
   body: string;
   imageUrl: string | null;
+  imageUrls?: string[];
   city: string | null;
   zone: string | null;
   createdAt: string;
@@ -450,6 +452,9 @@ export type FeedItem = {
     viewerInterested?: boolean;
     canBook?: boolean;
     viewerReserved?: boolean;
+    isHost?: boolean;
+    status?: string;
+    endsAt?: string | null;
     recurrence?: string;
     seriesId?: string | null;
     priceXaf?: number;

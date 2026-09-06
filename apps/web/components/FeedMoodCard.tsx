@@ -8,6 +8,7 @@ import { viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { Avatar } from "./Avatar";
 import { HeartIcon } from "./Icons";
+import { LikeDialogs, likeErrorKind } from "./LikeDialogs";
 import { useLiveLikeLabel } from "./LikeTimeBadge";
 
 export function FeedMoodCard({
@@ -15,33 +16,68 @@ export function FeedMoodCard({
   onChanged,
 }: {
   mood: MoodItem;
-  onChanged?: (next: MoodItem) => void;
+  onChanged?: (next: MoodItem, meta?: { soleLike?: boolean }) => void;
 }) {
   const { messages } = useI18n();
   const { placement, ready, refresh } = useLikePlacement();
   const [busy, setBusy] = useState(false);
+  const [transfer, setTransfer] = useState<string | null>(null);
+  const [buy, setBuy] = useState(false);
   const liked = viewerLikeActive(placement, "mood", mood.id, Boolean(mood.likedByMe), ready);
-  const [loadedAt] = useState(() => Date.now());
+  const [loadedAt, setLoadedAt] = useState(() => Date.now());
   const vie = useLiveLikeLabel(mood.likeTime, loadedAt);
   const showVie = (mood.likeTime?.totalSeconds ?? 0) > 0 || (mood.likeTime?.activeCount ?? 0) > 0;
 
-  async function like() {
+  async function like(confirmTransfer = true) {
     if (busy) return;
     setBusy(true);
     try {
       if (liked) {
         await api("/likes", { method: "DELETE", body: JSON.stringify({ targetType: "mood", targetId: mood.id }) });
-        onChanged?.({ ...mood, likedByMe: false });
-      } else {
-        await api("/likes", {
-          method: "POST",
-          body: JSON.stringify({ targetType: "mood", targetId: mood.id, confirmTransfer: true }),
+        const active = Math.max(0, (mood.likeTime?.activeCount ?? 1) - 1);
+        onChanged?.({
+          ...mood,
+          likedByMe: false,
+          likeTime: {
+            totalSeconds: mood.likeTime?.totalSeconds ?? 0,
+            activeCount: active,
+            likedByMe: false,
+            label: mood.likeTime?.label ?? "0 s",
+          },
         });
-        onChanged?.({ ...mood, likedByMe: true });
+        await refresh();
+        return;
       }
+      await api("/likes", {
+        method: "POST",
+        body: JSON.stringify({ targetType: "mood", targetId: mood.id, confirmTransfer }),
+      });
+      onChanged?.(
+        {
+          ...mood,
+          likedByMe: true,
+          likeTime: {
+            totalSeconds: mood.likeTime?.totalSeconds ?? 0,
+            activeCount: mood.likeTime?.likedByMe ? mood.likeTime.activeCount : (mood.likeTime?.activeCount ?? 0) + 1,
+            likedByMe: true,
+            label: "0 s",
+          },
+        },
+        { soleLike: true },
+      );
+      setLoadedAt(Date.now());
       await refresh();
+      setTransfer(null);
+      setBuy(false);
     } catch (e) {
-      if (!(e instanceof ApiError)) return;
+      if (e instanceof ApiError) {
+        const kind = likeErrorKind(String(e.code));
+        if (kind === "buy") {
+          setBuy(true);
+          return;
+        }
+        if (kind === "transfer") setTransfer(`${mood.author.firstName} ${mood.author.lastName}`);
+      }
     } finally {
       setBusy(false);
     }
@@ -49,9 +85,18 @@ export function FeedMoodCard({
 
   return (
     <article className="overflow-hidden rounded-card bg-surface shadow-card" data-kind="mood">
-      <Link href={`/mood?start=${mood.id}`} className="relative block aspect-[9/14] bg-ink">
+      <Link href={`/mood?start=${mood.id}`} prefetch className="relative block aspect-[9/14] bg-ink">
         {mood.videoUrl ? (
-          <video src={mood.videoUrl} muted loop playsInline autoPlay preload="metadata" className="h-full w-full object-cover" />
+          <video
+            src={mood.videoUrl}
+            poster={mood.imageUrl ?? undefined}
+            muted
+            loop
+            playsInline
+            autoPlay
+            preload="metadata"
+            className="h-full w-full object-cover"
+          />
         ) : mood.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={mood.imageUrl} alt="" className="h-full w-full object-cover" />
@@ -90,6 +135,13 @@ export function FeedMoodCard({
           </div>
         </div>
       </Link>
+      <LikeDialogs
+        transferName={transfer}
+        buyOpen={buy}
+        onCloseTransfer={() => setTransfer(null)}
+        onConfirmTransfer={() => void like(true)}
+        onCloseBuy={() => setBuy(false)}
+      />
     </article>
   );
 }

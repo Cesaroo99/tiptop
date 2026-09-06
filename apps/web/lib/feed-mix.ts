@@ -57,7 +57,7 @@ export function mixHomeFeed(
   rng: () => number = Math.random,
 ): MixedFeedEntry[] {
   const linkedEvents = new Set(input.posts.map((p) => p.event?.id).filter(Boolean) as string[]);
-  const visual = input.posts.filter((p) => p.imageUrl || p.event);
+  const visual = input.posts.filter((p) => p.imageUrl || (p.imageUrls && p.imageUrls.length > 0) || p.event);
   const text = input.posts.filter((p) => !p.imageUrl && !p.event);
   const decks: Record<DeckKey, MixedFeedEntry[]> = {
     post: shuffle(visual, rng).map((post) => ({ kind: "post", id: `post:${post.id}`, post })),

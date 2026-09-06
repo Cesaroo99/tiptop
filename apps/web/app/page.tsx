@@ -5,7 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { PostCard } from "@/components/PostCard";
 import { EventCard } from "@/components/EventCard";
 import { FeedMoodCard } from "@/components/FeedMoodCard";
-import { FeedPersonCard } from "@/components/FeedPersonCard";
+import { FeedPeopleDeck } from "@/components/FeedPeopleDeck";
 import { Avatar } from "@/components/Avatar";
 import { PlusIcon } from "@/components/Icons";
 import { CardSkeleton, EmptyState, ErrorBanner } from "@/components/ui";
@@ -19,7 +19,7 @@ import {
   restoreFeedAnchor,
   writeFeedCache,
 } from "@/lib/feed-session";
-import { applySoleLike, releaseViewerLike, replaceFeedItem } from "@/lib/like-feed";
+import { applySoleLike, applySoleMoodLike, releaseViewerLike, replaceFeedItem } from "@/lib/like-feed";
 import { useI18n } from "@/lib/i18n";
 import { useLikePlacement } from "@/lib/like-placement";
 import Link from "next/link";
@@ -298,12 +298,20 @@ function HomeFeed() {
             <Link
               key={m.id}
               href={`/mood?start=${m.id}`}
+              prefetch
               className="tap-scale flex w-[72px] shrink-0 flex-col items-center gap-1.5"
             >
               <span className="grid h-[68px] w-[68px] place-items-center rounded-full bg-accent p-[3px]">
                 <span className="block h-full w-full overflow-hidden rounded-full bg-surface">
                   {m.videoUrl ? (
-                    <video src={m.videoUrl} muted playsInline preload="metadata" className="h-full w-full object-cover" />
+                    <video
+                      src={m.videoUrl}
+                      poster={m.imageUrl ?? undefined}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      className="h-full w-full bg-ink object-cover"
+                    />
                   ) : (
                     <Avatar
                       src={m.imageUrl || m.author.avatarUrl}
@@ -334,6 +342,7 @@ function HomeFeed() {
       ) : null}
       {stream.map((row, index) => {
         const feedKey = `${row.id}:${index}`;
+        const firstPersonIndex = stream.findIndex((r) => r.kind === "person");
         if (row.kind === "post") {
           return (
             <div key={feedKey} data-feed-key={feedKey}>
@@ -368,10 +377,11 @@ function HomeFeed() {
           );
         }
         if (row.kind === "person") {
+          if (index !== firstPersonIndex) return null;
           return (
             <div key={feedKey} data-feed-key={feedKey}>
-            <FeedPersonCard
-              person={row.person}
+            <FeedPeopleDeck
+              people={people}
               onChanged={(next) => {
                 setPeople((cur) => cur.map((p) => (p.id === next.id ? next : p)));
                 setStream((cur) =>
@@ -386,10 +396,18 @@ function HomeFeed() {
           <div key={feedKey} data-feed-key={feedKey}>
           <FeedMoodCard
             mood={row.mood}
-            onChanged={(next) => {
-              setReels((cur) => cur.map((m) => (m.id === next.id ? next : m)));
+            onChanged={(next, meta) => {
+              setReels((cur) => (meta?.soleLike ? applySoleMoodLike(cur, next) : cur.map((m) => (m.id === next.id ? next : m))));
+              if (meta?.soleLike) setItems((cur) => cur?.map(releaseViewerLike) ?? cur);
               setStream((cur) =>
-                cur.map((row) => (row.kind === "mood" && row.mood.id === next.id ? { ...row, mood: next } : row)),
+                cur.map((row) => {
+                  if (row.kind === "mood") {
+                    if (row.mood.id === next.id) return { ...row, mood: next };
+                    return meta?.soleLike ? { ...row, mood: { ...row.mood, likedByMe: false } } : row;
+                  }
+                  if (row.kind === "post" && meta?.soleLike) return { ...row, post: releaseViewerLike(row.post) };
+                  return row;
+                }),
               );
             }}
           />

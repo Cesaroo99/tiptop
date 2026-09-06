@@ -136,4 +136,29 @@ describe("PostCard — publication vs événement", () => {
     expect(screen.getByLabelText("Commentaires")).toHaveAttribute("href", "/posts/p-organic");
     expect(document.querySelector("[data-kind=post]")).toBeTruthy();
   });
+
+  it("plusieurs images : carrousel sans ouvrir la publication", () => {
+    render(
+      <TestI18nProvider>
+        <PostCard
+          post={{
+            ...organic,
+            imageUrls: ["/seed/events/black-white.jpg", "/seed/events/afterwork.jpg", "/seed/events/live.jpg"],
+          }}
+        />
+      </TestI18nProvider>,
+    );
+    expect(screen.getByLabelText("1 / 3")).toBeInTheDocument();
+    expect(screen.getByLabelText("Suivant")).toBeInTheDocument();
+  });
+
+  it("texte long : voir plus / voir moins", () => {
+    const long = `${organic.body} ${"encore une ligne de sortie. ".repeat(12)}`;
+    render(
+      <TestI18nProvider>
+        <PostCard post={{ ...organic, body: long }} />
+      </TestI18nProvider>,
+    );
+    expect(screen.getByText("Voir plus")).toBeInTheDocument();
+  });
 });

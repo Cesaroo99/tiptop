@@ -25,7 +25,7 @@ export function ActionCircle({
   children: ReactNode;
 }) {
   const cls = `tap-scale grid h-10 w-10 shrink-0 place-items-center rounded-full transition hover:brightness-95 ${
-    active ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
+    active ? "bg-accent text-on-primary shadow-sm ring-2 ring-accent/25" : "bg-surface-sunken text-muted"
   } ${disabled ? "opacity-40" : ""}`;
   if (href && !disabled) {
     return (

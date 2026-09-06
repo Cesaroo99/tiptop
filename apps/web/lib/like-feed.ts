@@ -1,4 +1,4 @@
-import type { FeedItem, LikePlacement } from "./api";
+import type { FeedItem, LikePlacement, MoodItem } from "./api";
 
 /** Like unique : après chargement, seul le placement courant est actif. */
 export function viewerLikeActive(
@@ -36,4 +36,24 @@ export function applySoleLike(items: FeedItem[], next: FeedItem): FeedItem[] {
 
 export function replaceFeedItem(items: FeedItem[], next: FeedItem): FeedItem[] {
   return items.map((p) => (p.id === next.id ? next : p));
+}
+
+export function releaseViewerMoodLike(mood: MoodItem): MoodItem {
+  if (!mood.likedByMe && !mood.likeTime?.likedByMe) return mood;
+  const active = Math.max(0, (mood.likeTime?.activeCount ?? 1) - 1);
+  return {
+    ...mood,
+    likedByMe: false,
+    likeTime: {
+      ...mood.likeTime,
+      totalSeconds: mood.likeTime?.totalSeconds ?? 0,
+      activeCount: active,
+      likedByMe: false,
+      label: mood.likeTime?.label ?? "0 s",
+    },
+  };
+}
+
+export function applySoleMoodLike(items: MoodItem[], next: MoodItem): MoodItem[] {
+  return items.map((m) => (m.id === next.id ? next : releaseViewerMoodLike(m)));
 }

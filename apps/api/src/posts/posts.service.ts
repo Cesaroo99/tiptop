@@ -5,6 +5,26 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { LikesService } from "../likes/likes.service";
 
 const MAX_BODY = 2000;
+const MAX_IMAGES = 8;
+
+function parseImageUrls(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return [
+    ...new Set(
+      raw
+        .map((u) => (typeof u === "string" ? u.trim() : ""))
+        .filter((u) => u.startsWith("/seed/")),
+    ),
+  ].slice(0, MAX_IMAGES);
+}
+
+function resolvePostImages(imageUrl: string | null | undefined, imageUrls: unknown): { imageUrl: string | null; imageUrls: string[] } {
+  const extra = parseImageUrls(imageUrls);
+  const first = imageUrl?.trim() && imageUrl.startsWith("/seed/") ? imageUrl.trim() : extra[0] ?? null;
+  const all = first ? [first, ...extra.filter((u) => u !== first)] : extra;
+  const unique = [...new Set(all)].slice(0, MAX_IMAGES);
+  return { imageUrl: unique[0] ?? null, imageUrls: unique };
+}
 
 const POST_INCLUDE = {
   author: { include: { profile: true } },
@@ -24,6 +44,8 @@ const POST_INCLUDE = {
       requiresReservation: true,
       priceXaf: true,
       hostId: true,
+      status: true,
+      endsAt: true,
       recurrence: true,
       seriesId: true,
       participants: { select: { status: true, userId: true } },
@@ -45,6 +67,7 @@ export class PostsService {
       id: string;
       body: string;
       imageUrl: string | null;
+      imageUrls?: unknown;
       city: string | null;
       zone: string | null;
       createdAt: Date;
@@ -76,6 +99,8 @@ export class PostsService {
         requiresReservation?: boolean;
         priceXaf?: number;
         hostId?: string;
+        status?: string;
+        endsAt?: Date | null;
         recurrence?: string;
         seriesId?: string | null;
         participants: Array<{ status: string; userId?: string }>;
@@ -126,15 +151,20 @@ export class PostsService {
           ),
           canBook: !isHost && !eventIsFull(p.event.capacity, taken),
           viewerReserved: seated && !isHost,
+          isHost,
+          status: p.event.status ?? "PUBLISHED",
+          endsAt: p.event.endsAt?.toISOString() ?? null,
           recurrence: p.event.recurrence ?? "NONE",
           seriesId: p.event.seriesId ?? null,
           priceXaf: p.event.priceXaf ?? 0,
         }
       : null;
+    const images = resolvePostImages(p.imageUrl, p.imageUrls);
     return {
       id: p.id,
       body: p.body,
-      imageUrl: p.imageUrl,
+      imageUrl: images.imageUrl,
+      imageUrls: images.imageUrls,
       city: p.city,
       zone: p.zone,
       createdAt: p.createdAt.toISOString(),
@@ -187,6 +217,7 @@ export class PostsService {
       id: string;
       body: string;
       imageUrl: string | null;
+      imageUrls?: unknown;
       city: string | null;
       zone: string | null;
       createdAt: Date;
@@ -218,6 +249,8 @@ export class PostsService {
         requiresReservation?: boolean;
         priceXaf?: number;
         hostId?: string;
+        status?: string;
+        endsAt?: Date | null;
         recurrence?: string;
         seriesId?: string | null;
         participants: Array<{ status: string; userId?: string }>;
@@ -254,12 +287,12 @@ export class PostsService {
     });
   }
 
-  async create(authorId: string, input: { body: string; city?: string; zone?: string; imageUrl?: string }) {
+  async create(authorId: string, input: { body: string; city?: string; zone?: string; imageUrl?: string; imageUrls?: string[] }) {
     const body = input.body.trim();
     if (!body) throw new BadRequestException({ code: "POST_EMPTY" });
     if (body.length > MAX_BODY) throw new BadRequestException({ code: "POST_TOO_LONG" });
-    let imageUrl = input.imageUrl?.trim() || null;
-    if (imageUrl && !imageUrl.startsWith("/seed/")) {
+    const images = resolvePostImages(input.imageUrl, input.imageUrls);
+    if ((input.imageUrl || (input.imageUrls && input.imageUrls.length)) && images.imageUrls.length === 0) {
       throw new BadRequestException({ code: "IMAGE_NOT_ALLOWED" });
     }
     const author = await this.prisma.user.findUnique({
@@ -270,7 +303,8 @@ export class PostsService {
       data: {
         authorId,
         body,
-        imageUrl,
+        imageUrl: images.imageUrl,
+        imageUrls: images.imageUrls.length ? images.imageUrls : undefined,
         city: input.city ?? author?.profile?.city,
         zone: input.zone ?? author?.profile?.zone,
       },

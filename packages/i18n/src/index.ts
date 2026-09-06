@@ -243,6 +243,8 @@ export type Messages = {
     inviteLater: string;
     eventsLater: string;
     noImageHint: string;
+    seeMore: string;
+    seeLess: string;
     posted: string;
     notifInvite: string;
     notifTicket: string;
@@ -1200,6 +1202,8 @@ export const fr: Messages = {
     inviteLater: "Les invitations vers un événement arrivent avec le cœur « monde réel ».",
     eventsLater: "Les événements ne sont pas encore indexés.",
     noImageHint: "Visuel local de démo (stockage objet plus tard).",
+    seeMore: "Voir plus",
+    seeLess: "Voir moins",
     posted: "Publication envoyée",
     notifInvite: "t’a invité à une sortie",
     notifTicket: "ticket mis à jour",
@@ -2157,6 +2161,8 @@ export const en: Messages = {
     inviteLater: "Invites to an event ship with the real-world core.",
     eventsLater: "Events are not indexed yet.",
     noImageHint: "Local demo visual (object storage later).",
+    seeMore: "See more",
+    seeLess: "See less",
     posted: "Post published",
     notifInvite: "invited you to a meetup",
     notifTicket: "ticket updated",

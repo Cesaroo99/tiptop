@@ -9,8 +9,12 @@ import { viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { recurrenceCaption } from "@/lib/event-series";
 import { formatCompactCount, formatRelative, splitPostLead } from "@/lib/time";
-import { ageCategoryLabel } from "@tiptop/domain";
+import { canInteractWithEvent, eventLifecycle } from "@tiptop/domain";
+import { postImageList } from "@/lib/post-images";
+import { AgeBadge } from "./AgeBadge";
 import { Avatar, CertifiedMark } from "./Avatar";
+import { ExpandableText } from "./ExpandableText";
+import { PostMediaCarousel } from "./PostMediaCarousel";
 import {
   CommentIcon,
   FlagIcon,
@@ -76,7 +80,12 @@ export function PostCard({
   const reserved = Boolean(event?.viewerReserved);
   const seriesLabel = recurrenceCaption(event?.recurrence, messages.world);
   const { lead, rest } = splitPostLead(post.body);
-  const age = isEvent ? ageCategoryLabel(event?.minAge) : null;
+  const images = postImageList(post);
+  const lifecycle = event
+    ? eventLifecycle(new Date(event.startsAt), event.endsAt ? new Date(event.endsAt) : null, new Date(), event.status)
+    : null;
+  const canInterest = Boolean(event && lifecycle && canInteractWithEvent(lifecycle.phase) && !event.isHost);
+  const [interestBusy, setInterestBusy] = useState(false);
   const mapCity = event?.city ?? post.city;
   const mapZone = event?.zone ?? post.zone;
 
@@ -183,16 +192,42 @@ export function PostCard({
   }
 
   async function toggleInterested() {
-    if (!event) return;
-    const res = await api<{ interested: boolean }>(`/events/${event.id}/interested`, { method: "POST" });
+    if (!event || interestBusy || !canInterest) return;
+    const next = !interested;
+    setInterestBusy(true);
     onChanged?.({
       ...post,
       event: {
         ...event,
-        viewerInterested: res.interested,
-        interestedCount: Math.max(0, event.interestedCount + (res.interested ? 1 : -1)),
+        viewerInterested: next,
+        interestedCount: Math.max(0, event.interestedCount + (next ? 1 : -1)),
       },
     });
+    try {
+      const res = await api<{ interested: boolean }>(`/events/${event.id}/interested`, { method: "POST" });
+      onChanged?.({
+        ...post,
+        event: {
+          ...event,
+          viewerInterested: res.interested,
+          interestedCount: Math.max(
+            0,
+            event.interestedCount + (res.interested === interested ? 0 : res.interested ? 1 : -1),
+          ),
+        },
+      });
+    } catch {
+      onChanged?.({
+        ...post,
+        event: {
+          ...event,
+          viewerInterested: interested,
+          interestedCount: event.interestedCount,
+        },
+      });
+    } finally {
+      setInterestBusy(false);
+    }
   }
 
   const relative = formatRelative(post.createdAt, messages.social);
@@ -224,11 +259,7 @@ export function PostCard({
               {post.author.firstName} {post.author.lastName}
             </Link>
             {post.author.certified ? <CertifiedMark /> : null}
-            {age ? (
-              <span className="type-caption shrink-0 rounded-full bg-danger px-2 py-0.5 font-bold leading-none text-white">
-                {age}
-              </span>
-            ) : null}
+            <AgeBadge minAge={event?.minAge} />
           </div>
           <p className="type-caption mt-0.5 flex items-center gap-1 text-muted">
             <GlobeIcon size={12} />
@@ -253,27 +284,42 @@ export function PostCard({
         <p className="type-body-sm mt-3 text-muted">{messages.social.postDeleted}</p>
       ) : (
         <>
-          <p className="type-body-sm mt-3 text-ink">
-            {lead ? (
-              <>
-                <span className="font-bold">{lead}</span>
-                {rest ? ` ${rest}` : null}
-              </>
-            ) : (
-              post.body
-            )}
-          </p>
-          {post.imageUrl || isEvent ? (
+          <ExpandableText text={post.body} lead={lead} rest={rest} />
+          {images.length || isEvent ? (
             <div className="relative mt-3">
-              {post.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={post.imageUrl} alt="" className="h-56 w-full rounded-xl object-cover" />
+              {images.length ? (
+                <PostMediaCarousel
+                  images={images}
+                  overlay={
+                    isEvent && event ? (
+                      <>
+                        <div className="absolute left-2 top-2 z-[1]">
+                          <SeatsLeftBadge remaining={remaining} />
+                        </div>
+                        <EventPriceBadge amount={event.priceXaf} />
+                        <Link
+                          href={`/events/${event.id}`}
+                          aria-label={messages.world.sortie}
+                          className="absolute bottom-2 right-2 z-[1] h-[4.25rem] w-[6.25rem]"
+                        >
+                          <MapThumb
+                            city={mapCity}
+                            zone={mapZone}
+                            lat={event.latitude}
+                            lng={event.longitude}
+                            className="h-full w-full"
+                          />
+                        </Link>
+                      </>
+                    ) : null
+                  }
+                />
               ) : (
                 <div className="grid h-40 w-full place-items-center rounded-xl bg-gradient-to-br from-accent/15 to-yellow/20 type-body-sm text-accent">
                   {event?.title ?? messages.world.sortie}
                 </div>
               )}
-              {isEvent && event ? (
+              {!images.length && isEvent && event ? (
                 <>
                   <div className="absolute left-2 top-2">
                     <SeatsLeftBadge remaining={remaining} />
@@ -324,6 +370,7 @@ export function PostCard({
               onReserve={() => setBookOpen(true)}
               interestedLabel={interested ? messages.world.notInterested : messages.world.interested}
               interested={interested}
+              interestedDisabled={!canInterest || interestBusy}
               onInterested={() => void toggleInterested()}
               startsAt={event.startsAt}
               seriesLabel={seriesLabel}
