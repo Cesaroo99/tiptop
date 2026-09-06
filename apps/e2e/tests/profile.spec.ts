@@ -30,7 +30,7 @@ test.describe("Profil — visiteur et soi", () => {
     await unlinkFriend("william.ekani");
     await page.goto("/u/william.ekani");
     await expect(page.getByRole("heading", { name: "William Ekani" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Ajouter comme amie" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Amie/ })).toBeVisible();
     await expect(page.getByRole("button", { name: "Message" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: /Poser mon like|Mon like est ici/ })).toBeVisible();
   });

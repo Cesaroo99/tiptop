@@ -517,6 +517,7 @@ export type Messages = {
     participantsCount: string;
     countryCM: string;
     moreActions: string;
+    askFriend: string;
     reservationsCount: string;
     seatsLeft: string;
     seatsLeftOne: string;
@@ -1340,6 +1341,7 @@ export const fr: Messages = {
     participantsCount: "{n} participants",
     countryCM: "Cameroun",
     moreActions: "Plus",
+    askFriend: "Amie",
     reservationsCount: "Réservations",
     seatsLeft: "{count} places restantes",
     seatsLeftOne: "1 place restante",
@@ -2163,6 +2165,7 @@ export const en: Messages = {
     participantsCount: "{n} participants",
     countryCM: "Cameroon",
     moreActions: "More",
+    askFriend: "Friend",
     reservationsCount: "Bookings",
     seatsLeft: "{count} seats left",
     seatsLeftOne: "1 seat left",

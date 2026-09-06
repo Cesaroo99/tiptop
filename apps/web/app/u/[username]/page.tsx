@@ -297,7 +297,7 @@ function ProfileView() {
                 onClick={() => void addFriend()}
               >
                 <PlusIcon size={15} />
-                {messages.world.addFriend}
+                {messages.world.askFriend}
               </button>
             )}
             <button
