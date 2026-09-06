@@ -131,7 +131,7 @@ export default function NotificationsPage() {
         method: "POST",
       });
       setSocialInvite(null);
-      if (res.conversationId) router.push(`/messages/${res.conversationId}`);
+      if (res.conversationId) router.replace(`/messages/${res.conversationId}`);
       else await load();
     } finally {
       setBusy(false);

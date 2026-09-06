@@ -337,9 +337,13 @@ function Thread() {
                       <audio controls src={m.audioUrl} className="max-w-full" />
                     ) : null}
                     {m.kind === "FILE" && m.fileUrl ? (
-                      <a href={m.fileUrl} target="_blank" rel="noreferrer" className="underline">
-                        {m.fileName || messages.chat.file}
-                      </a>
+                      m.mimeType?.startsWith("video/") ? (
+                        <video controls src={m.fileUrl} className="mb-1.5 max-h-48 w-full rounded-2xl" />
+                      ) : (
+                        <a href={m.fileUrl} target="_blank" rel="noreferrer" className="underline">
+                          {m.fileName || messages.chat.file}
+                        </a>
+                      )
                     ) : null}
                     {m.body && m.kind !== "AUDIO" ? <p>{m.body}</p> : null}
                     <p className={`type-caption mt-1 text-right ${mine ? "text-on-primary/70" : "text-muted"}`}>
