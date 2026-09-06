@@ -36,7 +36,9 @@ Voir `.env.example`. Ne jamais committer de secrets de production.
 
 ## Production
 
-- `NODE_ENV=production` désactive le code OTP mock (SMS provider à brancher)
+- Déploiement Render + APK : [docs/DEPLOY_RENDER.md](./docs/DEPLOY_RENDER.md)
+- `OTP_ALLOW_MOCK=1` conserve le code `1234` pour tester sur téléphone
+- Sans ce flag, `NODE_ENV=production` génère un vrai OTP (SMS à brancher)
 - `SESSION_SECRET` long et unique
-- HTTPS pour cookies `Secure`
+- HTTPS (fourni par Render)
 - `DATABASE_URL` managée

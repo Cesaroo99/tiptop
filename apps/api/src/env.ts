@@ -12,24 +12,27 @@ export type Env = {
   REDIS_URL: string;
   SESSION_SECRET: string;
   OTP_MOCK_CODE: string;
+  OTP_ALLOW_MOCK: boolean;
   OTP_EXPIRY_SECONDS: number;
   OTP_MAX_ATTEMPTS: number;
 };
 
 export function loadEnv(): Env {
-  const PORT = Number(process.env.PORT ?? 3001);
+  const PORT = Number(process.env.API_PORT ?? process.env.PORT ?? 3001);
   const DATABASE_URL = process.env.DATABASE_URL;
   if (!DATABASE_URL) {
     throw new Error("DATABASE_URL manquant");
   }
+  const flag = (process.env.OTP_ALLOW_MOCK ?? "").toLowerCase();
   return {
     NODE_ENV: process.env.NODE_ENV ?? "development",
     PORT,
-    WEB_ORIGIN: process.env.WEB_ORIGIN ?? "http://localhost:3000",
+    WEB_ORIGIN: process.env.WEB_ORIGIN ?? process.env.RENDER_EXTERNAL_URL ?? "http://localhost:3000",
     DATABASE_URL,
     REDIS_URL: process.env.REDIS_URL ?? "redis://127.0.0.1:6379",
     SESSION_SECRET: process.env.SESSION_SECRET ?? "dev-only-secret",
     OTP_MOCK_CODE: process.env.OTP_MOCK_CODE ?? "1234",
+    OTP_ALLOW_MOCK: flag === "1" || flag === "true" || flag === "yes",
     OTP_EXPIRY_SECONDS: Number(process.env.OTP_EXPIRY_SECONDS ?? 90),
     OTP_MAX_ATTEMPTS: Number(process.env.OTP_MAX_ATTEMPTS ?? 5),
   };

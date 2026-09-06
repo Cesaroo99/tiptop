@@ -137,8 +137,8 @@ export class AuthService {
       throw new HttpException({ code: "OTP_COOLDOWN" }, HttpStatus.TOO_MANY_REQUESTS);
     }
 
-    const code =
-      env.NODE_ENV === "production" ? generateNumericOtp(DEFAULT_OTP_LENGTH) : env.OTP_MOCK_CODE;
+    const useMock = env.NODE_ENV !== "production" || env.OTP_ALLOW_MOCK;
+    const code = useMock ? env.OTP_MOCK_CODE : generateNumericOtp(DEFAULT_OTP_LENGTH);
     const expiresAt = new Date(Date.now() + env.OTP_EXPIRY_SECONDS * 1000);
     await this.prisma.otpChallenge.create({
       data: {
@@ -148,15 +148,14 @@ export class AuthService {
       },
     });
 
-    if (env.NODE_ENV !== "production") {
-      // Mock SMS — jamais en production
+    if (useMock) {
       console.info(`[otp-mock] ${parsed.e164} → ${code}`);
     }
 
     return {
       phoneMasked: maskPhone(parsed.e164),
       expiresIn: env.OTP_EXPIRY_SECONDS,
-      mock: env.NODE_ENV !== "production",
+      mock: useMock,
     };
   }
 
@@ -171,7 +170,7 @@ export class AuthService {
     }
 
     const providedHash = hmac(env.SESSION_SECRET, code);
-    const mockOk = env.NODE_ENV !== "production" && code === env.OTP_MOCK_CODE;
+    const mockOk = (env.NODE_ENV !== "production" || env.OTP_ALLOW_MOCK) && code === env.OTP_MOCK_CODE;
     const status = evaluateOtp({
       expectedHash: challenge.codeHash,
       providedHash: mockOk ? challenge.codeHash : providedHash,

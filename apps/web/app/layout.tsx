@@ -6,6 +6,8 @@ import { Providers } from "@/components/Providers";
 export const metadata: Metadata = {
   title: "TipTop",
   description: "Sors. Rencontre. Vis.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "TipTop", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

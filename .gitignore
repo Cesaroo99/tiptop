@@ -24,6 +24,11 @@ apps/web/public/uploads/chat/*
 !apps/web/public/uploads/chat/.gitkeep
 .idea
 .vscode
+apps/android/local.properties
+apps/android/.gradle
+apps/android/app/build
+apps/android/build
+apps/android/.cxx
 apps/e2e/test-results
 apps/e2e/playwright-report
 apps/e2e/blob-report

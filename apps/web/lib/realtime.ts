@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { io, type Socket } from "socket.io-client";
 import { getStoredToken } from "./api";
 
-const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const apiBase = process.env.NEXT_PUBLIC_API_URL ?? (typeof window === "undefined" ? "http://localhost:3001" : "");
 
 type Handler = (payload: unknown) => void;
 
