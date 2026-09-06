@@ -6,6 +6,7 @@ import { presenceFromDeclared, type PresenceState } from "@tiptop/domain";
 import { AppShell } from "@/components/AppShell";
 import { AvailabilityBadge } from "@/components/AvailabilityBadge";
 import { BriefcaseIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, HeartIcon, RouteIcon, UserPlusIcon } from "@/components/Icons";
+import { SearchEntry } from "@/components/SearchEntry";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { SocialInviteModal } from "@/components/SocialInviteModal";
 import { Chip, EmptyState, ErrorBanner, Skeleton } from "@/components/ui";
@@ -543,10 +544,17 @@ function PeopleChrome({
   return (
     <>
       <div className="mb-3 flex items-end justify-between gap-3">
-        <h1 className="type-h1 text-accent">{title}</h1>
-        <Chip active={filtersOpen || active > 0} onClick={onToggleFilters} tone={active > 0 ? "info" : "neutral"}>
-          {active > 0 ? messages.world.filtersActive.replace("{n}", String(active)) : messages.world.filters}
-        </Chip>
+        <h1 className="type-h1 min-w-0 flex-1 truncate text-accent">{title}</h1>
+        <div className="flex shrink-0 items-center gap-2">
+          <SearchEntry
+            href="/search?type=people"
+            size={16}
+            className="tap-scale grid h-9 w-9 place-items-center rounded-full bg-surface-sunken text-muted transition hover:brightness-95"
+          />
+          <Chip active={filtersOpen || active > 0} onClick={onToggleFilters} tone={active > 0 ? "info" : "neutral"}>
+            {active > 0 ? messages.world.filtersActive.replace("{n}", String(active)) : messages.world.filters}
+          </Chip>
+        </div>
       </div>
       <div className="mb-3 grid grid-cols-3 gap-1 rounded-full bg-surface-sunken p-1">
         {tabs.map(([key, label]) => (

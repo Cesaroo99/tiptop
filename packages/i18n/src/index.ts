@@ -187,6 +187,8 @@ export type Messages = {
     events: string;
     all: string;
     applySearch: string;
+    searchSuggestions: string;
+    searchAround: string;
     markAllRead: string;
     notifNew: string;
     notifEarlier: string;
@@ -556,6 +558,7 @@ export type Messages = {
     showOnProfile: string;
     hideOnProfile: string;
     participantsCount: string;
+    participantsCountOne: string;
     countryCM: string;
     moreActions: string;
     askFriend: string;
@@ -1060,6 +1063,8 @@ export const fr: Messages = {
     events: "Événements",
     all: "Tout",
     applySearch: "Appliquer la recherche",
+    searchSuggestions: "Suggestions près de toi",
+    searchAround: "Autour de {place}",
     markAllRead: "Tout marquer comme lu",
     notifNew: "Nouveau",
     notifEarlier: "Plus tôt",
@@ -1429,6 +1434,7 @@ export const fr: Messages = {
     showOnProfile: "Visible sur mon profil",
     hideOnProfile: "Masqué du profil",
     participantsCount: "{n} participants",
+    participantsCountOne: "1 participant",
     countryCM: "Cameroun",
     moreActions: "Plus",
     askFriend: "Amie",
@@ -1933,6 +1939,8 @@ export const en: Messages = {
     events: "Events",
     all: "All",
     applySearch: "Apply search",
+    searchSuggestions: "Suggestions near you",
+    searchAround: "Around {place}",
     markAllRead: "Mark all as read",
     notifNew: "New",
     notifEarlier: "Earlier",
@@ -2302,6 +2310,7 @@ export const en: Messages = {
     showOnProfile: "Visible on my profile",
     hideOnProfile: "Hidden from profile",
     participantsCount: "{n} participants",
+    participantsCountOne: "1 participant",
     countryCM: "Cameroon",
     moreActions: "More",
     askFriend: "Friend",

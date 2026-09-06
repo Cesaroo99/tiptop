@@ -184,6 +184,85 @@ export type OfferItem = {
   };
 };
 
+export type SearchPerson = {
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  certified: boolean;
+  profession: string | null;
+  city: string | null;
+  avatarUrl: string | null;
+  available: boolean;
+};
+
+export type SearchPost = {
+  id: string;
+  body: string;
+  imageUrl: string | null;
+  createdAt: string;
+  author: {
+    username: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl: string | null;
+  };
+};
+
+export type SearchEvent = {
+  id: string;
+  title: string;
+  imageUrl: string | null;
+  startsAt: string;
+  city: string;
+  zone: string | null;
+  priceXaf: number;
+  currency?: string;
+  taken: number;
+  viewerHearted: boolean;
+  host: {
+    username: string;
+    firstName: string;
+    lastName: string;
+    avatarUrl: string | null;
+  };
+};
+
+export type SearchWish = {
+  id: string;
+  title: string;
+  category: string;
+  owner: { username: string; firstName: string; lastName: string };
+};
+
+export type SearchMood = {
+  id: string;
+  body: string;
+  activity: string | null;
+  city: string | null;
+  author: { username: string; firstName: string; lastName: string };
+};
+
+export type SearchOffer = {
+  id: string;
+  title: string;
+  priceXaf: number;
+  currency?: string;
+  city: string;
+  shopName: string | null;
+  seller: { username: string; firstName: string; lastName: string };
+};
+
+export type SearchResult = {
+  suggested: boolean;
+  people: SearchPerson[];
+  posts: SearchPost[];
+  events: SearchEvent[];
+  wishes: SearchWish[];
+  moods: SearchMood[];
+  offers: SearchOffer[];
+};
+
 export type PersonCard = {
   id: string;
   username: string;

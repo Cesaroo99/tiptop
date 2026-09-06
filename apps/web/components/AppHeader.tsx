@@ -4,14 +4,39 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { BellIcon, ChevronDownIcon, MessageIcon, PinIcon, SearchIcon } from "./Icons";
+import { BellIcon, ChevronDownIcon, MessageIcon, PinIcon } from "./Icons";
 import { Logo } from "./Logo";
+import { SearchEntry } from "./SearchEntry";
 
 export function AppHeader({
   location,
 }: {
   location?: string | null;
 }) {
+  const { messages } = useI18n();
+
+  return (
+    <header className="phone-safe-top space-y-3 px-4 pb-1">
+      <div className="flex items-center justify-between">
+        <Logo size={34} />
+        <HeaderUtilityIcons />
+      </div>
+      <div className="flex items-center gap-2">
+        <Link
+          href="/zone"
+          className="tap-scale type-body-sm flex h-12 flex-1 items-center gap-2 rounded-full bg-surface-sunken px-4 text-left text-ink transition hover:brightness-95"
+        >
+          <PinIcon size={16} className="shrink-0 text-muted" />
+          <span className="flex-1 truncate font-semibold">{location || messages.home.locationFallback}</span>
+          <ChevronDownIcon size={14} className="shrink-0 text-muted" />
+        </Link>
+        <SearchEntry />
+      </div>
+    </header>
+  );
+}
+
+export function HeaderUtilityIcons() {
   const { messages } = useI18n();
   const [unread, setUnread] = useState(0);
   const [chatUnread, setChatUnread] = useState(0);
@@ -25,39 +50,17 @@ export function AppHeader({
   }, []);
 
   return (
-    <header className="phone-safe-top space-y-3 px-4 pb-1">
-      <div className="flex items-center justify-between">
-        <Logo size={34} />
-        <div className="flex items-center gap-1.5">
-          <HeaderIcon href="/notifications" label="Notifications" badge={unread > 0 ? String(unread) : undefined}>
-            <BellIcon size={18} />
-          </HeaderIcon>
-          <HeaderIcon href="/messages" label="Messages" badge={chatUnread > 0 ? String(chatUnread) : undefined}>
-            <MessageIcon size={18} />
-          </HeaderIcon>
-          <HeaderIcon href="/menu" label="Menu">
-            <Hamburger />
-          </HeaderIcon>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <Link
-          href="/zone"
-          className="tap-scale type-body-sm flex h-12 flex-1 items-center gap-2 rounded-full bg-surface-sunken px-4 text-left text-ink transition hover:brightness-95"
-        >
-          <PinIcon size={16} className="shrink-0 text-muted" />
-          <span className="flex-1 truncate font-semibold">{location || messages.home.locationFallback}</span>
-          <ChevronDownIcon size={14} className="shrink-0 text-muted" />
-        </Link>
-        <Link
-          href="/search"
-          aria-label="Recherche"
-          className="tap-scale grid h-12 w-12 shrink-0 place-items-center rounded-full bg-surface-sunken text-muted transition hover:brightness-95"
-        >
-          <SearchIcon size={18} />
-        </Link>
-      </div>
-    </header>
+    <div className="flex items-center gap-1.5">
+      <HeaderIcon href="/notifications" label={messages.common.notifications} badge={unread > 0 ? String(unread) : undefined}>
+        <BellIcon size={18} />
+      </HeaderIcon>
+      <HeaderIcon href="/messages" label={messages.common.messages} badge={chatUnread > 0 ? String(chatUnread) : undefined}>
+        <MessageIcon size={18} />
+      </HeaderIcon>
+      <HeaderIcon href="/menu" label={messages.menu.title}>
+        <Hamburger />
+      </HeaderIcon>
+    </div>
   );
 }
 

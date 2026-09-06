@@ -45,6 +45,7 @@ describe("Écran Events — gestion, pas un fil", () => {
       </TestI18nProvider>,
     );
     expect(screen.queryByRole("link", { name: "Tous" })).toBeNull();
+    expect(screen.getAllByRole("link", { name: "Recherche" }).some((el) => el.getAttribute("href") === "/search?type=events")).toBe(true);
     expect(screen.getByRole("link", { name: "Les Tickets" })).toHaveAttribute("href", "/tickets");
     expect(screen.getByRole("link", { name: "Mes invitations" })).toHaveAttribute("href", "/tickets?tab=invites");
     expect(await screen.findByText("Tu n'as encore créé ni rejoint aucun événement. Découvre-en dans le fil d'accueil, ou crée le tien.")).toBeInTheDocument();
