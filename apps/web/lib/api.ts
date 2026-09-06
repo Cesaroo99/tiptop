@@ -36,6 +36,9 @@ export type EventCard = {
   city: string;
   zone: string | null;
   venue: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   startsAt: string;
   endsAt: string | null;
   priceXaf: number;
@@ -316,6 +319,9 @@ export type TicketItem = {
     city: string;
     zone: string | null;
     venue: string | null;
+    address?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
     imageUrl: string | null;
     hostId: string;
   };

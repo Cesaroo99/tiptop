@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { EventInvitationSheet } from "@/components/EventInvitationSheet";
 import { CalendarIcon } from "@/components/Icons";
+import { MapThumb } from "@/components/MapThumb";
 import { Chip, EmptyState, ScreenHeader } from "@/components/ui";
 import { api, ApiError, type InvitationItem, type ReservationItem, type TicketItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -147,6 +148,15 @@ function TicketsPage() {
               <div className="mt-3 flex items-center justify-between">
                 <Chip tone={t.status === "CONSUMED" ? "neutral" : "success"}>{statusLabel[t.status] ?? t.status}</Chip>
                 <span className="type-caption text-muted">{new Date(t.event.startsAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}</span>
+              </div>
+              <div className="mt-3 h-28 overflow-hidden rounded-xl">
+                <MapThumb
+                  city={t.event.city}
+                  zone={t.event.zone}
+                  lat={t.event.latitude}
+                  lng={t.event.longitude}
+                  className="h-full w-full"
+                />
               </div>
             </Link>
           ))}

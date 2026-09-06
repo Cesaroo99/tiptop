@@ -10,6 +10,7 @@ import { useSession } from "@/lib/session";
 import { recurrenceCaption } from "@/lib/event-series";
 import { formatCompactCount, formatCountdownLabel, formatEventWhen, formatFcfa, formatRelative, splitPostLead } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
+import { EventMap } from "./EventMap";
 import { BookEventSheet } from "./BookEventSheet";
 import { CommentThread } from "./CommentThread";
 import {
@@ -128,6 +129,9 @@ export function EventDetailCard({
     city: event.city,
     zone: event.zone,
     placeName: event.venue,
+    address: event.address,
+    latitude: event.latitude,
+    longitude: event.longitude,
   });
   const stats = hostView
     ? [
@@ -219,14 +223,23 @@ export function EventDetailCard({
             aria-label={`${event.city}${event.zone ? ` - ${event.zone}` : ""}`}
             className="absolute bottom-2 right-2 h-[4.25rem] w-[6.25rem]"
           >
-            <MapThumb city={event.city} zone={event.zone} className="h-full w-full" />
+            <MapThumb city={event.city} zone={event.zone} lat={event.latitude} lng={event.longitude} className="h-full w-full" />
           </a>
         ) : (
           <div className="absolute bottom-2 right-2 h-[4.25rem] w-[6.25rem]">
-            <MapThumb city={event.city} zone={event.zone} className="h-full w-full" />
+            <MapThumb city={event.city} zone={event.zone} lat={event.latitude} lng={event.longitude} className="h-full w-full" />
           </div>
         )}
       </div>
+      <EventMap
+        className="mt-3"
+        city={event.city}
+        zone={event.zone}
+        venue={event.venue}
+        address={event.address}
+        latitude={event.latitude}
+        longitude={event.longitude}
+      />
 
       <p className="type-caption mt-3 text-muted">{stats.join(" · ")}</p>
       {event.occurrences && event.occurrences.length > 1 ? (

@@ -1,5 +1,6 @@
 import { PrismaClient, LikeUnitSource, UserRole, ReportKind, ReportReason } from "@prisma/client";
 import { invitationExpiresAt, directKey, crossedMilestones, DEFAULT_LIKE_MILESTONES, sumLikeSeconds } from "@tiptop/domain";
+import { enrichWorldCatalog } from "./seed-world";
 
 const prisma = new PrismaClient();
 
@@ -563,6 +564,7 @@ async function main() {
 
   await enrichLivingWorld(prisma, { cesar, erica, mbelle, availableUntil });
   await enrichMassCatalog(prisma, { availableUntil });
+  await enrichWorldCatalog(prisma);
 
   console.log("Seed OK — OTP mock 1234, démo César admin +237 695 21 47 85");
 }

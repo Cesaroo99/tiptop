@@ -116,7 +116,7 @@ export class SearchService {
             ? { city: { equals: city, mode: Prisma.QueryMode.insensitive } }
             : {}),
       },
-      take: 40,
+      take: query ? 40 : 80,
       orderBy: { startsAt: "asc" },
       include: {
         host: { include: { profile: { select: { avatarUrl: true } } } },
@@ -124,7 +124,7 @@ export class SearchService {
         hearts: { where: { userId: viewerId, releasedAt: null }, select: { id: true } },
       },
     });
-    return dedupeSeriesOccurrences(rows).slice(0, 20).map((e) => ({
+    return dedupeSeriesOccurrences(rows).slice(0, query ? 20 : 40).map((e) => ({
       id: e.id,
       title: e.title,
       imageUrl: e.imageUrl,

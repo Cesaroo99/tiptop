@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { EventMap } from "@/components/EventMap";
 import { CalendarIcon, PinIcon } from "@/components/Icons";
 import { Logo } from "@/components/Logo";
+import { TicketQr } from "@/components/TicketQr";
 import { ErrorBanner, ScreenHeader } from "@/components/ui";
 import { api, type TicketItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
@@ -18,9 +20,21 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api<TicketItem>(`/tickets/${id}`)
-      .then(setTicket)
-      .catch(() => setError(messages.common.error));
+    let cancelled = false;
+    async function load() {
+      try {
+        const next = await api<TicketItem>(`/tickets/${id}`);
+        if (!cancelled) setTicket(next);
+      } catch {
+        if (!cancelled) setError(messages.common.error);
+      }
+    }
+    void load();
+    const t = window.setInterval(() => void load(), 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(t);
+    };
   }, [id, messages.common.error]);
 
   if (error) {
@@ -34,6 +48,7 @@ export default function Page() {
   if (!ticket) return <p className="p-4 text-sm text-muted">{messages.common.loading}</p>;
 
   const consumed = ticket.status === "CONSUMED";
+  const place = [ticket.event.venue, ticket.event.zone, ticket.event.city].filter(Boolean).join(" · ");
 
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-4 py-4">
@@ -56,8 +71,7 @@ export default function Page() {
           </p>
           <p className="type-body-sm mt-1 inline-flex items-center gap-1.5 text-muted">
             <PinIcon size={14} />
-            {ticket.event.city}
-            {ticket.event.zone ? ` - ${ticket.event.zone}` : ""}
+            {place}
           </p>
           <p className="type-caption mt-2 text-muted">
             {ticket.holder.firstName} {ticket.holder.lastName}
@@ -68,12 +82,22 @@ export default function Page() {
           {consumed ? (
             <div className="rounded-lg bg-surface-sunken px-4 py-10 type-body-sm text-muted">{messages.booking.ticketQrInactive}</div>
           ) : ticket.qrActive && ticket.qr ? (
-            <QrPattern value={ticket.qr} />
+            <TicketQr value={ticket.qr} />
           ) : (
             <p className="type-body-sm text-muted">{messages.booking.ticketQrLater}</p>
           )}
           {ticket.qr ? <p className="mt-4 break-all font-mono text-[11px] text-muted">{ticket.qr}</p> : null}
           <p className="type-caption mt-3 text-muted">{messages.booking.ticketQrHint}</p>
+        </div>
+        <div className="px-4 pb-5">
+          <EventMap
+            city={ticket.event.city}
+            zone={ticket.event.zone}
+            venue={ticket.event.venue}
+            address={ticket.event.address}
+            latitude={ticket.event.latitude}
+            longitude={ticket.event.longitude}
+          />
         </div>
       </div>
       <Link href={`/events/${ticket.event.id}`} className="type-body-sm mt-4 block text-center font-semibold text-accent">
@@ -85,21 +109,5 @@ export default function Page() {
         </Link>
       ) : null}
     </main>
-  );
-}
-
-function QrPattern({ value }: { value: string }) {
-  const size = 21;
-  const cells: boolean[] = [];
-  for (let i = 0; i < size * size; i++) {
-    const c = value.charCodeAt(i % value.length) + i * 7;
-    cells.push(c % 3 !== 0);
-  }
-  return (
-    <div className="mx-auto mt-6 grid w-56 grid-cols-[repeat(21,minmax(0,1fr))] gap-px rounded-2xl bg-white p-3">
-      {cells.map((on, i) => (
-        <div key={i} className={on ? "aspect-square bg-black" : "aspect-square bg-white"} />
-      ))}
-    </div>
   );
 }

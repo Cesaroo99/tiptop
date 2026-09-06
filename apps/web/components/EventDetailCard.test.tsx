@@ -107,6 +107,8 @@ describe("EventDetailCard", () => {
     expect(screen.getByLabelText("Commentaires")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Intéressé" })).toBeInTheDocument();
     expect(screen.getByText("Réserver")).toBeInTheDocument();
+    expect(screen.getByText("Y aller")).toBeInTheDocument();
+    expect(screen.getByTitle(/Villa Odza/)).toBeInTheDocument();
   });
 
   it("déjà réservé : Réserver pour un autre + prochaines dates de série", () => {

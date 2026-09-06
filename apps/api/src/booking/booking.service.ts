@@ -676,6 +676,9 @@ export class BookingService {
         city: string;
         zone: string | null;
         venue: string | null;
+        address?: string | null;
+        latitude?: number | null;
+        longitude?: number | null;
         hostId: string;
         imageUrl: string | null;
       };
@@ -707,6 +710,9 @@ export class BookingService {
         city: t.event.city,
         zone: t.event.zone,
         venue: t.event.venue,
+        address: t.event.address ?? null,
+        latitude: t.event.latitude ?? null,
+        longitude: t.event.longitude ?? null,
         imageUrl: t.event.imageUrl,
         hostId: t.event.hostId,
       },

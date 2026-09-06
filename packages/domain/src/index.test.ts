@@ -44,6 +44,7 @@ import {
 } from "../src/events";
 import { interestFromActivity, isMoodInterest, parseMoodInterests, statusExpiresAt, STATUS_HOURS } from "../src/moods";
 import { canConsumeTicket, canShowQr, isInEntryWindow, signTicketQr, verifyTicketQr } from "../src/tickets";
+import { cityCoords, osmEmbedUrl, WORLD_CITIES } from "../src/world-cities";
 import { applyWebhook, mockCharge, reservationAmountXaf } from "../src/payments";
 import {
   canOpenNewDirectConversation,
@@ -545,13 +546,22 @@ describe("tickets & paiement", () => {
     expect(canConsumeTicket("AWAITING_PAYMENT", null)).toBe("NOT_CONFIRMED");
   });
 
-  it("n’affiche le QR que dans la fenêtre d’entrée", () => {
+  it("affiche le QR tant que le billet est confirmé et l’événement pas fini", () => {
     const startsAt = new Date("2026-08-31T18:00:00Z");
     const endsAt = new Date("2026-08-31T22:00:00Z");
     expect(isInEntryWindow({ startsAt, endsAt, now: new Date("2026-08-31T16:00:00Z") })).toBe(true);
     expect(isInEntryWindow({ startsAt, endsAt, now: new Date("2026-08-31T15:00:00Z") })).toBe(false);
-    expect(canShowQr({ status: "CONFIRMED", startsAt, endsAt, now: new Date("2026-08-31T17:00:00Z") })).toBe(true);
+    expect(canShowQr({ status: "CONFIRMED", startsAt, endsAt, now: new Date("2026-08-31T10:00:00Z") })).toBe(true);
+    expect(canShowQr({ status: "CONFIRMED", startsAt, endsAt, now: new Date("2026-08-31T23:00:00Z") })).toBe(false);
     expect(canShowQr({ status: "AWAITING_PAYMENT", startsAt, endsAt, now: new Date("2026-08-31T17:00:00Z") })).toBe(false);
+  });
+
+  it("couvre des villes réelles et une carte OSM guidable", () => {
+    expect(WORLD_CITIES.length).toBeGreaterThanOrEqual(50);
+    expect(cityCoords("Paris")).toEqual({ lat: 48.8566, lng: 2.3522 });
+    expect(cityCoords("Yaoundé")?.lat).toBeCloseTo(3.848);
+    expect(osmEmbedUrl(3.89, 11.512)).toContain("openstreetmap.org/export/embed.html");
+    expect(osmEmbedUrl(3.89, 11.512)).toContain("marker=3.89%2C11.512");
   });
 
   it("calcule le montant et ignore un webhook dupliqué", () => {

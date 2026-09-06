@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Event" ADD COLUMN "address" TEXT;
+ALTER TABLE "Event" ADD COLUMN "latitude" DOUBLE PRECISION;
+ALTER TABLE "Event" ADD COLUMN "longitude" DOUBLE PRECISION;

@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Query, Req, UseGuards } from "@nestjs/common";
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
+import { IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
 import { Type } from "class-transformer";
 import type { Request } from "express";
 import { SessionGuard } from "../auth/session.guard";
@@ -32,6 +32,21 @@ class CreateEventDto {
   @IsOptional()
   @IsString()
   venue?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(240)
+  address?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  latitude?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  longitude?: number;
 
   @IsString()
   startsAt!: string;
@@ -109,6 +124,21 @@ class UpdateEventDto {
   @IsOptional()
   @IsString()
   venue?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(240)
+  address?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  latitude?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  longitude?: number;
 
   @IsOptional()
   @IsString()

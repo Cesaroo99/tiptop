@@ -35,6 +35,9 @@ export type CreateEventInput = {
   city?: string;
   zone?: string;
   venue?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
   startsAt: string;
   endsAt?: string;
   priceXaf?: number;
@@ -84,6 +87,9 @@ export class EventsService {
         city: input.city ?? host?.profile?.city ?? "Yaoundé",
         zone: input.zone ?? host?.profile?.zone,
         venue: input.venue?.trim() || null,
+        address: input.address?.trim() || null,
+        latitude: input.latitude ?? null,
+        longitude: input.longitude ?? null,
         startsAt,
         endsAt,
         priceXaf,
@@ -113,6 +119,9 @@ export class EventsService {
             city: event.city,
             zone: event.zone,
             venue: event.venue,
+            address: event.address,
+            latitude: event.latitude,
+            longitude: event.longitude,
             startsAt: starts,
             endsAt: span != null ? new Date(starts.getTime() + span) : null,
             priceXaf: event.priceXaf,
@@ -226,6 +235,9 @@ export class EventsService {
     if (patch.title != null) data.title = patch.title.trim().slice(0, 120);
     if (patch.description != null) data.description = patch.description.trim().slice(0, 4000);
     if (patch.venue != null) data.venue = patch.venue.trim() || null;
+    if (patch.address != null) data.address = patch.address.trim() || null;
+    if (patch.latitude != null) data.latitude = patch.latitude;
+    if (patch.longitude != null) data.longitude = patch.longitude;
     if (patch.city != null) data.city = patch.city;
     if (patch.zone != null) data.zone = patch.zone;
     if (patch.capacity != null) data.capacity = patch.capacity > 0 ? patch.capacity : null;
@@ -452,6 +464,9 @@ export class EventsService {
       city: string;
       zone: string | null;
       venue: string | null;
+      address?: string | null;
+      latitude?: number | null;
+      longitude?: number | null;
       startsAt: Date;
       endsAt: Date | null;
       priceXaf: number;
@@ -530,6 +545,9 @@ export class EventsService {
       city: e.city,
       zone: e.zone,
       venue: e.venue,
+      address: e.address ?? null,
+      latitude: e.latitude ?? null,
+      longitude: e.longitude ?? null,
       startsAt: e.startsAt.toISOString(),
       endsAt: e.endsAt?.toISOString() ?? null,
       priceXaf: e.priceXaf,

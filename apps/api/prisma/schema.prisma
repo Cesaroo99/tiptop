@@ -573,6 +573,9 @@ model Event {
   city                String
   zone                String?
   venue               String?
+  address             String?
+  latitude            Float?
+  longitude           Float?
   startsAt            DateTime
   endsAt              DateTime?
   priceXaf            Int         @default(0)

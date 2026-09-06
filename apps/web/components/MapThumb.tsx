@@ -1,5 +1,6 @@
 "use client";
 
+import { cityCoords } from "@tiptop/domain";
 import { ZONE_COORDS } from "@/lib/time";
 import { PinIcon } from "./Icons";
 
@@ -20,7 +21,7 @@ export function MapThumb({
   const point =
     lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng)
       ? { lat, lng }
-      : fromZone || ZONE_COORDS["Carrefour Damas"];
+      : fromZone || cityCoords(city) || ZONE_COORDS["Carrefour Damas"];
   const zoom = lat != null && lng != null ? 16 : 14;
   const src = `https://staticmap.openstreetmap.de/staticmap.php?center=${point.lat},${point.lng}&zoom=${zoom}&size=240x180&maptype=mapnik`;
   return (

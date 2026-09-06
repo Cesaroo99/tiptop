@@ -33,7 +33,12 @@ export function canShowQr(input: {
   endsAt: Date | null;
   now?: Date;
 }): boolean {
-  return input.status === "CONFIRMED" && isInEntryWindow(input);
+  if (input.status !== "CONFIRMED") return false;
+  const now = (input.now ?? new Date()).getTime();
+  const close = input.endsAt
+    ? input.endsAt.getTime()
+    : input.startsAt.getTime() + ENTRY_FALLBACK_AFTER_MS;
+  return now <= close;
 }
 
 export function canConsumeTicket(status: TicketStatus, consumedAt: Date | null): "OK" | "ALREADY_CONSUMED" | "NOT_CONFIRMED" {

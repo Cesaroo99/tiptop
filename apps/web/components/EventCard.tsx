@@ -155,7 +155,7 @@ export function EventCard({
           </div>
         </div>
         <div className="absolute bottom-2 right-2 h-16 w-24 overflow-hidden rounded-md ring-2 ring-white/70">
-          <MapThumb city={event.city} zone={event.zone} className="h-full w-full" />
+          <MapThumb city={event.city} zone={event.zone} lat={event.latitude} lng={event.longitude} className="h-full w-full" />
         </div>
       </Link>
       <div className="p-4">
