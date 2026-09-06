@@ -105,6 +105,12 @@ function SearchScreen() {
   const showWishes = type === "all" || type === "wishes";
   const showMoods = type === "all" || type === "moods";
   const showOffers = type === "all" || type === "offers";
+  const peopleItems = type === "all" ? (result?.people.slice(0, 3) ?? []) : (result?.people ?? []);
+  const eventItems = type === "all" ? (result?.events.slice(0, 2) ?? []) : (result?.events ?? []);
+  const postItems = type === "all" ? (result?.posts.slice(0, 2) ?? []) : (result?.posts ?? []);
+  const wishItems = type === "all" ? (result?.wishes.slice(0, 2) ?? []) : (result?.wishes ?? []);
+  const moodItems = type === "all" ? (result?.moods.slice(0, 2) ?? []) : (result?.moods ?? []);
+  const offerItems = type === "all" ? (result?.offers.slice(0, 2) ?? []) : (result?.offers ?? []);
 
   return (
     <div className="px-4 pb-6 pt-3">
@@ -184,19 +190,37 @@ function SearchScreen() {
       {empty && !loading ? <EmptyState title={messages.common.search} body={messages.social.emptySearch} /> : null}
 
       <div className="mt-4 space-y-4" data-testid="search-results">
-        {showPeople && result && result.people.length > 0 ? (
+        {showPeople && peopleItems.length > 0 ? (
           <section className="space-y-3">
-            {type === "all" ? <p className="type-label text-subtle">{messages.social.people}</p> : null}
-            {result.people.map((p) => (
+            {type === "all" ? (
+              <div className="flex items-center justify-between">
+                <p className="type-label text-subtle">{messages.social.people}</p>
+                {result && result.people.length > peopleItems.length ? (
+                  <button type="button" onClick={() => changeType("people")} className="type-caption font-semibold text-accent">
+                    {messages.home.seeAll}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+            {peopleItems.map((p) => (
               <SearchPersonCard key={p.id} person={p} />
             ))}
           </section>
         ) : null}
 
-        {showEvents && result && result.events.length > 0 ? (
+        {showEvents && eventItems.length > 0 ? (
           <section className="space-y-3">
-            {type === "all" ? <p className="type-label text-subtle">{messages.social.events}</p> : null}
-            {result.events.map((e) => (
+            {type === "all" ? (
+              <div className="flex items-center justify-between">
+                <p className="type-label text-subtle">{messages.social.events}</p>
+                {result && result.events.length > eventItems.length ? (
+                  <button type="button" onClick={() => changeType("events")} className="type-caption font-semibold text-accent">
+                    {messages.home.seeAll}
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+            {eventItems.map((e) => (
               <SearchEventCard
                 key={e.id}
                 event={e}
@@ -210,10 +234,10 @@ function SearchScreen() {
           </section>
         ) : null}
 
-        {showPosts && result && result.posts.length > 0 ? (
+        {showPosts && postItems.length > 0 ? (
           <section className="space-y-3">
             {type === "all" ? <p className="type-label text-subtle">{messages.social.publications}</p> : null}
-            {result.posts.map((p) => (
+            {postItems.map((p) => (
               <Link key={p.id} href={`/posts/${p.id}`} className="block rounded-card bg-surface p-4 shadow-card">
                 <p className="type-heading text-ink">
                   {p.author.firstName} {p.author.lastName}
@@ -224,10 +248,10 @@ function SearchScreen() {
           </section>
         ) : null}
 
-        {showWishes && result && result.wishes.length > 0 ? (
+        {showWishes && wishItems.length > 0 ? (
           <section className="space-y-3">
             {type === "all" ? <p className="type-label text-subtle">{messages.social.wishesLabel}</p> : null}
-            {result.wishes.map((w) => (
+            {wishItems.map((w) => (
               <Link key={w.id} href={`/u/${w.owner.username}`} className="block rounded-card bg-surface p-4 shadow-card">
                 <p className="type-heading text-ink">{w.title}</p>
                 <p className="type-caption mt-1 text-muted">
@@ -238,10 +262,10 @@ function SearchScreen() {
           </section>
         ) : null}
 
-        {showMoods && result && result.moods.length > 0 ? (
+        {showMoods && moodItems.length > 0 ? (
           <section className="space-y-3">
             {type === "all" ? <p className="type-label text-subtle">{messages.social.moodsLabel}</p> : null}
-            {result.moods.map((m) => (
+            {moodItems.map((m) => (
               <Link key={m.id} href={`/mood?start=${m.id}`} className="block rounded-card bg-surface p-4 shadow-card">
                 <p className="type-heading text-ink">{m.activity || m.body}</p>
                 <p className="type-caption mt-1 text-muted">
@@ -253,10 +277,10 @@ function SearchScreen() {
           </section>
         ) : null}
 
-        {showOffers && result && result.offers.length > 0 ? (
+        {showOffers && offerItems.length > 0 ? (
           <section className="space-y-3">
             {type === "all" ? <p className="type-label text-subtle">{messages.need.title}</p> : null}
-            {result.offers.map((o) => (
+            {offerItems.map((o) => (
               <Link key={o.id} href={`/need/${o.id}`} className="block rounded-card bg-surface p-4 shadow-card">
                 <p className="type-heading text-ink">{o.title}</p>
                 <p className="type-caption mt-1 text-muted">

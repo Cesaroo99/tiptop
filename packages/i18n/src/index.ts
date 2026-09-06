@@ -558,6 +558,7 @@ export type Messages = {
     showOnProfile: string;
     hideOnProfile: string;
     participantsCount: string;
+    participantsCountOne: string;
     countryCM: string;
     moreActions: string;
     askFriend: string;
@@ -1433,6 +1434,7 @@ export const fr: Messages = {
     showOnProfile: "Visible sur mon profil",
     hideOnProfile: "Masqué du profil",
     participantsCount: "{n} participants",
+    participantsCountOne: "1 participant",
     countryCM: "Cameroun",
     moreActions: "Plus",
     askFriend: "Amie",
@@ -2308,6 +2310,7 @@ export const en: Messages = {
     showOnProfile: "Visible on my profile",
     hideOnProfile: "Hidden from profile",
     participantsCount: "{n} participants",
+    participantsCountOne: "1 participant",
     countryCM: "Cameroon",
     moreActions: "More",
     askFriend: "Friend",

@@ -111,7 +111,9 @@ export function SearchEventCard({
           )}
         </Link>
         <span className="type-caption absolute left-3 top-3 rounded-pill bg-white/90 px-3 py-1.5 font-bold text-ink shadow-sm backdrop-blur-sm">
-          {messages.world.participantsCount.replace("{n}", String(event.taken))}
+          {event.taken === 1
+            ? messages.world.participantsCountOne
+            : messages.world.participantsCount.replace("{n}", String(event.taken))}
         </span>
         <button
           type="button"
