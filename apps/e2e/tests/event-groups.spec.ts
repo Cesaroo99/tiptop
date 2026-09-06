@@ -41,7 +41,8 @@ test.describe("Groupes d’événement", () => {
 
     await page.getByRole("button", { name: "Inviter" }).click();
     await expect(page.getByText("Erica Sinclair")).toBeVisible();
-    await page.getByRole("button", { name: "Inviter" }).last().click();
+    await page.locator("li").filter({ hasText: "Erica Sinclair" }).getByRole("button", { name: "Inviter" }).click();
+    await expect(page.locator("li").filter({ hasText: "Erica Sinclair" })).toHaveCount(0);
 
     const ericaCtx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     const ericaPage = await ericaCtx.newPage();
