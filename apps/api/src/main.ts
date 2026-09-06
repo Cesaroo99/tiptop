@@ -12,13 +12,8 @@ async function bootstrap() {
   app.useWebSocketAdapter(new IoAdapter(app));
   app.setGlobalPrefix("api");
   app.use(cookieParser());
-  const allowed = [env.WEB_ORIGIN, process.env.RENDER_EXTERNAL_URL].filter(Boolean) as string[];
   app.enableCors({
-    origin: (origin, cb) => {
-      if (!origin) return cb(null, true);
-      if (allowed.includes(origin) || origin.endsWith(".onrender.com")) return cb(null, true);
-      cb(null, false);
-    },
+    origin: true,
     credentials: true,
   });
   app.useGlobalPipes(

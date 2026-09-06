@@ -70,6 +70,28 @@ function isHealth(url = "") {
   return url.split("?")[0] === "/api/health";
 }
 
+const HOP_BY_HOP = new Set([
+  "connection",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailers",
+  "transfer-encoding",
+  "upgrade",
+  "host",
+]);
+
+function proxyHeaders(req, port) {
+  const headers = {};
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (!value || HOP_BY_HOP.has(key.toLowerCase())) continue;
+    headers[key] = value;
+  }
+  headers.host = `127.0.0.1:${port}`;
+  return headers;
+}
+
 function proxyHttp(req, res, port) {
   const up = http.request(
     {
@@ -77,7 +99,7 @@ function proxyHttp(req, res, port) {
       port,
       path: req.url,
       method: req.method,
-      headers: req.headers,
+      headers: proxyHeaders(req, port),
     },
     (incoming) => {
       res.writeHead(incoming.statusCode ?? 502, incoming.headers);
@@ -85,16 +107,20 @@ function proxyHttp(req, res, port) {
     },
   );
   up.on("error", () => {
-    if (!res.headersSent) res.writeHead(503).end("TipTop démarre…");
+    if (!res.headersSent) {
+      res.writeHead(503, { "content-type": "application/json" });
+      res.end(JSON.stringify({ code: "BOOTING", message: "TipTop démarre…" }));
+    }
   });
   req.pipe(up);
 }
 
 function proxyUpgrade(req, socket, head, port) {
   const up = net.connect(port, "127.0.0.1", () => {
-    const lines = [`${req.method} ${req.url} HTTP/1.1`];
+    const lines = [`${req.method} ${req.url} HTTP/1.1`, `Host: 127.0.0.1:${port}`];
     for (const [key, value] of Object.entries(req.headers)) {
-      if (value) lines.push(`${key}: ${Array.isArray(value) ? value.join(", ") : value}`);
+      if (!value || HOP_BY_HOP.has(key.toLowerCase())) continue;
+      lines.push(`${key}: ${Array.isArray(value) ? value.join(", ") : value}`);
     }
     up.write(`${lines.join("\r\n")}\r\n\r\n`);
     if (head?.length) up.write(head);
@@ -146,17 +172,15 @@ async function boot() {
   ]);
 
   await migrateWithRetry(prismaBin);
-  try {
-    console.log("[render] seed complet (monde vivant)");
-    await runOnce(tsxBin, ["prisma/seed.ts"], apiDir);
-  } catch (err) {
-    console.error("[render] seed complet ignoré :", err);
-  }
 
   run(tsxBin, ["src/main.ts"], { API_PORT: String(apiPort), PORT: String(apiPort) }, apiDir);
   await waitFor(`http://127.0.0.1:${apiPort}/api/health`);
   apiReady = true;
   console.log("[render] API prête");
+
+  void runOnce(tsxBin, ["prisma/seed.ts"], apiDir)
+    .then(() => console.log("[render] seed complet OK"))
+    .catch((err) => console.error("[render] seed complet ignoré :", err));
 
   run(
     "node",
