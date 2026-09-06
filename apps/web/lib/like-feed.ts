@@ -57,3 +57,36 @@ export function releaseViewerMoodLike(mood: MoodItem): MoodItem {
 export function applySoleMoodLike(items: MoodItem[], next: MoodItem): MoodItem[] {
   return items.map((m) => (m.id === next.id ? next : releaseViewerMoodLike(m)));
 }
+
+/** Aligne une carte sur le like unique courant — décrémente vraiment activeCount. */
+export function applyPlacementToPost(
+  post: FeedItem,
+  placement: Pick<LikePlacement, "targetType" | "targetId"> | null | undefined,
+): FeedItem {
+  const mine = placement?.targetType === "post" && placement.targetId === post.id;
+  if (mine) {
+    if (post.likedByMe && post.likeTime?.likedByMe) return post;
+    return {
+      ...post,
+      likedByMe: true,
+      likeTime: post.likeTime ? { ...post.likeTime, likedByMe: true } : post.likeTime,
+    };
+  }
+  return releaseViewerLike(post);
+}
+
+export function applyPlacementToMood(
+  mood: MoodItem,
+  placement: Pick<LikePlacement, "targetType" | "targetId"> | null | undefined,
+): MoodItem {
+  const mine = placement?.targetType === "mood" && placement.targetId === mood.id;
+  if (mine) {
+    if (mood.likedByMe && mood.likeTime?.likedByMe) return mood;
+    return {
+      ...mood,
+      likedByMe: true,
+      likeTime: mood.likeTime ? { ...mood.likeTime, likedByMe: true } : mood.likeTime,
+    };
+  }
+  return releaseViewerMoodLike(mood);
+}

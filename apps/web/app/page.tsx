@@ -20,7 +20,15 @@ import {
   restoreFeedAnchor,
   writeFeedCache,
 } from "@/lib/feed-session";
-import { applySoleLike, applySoleMoodLike, releaseViewerLike, replaceFeedItem } from "@/lib/like-feed";
+import {
+  applyPlacementToMood,
+  applyPlacementToPost,
+  applySoleLike,
+  applySoleMoodLike,
+  releaseViewerLike,
+  releaseViewerMoodLike,
+  replaceFeedItem,
+} from "@/lib/like-feed";
 import { useI18n } from "@/lib/i18n";
 import { useLikePlacement } from "@/lib/like-placement";
 import Link from "next/link";
@@ -234,24 +242,24 @@ function HomeFeed() {
     if (!ready) return;
     setItems((cur) => {
       if (!cur) return cur;
-      if (placement?.targetType === "post") {
-        return cur.map((p) => (p.id === placement.targetId ? { ...p, likedByMe: true } : releaseViewerLike(p)));
-      }
-      return cur.map(releaseViewerLike);
+      return cur.map((p) => applyPlacementToPost(p, placement));
     });
     setStream((cur) => {
       let changed = false;
       const next = cur.map((row) => {
-        if (row.kind !== "post") return row;
-        const shouldLike = placement?.targetType === "post" && row.post.id === placement.targetId;
-        if (shouldLike) {
-          if (row.post.likedByMe && row.post.likeTime?.likedByMe) return row;
+        if (row.kind === "post") {
+          const post = applyPlacementToPost(row.post, placement);
+          if (post === row.post) return row;
           changed = true;
-          return { ...row, post: { ...row.post, likedByMe: true } };
+          return { ...row, post };
         }
-        if (!row.post.likedByMe && !row.post.likeTime?.likedByMe) return row;
-        changed = true;
-        return { ...row, post: releaseViewerLike(row.post) };
+        if (row.kind === "mood") {
+          const mood = applyPlacementToMood(row.mood, placement);
+          if (mood === row.mood) return row;
+          changed = true;
+          return { ...row, mood };
+        }
+        return row;
       });
       return changed ? next : cur;
     });
@@ -261,12 +269,7 @@ function HomeFeed() {
         likedByMe: placement?.targetType === "user" && placement.targetId === p.id,
       })),
     );
-    setReels((cur) =>
-      cur.map((m) => ({
-        ...m,
-        likedByMe: placement?.targetType === "mood" && placement.targetId === m.id,
-      })),
-    );
+    setReels((cur) => cur.map((m) => applyPlacementToMood(m, placement)));
   }, [ready, placement?.targetType, placement?.targetId]);
 
   const inviteIds = new Set(stream.filter((r) => r.kind === "invite").map((r) => r.person.id));
@@ -358,8 +361,12 @@ function HomeFeed() {
                   if (!cur) return cur;
                   return meta?.soleLike ? applySoleLike(cur, next) : replaceFeedItem(cur, next);
                 });
+                if (meta?.soleLike) setReels((cur) => cur.map(releaseViewerMoodLike));
                 setStream((cur) =>
                   cur.map((entry) => {
+                    if (entry.kind === "mood") {
+                      return meta?.soleLike ? { ...entry, mood: releaseViewerMoodLike(entry.mood) } : entry;
+                    }
                     if (entry.kind !== "post") return entry;
                     if (entry.post.id === next.id) return { ...entry, post: next };
                     return meta?.soleLike ? { ...entry, post: releaseViewerLike(entry.post) } : entry;
@@ -421,7 +428,7 @@ function HomeFeed() {
                 cur.map((row) => {
                   if (row.kind === "mood") {
                     if (row.mood.id === next.id) return { ...row, mood: next };
-                    return meta?.soleLike ? { ...row, mood: { ...row.mood, likedByMe: false } } : row;
+                    return meta?.soleLike ? { ...row, mood: releaseViewerMoodLike(row.mood) } : row;
                   }
                   if (row.kind === "post" && meta?.soleLike) return { ...row, post: releaseViewerLike(row.post) };
                   return row;

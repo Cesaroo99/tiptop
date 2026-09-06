@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { applySoleLike, applySoleMoodLike, releaseViewerLike, viewerLikeActive } from "./like-feed";
+import {
+  applyPlacementToMood,
+  applySoleLike,
+  applySoleMoodLike,
+  releaseViewerLike,
+  viewerLikeActive,
+} from "./like-feed";
 import type { FeedItem } from "./api";
 
 function item(id: string, liked: boolean): FeedItem {
@@ -80,6 +86,43 @@ describe("like unique dans le fil", () => {
     expect(out[0]?.likedByMe).toBe(false);
     expect(out[0]?.likeTime?.activeCount).toBe(0);
     expect(out[1]?.likedByMe).toBe(true);
+  });
+
+  it("déplacer le like hors du mood arrête son décompte", () => {
+    const a = {
+      id: "m1",
+      body: "a",
+      imageUrl: null,
+      videoUrl: null,
+      expiresAt: null,
+      createdAt: new Date().toISOString(),
+      commentsCount: 0,
+      likedAuthor: false,
+      likedByMe: true,
+      authorActiveLikes: 1,
+      likeTime: { totalSeconds: 10, activeCount: 1, likedByMe: true, label: "10 s" },
+      activity: null,
+      city: null,
+      zone: null,
+      event: null,
+      companion: null,
+      author: {
+        id: "u",
+        username: "u",
+        firstName: "A",
+        lastName: "B",
+        certified: false,
+        avatarUrl: null,
+        city: "Yaoundé",
+      },
+    };
+    const released = applyPlacementToMood(a, { targetType: "post", targetId: "p1" });
+    expect(released.likedByMe).toBe(false);
+    expect(released.likeTime?.likedByMe).toBe(false);
+    expect(released.likeTime?.activeCount).toBe(0);
+    const kept = applyPlacementToMood(a, { targetType: "mood", targetId: "m1" });
+    expect(kept.likedByMe).toBe(true);
+    expect(kept.likeTime?.activeCount).toBe(1);
   });
 
   it("un like mood/commentaire éteint le like de la publication", () => {

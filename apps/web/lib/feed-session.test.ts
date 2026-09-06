@@ -65,4 +65,13 @@ describe("leftoverFeedEntries", () => {
       expect.objectContaining({ kind: "invite", id: "invite:u2" }),
     ]);
   });
+
+  it("ne rajoute pas les vidéos mood restantes", () => {
+    const leftover = leftoverFeedEntries([{ kind: "post", id: "post:p1", post: post("p1") }], {
+      events: [],
+      people: [],
+      moods: [{ id: "m1" } as never, { id: "m2" } as never],
+    });
+    expect(leftover.some((row) => row.kind === "mood")).toBe(false);
+  });
 });

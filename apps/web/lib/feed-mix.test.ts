@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mixHomeFeed, splitFeedPeople } from "./feed-mix";
+import { MAX_HOME_FEED_MOODS, mixHomeFeed, splitFeedPeople } from "./feed-mix";
 import type { EventCard, FeedItem, MoodItem, PersonCard } from "./api";
 
 function post(id: string, extra: Partial<FeedItem> = {}): FeedItem {
@@ -138,6 +138,19 @@ describe("mixHomeFeed", () => {
     const inviteIds = mixed.filter((row) => row.kind === "invite").map((row) => row.person.id);
     const deckIds = mixed.filter((row) => row.kind === "person").map((row) => row.person.id);
     expect(inviteIds.some((id) => deckIds.includes(id))).toBe(false);
+  });
+
+  it("limite les vidéos mood dans le fil", () => {
+    const mixed = mixHomeFeed(
+      {
+        posts: [post("p1", { imageUrl: "/x.jpg" }), post("p2"), post("p3", { imageUrl: "/y.jpg" })],
+        events: [event("e1")],
+        people: [person("u1")],
+        moods: [mood("m1"), mood("m2"), mood("m3"), mood("m4")],
+      },
+      () => 0.4,
+    );
+    expect(mixed.filter((row) => row.kind === "mood")).toHaveLength(MAX_HOME_FEED_MOODS);
   });
 
   it("n’ajoute pas un event déjà lié à un post", () => {

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { api, ApiError, type FeedItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
-import { viewerLikeActive } from "@/lib/like-feed";
+import { releaseViewerLike, viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { recurrenceCaption } from "@/lib/event-series";
 import { formatCompactCount, formatRelative, splitPostLead } from "@/lib/time";
@@ -60,13 +60,6 @@ export function PostCard({
   const [deleted, setDeleted] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
   const [loadedAt, setLoadedAt] = useState(() => Date.now());
-  useEffect(() => {
-    setLoadedAt(Date.now());
-  }, [post.likeTime?.totalSeconds, post.likeTime?.activeCount]);
-  const showVie = (post.likeTime?.totalSeconds ?? 0) > 0 || (post.likeTime?.activeCount ?? 0) > 0;
-  const mine = user?.id === post.author.id;
-  const event = post.event ?? null;
-  const isEvent = Boolean(event);
   const liked = viewerLikeActive(
     placement,
     "post",
@@ -74,6 +67,14 @@ export function PostCard({
     post.likeTime?.likedByMe ?? post.likedByMe ?? false,
     ready,
   );
+  const shown = liked ? post : releaseViewerLike(post);
+  useEffect(() => {
+    setLoadedAt(Date.now());
+  }, [shown.likeTime?.totalSeconds, shown.likeTime?.activeCount]);
+  const showVie = (shown.likeTime?.totalSeconds ?? 0) > 0 || (shown.likeTime?.activeCount ?? 0) > 0;
+  const mine = user?.id === post.author.id;
+  const event = post.event ?? null;
+  const isEvent = Boolean(event);
   const interested = event?.viewerInterested ?? false;
   const remaining = event ? seatsRemainingOf(event.capacity, event.reservedCount, event.remaining) : null;
   const eventFull = remaining != null && remaining <= 0;
@@ -355,7 +356,7 @@ export function PostCard({
           <p className="type-caption mt-3 text-muted">{stats.join(" . ")}</p>
           {showVie ? (
             <p className="type-body-sm mt-2 font-extrabold text-ink">
-              <LikeTimeBadge time={post.likeTime} loadedAt={loadedAt} className="text-ink" />
+              <LikeTimeBadge time={shown.likeTime} loadedAt={loadedAt} className="text-ink" />
             </p>
           ) : null}
           {isEvent && event ? (

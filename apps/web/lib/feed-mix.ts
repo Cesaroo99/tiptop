@@ -11,8 +11,11 @@ type DeckKey = "mood" | "post" | "text" | "person" | "invite" | "event";
 
 const DECK_ORDER: DeckKey[] = ["mood", "post", "text", "person", "invite", "event"];
 
+/** Peu de vidéos dans le fil : le bandeau stories (STATUS) reste ailleurs. */
+export const MAX_HOME_FEED_MOODS = 2;
+
 const DECK_WEIGHT: Record<DeckKey, number> = {
-  mood: 3,
+  mood: 1,
   post: 3,
   event: 2,
   person: 2,
@@ -98,7 +101,9 @@ export function mixHomeFeed(
     ).map((event) => ({ kind: "event", id: `event:${event.id}`, event })),
     person: shuffle(split.deck, rng).map((person) => ({ kind: "person", id: `person:${person.id}`, person })),
     invite: shuffle(split.invitees, rng).map((person) => ({ kind: "invite", id: `invite:${person.id}`, person })),
-    mood: shuffle(input.moods, rng).map((mood) => ({ kind: "mood", id: `mood:${mood.id}`, mood })),
+    mood: shuffle(input.moods, rng)
+      .slice(0, MAX_HOME_FEED_MOODS)
+      .map((mood) => ({ kind: "mood", id: `mood:${mood.id}`, mood })),
   };
 
   const out: MixedFeedEntry[] = [];

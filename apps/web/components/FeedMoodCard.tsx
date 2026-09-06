@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { api, ApiError, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { viewerLikeActive } from "@/lib/like-feed";
+import { releaseViewerMoodLike, viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { Avatar } from "./Avatar";
 import { HeartIcon } from "./Icons";
@@ -25,8 +25,9 @@ export function FeedMoodCard({
   const [buy, setBuy] = useState(false);
   const liked = viewerLikeActive(placement, "mood", mood.id, Boolean(mood.likedByMe), ready);
   const [loadedAt, setLoadedAt] = useState(() => Date.now());
-  const vie = useLiveLikeLabel(mood.likeTime, loadedAt);
-  const showVie = (mood.likeTime?.totalSeconds ?? 0) > 0 || (mood.likeTime?.activeCount ?? 0) > 0;
+  const shown = liked ? mood : releaseViewerMoodLike(mood);
+  const vie = useLiveLikeLabel(shown.likeTime, loadedAt);
+  const showVie = (shown.likeTime?.totalSeconds ?? 0) > 0 || (shown.likeTime?.activeCount ?? 0) > 0;
 
   async function like(confirmTransfer = true) {
     if (busy) return;

@@ -96,9 +96,10 @@ export function restoreFeedAnchor(scrollTop: number, lastVisibleId?: string | nu
   });
 }
 
+/** Suite locale du fil : events / personnes. Pas de vidéos mood supplémentaires. */
 export function leftoverFeedEntries(
   stream: MixedFeedEntry[],
-  extras: { events: EventCard[]; people: PersonCard[]; invitees?: PersonCard[]; moods: MoodItem[] },
+  extras: { events: EventCard[]; people: PersonCard[]; invitees?: PersonCard[]; moods?: MoodItem[] },
 ): MixedFeedEntry[] {
   const seen = new Set(stream.map((row) => row.id));
   const seenPeople = new Set(
@@ -119,10 +120,6 @@ export function leftoverFeedEntries(
   for (const person of extras.people) {
     const id = `person:${person.id}`;
     if (!seen.has(id) && !seenPeople.has(person.id)) out.push({ kind: "person", id, person });
-  }
-  for (const mood of extras.moods) {
-    const id = `mood:${mood.id}`;
-    if (!seen.has(id)) out.push({ kind: "mood", id, mood });
   }
   return out;
 }
