@@ -44,5 +44,16 @@ describe("FeedPersonCard", () => {
     expect(screen.getByText("DJ")).toBeInTheDocument();
     expect(screen.getByText(/de vous/)).toBeInTheDocument();
     expect(screen.queryByText("Activer le GPS")).toBeNull();
+    expect(screen.queryByText("Disponible près de toi")).toBeNull();
+  });
+
+  it("n’affiche pas « Disponible près de toi » même si l’API l’envoie", () => {
+    render(
+      <TestI18nProvider>
+        <FeedPersonCard person={{ ...person, why: [{ key: "nearby_available" }] }} />
+      </TestI18nProvider>,
+    );
+    expect(screen.queryByText("Disponible près de toi")).toBeNull();
+    expect(screen.getByText("Léa Moreau")).toBeInTheDocument();
   });
 });

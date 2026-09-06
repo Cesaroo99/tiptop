@@ -10,7 +10,6 @@ import { useSession } from "@/lib/session";
 import { viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { useViewerLocation } from "@/lib/viewer-location";
-import { personWhyLines } from "@/lib/discovery-why";
 import { AvailabilityBadge } from "./AvailabilityBadge";
 import { CertifiedMark } from "./Avatar";
 import { BriefcaseIcon, CheckIcon, HeartIcon, RouteIcon, UserPlusIcon } from "./Icons";
@@ -146,7 +145,7 @@ export function NearbyPersonCard({
           <HeartIcon size={16} filled={liked} />
         </button>
       </div>
-      <div className="space-y-2.5 px-4 pb-4 pt-3 text-center">
+      <div className="space-y-1 px-3.5 pb-3 pt-2.5 text-center">
         <h2 className="min-w-0">
           <span className="type-h2 line-clamp-2 break-words text-ink">
             {person.firstName} {person.lastName}
@@ -156,7 +155,7 @@ export function NearbyPersonCard({
               </span>
             ) : null}
           </span>
-          <span className="type-caption mt-1 flex min-w-0 items-center justify-center gap-1.5 text-muted">
+          <span className="type-caption mt-0.5 flex min-w-0 items-center justify-center gap-1.5 text-muted">
             {person.age != null ? <span className="shrink-0">{messages.world.age.replace("{age}", String(person.age))}</span> : null}
             {person.age != null && person.profession ? <span aria-hidden>·</span> : null}
             {person.profession ? (
@@ -173,17 +172,7 @@ export function NearbyPersonCard({
             {distanceText ? `${distanceText} ${messages.world.fromYou}` : person.locationLabel ?? messages.world.approximate}
           </span>
         </p>
-        {personWhyLines(person, messages).map((line) => (
-          <p key={line} className="type-caption mx-auto font-medium text-accent">
-            {line}
-          </p>
-        ))}
-        {person.activeMood ? (
-          <p className="type-caption mx-auto truncate rounded-lg bg-accent-soft px-3 py-1.5 font-medium text-accent">
-            {person.activeMood.activity || person.activeMood.body}
-          </p>
-        ) : null}
-        <div className="grid grid-cols-2 gap-2 pt-0.5">
+        <div className="grid grid-cols-2 gap-2">
           {presence === "AVAILABLE" ? (
             <button
               type="button"
