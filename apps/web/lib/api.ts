@@ -246,6 +246,7 @@ export type InvitationItem = {
     priceXaf: number;
     currency?: string;
     paymentRule?: "HOLD" | "PAY_FIRST" | "PAY_REQUIRED";
+    imageUrl?: string | null;
   };
   inviter: { id: string; username: string; firstName: string; lastName: string };
   invitee: { id: string; username: string; firstName: string; lastName: string };

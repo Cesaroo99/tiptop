@@ -189,8 +189,19 @@ export type Messages = {
     notifNew: string;
     notifEarlier: string;
     notifLike: string;
+    notifLikeProfile: string;
+    notifLikePost: string;
+    notifLikeMood: string;
+    notifLikeComment: string;
+    notifLikeWish: string;
     notifComment: string;
+    notifCommentMood: string;
     notifFollow: string;
+    notifInviteConsult: string;
+    notifInviteTitle: string;
+    notifInviteSeeEvent: string;
+    notifInviteExpired: string;
+    searchNotifs: string;
     emptyNotifs: string;
     chatLater: string;
     inviteLater: string;
@@ -273,6 +284,7 @@ export type Messages = {
     openChat: string;
     rateLimited: string;
     alreadyPending: string;
+    consultTitle: string;
     proposeOuting: string;
     joinNow: string;
   };
@@ -941,9 +953,20 @@ export const fr: Messages = {
     markAllRead: "Tout marquer comme lu",
     notifNew: "Nouveau",
     notifEarlier: "Plus tôt",
-    notifLike: "a aimé ton profil",
+    notifLike: "t’a posé son like",
+    notifLikeProfile: "t’a posé son like",
+    notifLikePost: "t’a posé son like sur ta publication",
+    notifLikeMood: "t’a posé son like sur ton mood",
+    notifLikeComment: "t’a posé son like sur ton commentaire",
+    notifLikeWish: "t’a posé son like sur ton envie",
     notifComment: "a commenté ta publication",
+    notifCommentMood: "a commenté ton mood",
     notifFollow: "t’a suivi",
+    notifInviteConsult: "Consulter l’invitation",
+    notifInviteTitle: "Invitation",
+    notifInviteSeeEvent: "Voir la sortie",
+    notifInviteExpired: "Cette invitation n’est plus valable.",
+    searchNotifs: "Rechercher une notification",
     emptyNotifs: "Pas encore de notifications.",
     chatLater: "Ouvre une vraie conversation — pas un faux chat.",
     inviteLater: "Les invitations vers un événement arrivent avec le cœur « monde réel ».",
@@ -1026,6 +1049,7 @@ export const fr: Messages = {
     openChat: "Ouvrir la conversation",
     rateLimited: "Trop d’invitations envoyées aujourd’hui. Réessaie demain.",
     alreadyPending: "Une invitation est déjà en attente avec cette personne.",
+    consultTitle: "Proposition de sortie",
     proposeOuting: "Proposer une sortie",
     joinNow: "Rejoindre",
   },
@@ -1694,9 +1718,20 @@ export const en: Messages = {
     markAllRead: "Mark all as read",
     notifNew: "New",
     notifEarlier: "Earlier",
-    notifLike: "liked your profile",
+    notifLike: "placed their like on you",
+    notifLikeProfile: "placed their like on you",
+    notifLikePost: "placed their like on your post",
+    notifLikeMood: "placed their like on your mood",
+    notifLikeComment: "placed their like on your comment",
+    notifLikeWish: "placed their like on your wish",
     notifComment: "commented on your post",
+    notifCommentMood: "commented on your mood",
     notifFollow: "followed you",
+    notifInviteConsult: "View invitation",
+    notifInviteTitle: "Invitation",
+    notifInviteSeeEvent: "See the event",
+    notifInviteExpired: "This invitation is no longer valid.",
+    searchNotifs: "Search notifications",
     emptyNotifs: "No notifications yet.",
     chatLater: "Opens a real conversation — not a fake chat.",
     inviteLater: "Invites to an event ship with the real-world core.",
@@ -1779,6 +1814,7 @@ export const en: Messages = {
     openChat: "Open the conversation",
     rateLimited: "Too many invitations sent today. Try again tomorrow.",
     alreadyPending: "An invitation is already pending with this person.",
+    consultTitle: "Outing proposal",
     proposeOuting: "Propose an outing",
     joinNow: "Join",
   },

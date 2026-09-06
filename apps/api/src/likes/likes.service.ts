@@ -840,12 +840,13 @@ export class LikesService {
       return plan;
     });
     if (resolved.beneficiaryUserId !== ownerId) {
+      const dest = await this.likeNotifTarget(target);
       await this.notifications.create({
         userId: resolved.beneficiaryUserId,
         actorId: ownerId,
         type: "LIKE",
-        entityType: target.type,
-        entityId: target.id,
+        entityType: dest.entityType,
+        entityId: dest.entityId,
       });
     }
     const unlocked = await this.syncMilestones(resolved.beneficiaryUserId);
@@ -974,6 +975,22 @@ export class LikesService {
         actor: mapPerson(p.actor),
       })),
     };
+  }
+
+  private async likeNotifTarget(target: { type: DomainTarget; id: string }) {
+    if (target.type === "comment") {
+      const postComment = await this.prisma.comment.findUnique({
+        where: { id: target.id },
+        select: { postId: true },
+      });
+      if (postComment) return { entityType: "comment_post", entityId: postComment.postId };
+      const moodComment = await this.prisma.moodComment.findUnique({
+        where: { id: target.id },
+        select: { moodId: true },
+      });
+      if (moodComment) return { entityType: "comment_mood", entityId: moodComment.moodId };
+    }
+    return { entityType: target.type, entityId: target.id };
   }
 
   private async resolveTarget(ownerId: string, target: { type: DomainTarget; id: string }) {

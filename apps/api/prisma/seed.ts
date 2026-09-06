@@ -326,26 +326,38 @@ async function main() {
     });
   }
 
-  const inviteCount = await prisma.invitation.count({ where: { inviteeId: cesar.id } });
-  if (inviteCount === 0 && picnic) {
-    const invitation = await prisma.invitation.create({
-      data: {
-        eventId: picnic.id,
-        inviterId: mbelle.id,
-        inviteeId: cesar.id,
-        payer: "FREE",
-        expiresAt: invitationExpiresAt(new Date()),
-      },
+  const pendingInvite = await prisma.invitation.findFirst({
+    where: { inviteeId: cesar.id, status: "PENDING" },
+  });
+  if (!pendingInvite) {
+    const alreadyInvited = await prisma.invitation.findMany({
+      where: { inviteeId: cesar.id },
+      select: { eventId: true },
     });
-    await prisma.notification.create({
-      data: {
-        userId: cesar.id,
-        actorId: mbelle.id,
-        type: "INVITE",
-        entityType: "invitation",
-        entityId: invitation.id,
-      },
-    });
+    const taken = new Set(alreadyInvited.map((row) => row.eventId));
+    const target =
+      [picnic, paid].find((event) => event && !taken.has(event.id)) ?? picnic ?? paid;
+    if (target) {
+      const inviterId = target.hostId === mbelle.id ? mbelle.id : erica.id;
+      const invitation = await prisma.invitation.create({
+        data: {
+          eventId: target.id,
+          inviterId,
+          inviteeId: cesar.id,
+          payer: target.priceXaf > 0 ? "GUEST" : "FREE",
+          expiresAt: invitationExpiresAt(new Date()),
+        },
+      });
+      await prisma.notification.create({
+        data: {
+          userId: cesar.id,
+          actorId: inviterId,
+          type: "INVITE",
+          entityType: "invitation",
+          entityId: invitation.id,
+        },
+      });
+    }
   }
 
   if (black) {
@@ -1187,6 +1199,29 @@ async function enrichLivingWorld(
       where: { ownerId_personId: { ownerId: cesar.id, personId } },
       update: {},
       create: { ownerId: cesar.id, personId },
+    });
+  }
+
+  const socialPending = await db.socialInvite.findFirst({ where: { inviteeId: cesar.id, status: "SENT" } });
+  if (!socialPending) {
+    const social = await db.socialInvite.create({
+      data: {
+        inviterId: erica.id,
+        inviteeId: cesar.id,
+        context: "RESTAURANT",
+        label: "Sushi House Bastos",
+        message: "On se voit ce soir ?",
+        expiresAt: new Date(Date.now() + 20 * 3600_000),
+      },
+    });
+    await db.notification.create({
+      data: {
+        userId: cesar.id,
+        actorId: erica.id,
+        type: "SOCIAL_INVITE",
+        entityType: "social_invite_sent",
+        entityId: social.id,
+      },
     });
   }
 

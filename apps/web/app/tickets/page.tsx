@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { EventInvitationSheet } from "@/components/EventInvitationSheet";
 import { CalendarIcon } from "@/components/Icons";
 import { Chip, EmptyState, ScreenHeader } from "@/components/ui";
 import { api, ApiError, type InvitationItem, type ReservationItem, type TicketItem } from "@/lib/api";
@@ -31,6 +32,9 @@ function TicketsPage() {
   const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [reservations, setReservations] = useState<ReservationItem[]>([]);
   const [note, setNote] = useState<string | null>(null);
+  const [opened, setOpened] = useState<InvitationItem | null>(null);
+  const [busy, setBusy] = useState(false);
+  const openId = params.get("open");
   const [pendingReviews, setPendingReviews] = useState<Array<{ eventId: string; title: string }>>([]);
 
   async function loadInvites(next = box) {
@@ -54,6 +58,19 @@ function TicketsPage() {
     void loadInvites();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [box]);
+
+  useEffect(() => {
+    if (!openId) return;
+    setTab("invites");
+    const hit = invites.find((i) => i.id === openId);
+    if (hit) {
+      setOpened(hit);
+      return;
+    }
+    api<InvitationItem>(`/invitations/${openId}`)
+      .then(setOpened)
+      .catch(() => undefined);
+  }, [openId, invites]);
 
   async function act(id: string, action: "accept" | "refuse") {
     try {
@@ -168,35 +185,57 @@ function TicketsPage() {
           {invites.length === 0 ? <EmptyState title={messages.world.tabInvites} body={messages.world.invitationsEmpty} /> : null}
           <div className="space-y-3">
             {invites.map((inv) => (
-              <article key={inv.id} className="rounded-card bg-surface p-4 shadow-card">
+              <button
+                key={inv.id}
+                type="button"
+                onClick={() => setOpened(inv)}
+                className="w-full rounded-card bg-surface p-4 text-left shadow-card"
+              >
                 <p className="type-heading text-ink">{inv.event.title}</p>
                 <p className="type-caption mt-1 text-muted">
                   {inv.inviter.firstName} → {inv.invitee.firstName} · {statusLabel[inv.status] ?? inv.status}
                   {inv.payAfterAccept ? ` · ${messages.booking.waitPayPendingHint}` : ""}
                 </p>
+                {box === "received" && inv.status === "PENDING" ? (
+                  <p className="type-caption mt-2 font-semibold text-accent">{messages.social.notifInviteConsult}</p>
+                ) : null}
                 {box === "sent" && inv.status === "ACCEPTED" && inv.reservation?.needsPayment ? (
                   <Link
                     href={`/events/${inv.event.id}/pay?reservationId=${inv.reservation.id}`}
                     className="type-body-sm mt-2 inline-block font-semibold text-accent"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     {messages.booking.payAcceptedSeat}
                   </Link>
                 ) : null}
-                {box === "received" && inv.status === "PENDING" ? (
-                  <div className="mt-3 flex gap-2">
-                    <button type="button" className="tap-scale type-button flex-1 rounded-pill bg-accent py-2.5 text-on-primary transition hover:bg-accent-hover" onClick={() => void act(inv.id, "accept")}>
-                      {messages.world.accept}
-                    </button>
-                    <button type="button" className="tap-scale type-button flex-1 rounded-pill border border-border bg-surface py-2.5 text-ink transition hover:bg-surface-sunken" onClick={() => void act(inv.id, "refuse")}>
-                      {messages.world.refuse}
-                    </button>
-                  </div>
-                ) : null}
-              </article>
+              </button>
             ))}
           </div>
         </div>
       ) : null}
+      <EventInvitationSheet
+        invitation={opened}
+        open={Boolean(opened)}
+        canRespond={box === "received" && opened?.status === "PENDING"}
+        busy={busy}
+        onClose={() => setOpened(null)}
+        onAccept={() => {
+          if (!opened) return;
+          setBusy(true);
+          void act(opened.id, "accept").finally(() => {
+            setBusy(false);
+            setOpened(null);
+          });
+        }}
+        onRefuse={() => {
+          if (!opened) return;
+          setBusy(true);
+          void act(opened.id, "refuse").finally(() => {
+            setBusy(false);
+            setOpened(null);
+          });
+        }}
+      />
     </main>
   );
 }

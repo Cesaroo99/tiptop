@@ -38,6 +38,11 @@ export class SocialInvitesController {
     return this.invites.list(req.user.id, b);
   }
 
+  @Get(":id")
+  get(@Req() req: Request & { user: PublicUser }, @Param("id") id: string) {
+    return this.invites.get(req.user.id, id);
+  }
+
   @Post()
   create(@Req() req: Request & { user: PublicUser }, @Body() body: CreateSocialInviteDto) {
     return this.invites.create(req.user.id, body);

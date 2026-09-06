@@ -37,6 +37,11 @@ export class InvitationsController {
     return this.invitations.list(req.user.id, b);
   }
 
+  @Get("invitations/:id")
+  get(@Req() req: Request & { user: PublicUser }, @Param("id") id: string) {
+    return this.invitations.get(req.user.id, id);
+  }
+
   @Post("invitations")
   create(@Req() req: Request & { user: PublicUser }, @Body() body: CreateInviteDto) {
     return this.invitations.create(req.user.id, body.inviteeId, body.eventId, body.payer, body.payAfterAccept);

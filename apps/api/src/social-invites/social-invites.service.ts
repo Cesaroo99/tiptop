@@ -86,6 +86,16 @@ export class SocialInvitesService {
     return { items: rows.map((r) => this.serialize(r)) };
   }
 
+  async get(userId: string, id: string) {
+    await this.expireStale();
+    const row = await this.prisma.socialInvite.findUnique({ where: { id }, include: this.include() });
+    if (!row) throw new NotFoundException({ code: "INVITE_NOT_FOUND" });
+    if (row.inviteeId !== userId && row.inviterId !== userId) {
+      throw new ForbiddenException({ code: "NOT_PARTY" });
+    }
+    return this.serialize(row);
+  }
+
   async accept(actorId: string, id: string) {
     await this.expireStale();
     const inv = await this.prisma.socialInvite.findUnique({ where: { id } });
