@@ -1,5 +1,4 @@
--- Filet Render : colonnes Event attendues par le client Prisma.
--- wanted / allowGroups n'ont jamais eu de migration : findMany et le seed 500.
+-- Filet Render : colonnes / tables que Prisma attend, oubliées par les migrations.
 ALTER TABLE "Event" ADD COLUMN IF NOT EXISTS "description" TEXT NOT NULL DEFAULT '';
 ALTER TABLE "Event" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;
 ALTER TABLE "Event" ADD COLUMN IF NOT EXISTS "zone" TEXT;
@@ -18,3 +17,28 @@ ALTER TABLE "Event" ADD COLUMN IF NOT EXISTS "wanted" BOOLEAN NOT NULL DEFAULT f
 ALTER TABLE "Event" ADD COLUMN IF NOT EXISTS "allowGroups" BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE "Event" ADD COLUMN IF NOT EXISTS "recurrence" TEXT NOT NULL DEFAULT 'NONE';
 ALTER TABLE "Event" ADD COLUMN IF NOT EXISTS "seriesId" TEXT;
+ALTER TABLE "EventParticipant" ADD COLUMN IF NOT EXISTS "showOnProfile" BOOLEAN NOT NULL DEFAULT false;
+
+DO $$ BEGIN CREATE TYPE "EventGroupRole" AS ENUM ('HOST', 'ADMIN', 'MEMBER'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE "EventGroupStatus" AS ENUM ('INVITED', 'JOINED', 'DECLINED', 'LEFT'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE TABLE IF NOT EXISTS "EventGroup" (
+    "id" TEXT NOT NULL,
+    "eventId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "createdById" TEXT NOT NULL,
+    "conversationId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "EventGroup_pkey" PRIMARY KEY ("id")
+);
+CREATE TABLE IF NOT EXISTS "EventGroupMember" (
+    "id" TEXT NOT NULL,
+    "groupId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "role" "EventGroupRole" NOT NULL DEFAULT 'MEMBER',
+    "status" "EventGroupStatus" NOT NULL,
+    "invitedById" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "respondedAt" TIMESTAMP(3),
+    CONSTRAINT "EventGroupMember_pkey" PRIMARY KEY ("id")
+);

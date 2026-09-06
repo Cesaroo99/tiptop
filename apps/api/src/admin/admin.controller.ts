@@ -88,6 +88,11 @@ export class AdminController {
     return this.admin.overview();
   }
 
+  @Post("repair-schema")
+  repairSchema() {
+    return this.admin.repairSchema();
+  }
+
   @Get("users")
   users(@Query("q") q?: string) {
     return this.admin.users(q ?? "");

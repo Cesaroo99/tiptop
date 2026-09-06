@@ -18,6 +18,7 @@ import {
 import type { AdminAction, Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { applyEventSchemaFixes, listTableColumns } from "../ensure-event-schema";
 
 const person = { id: true, username: true, firstName: true, lastName: true, certified: true } as const;
 
@@ -38,7 +39,80 @@ export class AdminService {
       this.prisma.payment.count({ where: { status: "SUCCEEDED" } }),
       this.prisma.report.count({ where: { status: "OPEN" } }),
     ]);
-    return { users, blocked, posts, hiddenPosts, events, payments, openReports };
+    let eventColumns: string[] = [];
+    let participantColumns: string[] = [];
+    try {
+      eventColumns = await listTableColumns((sql) => this.prisma.$queryRawUnsafe(sql), "Event");
+      participantColumns = await listTableColumns((sql) => this.prisma.$queryRawUnsafe(sql), "EventParticipant");
+    } catch {
+      /* diagnostic optionnel */
+    }
+    return {
+      users,
+      blocked,
+      posts,
+      hiddenPosts,
+      events,
+      payments,
+      openReports,
+      schema: {
+        eventColumns,
+        participantColumns,
+        hasWanted: eventColumns.includes("wanted"),
+        hasAllowGroups: eventColumns.includes("allowGroups"),
+        hasShowOnProfile: participantColumns.includes("showOnProfile"),
+        lastFixErrors: this.prisma.lastSchemaErrors ?? [],
+      },
+    };
+  }
+
+  async repairSchema() {
+    const errors = await applyEventSchemaFixes((sql) => this.prisma.$executeRawUnsafe(sql));
+    this.prisma.lastSchemaErrors = errors;
+    const eventColumns = await listTableColumns((sql) => this.prisma.$queryRawUnsafe(sql), "Event");
+    const participantColumns = await listTableColumns((sql) => this.prisma.$queryRawUnsafe(sql), "EventParticipant");
+    let probe: { ok: boolean; error?: string; eventId?: string } = { ok: false };
+    try {
+      const host = await this.prisma.user.findUnique({ where: { phoneE164: "+237695214785" } });
+      if (!host) throw new Error("CESAR_MISSING");
+      const existing = await this.prisma.event.findFirst({
+        where: { hostId: host.id, title: "Soirée Black & White" },
+      });
+      if (existing) {
+        probe = { ok: true, eventId: existing.id };
+      } else {
+        const startsAt = new Date(Date.now() + 4 * 3600_000);
+        const created = await this.prisma.event.create({
+          data: {
+            hostId: host.id,
+            title: "Soirée Black & White",
+            description: "On sort vraiment — tenues noires et blanches, Carrefour Damas.",
+            imageUrl: "/seed/events/black-white.jpg",
+            city: "Yaoundé",
+            zone: "Carrefour Damas",
+            venue: "Black&White",
+            startsAt,
+            endsAt: new Date(startsAt.getTime() + 4 * 3600_000),
+            priceXaf: 0,
+            capacity: 40,
+            minAge: 18,
+            requiresReservation: false,
+            participants: { create: { userId: host.id, status: "HOST" } },
+          },
+        });
+        probe = { ok: true, eventId: created.id };
+      }
+    } catch (err) {
+      probe = { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
+    return {
+      errors,
+      eventColumns,
+      participantColumns,
+      hasWanted: eventColumns.includes("wanted"),
+      hasShowOnProfile: participantColumns.includes("showOnProfile"),
+      probe,
+    };
   }
 
   async users(q: string) {

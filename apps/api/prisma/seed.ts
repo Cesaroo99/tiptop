@@ -1,10 +1,12 @@
 import { PrismaClient, LikeUnitSource, UserRole, ReportKind, ReportReason } from "@prisma/client";
 import { invitationExpiresAt, directKey, crossedMilestones, DEFAULT_LIKE_MILESTONES, sumLikeSeconds } from "@tiptop/domain";
+import { applyEventSchemaFixes } from "../src/ensure-event-schema";
 import { enrichWorldCatalog } from "./seed-world";
 
 const prisma = new PrismaClient();
 
 async function main() {
+  await applyEventSchemaFixes((sql) => prisma.$executeRawUnsafe(sql));
   const availableUntil = new Date(Date.now() + 7 * 24 * 3600_000);
   const cesar = await prisma.user.upsert({
     where: { phoneE164: "+237695214785" },

@@ -27,6 +27,7 @@ import {
 } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { applyEventSchemaFixes } from "../ensure-event-schema";
 
 export type CreateEventInput = {
   title: string;
@@ -181,7 +182,20 @@ export class EventsService {
       return { items: tab === "all" ? dedupeSeriesOccurrences(items) : items };
     } catch (err) {
       console.error("[events.list]", err);
-      return { items: [] };
+      await applyEventSchemaFixes((sql) => this.prisma.$executeRawUnsafe(sql));
+      try {
+        const rows = await this.prisma.event.findMany({
+          where,
+          orderBy: { startsAt: "asc" },
+          take: tab === "all" ? 80 : 40,
+          include: this.include(),
+        });
+        const items = await Promise.all(rows.map((e) => this.map(viewerId, e)));
+        return { items: tab === "all" ? dedupeSeriesOccurrences(items) : items };
+      } catch (err2) {
+        console.error("[events.list.retry]", err2);
+        return { items: [] };
+      }
     }
   }
 
