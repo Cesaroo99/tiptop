@@ -17,6 +17,7 @@ import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useLikePlacement } from "@/lib/like-placement";
 import { useSession } from "@/lib/session";
+import { sheetOverlayClass, useSheetPortal } from "@/lib/sheet-portal";
 
 /**
  * Flux Mood vertical immersif : un mood par écran, média lisible,
@@ -281,6 +282,13 @@ function MoodSlide({
               {mood.author.certified ? <CertifiedMark /> : null}
             </span>
           </Link>
+          {user && user.id !== mood.author.id ? (
+            <FollowAuthor
+              authorId={mood.author.id}
+              following={Boolean(mood.following)}
+              onChange={(following) => onChange({ following })}
+            />
+          ) : null}
         </div>
         {mood.companion ? (
           <Link
@@ -464,6 +472,50 @@ function MoodVideo({ src, muted }: { src: string; muted: boolean }) {
   );
 }
 
+function FollowAuthor({
+  authorId,
+  following,
+  onChange,
+}: {
+  authorId: string;
+  following: boolean;
+  onChange: (following: boolean) => void;
+}) {
+  const { messages } = useI18n();
+  const [busy, setBusy] = useState(false);
+
+  async function toggle() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (following) {
+        await api(`/users/${authorId}/follow`, { method: "DELETE" });
+        onChange(false);
+      } else {
+        await api(`/users/${authorId}/follow`, { method: "POST" });
+        onChange(true);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => void toggle()}
+      disabled={busy}
+      className={`tap-scale shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold leading-none shadow-[0_1px_6px_rgba(0,0,0,0.28)] ${
+        following
+          ? "border border-white/40 bg-white/10 text-white"
+          : "bg-accent text-on-primary"
+      }`}
+    >
+      {following ? messages.social.following : messages.social.follow}
+    </button>
+  );
+}
+
 function MoodComments({
   moodId,
   open,
@@ -476,6 +528,7 @@ function MoodComments({
   onSent: () => void;
 }) {
   const { messages } = useI18n();
+  const portal = useSheetPortal();
   const [comments, setComments] = useState<CommentItem[] | null>(null);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
@@ -504,15 +557,24 @@ function MoodComments({
     }
   }
 
-  if (!open || typeof document === "undefined") return null;
+  if (!open || !portal) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-end justify-center" role="dialog" aria-modal aria-label={messages.social.comments}>
-      <button type="button" className="absolute inset-0 bg-black/45" aria-label={messages.common.close} onClick={onClose} />
-      <div className="relative flex h-[72%] w-full max-w-md flex-col rounded-t-2xl bg-surface-elevated pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-elevated">
-        <div className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-border" aria-hidden />
-        <div className="flex items-center justify-between px-4 py-3">
-          <h2 className="type-h4 text-ink">
+    <div
+      className={sheetOverlayClass(portal)}
+      role="dialog"
+      aria-modal
+      aria-label={messages.social.comments}
+      onClick={onClose}
+    >
+      <div
+        data-testid="mood-comments-sheet"
+        className="sheet-panel flex h-[min(64dvh,488px)] w-full max-w-md flex-col rounded-t-[28px] bg-surface px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 shadow-elevated"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border" aria-hidden />
+        <div className="flex items-center justify-between pb-2">
+          <h2 className="type-h3 text-ink">
             {messages.social.comments}
             {comments ? ` · ${comments.length}` : ""}
           </h2>
@@ -520,11 +582,11 @@ function MoodComments({
             {messages.common.close}
           </button>
         </div>
-        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4">
+        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
           {comments === null ? (
             <p className="type-body-sm text-muted">{messages.common.loading}</p>
           ) : comments.length === 0 ? (
-            <p className="type-body-sm py-8 text-center text-muted">{messages.world.moodCommentsEmpty}</p>
+            <p className="type-body-sm py-6 text-center text-muted">{messages.world.moodCommentsEmpty}</p>
           ) : (
             comments.map((c) => (
               <div key={c.id} className="flex gap-2.5 py-1.5">
@@ -537,7 +599,7 @@ function MoodComments({
           )}
         </div>
         <form
-          className="flex items-center gap-2 border-t border-divider px-4 py-3"
+          className="mt-3 flex items-center gap-2 border-t border-divider pt-3"
           onSubmit={(e) => {
             e.preventDefault();
             void send();
@@ -561,6 +623,6 @@ function MoodComments({
         </form>
       </div>
     </div>,
-    document.body,
+    portal,
   );
 }

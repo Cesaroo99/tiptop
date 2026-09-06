@@ -1,26 +1,23 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { MoodLikeRail, moodLikeMeters } from "./MoodLikeRail";
+import { MoodLikeRail, moodLikeDuration } from "./MoodLikeRail";
 import { TestI18nProvider } from "@/lib/test-utils";
 
-describe("moodLikeMeters", () => {
-  it("affiche une durée, jamais un débit ni un nombre de likes", () => {
+describe("moodLikeDuration", () => {
+  it("affiche le cumul de temps, jamais /H /J /M ni un nombre de likes", () => {
     expect(
-      moodLikeMeters({
+      moodLikeDuration({
         totalSeconds: 3723,
         activeCount: 1,
         likedByMe: false,
         label: "1 h 2 min",
-        hourSeconds: 45,
-        daySeconds: 1500,
-        monthSeconds: 3723,
       }),
-    ).toEqual({ total: "1 h 2", hour: "45 s", day: "25 min", month: "1 h 2" });
+    ).toBe("1 h 2");
   });
 });
 
 describe("MoodLikeRail", () => {
-  it("pose le like unique et montre le temps /H /J /M", () => {
+  it("pose le like unique et montre uniquement le temps cumulé", () => {
     const onLike = vi.fn();
     render(
       <TestI18nProvider>
@@ -32,9 +29,6 @@ describe("MoodLikeRail", () => {
             activeCount: 0,
             likedByMe: false,
             label: "40 s",
-            hourSeconds: 40,
-            daySeconds: 40,
-            monthSeconds: 40,
           }}
           commentsCount={2300}
           onLike={onLike}
@@ -44,13 +38,12 @@ describe("MoodLikeRail", () => {
         />
       </TestI18nProvider>,
     );
-    expect(screen.getAllByText("40 s").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("/H")).toBeInTheDocument();
-    expect(screen.getByText("/J")).toBeInTheDocument();
-    expect(screen.getByText("/M")).toBeInTheDocument();
+    expect(screen.getByText("40 s")).toBeInTheDocument();
+    expect(screen.queryByText("/H")).not.toBeInTheDocument();
+    expect(screen.queryByText("/J")).not.toBeInTheDocument();
+    expect(screen.queryByText("/M")).not.toBeInTheDocument();
     expect(screen.getByText("2.3k")).toBeInTheDocument();
     expect(screen.queryByText("1 like")).not.toBeInTheDocument();
-    expect(screen.queryByText("111k")).not.toBeInTheDocument();
     screen.getByRole("button", { name: "Poser mon like" }).click();
     expect(onLike).toHaveBeenCalledOnce();
   });

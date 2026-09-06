@@ -26,9 +26,10 @@ test.describe("Smokes parcours 3–5, 8, 12", () => {
   test("P8 — rail mood", async ({ page }) => {
     await page.goto("/mood");
     await expect(page.getByRole("link", { name: "Créer un mood" })).toBeVisible();
-    await expect(page.getByText("/H").first()).toBeVisible();
-    await expect(page.getByText("/J").first()).toBeVisible();
-    await expect(page.getByText("/M").first()).toBeVisible();
+    await expect(page.getByText("0 s").first()).toBeVisible();
+    await expect(page.getByText("/H")).toHaveCount(0);
+    await expect(page.getByText("/J")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /Suivre|Abonné/ }).first()).toBeVisible();
   });
 
   test("P12 — notifications in-app", async ({ page }) => {

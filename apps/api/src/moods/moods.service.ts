@@ -137,7 +137,7 @@ export class MoodsService {
       visible.map((m) => m.id),
     );
     return {
-      items: visible.map((m) => this.map(m, extras, likeTimes.get(m.id))),
+      items: visible.map((m) => this.map(m, extras, likeTimes.get(m.id), followeeIds.has(m.authorId))),
     };
   }
 
@@ -157,7 +157,11 @@ export class MoodsService {
     if (!isMoodActive(mood.expiresAt)) throw new NotFoundException({ code: "MOOD_EXPIRED" });
     const extras = await this.likeExtras(viewerId, [mood.authorId]);
     const likeTimes = await this.likes.snapshots(viewerId, "mood", [mood.id]);
-    return this.map(mood, extras, likeTimes.get(mood.id));
+    const follow = await this.prisma.follow.findFirst({
+      where: { followerId: viewerId, followeeId: mood.authorId },
+      select: { id: true },
+    });
+    return this.map(mood, extras, likeTimes.get(mood.id), Boolean(follow));
   }
 
   async comments(moodId: string) {
@@ -273,6 +277,7 @@ export class MoodsService {
       dayLabel?: string;
       monthLabel?: string;
     },
+    following = false,
   ) {
     return {
       id: m.id,
@@ -299,6 +304,7 @@ export class MoodsService {
       createdAt: m.createdAt.toISOString(),
       commentsCount: m._count.comments,
       likedAuthor: extras.liked.has(m.author.id),
+      following,
       likedByMe: likeTime?.likedByMe ?? false,
       authorActiveLikes: extras.counts.get(m.author.id) ?? 0,
       likeTime: likeTime

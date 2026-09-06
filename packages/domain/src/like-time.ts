@@ -75,7 +75,7 @@ export function likeTimeWindows(periods: LikePeriodSlice[], now: Date) {
   };
 }
 
-/** 32 · 1.5k · 111k · 2.3M — rail Mood (/H /J /M) et compteurs compact. */
+/** 32 · 1.5k · 111k · 2.3M — compteurs compact (commentaires, stats). */
 export function formatCompactCount(value: number): string {
   const n = Math.max(0, Math.floor(value));
   if (n < 1000) return String(n);

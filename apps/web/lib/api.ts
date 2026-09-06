@@ -110,6 +110,7 @@ export type MoodItem = {
   createdAt: string;
   commentsCount: number;
   likedAuthor: boolean;
+  following?: boolean;
   likedByMe?: boolean;
   authorActiveLikes: number;
   likeTime?: LikeTimeSnap;
