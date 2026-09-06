@@ -51,23 +51,27 @@ export function LikeFaces({
 export function LikePlacedCard({
   title,
   person,
+  placement,
   idle,
 }: {
   title: string;
   person: LikeFace | null;
+  placement?: { label: string; href: string } | null;
   idle: string;
 }) {
+  const name = person ? `${person.firstName} ${person.lastName}` : placement?.label;
+  const href = person ? `/u/${person.username}` : placement?.href;
   return (
     <section className="rounded-card bg-surface p-4 shadow-card">
       <p className="mb-3 text-sm font-semibold text-accent">{title}</p>
-      {person ? (
-        <Link href={`/u/${person.username}`} className="flex items-center gap-3">
-          <Avatar src={person.avatarUrl} firstName={person.firstName} lastName={person.lastName} size={48} />
+      {name && href ? (
+        <Link href={href} className="flex items-center gap-3">
+          {person ? (
+            <Avatar src={person.avatarUrl} firstName={person.firstName} lastName={person.lastName} size={48} />
+          ) : null}
           <div>
-            <p className="font-semibold text-ink">
-              {person.firstName} {person.lastName}
-            </p>
-            <p className="text-xs text-muted">@{person.username}</p>
+            <p className="font-semibold text-ink">{name}</p>
+            {person ? <p className="text-xs text-muted">@{person.username}</p> : null}
           </div>
         </Link>
       ) : (

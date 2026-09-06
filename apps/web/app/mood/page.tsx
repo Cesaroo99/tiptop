@@ -17,7 +17,7 @@ import { EmptyState, Modal, Skeleton } from "@/components/ui";
 import { moodSoundSrc } from "@tiptop/domain";
 import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { viewerLikeActive } from "@/lib/like-feed";
+import { applyPlacementToMood, releaseViewerMoodLike, viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { useSession } from "@/lib/session";
 import { sheetOverlayClass, useSheetPortal } from "@/lib/sheet-portal";
@@ -46,20 +46,36 @@ function MoodFeed() {
   const slideRefs = useRef(new Map<string, HTMLElement>());
 
   useEffect(() => {
-    api<{ items: MoodItem[] }>("/moods")
-      .then(async (d) => {
-        if (startId && !d.items.some((m) => m.id === startId)) {
-          try {
-            const single = await api<MoodItem>(`/moods/${startId}`);
-            setItems([single, ...d.items]);
-            return;
-          } catch {
-            /* Mood expiré : on garde le flux. */
-          }
+    let cancelled = false;
+    async function load() {
+      if (startId) {
+        try {
+          const single = await api<MoodItem>(`/moods/${startId}`);
+          if (!cancelled) setItems([single]);
+        } catch {
+          /* Mood expiré : on charge le flux. */
         }
-        setItems(d.items);
-      })
-      .catch(() => setItems([]));
+      }
+      try {
+        const d = await api<{ items: MoodItem[] }>("/moods");
+        if (cancelled) return;
+        if (startId) {
+          const rest = d.items.filter((m) => m.id !== startId);
+          setItems((cur) => {
+            const first = cur?.find((m) => m.id === startId) ?? d.items.find((m) => m.id === startId);
+            return first ? [first, ...rest] : d.items;
+          });
+        } else {
+          setItems(d.items);
+        }
+      } catch {
+        if (!cancelled) setItems((cur) => cur ?? []);
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startId]);
 
@@ -69,8 +85,21 @@ function MoodFeed() {
     el?.scrollIntoView({ block: "start" });
   }, [startId, items]);
 
+  const { placement, ready } = useLikePlacement();
+
+  useEffect(() => {
+    if (!ready) return;
+    setItems((cur) => cur?.map((m) => applyPlacementToMood(m, placement)) ?? cur);
+  }, [ready, placement?.targetType, placement?.targetId]);
+
   function updateMood(id: string, patch: Partial<MoodItem>) {
-    setItems((cur) => cur?.map((m) => (m.id === id ? { ...m, ...patch } : m)) ?? cur);
+    setItems(
+      (cur) =>
+        cur?.map((m) => {
+          if (m.id === id) return { ...m, ...patch };
+          return patch.likedByMe ? releaseViewerMoodLike(m) : m;
+        }) ?? cur,
+    );
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
@@ -216,9 +245,14 @@ function MoodSlide({
       });
       onChange({
         likedByMe: true,
-        likeTime: mood.likeTime
-          ? { ...mood.likeTime, likedByMe: true, activeCount: mood.likeTime.activeCount + 1 }
-          : undefined,
+        likeTime: {
+          totalSeconds: mood.likeTime?.totalSeconds ?? 0,
+          activeCount: mood.likeTime?.likedByMe
+            ? (mood.likeTime.activeCount ?? 1)
+            : (mood.likeTime?.activeCount ?? 0) + 1,
+          likedByMe: true,
+          label: mood.likeTime?.label ?? "0 s",
+        },
       });
       await refreshPlacement();
       setTransfer(null);
@@ -230,7 +264,7 @@ function MoodSlide({
           setBuy(true);
           return;
         }
-        if (kind === "transfer") setTransfer(messages.social.transferGeneric);
+        if (kind === "transfer") setTransfer(placement?.label || messages.social.transferGeneric);
       }
     }
   }
@@ -255,6 +289,7 @@ function MoodSlide({
       {mood.videoUrl ? (
         <MoodVideo
           src={mood.videoUrl}
+          poster={mood.imageUrl}
           muted={muted || mood.soundKey === "off" || Boolean(moodSoundSrc(mood.soundKey))}
           soundSrc={moodSoundSrc(mood.soundKey)}
         />
@@ -417,7 +452,7 @@ function MoodSlide({
 }
 
 /** Vidéo en boucle : joue dès qu’elle est visible, tap pour pause / lecture. */
-function MoodVideo({ src, muted, soundSrc }: { src: string; muted: boolean; soundSrc?: string | null }) {
+function MoodVideo({ src, poster, muted, soundSrc }: { src: string; poster?: string | null; muted: boolean; soundSrc?: string | null }) {
   const { messages } = useI18n();
   const ref = useRef<HTMLVideoElement>(null);
   const pausedRef = useRef(false);
@@ -462,12 +497,13 @@ function MoodVideo({ src, muted, soundSrc }: { src: string; muted: boolean; soun
       <video
         ref={ref}
         src={src}
+        poster={poster ?? undefined}
         muted={muted}
         loop
         playsInline
         autoPlay
         preload="auto"
-        className="h-full w-full object-cover"
+        className="h-full w-full bg-ink object-cover"
         onClick={toggle}
       />
       {soundSrc ? <audio src={soundSrc} loop autoPlay muted={muted} /> : null}

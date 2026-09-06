@@ -14,6 +14,11 @@ vi.mock("@/lib/session", () => ({
   useSession: () => ({ user: { id: "host", profileCompleted: true }, loading: false }),
 }));
 
+vi.stubGlobal(
+  "fetch",
+  vi.fn(async () => ({ ok: true, json: async () => ({ items: [] }) })),
+);
+
 const event: EventCardType = {
   id: "evt_1",
   title: "Piscine party - Odza, Yaoundé",
@@ -85,7 +90,7 @@ const people: EventManagePerson[] = [
 ];
 
 describe("écran organisateur", () => {
-  it("montre Valider ticket et le compte à rebours, pas le coup de cœur", () => {
+  it("montre Valider ticket, les 4 actions et le compte à rebours", () => {
     render(
       <TestI18nProvider>
         <EventDetailCard event={event} variant="host" />
@@ -93,7 +98,11 @@ describe("écran organisateur", () => {
     );
     expect(screen.getByRole("link", { name: /Valider ticket/i })).toHaveAttribute("href", "/events/evt_1/scan");
     expect(screen.getByText("Événement dans :")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Coup de cœur")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Coup de cœur")).toBeInTheDocument();
+    expect(screen.getByLabelText("Commentaires")).toBeInTheDocument();
+    expect(screen.getByLabelText("Réserver")).toBeDisabled();
+    expect(screen.getByLabelText("Intéressé")).toBeDisabled();
+    expect(screen.queryByText("Réserver")).not.toBeInTheDocument();
     expect(screen.queryByText(/Partages/)).not.toBeInTheDocument();
   });
 

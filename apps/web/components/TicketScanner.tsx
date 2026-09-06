@@ -44,7 +44,7 @@ export function TicketScanner({
     try {
       const res = await api<ScanResult>("/tickets/scan", {
         method: "POST",
-        body: JSON.stringify({ token: raw }),
+        body: JSON.stringify({ token: raw, eventId }),
       });
       const who = res.holder ? `${res.holder.firstName} ${res.holder.lastName}` : "";
       setResult(who ? `${messages.booking.scanOk} — ${who}` : messages.booking.scanOk);

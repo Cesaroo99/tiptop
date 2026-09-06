@@ -30,7 +30,7 @@ test.describe("P1 — compte → OTP → accueil", () => {
     await fillOtp(page, CESAR.otp);
     await page.getByRole("button", { name: "Vérifier" }).click();
     await expect(page).not.toHaveURL(/\/otp/);
-    await expect(page.getByText("Votre mood !")).toBeVisible();
+    await expect(page.getByText("Ton statut")).toBeVisible();
     await expect(page.getByRole("link", { name: "Home" })).toBeVisible();
   });
 });

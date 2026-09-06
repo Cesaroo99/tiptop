@@ -33,6 +33,7 @@ import {
   likePlacementHref,
   likePlacementLabel,
   parseLikePlacementKind,
+  personDisplayName,
   type LikePlacementKind,
 } from "./like-placement";
 
@@ -338,56 +339,70 @@ export class LikesService {
         select: { username: true, firstName: true, lastName: true },
       });
       return {
-        label: likePlacementLabel("user", { name: user ? `${user.firstName} ${user.lastName}` : "" }),
+        label: likePlacementLabel("user", { name: user ? personDisplayName(user.firstName, user.lastName) : "" }),
         href: likePlacementHref("user", { id, username: user?.username }),
       };
     }
     if (kind === "post") {
       const post = await this.prisma.post.findUnique({
         where: { id },
-        select: { id: true, body: true, event: { select: { id: true, title: true } } },
+        select: {
+          id: true,
+          event: { select: { id: true } },
+          author: { select: { firstName: true, lastName: true } },
+        },
       });
       return {
-        label: likePlacementLabel("post", { title: post?.event?.title, body: post?.body }),
+        label: likePlacementLabel("post", {
+          name: post ? personDisplayName(post.author.firstName, post.author.lastName) : "",
+        }),
         href: likePlacementHref("post", { id, eventId: post?.event?.id }),
       };
     }
     if (kind === "comment") {
       const comment = await this.prisma.comment.findUnique({
         where: { id },
-        select: { body: true, postId: true },
+        select: { postId: true, author: { select: { firstName: true, lastName: true } } },
       });
       if (comment) {
         return {
-          label: likePlacementLabel("comment", { body: comment.body }),
+          label: likePlacementLabel("comment", {
+            name: personDisplayName(comment.author.firstName, comment.author.lastName),
+          }),
           href: likePlacementHref("comment", { id, postId: comment.postId }),
         };
       }
       const moodComment = await this.prisma.moodComment.findUnique({
         where: { id },
-        select: { body: true, moodId: true },
+        select: { moodId: true, author: { select: { firstName: true, lastName: true } } },
       });
       return {
-        label: likePlacementLabel("comment", { body: moodComment?.body }),
+        label: likePlacementLabel("comment", {
+          name: moodComment ? personDisplayName(moodComment.author.firstName, moodComment.author.lastName) : "",
+        }),
         href: likePlacementHref("comment", { id, moodId: moodComment?.moodId }),
       };
     }
     if (kind === "mood") {
       const mood = await this.prisma.mood.findUnique({
         where: { id },
-        select: { body: true, activity: true },
+        select: { author: { select: { firstName: true, lastName: true } } },
       });
       return {
-        label: likePlacementLabel("mood", { body: mood?.body, activity: mood?.activity }),
+        label: likePlacementLabel("mood", {
+          name: mood ? personDisplayName(mood.author.firstName, mood.author.lastName) : "",
+        }),
         href: likePlacementHref("mood", { id }),
       };
     }
     const wish = await this.prisma.wish.findUnique({
       where: { id },
-      select: { title: true },
+      select: { owner: { select: { firstName: true, lastName: true } } },
     });
     return {
-      label: likePlacementLabel("wish", { title: wish?.title }),
+      label: likePlacementLabel("wish", {
+        name: wish ? personDisplayName(wish.owner.firstName, wish.owner.lastName) : "",
+      }),
       href: likePlacementHref("wish", { id }),
     };
   }
@@ -417,6 +432,7 @@ export class LikesService {
       total: units.length,
       packs: [...LIKE_PACKS],
       placedOn: stats.placedOn,
+      placement: await this.currentPlacement(ownerId),
       receivedFrom: stats.receivedFrom,
       likeTime: stats.likeTime,
       production: {

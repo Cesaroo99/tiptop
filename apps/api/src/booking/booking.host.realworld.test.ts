@@ -75,6 +75,14 @@ describe("gestion organisateur — liste et validation", () => {
     expect(data.counts.reserved).toBe(1);
   });
 
+  it("refuse le scan à un participant", async () => {
+    if (!eventId || !ticketId) return;
+    await expect(booking.consume(ericaId, ticketId)).rejects.toMatchObject({
+      response: { code: "NOT_HOST" },
+    });
+    await expect(booking.scan(ericaId, "fake-token", eventId)).rejects.toBeTruthy();
+  });
+
   it("consomme le ticket et le place en validé", async () => {
     if (!eventId || !ticketId) return;
     const res = await booking.consume(cesarId, ticketId);

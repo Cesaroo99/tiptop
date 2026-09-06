@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Inject, Param, Post, Req, UseGuards } from "@nestjs/common";
-import { IsOptional, IsString, MaxLength } from "class-validator";
+import { IsArray, IsOptional, IsString, MaxLength } from "class-validator";
 import type { Request } from "express";
 import { SessionGuard } from "../auth/session.guard";
 import type { PublicUser } from "../auth/auth.service";
@@ -21,6 +21,11 @@ class CreatePostDto {
   @IsOptional()
   @IsString()
   imageUrl?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  imageUrls?: string[];
 }
 
 class CreateCommentDto {

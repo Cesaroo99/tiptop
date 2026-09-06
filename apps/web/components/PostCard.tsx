@@ -1,68 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, ApiError, type FeedItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
-import { viewerLikeActive } from "@/lib/like-feed";
+import { releaseViewerLike, viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { recurrenceCaption } from "@/lib/event-series";
-import { formatCompactCount, formatCountdownLabel, formatRelative, splitPostLead } from "@/lib/time";
-import { ageCategoryLabel } from "@tiptop/domain";
+import { formatCompactCount, formatRelative, splitPostLead } from "@/lib/time";
+import { canInteractWithEvent, eventLifecycle } from "@tiptop/domain";
+import { postImageList } from "@/lib/post-images";
+import { AgeBadge } from "./AgeBadge";
 import { Avatar, CertifiedMark } from "./Avatar";
+import { ExpandableText } from "./ExpandableText";
+import { PostMediaCarousel } from "./PostMediaCarousel";
 import {
-  CalendarPlusIcon,
   CommentIcon,
   FlagIcon,
   GlobeIcon,
   HeartIcon,
-  InterestedIcon,
   LinkIcon,
   MoreIcon,
   ShareIcon,
   SlashIcon,
   TrashIcon,
 } from "./Icons";
+import { ActionCircle, EventActionRow } from "./EventActionRow";
+import { EventPriceBadge } from "./EventPriceBadge";
 import { BookEventSheet } from "./BookEventSheet";
+import { EventPlaceLine } from "./EventPlaceLine";
+import { LikeTimeBadge } from "./LikeTimeBadge";
 import { LikeDialogs, likeErrorKind } from "./LikeDialogs";
 import { MapThumb } from "./MapThumb";
-import { SeatsLeftBadge, seatsLeftLabel, seatsRemainingOf } from "./SeatsLeftBadge";
+import { SeatsLeftBadge, seatsRemainingOf } from "./SeatsLeftBadge";
 import { OptionsSheet } from "./OptionsSheet";
 import { ReportModal } from "./ReportModal";
 import { IconButton, Modal } from "./ui";
-
-function ActionCircle({
-  href,
-  label,
-  onClick,
-  active,
-  disabled,
-  children,
-}: {
-  href?: string;
-  label: string;
-  onClick?: () => void;
-  active?: boolean;
-  disabled?: boolean;
-  children: React.ReactNode;
-}) {
-  const cls = `tap-scale grid h-10 w-10 shrink-0 place-items-center rounded-full transition hover:brightness-95 ${
-    active ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
-  } ${disabled ? "opacity-40" : ""}`;
-  if (href) {
-    return (
-      <Link href={href} aria-label={label} className={cls}>
-        {children}
-      </Link>
-    );
-  }
-  return (
-    <button type="button" aria-label={label} disabled={disabled} onClick={onClick} className={cls}>
-      {children}
-    </button>
-  );
-}
 
 export function PostCard({
   post,
@@ -85,10 +59,7 @@ export function PostCard({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleted, setDeleted] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
-  const mine = user?.id === post.author.id;
-  const event = post.event ?? null;
-  const isEvent = Boolean(event);
-  const countdown = event ? formatCountdownLabel(event.startsAt) : null;
+  const [loadedAt, setLoadedAt] = useState(() => Date.now());
   const liked = viewerLikeActive(
     placement,
     "post",
@@ -96,13 +67,26 @@ export function PostCard({
     post.likeTime?.likedByMe ?? post.likedByMe ?? false,
     ready,
   );
+  const shown = liked ? post : releaseViewerLike(post);
+  useEffect(() => {
+    setLoadedAt(Date.now());
+  }, [shown.likeTime?.totalSeconds, shown.likeTime?.activeCount]);
+  const showVie = (shown.likeTime?.totalSeconds ?? 0) > 0 || (shown.likeTime?.activeCount ?? 0) > 0;
+  const mine = user?.id === post.author.id;
+  const event = post.event ?? null;
+  const isEvent = Boolean(event);
   const interested = event?.viewerInterested ?? false;
   const remaining = event ? seatsRemainingOf(event.capacity, event.reservedCount, event.remaining) : null;
   const eventFull = remaining != null && remaining <= 0;
   const reserved = Boolean(event?.viewerReserved);
   const seriesLabel = recurrenceCaption(event?.recurrence, messages.world);
   const { lead, rest } = splitPostLead(post.body);
-  const age = isEvent ? ageCategoryLabel(event?.minAge) : null;
+  const images = postImageList(post);
+  const lifecycle = event
+    ? eventLifecycle(new Date(event.startsAt), event.endsAt ? new Date(event.endsAt) : null, new Date(), event.status)
+    : null;
+  const canInterest = Boolean(event && lifecycle && canInteractWithEvent(lifecycle.phase) && !event.isHost);
+  const [interestBusy, setInterestBusy] = useState(false);
   const mapCity = event?.city ?? post.city;
   const mapZone = event?.zone ?? post.zone;
 
@@ -155,7 +139,7 @@ export function PostCard({
           return;
         }
         if (kind === "transfer") {
-          setTransfer({ name: messages.social.transferGeneric });
+          setTransfer({ name: placement?.label || messages.social.transferGeneric });
         }
       }
     }
@@ -209,16 +193,42 @@ export function PostCard({
   }
 
   async function toggleInterested() {
-    if (!event) return;
-    const res = await api<{ interested: boolean }>(`/events/${event.id}/interested`, { method: "POST" });
+    if (!event || interestBusy || !canInterest) return;
+    const next = !interested;
+    setInterestBusy(true);
     onChanged?.({
       ...post,
       event: {
         ...event,
-        viewerInterested: res.interested,
-        interestedCount: Math.max(0, event.interestedCount + (res.interested ? 1 : -1)),
+        viewerInterested: next,
+        interestedCount: Math.max(0, event.interestedCount + (next ? 1 : -1)),
       },
     });
+    try {
+      const res = await api<{ interested: boolean }>(`/events/${event.id}/interested`, { method: "POST" });
+      onChanged?.({
+        ...post,
+        event: {
+          ...event,
+          viewerInterested: res.interested,
+          interestedCount: Math.max(
+            0,
+            event.interestedCount + (res.interested === interested ? 0 : res.interested ? 1 : -1),
+          ),
+        },
+      });
+    } catch {
+      onChanged?.({
+        ...post,
+        event: {
+          ...event,
+          viewerInterested: interested,
+          interestedCount: event.interestedCount,
+        },
+      });
+    } finally {
+      setInterestBusy(false);
+    }
   }
 
   const relative = formatRelative(post.createdAt, messages.social);
@@ -226,7 +236,6 @@ export function PostCard({
     `${formatCompactCount(post.commentsCount)} ${messages.social.comments}`,
     `${formatCompactCount(shares)} ${messages.social.shares}`,
     isEvent && event ? `${formatCompactCount(event.reservedCount)} ${messages.world.reservationsCount}` : null,
-    isEvent && event ? seatsLeftLabel(remaining, messages.world) : null,
     isEvent && event ? `${formatCompactCount(event.interestedCount)} ${messages.world.interestedCount}` : null,
   ].filter(Boolean);
 
@@ -251,11 +260,7 @@ export function PostCard({
               {post.author.firstName} {post.author.lastName}
             </Link>
             {post.author.certified ? <CertifiedMark /> : null}
-            {age ? (
-              <span className="type-caption shrink-0 rounded-full bg-danger px-2 py-0.5 font-bold leading-none text-white">
-                {age}
-              </span>
-            ) : null}
+            <AgeBadge minAge={event?.minAge} />
           </div>
           <p className="type-caption mt-0.5 flex items-center gap-1 text-muted">
             <GlobeIcon size={12} />
@@ -269,14 +274,9 @@ export function PostCard({
             <p className="type-caption mt-0.5 font-medium text-accent">{messages.home.feedHintLocal}</p>
           ) : null}
         </div>
-        <button
-          type="button"
-          aria-label={messages.social.share}
-          onClick={() => void share()}
-          className="tap-scale mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent-soft text-accent transition hover:brightness-95"
-        >
-          <ShareIcon size={15} />
-        </button>
+        <IconButton label={messages.social.share} onClick={() => void share()} size={36} className="mt-0.5">
+          <ShareIcon size={16} />
+        </IconButton>
         <IconButton label={messages.social.moreOptions} onClick={() => setOptionsOpen(true)} size={36} className="mt-0.5">
           <MoreIcon size={16} />
         </IconButton>
@@ -285,89 +285,111 @@ export function PostCard({
         <p className="type-body-sm mt-3 text-muted">{messages.social.postDeleted}</p>
       ) : (
         <>
-          <p className="type-body-sm mt-3 text-ink">
-            {lead ? (
-              <>
-                <span className="font-bold">{lead}</span>
-                {rest ? ` ${rest}` : null}
-              </>
-            ) : (
-              post.body
-            )}
-          </p>
-          {post.imageUrl || isEvent ? (
+          <ExpandableText text={post.body} lead={lead} rest={rest} />
+          {images.length || isEvent ? (
             <div className="relative mt-3">
-              {post.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={post.imageUrl} alt="" className="h-56 w-full rounded-xl object-cover" />
+              {images.length ? (
+                <PostMediaCarousel
+                  images={images}
+                  overlay={
+                    isEvent && event ? (
+                      <>
+                        <div className="absolute left-2 top-2 z-[1]">
+                          <SeatsLeftBadge remaining={remaining} />
+                        </div>
+                        <EventPriceBadge amount={event.priceXaf} />
+                        <Link
+                          href={`/events/${event.id}`}
+                          aria-label={messages.world.sortie}
+                          className="absolute bottom-2 right-2 z-[1] h-[4.25rem] w-[6.25rem]"
+                        >
+                          <MapThumb
+                            city={mapCity}
+                            zone={mapZone}
+                            lat={event.latitude}
+                            lng={event.longitude}
+                            className="h-full w-full"
+                          />
+                        </Link>
+                      </>
+                    ) : null
+                  }
+                />
               ) : (
                 <div className="grid h-40 w-full place-items-center rounded-xl bg-gradient-to-br from-accent/15 to-yellow/20 type-body-sm text-accent">
                   {event?.title ?? messages.world.sortie}
                 </div>
               )}
-              {isEvent && event ? (
+              {!images.length && isEvent && event ? (
                 <>
                   <div className="absolute left-2 top-2">
                     <SeatsLeftBadge remaining={remaining} />
                   </div>
+                  <EventPriceBadge amount={event.priceXaf} />
                   <Link
                     href={`/events/${event.id}`}
                     aria-label={messages.world.sortie}
                     className="absolute bottom-2 right-2 h-[4.25rem] w-[6.25rem]"
                   >
-                    <MapThumb city={mapCity} zone={mapZone} className="h-full w-full" />
+                    <MapThumb
+                      city={mapCity}
+                      zone={mapZone}
+                      lat={event.latitude}
+                      lng={event.longitude}
+                      className="h-full w-full"
+                    />
                   </Link>
                 </>
               ) : null}
             </div>
           ) : null}
+          {isEvent && event ? (
+            <EventPlaceLine
+              city={event.city ?? post.city}
+              zone={event.zone ?? post.zone}
+              venue={event.venue}
+              address={event.address}
+              latitude={event.latitude}
+              longitude={event.longitude}
+            />
+          ) : null}
           <p className="type-caption mt-3 text-muted">{stats.join(" . ")}</p>
-          <div className="mt-3 flex items-center gap-2">
-            <ActionCircle
-              label={liked ? messages.social.likeHere : messages.social.likePlace}
-              active={liked}
-              onClick={() => void like()}
-            >
-              <HeartIcon size={17} filled={liked} />
-            </ActionCircle>
-            <ActionCircle href={`/posts/${post.id}`} label={messages.social.comments}>
-              <CommentIcon size={17} />
-            </ActionCircle>
-            {isEvent && event ? (
-              <>
-                <ActionCircle
-                  label={reserved ? messages.booking.reserveOthers : messages.booking.reserve}
-                  disabled={eventFull}
-                  onClick={() => setBookOpen(true)}
-                >
-                  <CalendarPlusIcon size={17} />
-                </ActionCircle>
-                {eventFull ? (
-                  <span className="type-caption rounded-pill bg-danger-soft px-2.5 py-2 font-bold text-danger">
-                    {messages.world.seatsFull}
-                  </span>
-                ) : null}
-                <ActionCircle
-                  label={interested ? messages.world.notInterested : messages.world.interested}
-                  active={interested}
-                  onClick={() => void toggleInterested()}
-                >
-                  <InterestedIcon size={17} />
-                </ActionCircle>
-              </>
-            ) : null}
-            {isEvent && (countdown || seriesLabel) ? (
-              <span className="ml-auto flex min-w-0 flex-col items-end gap-0.5">
-                {seriesLabel ? <span className="type-caption font-semibold text-accent">{seriesLabel}</span> : null}
-                {countdown ? (
-                  <span className="flex min-w-0 items-center gap-1.5">
-                    <span className="type-caption whitespace-nowrap text-muted">{messages.world.eventInLabel}</span>
-                    <span className="type-caption shrink-0 rounded-full bg-yellow px-2.5 py-1 font-bold text-ink">{countdown}</span>
-                  </span>
-                ) : null}
-              </span>
-            ) : null}
-          </div>
+          {showVie ? (
+            <p className="type-body-sm mt-2 font-extrabold text-ink">
+              <LikeTimeBadge time={shown.likeTime} loadedAt={loadedAt} className="text-ink" />
+            </p>
+          ) : null}
+          {isEvent && event ? (
+            <EventActionRow
+              likeLabel={liked ? messages.social.likeHere : messages.social.likePlace}
+              liked={liked}
+              onLike={() => void like()}
+              commentLabel={messages.social.comments}
+              commentHref={`/posts/${post.id}`}
+              reserveLabel={reserved ? messages.booking.reserveOthers : messages.booking.reserve}
+              reserveDisabled={eventFull}
+              onReserve={() => setBookOpen(true)}
+              interestedLabel={interested ? messages.world.notInterested : messages.world.interested}
+              interested={interested}
+              interestedDisabled={!canInterest || interestBusy}
+              onInterested={() => void toggleInterested()}
+              startsAt={event.startsAt}
+              seriesLabel={seriesLabel}
+            />
+          ) : (
+            <div className="mt-3 flex items-center gap-2">
+              <ActionCircle
+                label={liked ? messages.social.likeHere : messages.social.likePlace}
+                active={liked}
+                onClick={() => void like()}
+              >
+                <HeartIcon size={17} filled={liked} />
+              </ActionCircle>
+              <ActionCircle href={`/posts/${post.id}`} label={messages.social.comments}>
+                <CommentIcon size={17} />
+              </ActionCircle>
+            </div>
+          )}
           {copied ? <p className="type-caption mt-2 text-accent">{messages.social.copied}</p> : null}
         </>
       )}

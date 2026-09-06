@@ -4,6 +4,7 @@ import {
   likePlacementHref,
   likePlacementLabel,
   parseLikePlacementKind,
+  personDisplayName,
   postLeadLabel,
 } from "./like-placement";
 
@@ -17,15 +18,16 @@ describe("like placement meta", () => {
     expect(likePlacementHref("comment", { id: "c2", moodId: "m1" })).toBe("/mood?start=m1");
   });
 
-  it("prend le titre d’événement ou l’accroche avant « : »", () => {
-    expect(likePlacementLabel("post", { title: "Expo photo Hilton", body: "Expo : venez." })).toBe(
-      "Expo photo Hilton",
+  it("affiche uniquement le nom de la personne à qui on donne de la vie", () => {
+    expect(likePlacementLabel("post", { name: "César Memoli", title: "Expo photo Hilton", body: "Expo : venez." })).toBe(
+      "César Memoli",
     );
-    expect(likePlacementLabel("post", { body: "Un tour au Black&White : on sort." })).toBe(
-      "Un tour au Black&White",
-    );
+    expect(likePlacementLabel("mood", { name: "Mia Patel", activity: "Rooftop", body: "en ville" })).toBe("Mia Patel");
+    expect(likePlacementLabel("comment", { name: "Léa Moreau", body: "Trop bien cette soirée" })).toBe("Léa Moreau");
+    expect(likePlacementLabel("wish", { name: "Mbelle Junior", title: "Un vélo" })).toBe("Mbelle Junior");
     expect(likePlacementLabel("user", { name: "César Memoli" })).toBe("César Memoli");
-    expect(likePlacementLabel("mood", { activity: "Rooftop", body: "en ville" })).toBe("Rooftop");
+    expect(likePlacementLabel("post", { title: "Expo", body: "accroche" })).toBe("…");
+    expect(personDisplayName("César", "Memoli")).toBe("César Memoli");
   });
 
   it("coupe les libellés trop longs", () => {

@@ -41,6 +41,8 @@ export type Messages = {
     feedHintFollowed: string;
     feedHintLocal: string;
     feedHintAlive: string;
+    justAvailable: string;
+    justAvailableBody: string;
   };
   need: {
     title: string;
@@ -243,6 +245,8 @@ export type Messages = {
     inviteLater: string;
     eventsLater: string;
     noImageHint: string;
+    seeMore: string;
+    seeLess: string;
     posted: string;
     notifInvite: string;
     notifTicket: string;
@@ -381,6 +385,13 @@ export type Messages = {
     ttlHint: string;
     zoneTitle: string;
     zoneBody: string;
+    useCurrentLocation: string;
+    currentLocation: string;
+    locationFixed: string;
+    locationLiveHint: string;
+    locationFixedHint: string;
+    fromYou: string;
+    goThere: string;
     precision: string;
     precisionExact: string;
     precisionZone: string;
@@ -991,6 +1002,8 @@ export const fr: Messages = {
     feedHintFollowed: "Vient de publier · tu la suis",
     feedHintLocal: "Près de toi",
     feedHintAlive: "Beaucoup de vie en ce moment",
+    justAvailable: "{name} est dispo",
+    justAvailableBody: "Propose-lui une sortie.",
   },
   need: {
     title: "Autour de moi",
@@ -1193,6 +1206,8 @@ export const fr: Messages = {
     inviteLater: "Les invitations vers un événement arrivent avec le cœur « monde réel ».",
     eventsLater: "Les événements ne sont pas encore indexés.",
     noImageHint: "Visuel local de démo (stockage objet plus tard).",
+    seeMore: "Voir plus",
+    seeLess: "Voir moins",
     posted: "Publication envoyée",
     notifInvite: "t’a invité à une sortie",
     notifTicket: "ticket mis à jour",
@@ -1331,6 +1346,13 @@ export const fr: Messages = {
     ttlHint: "Visible 4 heures, puis tu disparais du carousel.",
     zoneTitle: "Ta zone",
     zoneBody: "La zone filtre les personnes et les sorties près de toi. Le GPS propose, il ne force pas.",
+    useCurrentLocation: "Utiliser ma position actuelle",
+    currentLocation: "Position actuelle",
+    locationFixed: "Position figée",
+    locationLiveHint: "Les distances utilisent ta position réelle.",
+    locationFixedHint: "Les distances utilisent l’endroit que tu as choisi.",
+    fromYou: "de toi",
+    goThere: "S’y rendre",
     precision: "Précision de localisation",
     precisionExact: "Exacte",
     precisionZone: "Zone",
@@ -1941,6 +1963,8 @@ export const en: Messages = {
     feedHintFollowed: "Just posted · you follow them",
     feedHintLocal: "Near you",
     feedHintAlive: "A lot of life right now",
+    justAvailable: "{name} is available",
+    justAvailableBody: "Invite them out.",
   },
   need: {
     title: "Around me",
@@ -2143,6 +2167,8 @@ export const en: Messages = {
     inviteLater: "Invites to an event ship with the real-world core.",
     eventsLater: "Events are not indexed yet.",
     noImageHint: "Local demo visual (object storage later).",
+    seeMore: "See more",
+    seeLess: "See less",
     posted: "Post published",
     notifInvite: "invited you to a meetup",
     notifTicket: "ticket updated",
@@ -2281,6 +2307,13 @@ export const en: Messages = {
     ttlHint: "Visible for 4 hours, then you leave the carousel.",
     zoneTitle: "Your area",
     zoneBody: "The area filters people and meetups near you. GPS suggests, it does not force.",
+    useCurrentLocation: "Use my current location",
+    currentLocation: "Current location",
+    locationFixed: "Pinned location",
+    locationLiveHint: "Distances use your real position.",
+    locationFixedHint: "Distances use the place you chose.",
+    fromYou: "from you",
+    goThere: "Get directions",
     precision: "Location precision",
     precisionExact: "Exact",
     precisionZone: "Area",

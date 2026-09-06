@@ -17,7 +17,7 @@ export class FeedService {
     @Inject(DiscoveryService) private readonly discovery: DiscoveryService,
   ) {}
 
-  async list(viewerId: string) {
+  async list(viewerId: string, opts: { cursor?: string; excludeIds?: string[] } = {}) {
     const viewer = await this.prisma.user.findUnique({
       where: { id: viewerId },
       include: { profile: true },
@@ -27,13 +27,18 @@ export class FeedService {
       viewerNetwork(this.prisma, viewerId),
     ]);
     const hiddenIds = [...hidden];
+    const excludeIds = opts.excludeIds ?? [];
+    const before = opts.cursor ? new Date(opts.cursor) : null;
+    const pageSize = 30;
     const rows = await this.prisma.post.findMany({
       where: {
         hiddenAt: null,
         ...(hiddenIds.length ? { authorId: { notIn: hiddenIds } } : {}),
+        ...(excludeIds.length ? { id: { notIn: excludeIds } } : {}),
+        ...(before && !Number.isNaN(before.getTime()) ? { createdAt: { lt: before } } : {}),
       },
       orderBy: { createdAt: "desc" },
-      take: 50,
+      take: pageSize + 20,
       include: {
         author: { include: { profile: true } },
         event: {
@@ -44,6 +49,10 @@ export class FeedService {
             minAge: true,
             city: true,
             zone: true,
+            venue: true,
+            address: true,
+            latitude: true,
+            longitude: true,
             capacity: true,
             requiresReservation: true,
             priceXaf: true,
@@ -74,40 +83,45 @@ export class FeedService {
         return { ...item, hint: feedHint(signals), _score: feedItemScore(signals) };
       })
       .sort((a, b) => b._score - a._score)
-      .slice(0, 30)
+      .slice(0, pageSize)
       .map((row) => {
         const { _score, ...item } = row;
         void _score;
         return item;
       });
+    const nextCursor = items[items.length - 1]?.createdAt ?? null;
+    const hasMore = rows.length > pageSize;
+    const firstPage = !opts.cursor && excludeIds.length === 0;
     let events: Awaited<ReturnType<EventsService["list"]>>["items"] = [];
     let moods: Awaited<ReturnType<MoodsService["list"]>>["items"] = [];
     let reels: Awaited<ReturnType<MoodsService["list"]>>["items"] = [];
     let people: Awaited<ReturnType<DiscoveryService["people"]>>["items"] = [];
-    try {
-      const eventList = await this.events.list(viewerId, "all", viewer?.profile?.city ?? undefined);
-      events = eventList.items.filter((event) => !hidden.has(event.host.id)).slice(0, 16);
-    } catch (err) {
-      console.error("[feed] events.list", err);
+    if (firstPage) {
+      try {
+        const eventList = await this.events.list(viewerId, "all", viewer?.profile?.city ?? undefined);
+        events = eventList.items.filter((event) => !hidden.has(event.host.id)).slice(0, 16);
+      } catch (err) {
+        console.error("[feed] events.list", err);
+      }
+      try {
+        const moodList = await this.moods.list(viewerId, "STATUS");
+        moods = moodList.items.filter((mood) => !hidden.has(mood.author.id)).slice(0, 12);
+      } catch (err) {
+        console.error("[feed] moods.list", err);
+      }
+      try {
+        const reelList = await this.moods.list(viewerId, "MOOD");
+        reels = reelList.items.filter((m) => m.videoUrl && !hidden.has(m.author.id)).slice(0, 4);
+      } catch (err) {
+        console.error("[feed] moods.reels", err);
+      }
+      try {
+        const found = await this.discovery.people(viewerId, { city: viewer?.profile?.city ?? undefined });
+        people = found.items.filter((p) => p.circle !== "FRIEND" && !hidden.has(p.id)).slice(0, 10);
+      } catch (err) {
+        console.error("[feed] people", err);
+      }
     }
-    try {
-      const moodList = await this.moods.list(viewerId, "STATUS");
-      moods = moodList.items.filter((mood) => !hidden.has(mood.author.id)).slice(0, 12);
-    } catch (err) {
-      console.error("[feed] moods.list", err);
-    }
-    try {
-      const reelList = await this.moods.list(viewerId, "MOOD");
-      reels = reelList.items.filter((m) => m.videoUrl && !hidden.has(m.author.id)).slice(0, 12);
-    } catch (err) {
-      console.error("[feed] moods.reels", err);
-    }
-    try {
-      const found = await this.discovery.people(viewerId, { city: viewer?.profile?.city ?? undefined });
-      people = found.items.filter((p) => p.circle !== "FRIEND" && !hidden.has(p.id)).slice(0, 10);
-    } catch (err) {
-      console.error("[feed] people", err);
-    }
-    return { items, events, moods, reels, people };
+    return { items, events, moods, reels, people, nextCursor, hasMore };
   }
 }

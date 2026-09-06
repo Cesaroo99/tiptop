@@ -1,6 +1,7 @@
 "use client";
 
 import { formatCompactCount, formatLikeDurationShort, type LikeDurationLocale } from "@tiptop/domain";
+import { viewerAwareLikeTime } from "@/lib/like-feed";
 import { useLiveLikeSeconds } from "./LikeTimeBadge";
 import { CommentIcon, HeartIcon, MoreIcon, ShareIcon } from "./Icons";
 import type { LikeTimeSnap } from "@/lib/api";
@@ -66,9 +67,10 @@ export function MoodLikeRail({
 }) {
   const { messages, locale } = useI18n();
   const loc: LikeDurationLocale = locale === "en" ? "en" : "fr";
-  const liveTotal = useLiveLikeSeconds(likeTime, loadedAt);
-  const extra = Math.max(0, liveTotal - (likeTime?.totalSeconds ?? 0));
-  const duration = moodLikeDuration(likeTime, extra, loc);
+  const shown = viewerAwareLikeTime(likeTime, liked);
+  const liveTotal = useLiveLikeSeconds(shown, loadedAt);
+  const extra = Math.max(0, liveTotal - (shown?.totalSeconds ?? 0));
+  const duration = moodLikeDuration(shown ?? undefined, extra, loc);
 
   return (
     <div className="flex flex-col items-center gap-4 text-white">

@@ -1,21 +1,24 @@
 "use client";
 
-import { cityCoords, mapsDirectionsUrl, osmEmbedUrl } from "@tiptop/domain";
+import { cityCoords, osmEmbedUrl } from "@tiptop/domain";
+import { useEventDestination } from "@/lib/event-destination";
+import { eventPlaceLabel, hasExactCoords } from "@/lib/event-place";
 import { ZONE_COORDS } from "@/lib/time";
 import { useI18n } from "@/lib/i18n";
 import { PinIcon } from "./Icons";
 
+/** Point approximatif (distance / pastille). Ne pas l’utiliser comme destination d’itinéraire. */
 export function resolveEventPoint(input: {
   city?: string | null;
   zone?: string | null;
   latitude?: number | null;
   longitude?: number | null;
 }): { lat: number; lng: number } | null {
-  if (input.latitude != null && input.longitude != null && Number.isFinite(input.latitude) && Number.isFinite(input.longitude)) {
-    return { lat: input.latitude, lng: input.longitude };
+  if (hasExactCoords(input.latitude, input.longitude)) {
+    return { lat: input.latitude as number, lng: input.longitude as number };
   }
   if (input.zone && ZONE_COORDS[input.zone]) return ZONE_COORDS[input.zone];
-  return cityCoords(input.city);
+  return cityCoords(input.city) ?? null;
 }
 
 export function EventMap({
@@ -27,6 +30,8 @@ export function EventMap({
   longitude,
   compact = false,
   className = "",
+  mapsUrl: mapsUrlProp,
+  showCta = true,
 }: {
   city?: string | null;
   zone?: string | null;
@@ -36,19 +41,15 @@ export function EventMap({
   longitude?: number | null;
   compact?: boolean;
   className?: string;
+  mapsUrl?: string | null;
+  showCta?: boolean;
 }) {
   const { messages } = useI18n();
-  const point = resolveEventPoint({ city, zone, latitude, longitude });
-  const mapsUrl = mapsDirectionsUrl({
-    city,
-    zone,
-    placeName: venue,
-    address,
-    latitude: point?.lat,
-    longitude: point?.lng,
-  });
+  const dest = useEventDestination({ city, zone, venue, address, latitude, longitude });
+  const mapsUrl = mapsUrlProp ?? dest.mapsUrl;
+  const point = dest.point;
   if (!point && !mapsUrl) return null;
-  const label = [venue, address, zone, city].filter(Boolean).join(" · ");
+  const label = eventPlaceLabel({ venue, address, city, zone }) || [venue, address, zone, city].filter(Boolean).join(" · ");
 
   return (
     <div className={`overflow-hidden rounded-xl border border-border bg-surface-sunken ${className}`}>
@@ -66,7 +67,7 @@ export function EventMap({
           <PinIcon size={13} />
           <span className="truncate">{label}</span>
         </p>
-        {mapsUrl ? (
+        {showCta && mapsUrl ? (
           <a
             href={mapsUrl}
             target="_blank"

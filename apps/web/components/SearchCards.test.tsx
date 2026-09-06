@@ -8,6 +8,10 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
 }));
 
+vi.mock("@/lib/session", () => ({
+  useSession: () => ({ user: { id: "viewer", profileCompleted: true }, loading: false }),
+}));
+
 const person: SearchPerson = {
   id: "u-erica",
   username: "erica.sinclair",
@@ -30,6 +34,8 @@ const event: SearchEvent = {
   priceXaf: 5000,
   currency: "XAF",
   taken: 4,
+  capacity: 40,
+  remaining: 36,
   viewerHearted: false,
   host: {
     username: "alex.moullion",
@@ -52,16 +58,22 @@ describe("Cartes de recherche", () => {
     expect(screen.getByLabelText("Plus d'options")).toBeInTheDocument();
   });
 
-  it("affiche une sortie : participants réels, hôte, coup de cœur", () => {
+  it("affiche une sortie : places restantes, hôte, coup de cœur", () => {
     render(
       <TestI18nProvider>
         <SearchEventCard event={event} />
       </TestI18nProvider>,
     );
     expect(screen.getByText("Piscine party - Odza, Yaoundé")).toBeInTheDocument();
-    expect(screen.getByText("4 participants")).toBeInTheDocument();
+    expect(screen.getByText(/36 places restantes/)).toBeInTheDocument();
     expect(screen.getByText("Alex Moullion")).toBeInTheDocument();
+    expect(screen.getByText("5.000 FCFA")).toBeInTheDocument();
     expect(screen.getByLabelText("Coup de cœur")).toBeInTheDocument();
+    expect(screen.getByLabelText("Commentaires")).toBeInTheDocument();
+    expect(screen.getByLabelText("Réserver")).toBeInTheDocument();
+    expect(screen.queryByText("Réserver")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Intéressé")).toBeInTheDocument();
+    expect(screen.getByText("Événement dans :")).toBeInTheDocument();
     expect(screen.getAllByRole("link")[0]).toHaveAttribute("href", "/events/evt-piscine");
   });
 });

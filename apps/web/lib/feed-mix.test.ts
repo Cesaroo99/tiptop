@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mixHomeFeed } from "./feed-mix";
+import { MAX_HOME_FEED_MOODS, mixHomeFeed, splitFeedPeople } from "./feed-mix";
 import type { EventCard, FeedItem, MoodItem, PersonCard } from "./api";
 
 function post(id: string, extra: Partial<FeedItem> = {}): FeedItem {
@@ -120,6 +120,39 @@ describe("mixHomeFeed", () => {
     }
   });
 
+  it("propose les dispos en cartes invite sans vider le deck", () => {
+    const mixed = mixHomeFeed(
+      {
+        posts: [post("p1", { imageUrl: "/x.jpg" })],
+        events: [],
+        people: [
+          person("u1"),
+          { ...person("u2"), firstName: "Mia", why: [{ key: "nearby_available" }] },
+        ],
+        moods: [],
+      },
+      () => 0,
+    );
+    expect(mixed.some((row) => row.kind === "invite")).toBe(true);
+    expect(mixed.some((row) => row.kind === "person")).toBe(true);
+    const inviteIds = mixed.filter((row) => row.kind === "invite").map((row) => row.person.id);
+    const deckIds = mixed.filter((row) => row.kind === "person").map((row) => row.person.id);
+    expect(inviteIds.some((id) => deckIds.includes(id))).toBe(false);
+  });
+
+  it("limite les vidéos mood dans le fil", () => {
+    const mixed = mixHomeFeed(
+      {
+        posts: [post("p1", { imageUrl: "/x.jpg" }), post("p2"), post("p3", { imageUrl: "/y.jpg" })],
+        events: [event("e1")],
+        people: [person("u1")],
+        moods: [mood("m1"), mood("m2"), mood("m3"), mood("m4")],
+      },
+      () => 0.4,
+    );
+    expect(mixed.filter((row) => row.kind === "mood")).toHaveLength(MAX_HOME_FEED_MOODS);
+  });
+
   it("n’ajoute pas un event déjà lié à un post", () => {
     const mixed = mixHomeFeed({
       posts: [post("p1", { imageUrl: "/x.jpg", event: { id: "e1", title: "Soirée", startsAt: new Date().toISOString() } })],
@@ -129,5 +162,26 @@ describe("mixHomeFeed", () => {
     });
     expect(mixed.filter((row) => row.kind === "event")).toHaveLength(0);
     expect(mixed).toHaveLength(1);
+  });
+});
+
+describe("splitFeedPeople", () => {
+  it("garde une seule personne dans le deck swipe", () => {
+    const { invitees, deck } = splitFeedPeople([person("u1")]);
+    expect(invitees).toEqual([]);
+    expect(deck).toHaveLength(1);
+  });
+
+  it("priorise une dispo proche / affinité pour la carte invite", () => {
+    const far = { ...person("far"), distanceKm: 8, why: [] };
+    const match = {
+      ...person("match"),
+      distanceKm: 1,
+      why: [{ key: "nearby_available" }, { key: "shared_interests", count: 3 }],
+      activeMood: { id: "m", activity: "Piscine", body: "On s’ennuie", expiresAt: null as never },
+    };
+    const { invitees, deck } = splitFeedPeople([far, match]);
+    expect(invitees.map((p) => p.id)).toEqual(["match"]);
+    expect(deck.map((p) => p.id)).toEqual(["far"]);
   });
 });

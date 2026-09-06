@@ -9,8 +9,9 @@ import { CardSkeleton, Chip, EmptyState, ErrorBanner } from "@/components/ui";
 import { api, type EventCard as EventCardType, type InvitationItem } from "@/lib/api";
 import { formatEventWhen } from "@/lib/time";
 import { useI18n } from "@/lib/i18n";
-import { useMoney } from "@/lib/money";
-import { seatsLeftLabel, seatsRemainingOf } from "@/components/SeatsLeftBadge";
+import { EventPriceBadge } from "@/components/EventPriceBadge";
+import { MapThumb } from "@/components/MapThumb";
+import { SeatsLeftBadge, seatsRemainingOf } from "@/components/SeatsLeftBadge";
 
 /**
  * Events = espace de GESTION. La découverte des sorties se fait dans
@@ -163,8 +164,8 @@ function statusChip(event: EventCardType, messages: ReturnType<typeof useI18n>["
 
 function ManageEventCard({ event }: { event: EventCardType }) {
   const { locale, messages } = useI18n();
-  const { formatPrice } = useMoney();
   const chip = statusChip(event, messages);
+  const remaining = seatsRemainingOf(event.capacity, event.reservedCount ?? event.taken, event.remaining);
   const primaryHref = event.isHost
     ? `/events/${event.id}/manage`
     : event.viewerTicketId
@@ -178,21 +179,23 @@ function ManageEventCard({ event }: { event: EventCardType }) {
 
   return (
     <div className="overflow-hidden rounded-card bg-surface shadow-card transition hover:shadow-sm">
-      <Link href={primaryHref} className="tap-scale block">
-        <div className="relative">
-          {event.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={event.imageUrl} alt="" className="h-32 w-full object-cover" />
-          ) : (
-            <div className="grid h-24 place-items-center bg-gradient-to-br from-accent/15 to-yellow/15" />
-          )}
-          <span className="type-caption absolute left-2 top-2 rounded-pill bg-surface/90 px-2.5 py-1 font-bold text-ink backdrop-blur-sm">
-            {seatsLeftLabel(seatsRemainingOf(event.capacity, event.reservedCount ?? event.taken, event.remaining), messages.world) ??
-              `${event.reservedCount ?? event.taken} ${messages.world.reservationsCount}`}
-          </span>
-          <span className="type-caption absolute right-2 top-2 rounded-pill bg-accent px-2.5 py-1 font-bold text-on-primary">
-            {event.priceXaf > 0 ? formatPrice(event.priceXaf, event.currency) : messages.world.free}
-          </span>
+      <Link href={primaryHref} className="tap-scale relative block">
+        {event.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={event.imageUrl} alt="" className="h-48 w-full object-cover" />
+        ) : (
+          <div className="grid h-40 place-items-center bg-gradient-to-br from-accent/15 to-yellow/15 type-body-sm text-accent">
+            {messages.world.sortie}
+          </div>
+        )}
+        <div className="absolute left-2 top-2 z-[1] flex flex-col items-start gap-1.5">
+          <SeatsLeftBadge remaining={remaining} />
+        </div>
+        <div className="absolute right-2 top-2 z-[1] flex flex-col items-end gap-1.5">
+          <EventPriceBadge amount={event.priceXaf} className="rounded-lg bg-accent px-2.5 py-1 font-bold text-white shadow-sm" />
+        </div>
+        <div className="absolute bottom-2 right-2 z-[1] h-16 w-24 overflow-hidden rounded-md ring-2 ring-white/70">
+          <MapThumb city={event.city} zone={event.zone} lat={event.latitude} lng={event.longitude} className="h-full w-full" />
         </div>
         <div className="px-3.5 pt-3.5">
           <p className="type-body-sm truncate font-semibold text-ink">{event.title}</p>
