@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { PinIcon, PlusIcon } from "@/components/Icons";
-import { CardSkeleton, EmptyState, ErrorBanner, TextInput } from "@/components/ui";
+import { BackButton, CardSkeleton, EmptyState, ErrorBanner, TextInput } from "@/components/ui";
 import { api, type OfferItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useMoney } from "@/lib/money";
@@ -13,7 +13,7 @@ import { useSession } from "@/lib/session";
 
 export default function Page() {
   return (
-    <AppShell>
+    <AppShell chrome="nav">
       <Suspense>
         <NeedScreen />
       </Suspense>
@@ -72,8 +72,11 @@ function NeedScreen() {
 
   return (
     <div className="px-4 py-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h1 className="type-h1 text-ink">{mine ? messages.need.myOffers : messages.need.title}</h1>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-1">
+          <BackButton className="-ml-2" />
+          <h1 className="type-h1 truncate text-ink">{mine ? messages.need.myOffers : messages.need.title}</h1>
+        </div>
         <Link
           href="/compose?type=offer"
           className="tap-scale type-button flex items-center gap-1.5 rounded-pill bg-accent px-3.5 py-2 text-on-primary"

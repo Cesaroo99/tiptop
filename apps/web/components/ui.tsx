@@ -2,6 +2,7 @@
 
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { forwardRef, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { ArrowLeftIcon, ChevronRightIcon, CloseIcon } from "./Icons";
 
@@ -174,6 +175,27 @@ export function Chip({
   );
 }
 
+/** Bouton retour isolé — à coller à côté d’un titre custom, sans ScreenHeader. */
+export function BackButton({
+  onBack,
+  className,
+}: {
+  onBack?: () => void;
+  className?: string;
+}) {
+  const router = useRouter();
+  return (
+    <button
+      type="button"
+      aria-label="Retour"
+      onClick={() => (onBack ? onBack() : router.back())}
+      className={`tap-scale grid h-10 w-10 shrink-0 place-items-center rounded-full text-ink transition hover:bg-surface-sunken ${className ?? ""}`}
+    >
+      <ArrowLeftIcon size={20} />
+    </button>
+  );
+}
+
 export function ScreenHeader({
   title,
   onBack,
@@ -185,16 +207,7 @@ export function ScreenHeader({
 }) {
   return (
     <header className="flex items-center gap-3 px-4 pb-3 pt-2">
-      {onBack ? (
-        <button
-          type="button"
-          aria-label="Retour"
-          onClick={onBack}
-          className="tap-scale -ml-2 grid h-10 w-10 place-items-center rounded-full text-ink transition hover:bg-surface-sunken"
-        >
-          <ArrowLeftIcon size={20} />
-        </button>
-      ) : null}
+      {onBack ? <BackButton onBack={onBack} className="-ml-2" /> : null}
       <h1 className="type-h3 flex-1 truncate text-ink">{title}</h1>
       {right}
     </header>
@@ -235,6 +248,20 @@ export const TextInput = forwardRef<
       {...rest}
       ref={ref}
       className={`type-body w-full rounded-xl border bg-surface px-4 py-3.5 text-ink transition placeholder:text-subtle focus:border-accent ${invalid ? "border-danger" : "border-border"} ${props.className ?? ""}`}
+    />
+  );
+});
+
+export const TextArea = forwardRef<
+  HTMLTextAreaElement,
+  React.TextareaHTMLAttributes<HTMLTextAreaElement> & { invalid?: boolean }
+>(function TextArea(props, ref) {
+  const { invalid, ...rest } = props;
+  return (
+    <textarea
+      {...rest}
+      ref={ref}
+      className={`type-body min-h-[6.5rem] w-full resize-none rounded-xl border bg-surface px-4 py-3.5 text-ink transition placeholder:text-subtle focus:border-accent ${invalid ? "border-danger" : "border-border"} ${props.className ?? ""}`}
     />
   );
 });

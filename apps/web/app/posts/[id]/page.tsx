@@ -1,18 +1,18 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { LikeTimeBadge } from "@/components/LikeTimeBadge";
 import { PostCard } from "@/components/PostCard";
-import { EmptyState, ErrorBanner, Skeleton, TextInput } from "@/components/ui";
+import { EmptyState, ErrorBanner, ScreenHeader, Skeleton, TextInput } from "@/components/ui";
 import { api, type CommentItem, type FeedItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useLikePlacement } from "@/lib/like-placement";
 
 export default function PostPage() {
   return (
-    <AppShell>
+    <AppShell chrome="nav">
       <Thread />
     </AppShell>
   );
@@ -21,6 +21,7 @@ export default function PostPage() {
 function Thread() {
   const { id } = useParams<{ id: string }>();
   const { messages } = useI18n();
+  const router = useRouter();
   const { refresh: refreshPlacement } = useLikePlacement();
   const [post, setPost] = useState<FeedItem | null>(null);
   const [comments, setComments] = useState<CommentItem[] | null>(null);
@@ -60,7 +61,9 @@ function Thread() {
   }
 
   return (
-    <div className="space-y-4 px-4 py-4">
+    <div>
+      <ScreenHeader title={messages.social.publications} onBack={() => router.back()} />
+      <div className="space-y-4 px-4 pb-4">
       {error ? <ErrorBanner message={error} onRetry={() => void load()} /> : null}
       {!post && !error ? <Skeleton className="h-48" /> : null}
       {post ? <PostCard post={post} onChanged={setPost} /> : null}
@@ -110,6 +113,7 @@ function Thread() {
           OK
         </button>
       </form>
+      </div>
     </div>
   );
 }

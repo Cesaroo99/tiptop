@@ -68,6 +68,7 @@ describe("Autour de moi", () => {
         <Page />
       </TestI18nProvider>,
     );
+    expect(screen.getByLabelText("Retour")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Tu cherches quoi ?")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Les plus proches" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Les moins chers" })).toBeInTheDocument();

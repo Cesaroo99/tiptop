@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
@@ -11,7 +11,7 @@ import { MoodPlaceChip, MoodPlaceSheet, moodPlaceFromItem } from "@/components/M
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { ReportModal } from "@/components/ReportModal";
 import { SocialInviteModal } from "@/components/SocialInviteModal";
-import { ErrorBanner, IconButton, TextInput } from "@/components/ui";
+import { ErrorBanner, IconButton, ScreenHeader, TextInput } from "@/components/ui";
 import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { viewerLikeActive } from "@/lib/like-feed";
@@ -20,7 +20,7 @@ import { useSession } from "@/lib/session";
 
 export default function Page() {
   return (
-    <AppShell>
+    <AppShell chrome="nav">
       <MoodViewer />
     </AppShell>
   );
@@ -29,6 +29,7 @@ export default function Page() {
 function MoodViewer() {
   const { id } = useParams<{ id: string }>();
   const { messages } = useI18n();
+  const router = useRouter();
   const { user } = useSession();
   const { refresh: refreshPlacement, placement, ready } = useLikePlacement();
   const [mood, setMood] = useState<MoodItem | null>(null);
@@ -126,8 +127,22 @@ function MoodViewer() {
     setReplyTo(null);
   }
 
-  if (error) return <ErrorBanner message={error} />;
-  if (!mood) return <p className="p-4 text-sm text-muted">{messages.common.loading}</p>;
+  if (error) {
+    return (
+      <div>
+        <ScreenHeader title={messages.social.moodsTab} onBack={() => router.back()} />
+        <ErrorBanner message={error} />
+      </div>
+    );
+  }
+  if (!mood) {
+    return (
+      <div>
+        <ScreenHeader title={messages.social.moodsTab} onBack={() => router.back()} />
+        <p className="p-4 text-sm text-muted">{messages.common.loading}</p>
+      </div>
+    );
+  }
 
   const liked = viewerLikeActive(
     placement,
@@ -138,7 +153,9 @@ function MoodViewer() {
   );
 
   return (
-    <div className="px-4 py-4">
+    <div>
+      <ScreenHeader title={messages.social.moodsTab} onBack={() => router.back()} />
+      <div className="px-4 pb-4">
       <div className="overflow-hidden rounded-card bg-surface shadow-card">
         {mood.videoUrl ? (
           <video src={mood.videoUrl} controls loop muted playsInline className="h-56 w-full object-cover" />
@@ -250,6 +267,7 @@ function MoodViewer() {
       ) : null}
       <ReportModal open={reportOpen} kind="MOOD" moodId={id} onClose={() => setReportOpen(false)} />
       <MoodPlaceSheet place={moodPlaceFromItem(mood)} open={placeOpen} onClose={() => setPlaceOpen(false)} />
+      </div>
     </div>
   );
 }

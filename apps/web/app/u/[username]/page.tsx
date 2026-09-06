@@ -18,6 +18,7 @@ import {
   PinIcon,
   PlayIcon,
   PlusIcon,
+  SlashIcon,
   SparklesIcon,
 } from "@/components/Icons";
 import { LikeCapital } from "@/components/LikeCapital";
@@ -28,7 +29,7 @@ import { SocialInviteModal } from "@/components/SocialInviteModal";
 import { WishList } from "@/components/WishList";
 import { PostCard } from "@/components/PostCard";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
-import { EmptyState, ErrorBanner, Modal, Skeleton } from "@/components/ui";
+import { BackButton, EmptyState, ErrorBanner, Modal, Skeleton } from "@/components/ui";
 import { api, ApiError, type FeedItem } from "@/lib/api";
 import { applySoleLike, replaceFeedItem } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
@@ -102,7 +103,7 @@ type Profile = {
 
 export default function ProfilePage() {
   return (
-    <AppShell>
+    <AppShell chrome="nav">
       <ProfileView />
     </AppShell>
   );
@@ -264,6 +265,15 @@ function ProfileView() {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={profile.coverUrl} alt="" className="h-full w-full object-cover" />
         ) : null}
+        <BackButton className="absolute left-2 top-2 z-10 bg-black/40 text-white hover:bg-black/55" />
+        {profile.isSelf ? (
+          <Link
+            href="/account"
+            className="tap-scale type-caption absolute right-2 top-2 z-10 rounded-pill bg-black/40 px-3 py-2 font-semibold text-white hover:bg-black/55"
+          >
+            {messages.account.edit}
+          </Link>
+        ) : null}
       </div>
       <div className="-mt-10 px-4 text-center">
         <span className="mx-auto grid h-24 w-24 place-items-center rounded-full bg-[var(--bg)]">
@@ -285,7 +295,7 @@ function ProfileView() {
           <div className="mt-3 space-y-2">
             <p className="type-caption font-semibold text-muted">{messages.account.status}</p>
             <PresencePicker value={presence} busy={statusBusy} onChange={(k) => void setMyPresence(k)} />
-            <Link href="/account" className="type-caption inline-block font-semibold text-accent">
+            <Link href="/account" className="tap-scale type-button inline-flex rounded-pill bg-accent px-4 py-2 text-on-primary">
               {messages.account.title}
             </Link>
           </div>
@@ -546,6 +556,16 @@ function ProfileView() {
             label: messages.socialInvite.proposeOuting,
             icon: <SparklesIcon size={16} />,
             onClick: () => setProposeOpen(true),
+          },
+          {
+            key: "block",
+            label: messages.social.blockUser,
+            icon: <SlashIcon size={15} />,
+            danger: true,
+            onClick: async () => {
+              await api(`/users/${profile.id}/block`, { method: "POST" });
+              router.back();
+            },
           },
           {
             key: "report",

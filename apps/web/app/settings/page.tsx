@@ -73,6 +73,10 @@ export default function SettingsPage() {
       <ScreenHeader title={messages.settings.title} onBack={() => router.back()} />
       <p className="type-label mb-2 mt-2 px-1 text-subtle">{messages.settings.title}</p>
       <div className="space-y-2">
+        <CardButton onClick={() => router.push("/account")}>
+          <span>{messages.account.title}</span>
+          <NavChevron />
+        </CardButton>
         <CardButton onClick={() => void toggleTheme()}>
           <span>{messages.settings.darkMode}</span>
           <ThemeSwitch on={theme === "dark"} />

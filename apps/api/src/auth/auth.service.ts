@@ -37,7 +37,11 @@ export type PublicUser = {
   currency: string;
   country: string | null;
   profession: string | null;
+  bio: string | null;
+  website: string | null;
   avatarUrl: string | null;
+  coverUrl: string | null;
+  birthDate: string | null;
   city: string | null;
   zone: string | null;
   availability: Availability;
@@ -65,7 +69,11 @@ export class AuthService {
     currency?: string | null;
     profile: {
       profession: string | null;
+      bio?: string | null;
+      website?: string | null;
       avatarUrl: string | null;
+      coverUrl?: string | null;
+      birthDate?: Date | null;
       city: string | null;
       zone: string | null;
       country?: string | null;
@@ -91,7 +99,11 @@ export class AuthService {
       currency: resolveUserCurrency(user.currency, user.profile?.country),
       country: user.profile?.country ?? null,
       profession: user.profile?.profession ?? null,
+      bio: user.profile?.bio ?? null,
+      website: user.profile?.website ?? null,
       avatarUrl: user.profile?.avatarUrl ?? null,
+      coverUrl: user.profile?.coverUrl ?? null,
+      birthDate: user.profile?.birthDate ? user.profile.birthDate.toISOString().slice(0, 10) : null,
       city: user.profile?.city ?? null,
       zone: user.profile?.zone ?? null,
       availability: user.profile?.availability ?? Availability.HIDDEN,
