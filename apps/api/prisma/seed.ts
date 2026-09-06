@@ -1190,6 +1190,29 @@ async function enrichLivingWorld(
     });
   }
 
+  const socialPending = await db.socialInvite.findFirst({ where: { inviteeId: cesar.id, status: "SENT" } });
+  if (!socialPending) {
+    const social = await db.socialInvite.create({
+      data: {
+        inviterId: erica.id,
+        inviteeId: cesar.id,
+        context: "RESTAURANT",
+        label: "Sushi House Bastos",
+        message: "On se voit ce soir ?",
+        expiresAt: new Date(Date.now() + 20 * 3600_000),
+      },
+    });
+    await db.notification.create({
+      data: {
+        userId: cesar.id,
+        actorId: erica.id,
+        type: "SOCIAL_INVITE",
+        entityType: "social_invite_sent",
+        entityId: social.id,
+      },
+    });
+  }
+
   const extraNotifs = await db.notification.count({ where: { userId: cesar.id, type: "FOLLOW" } });
   if (extraNotifs < 4) {
     await db.notification.createMany({
