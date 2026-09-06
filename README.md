@@ -48,4 +48,4 @@ pnpm test:e2e
 
 ## Téléphone (Render + APK)
 
-[docs/DEPLOY_RENDER.md](./docs/DEPLOY_RENDER.md) — Blueprint Render sur **main** (`https://tiptop-phone.onrender.com`) et APK Android dans `apps/android`. Supprime d’abord les services / Postgres free déjà créés si le Blueprint a échoué.
+[docs/DEPLOY_RENDER.md](./docs/DEPLOY_RENDER.md) — site `https://tiptop-phone.onrender.com`, APK `https://tiptop-phone.onrender.com/tiptop.apk`.

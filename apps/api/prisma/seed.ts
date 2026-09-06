@@ -542,6 +542,7 @@ async function main() {
   }
 
   await enrichLivingWorld(prisma, { cesar, erica, mbelle, availableUntil });
+  await enrichMassCatalog(prisma, { availableUntil });
 
   console.log("Seed OK — OTP mock 1234, démo César admin +237 695 21 47 85");
 }
@@ -1629,6 +1630,248 @@ async function enrichLivingWorld(
         where: { userId_milestoneId: { userId: person.id, milestoneId: m.id } },
         create: { userId: person.id, milestoneId: m.id, notifiedAt: nowDate },
         update: { notifiedAt: nowDate },
+      });
+    }
+  }
+}
+
+async function enrichMassCatalog(db: PrismaClient, ctx: { availableUntil: Date }) {
+  const zones = [
+    "Bastos",
+    "Odza",
+    "Melen",
+    "Carrefour Damas",
+    "Essos",
+    "Nlongkak",
+    "Mvog-Mbi",
+    "Omnisports",
+    "Mimboman",
+    "Ngoa-Ekellé",
+  ];
+  const firstNames = [
+    "Léa",
+    "Samuel",
+    "Inès",
+    "Patrick",
+    "Chloé",
+    "Boris",
+    "Fatou",
+    "Kevin",
+    "Yasmine",
+    "Franck",
+    "Gaëlle",
+    "Hervé",
+  ];
+  const lastNames = [
+    "Biya",
+    "Kamga",
+    "Tchuente",
+    "Mbarga",
+    "Nguema",
+    "Ekotto",
+    "Abega",
+    "Owona",
+    "Fouda",
+    "Manga",
+    "Simo",
+    "Njoya",
+  ];
+  const jobs = [
+    "Graphiste",
+    "Développeur",
+    "Serveuse",
+    "Coach sportif",
+    "Photographe",
+    "Étudiant",
+    "Journaliste",
+    "Architecte",
+    "Musicien",
+    "Commerçant",
+    "Prof",
+    "Vidéaste",
+  ];
+  const avatars = [
+    "/seed/avatars/cesar.jpg",
+    "/seed/avatars/erica.jpg",
+    "/seed/avatars/alex.jpg",
+    "/seed/avatars/amina.jpg",
+    "/seed/avatars/fouda.jpg",
+    "/seed/avatars/koffi.jpg",
+    "/seed/avatars/mireille.jpg",
+    "/seed/avatars/nadege.jpg",
+    "/seed/avatars/onguene.jpg",
+    "/seed/avatars/rachel.jpg",
+    "/seed/avatars/sarah.jpg",
+    "/seed/avatars/william.jpg",
+  ];
+  const eventImages = [
+    "/seed/events/black-white.jpg",
+    "/seed/events/afterwork.jpg",
+    "/seed/events/brunch.jpg",
+    "/seed/events/piscine.jpg",
+    "/seed/events/live.jpg",
+    "/seed/events/expo.jpg",
+    "/seed/events/rooftop.jpg",
+  ];
+  const postImages = [
+    "/seed/posts/drinks.jpg",
+    "/seed/posts/food.jpg",
+    "/seed/posts/friends.jpg",
+    "/seed/posts/lights.jpg",
+    "/seed/posts/rooftop.jpg",
+  ];
+  const eventTitles = [
+    "Afterwork terrasse",
+    "Brunch du dimanche",
+    "Open mic",
+    "Match amical",
+    "Dégustation street food",
+    "Sunset rooftop",
+    "Soirée Black & Gold",
+    "Yoga au parc",
+    "Jam session",
+    "Marché nocturne",
+    "Ciné en plein air",
+    "Bowling entre potes",
+    "Karaoké live",
+    "Randonnée urbaine",
+    "Atelier photo",
+    "Beach volley indoor",
+    "Quiz night",
+    "Concert acoustique",
+  ];
+
+  const created: SeedUser[] = [];
+  for (let i = 0; i < 12; i += 1) {
+    const phone = `+23769100${String(i + 1).padStart(4, "0")}`;
+    const zone = zones[i % zones.length];
+    const row = await db.user.upsert({
+      where: { phoneE164: phone },
+      update: { profileCompleted: true },
+      create: {
+        phoneE164: phone,
+        phoneCountry: "CM",
+        username: `yaounde.user${i + 1}`,
+        firstName: firstNames[i],
+        lastName: lastNames[i],
+        profileCompleted: true,
+        profile: {
+          create: {
+            profession: jobs[i],
+            bio: `Je sors vraiment à ${zone}.`,
+            city: "Yaoundé",
+            zone,
+            country: "CM",
+            availability: "AVAILABLE",
+            availabilityUntil: ctx.availableUntil,
+            locationPrecision: "ZONE",
+            birthDate: new Date(1992 + (i % 10), i % 12, 4 + i),
+            latitude: 3.82 + (i % 8) * 0.012,
+            longitude: 11.48 + (i % 6) * 0.01,
+            avatarUrl: avatars[i % avatars.length],
+            coverUrl: "/seed/covers/city.jpg",
+          },
+        },
+        likeUnits: { create: [{ source: LikeUnitSource.FREE }] },
+      },
+    });
+    created.push(row);
+  }
+
+  const hosts = await db.user.findMany({
+    where: { profileCompleted: true },
+    take: 24,
+    include: { profile: true },
+  });
+  const cesar = await db.user.findUnique({ where: { phoneE164: "+237695214785" } });
+
+  for (let i = 0; i < eventTitles.length; i += 1) {
+    const host = hosts[i % hosts.length];
+    if (!host) continue;
+    const zone = zones[i % zones.length];
+    const title = `${eventTitles[i]} — ${zone}`;
+    const startsAt = new Date(Date.now() + (i + 1) * 9 * 3600_000);
+    let ev = await db.event.findFirst({ where: { title } });
+    if (!ev) {
+      ev = await db.event.create({
+        data: {
+          hostId: host.id,
+          title,
+          description: `${eventTitles[i]} à ${zone}. On se voit IRL, pas derrière un écran.`,
+          imageUrl: eventImages[i % eventImages.length],
+          city: "Yaoundé",
+          zone,
+          venue: zone,
+          startsAt,
+          endsAt: new Date(startsAt.getTime() + 4 * 3600_000),
+          priceXaf: i % 3 === 0 ? 0 : 2000 + (i % 5) * 500,
+          capacity: 30 + i * 2,
+          minAge: 18,
+          requiresReservation: i % 2 === 0,
+          participants: { create: { userId: host.id, status: "HOST" } },
+        },
+      });
+    }
+    if (cesar && cesar.id !== host.id) {
+      await db.eventParticipant.upsert({
+        where: { eventId_userId: { eventId: ev.id, userId: cesar.id } },
+        update: {},
+        create: { eventId: ev.id, userId: cesar.id, status: i % 2 === 0 ? "INTERESTED" : "RESERVED" },
+      });
+    }
+  }
+
+  for (let i = 0; i < 20; i += 1) {
+    const author = hosts[i % hosts.length];
+    if (!author) continue;
+    const zone = zones[i % zones.length];
+    const body = `Sortie ${i + 1} à ${zone} : qui est chaud ce soir ?`;
+    const exists = await db.post.findFirst({ where: { authorId: author.id, body } });
+    if (!exists) {
+      await db.post.create({
+        data: {
+          authorId: author.id,
+          body,
+          imageUrl: postImages[i % postImages.length],
+          city: "Yaoundé",
+          zone,
+        },
+      });
+    }
+  }
+
+  for (let i = 0; i < 10; i += 1) {
+    const author = hosts[i % hosts.length];
+    if (!author) continue;
+    const body = `Mood live ${i + 1} — je suis dehors maintenant.`;
+    const exists = await db.mood.findFirst({ where: { authorId: author.id, body } });
+    if (!exists) {
+      await db.mood.create({
+        data: {
+          authorId: author.id,
+          body,
+          imageUrl: i % 2 === 0 ? "/seed/moods/bastos.jpg" : "/seed/moods/street.jpg",
+          activity: i % 2 === 0 ? "🌆 Dehors" : "☕ Café",
+          city: "Yaoundé",
+          zone: zones[i % zones.length],
+          visibility: "ZONE",
+          expiresAt: new Date(Date.now() + 18 * 3600_000),
+        },
+      });
+    }
+  }
+
+  if (cesar) {
+    for (const person of created) {
+      await db.follow.upsert({
+        where: { followerId_followeeId: { followerId: cesar.id, followeeId: person.id } },
+        update: {},
+        create: { followerId: cesar.id, followeeId: person.id },
+      });
+      await db.follow.upsert({
+        where: { followerId_followeeId: { followerId: person.id, followeeId: cesar.id } },
+        update: {},
+        create: { followerId: person.id, followeeId: cesar.id },
       });
     }
   }

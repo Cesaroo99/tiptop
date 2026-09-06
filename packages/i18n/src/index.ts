@@ -84,6 +84,7 @@ export type Messages = {
     comingSoon: string;
     admin: string;
     newBadge: string;
+    downloadApk: string;
   };
   settings: {
     title: string;
@@ -993,6 +994,7 @@ export const fr: Messages = {
     comingSoon: "Cette section arrive dans une prochaine phase — le bouton n’invente pas de données.",
     admin: "Back-office",
     newBadge: "NEW",
+    downloadApk: "Télécharger l’APK",
   },
   settings: {
     title: "Paramètres",
@@ -1902,6 +1904,7 @@ export const en: Messages = {
     comingSoon: "This section ships in a later phase — the button does not invent data.",
     admin: "Back office",
     newBadge: "NEW",
+    downloadApk: "Download the APK",
   },
   settings: {
     title: "Settings",

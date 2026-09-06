@@ -28,10 +28,9 @@ Si le nom `tiptop-phone` est pris mondialement, change `name:` dans `render.yaml
 
 ## 3. APK téléphone
 
-WebView plein écran vers l’URL Render (caméra / localisation autorisées).
+Téléchargement direct : [https://tiptop-phone.onrender.com/tiptop.apk](https://tiptop-phone.onrender.com/tiptop.apk)
 
-- Artifact session : `tiptop.apk`
-- Ou GitHub → Actions → **APK TipTop** → artifact `tiptop-apk`
+WebView plein écran (caméra / localisation autorisées), splash animé au lancement.
 
 Sur le téléphone : autorise « sources inconnues », installe, ouvre TipTop. Au réveil Render, le premier chargement peut prendre ~1 min.
 

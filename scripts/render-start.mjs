@@ -147,10 +147,10 @@ async function boot() {
 
   await migrateWithRetry(prismaBin);
   try {
-    console.log("[render] seed démo");
-    await runOnce(tsxBin, ["prisma/seed-demo.ts"], apiDir);
+    console.log("[render] seed complet (monde vivant)");
+    await runOnce(tsxBin, ["prisma/seed.ts"], apiDir);
   } catch (err) {
-    console.error("[render] seed démo ignoré :", err);
+    console.error("[render] seed complet ignoré :", err);
   }
 
   run(tsxBin, ["src/main.ts"], { API_PORT: String(apiPort), PORT: String(apiPort) }, apiDir);

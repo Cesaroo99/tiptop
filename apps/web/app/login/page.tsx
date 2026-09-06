@@ -87,6 +87,13 @@ export default function LoginPage() {
           {messages.auth.login}
         </PrimaryButton>
       </form>
+      <a
+        href="/tiptop.apk"
+        download="tiptop.apk"
+        className="type-caption mt-6 block text-center font-semibold text-accent"
+      >
+        {messages.menu.downloadApk}
+      </a>
       <p className="type-caption mt-8 text-center text-muted">{messages.auth.orContinue}</p>
       <div className="mt-4 flex justify-center gap-4">
         <button type="button" onClick={() => setOauth(true)} className="tap-scale grid h-14 w-14 place-items-center rounded-xl bg-surface shadow-xs transition hover:shadow-sm" aria-label="Google">

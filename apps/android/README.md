@@ -1,6 +1,8 @@
 # TipTop Android
 
-WebView vers l’instance Render : `https://tiptop-phone.onrender.com`
+WebView vers l’instance Render : `https://tiptop-phone.onrender.com/splash`
+
+APK : [https://tiptop-phone.onrender.com/tiptop.apk](https://tiptop-phone.onrender.com/tiptop.apk)
 
 ```bash
 # local

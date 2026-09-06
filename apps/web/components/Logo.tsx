@@ -7,7 +7,15 @@
 const ICON_RATIO = 682 / 728;
 const LOCKUP_RATIO = 1867 / 728;
 
-export function Logo({ size = 40, withWordmark = true }: { size?: number; withWordmark?: boolean }) {
+export function Logo({
+  size = 40,
+  withWordmark = true,
+  className,
+}: {
+  size?: number;
+  withWordmark?: boolean;
+  className?: string;
+}) {
   if (withWordmark) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
@@ -16,6 +24,7 @@ export function Logo({ size = 40, withWordmark = true }: { size?: number; withWo
         alt="TipTop"
         height={size}
         width={Math.round(size * LOCKUP_RATIO)}
+        className={className}
         style={{ height: size, width: "auto" }}
         draggable={false}
       />
@@ -28,6 +37,7 @@ export function Logo({ size = 40, withWordmark = true }: { size?: number; withWo
       alt="TipTop"
       height={size}
       width={Math.round(size * ICON_RATIO)}
+      className={className}
       style={{ height: size, width: "auto" }}
       draggable={false}
     />

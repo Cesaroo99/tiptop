@@ -53,6 +53,7 @@ export default function MenuPage() {
     [
       { href: "/settings", label: messages.menu.settings },
       { href: "/help", label: messages.menu.help },
+      { href: "/tiptop.apk", label: messages.menu.downloadApk },
     ],
   ];
   if (user.role === "ADMIN" || user.role === "MODERATOR") {
@@ -89,7 +90,16 @@ export default function MenuPage() {
         {groups.map((group, i) => (
           <div key={i} className="space-y-2">
             {group.map((item) => (
-              <CardButton key={item.href} onClick={() => router.push(item.href)}>
+              <CardButton
+                key={item.href}
+                onClick={() => {
+                  if (item.href.endsWith(".apk")) {
+                    window.location.assign(item.href);
+                    return;
+                  }
+                  router.push(item.href);
+                }}
+              >
                 <span className="flex items-center gap-2">
                   {item.label}
                   {item.fresh ? (

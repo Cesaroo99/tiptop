@@ -557,3 +557,66 @@ body {
     opacity: 0.55;
   }
 }
+
+.splash-orb-cyan {
+  animation: splash-orb-float 3.2s var(--ease-standard) infinite alternate;
+}
+.splash-orb-yellow {
+  animation: splash-orb-float 3.6s var(--ease-standard) 0.2s infinite alternate-reverse;
+}
+.splash-glow {
+  background: radial-gradient(circle, rgba(5, 199, 242, 0.28) 0%, rgba(242, 226, 5, 0.1) 42%, transparent 70%);
+  animation: splash-glow-pulse 1.8s var(--ease-standard) infinite alternate;
+}
+.splash-logo-mark {
+  animation: splash-logo-pop 720ms var(--ease-standard) both;
+}
+.splash-logo-word {
+  animation: splash-word-in 560ms var(--ease-standard) 280ms both;
+}
+.splash-tagline {
+  animation: splash-word-in 560ms var(--ease-standard) 480ms both;
+}
+
+@keyframes splash-logo-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.72) rotate(-10deg);
+  }
+  58% {
+    opacity: 1;
+    transform: scale(1.08) rotate(3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+@keyframes splash-word-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes splash-orb-float {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(16px, -14px, 0) scale(1.08);
+  }
+}
+@keyframes splash-glow-pulse {
+  from {
+    opacity: 0.55;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
