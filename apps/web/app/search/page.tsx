@@ -7,7 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { HeaderUtilityIcons } from "@/components/AppHeader";
 import { ChevronDownIcon, PinIcon, SearchIcon } from "@/components/Icons";
 import { SearchEventCard, SearchPersonCard } from "@/components/SearchCards";
-import { CardSkeleton, EmptyState, ErrorBanner } from "@/components/ui";
+import { BackButton, CardSkeleton, EmptyState, ErrorBanner } from "@/components/ui";
 import { api, type SearchResult } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useMoney } from "@/lib/money";
@@ -115,7 +115,10 @@ function SearchScreen() {
   return (
     <div className="px-4 pb-6 pt-3">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h1 className="type-h1 text-accent">{messages.common.search}</h1>
+        <div className="flex min-w-0 items-center gap-1">
+          <BackButton className="-ml-2" />
+          <h1 className="type-h1 text-accent">{messages.common.search}</h1>
+        </div>
         <HeaderUtilityIcons />
       </div>
 

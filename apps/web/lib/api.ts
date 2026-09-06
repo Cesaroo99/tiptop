@@ -11,7 +11,11 @@ export type PublicUser = {
   locale: string;
   theme: string;
   profession: string | null;
+  bio?: string | null;
+  website?: string | null;
   avatarUrl: string | null;
+  coverUrl?: string | null;
+  birthDate?: string | null;
   city: string | null;
   zone: string | null;
   availability: string;

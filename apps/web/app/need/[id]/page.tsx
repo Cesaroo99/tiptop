@@ -6,14 +6,14 @@ import { useParams, useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
 import { MapThumb } from "@/components/MapThumb";
-import { CardSkeleton, ErrorBanner, PrimaryButton, SecondaryButton } from "@/components/ui";
+import { CardSkeleton, ErrorBanner, PrimaryButton, ScreenHeader, SecondaryButton } from "@/components/ui";
 import { api, type OfferItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useMoney } from "@/lib/money";
 
 export default function Page() {
   return (
-    <AppShell>
+    <AppShell chrome="nav">
       <OfferDetail />
     </AppShell>
   );
@@ -45,11 +45,31 @@ function OfferDetail() {
     router.replace("/need?mine=1");
   }
 
-  if (error) return <div className="px-4 py-4"><ErrorBanner message={error} onRetry={() => void load()} /></div>;
-  if (!offer) return <div className="px-4 py-4"><CardSkeleton /></div>;
+  if (error) {
+    return (
+      <div>
+        <ScreenHeader title={messages.need.title} onBack={() => router.back()} />
+        <div className="px-4 py-4">
+          <ErrorBanner message={error} onRetry={() => void load()} />
+        </div>
+      </div>
+    );
+  }
+  if (!offer) {
+    return (
+      <div>
+        <ScreenHeader title={messages.need.title} onBack={() => router.back()} />
+        <div className="px-4 py-4">
+          <CardSkeleton />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-4 px-4 py-4">
+    <div>
+      <ScreenHeader title={offer.title} onBack={() => router.back()} />
+      <div className="space-y-4 px-4 pb-4">
       {offer.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={offer.imageUrl} alt="" className="h-48 w-full rounded-card object-cover" />
@@ -110,6 +130,7 @@ function OfferDetail() {
           {messages.world.message}
         </PrimaryButton>
       )}
+      </div>
     </div>
   );
 }

@@ -76,6 +76,12 @@ export default function MenuPage() {
         </div>
         <NavChevron />
       </Link>
+      <div className="mt-2">
+        <CardButton onClick={() => router.push("/account")}>
+          <span>{messages.account.title}</span>
+          <NavChevron />
+        </CardButton>
+      </div>
       <Link href="/likes" className="mt-4 block">
         <LikeCapital time={stats.likeTime} forSelf />
       </Link>

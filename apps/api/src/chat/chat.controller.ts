@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Inject, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
 import { IsBoolean, IsIn, IsInt, IsOptional, IsString, MaxLength, Min } from "class-validator";
 import type { Request } from "express";
 import { SessionGuard } from "../auth/session.guard";
@@ -135,9 +135,19 @@ export class ChatController {
     return this.chat.read(req.user.id, id);
   }
 
+  @Get("users/me/blocks")
+  listBlocks(@Req() req: Request & { user: PublicUser }) {
+    return this.chat.listBlocks(req.user.id);
+  }
+
   @Post("users/:id/block")
   block(@Req() req: Request & { user: PublicUser }, @Param("id") id: string) {
     return this.chat.block(req.user.id, id);
+  }
+
+  @Delete("users/:id/block")
+  unblock(@Req() req: Request & { user: PublicUser }, @Param("id") id: string) {
+    return this.chat.unblock(req.user.id, id);
   }
 
   @Post("devices")

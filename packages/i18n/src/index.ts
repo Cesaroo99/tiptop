@@ -108,6 +108,22 @@ export type Messages = {
     saved: string;
     status: string;
     statusHint: string;
+    edit: string;
+    bio: string;
+    bioHint: string;
+    website: string;
+    websiteHint: string;
+    birthDate: string;
+    country: string;
+    avatar: string;
+    cover: string;
+    phoneLocked: string;
+    location: string;
+    changeZone: string;
+    blocked: string;
+    blockedEmpty: string;
+    unblock: string;
+    viewPublic: string;
   };
   onboarding: {
     title: string;
@@ -1001,6 +1017,22 @@ export const fr: Messages = {
     saved: "Modifications enregistrées",
     status: "Ton état",
     statusHint: "Tu le choisis ici. Les autres le voient sur ton profil et autour d’elles — elles ne peuvent pas le changer.",
+    edit: "Modifier",
+    bio: "À propos de toi",
+    bioHint: "Quelques mots pour que les autres te reconnaissent IRL.",
+    website: "Site ou réseau",
+    websiteHint: "Sans https:// — exemple : tiptop.cm",
+    birthDate: "Date de naissance",
+    country: "Pays",
+    avatar: "Photo de profil",
+    cover: "Photo de couverture",
+    phoneLocked: "Le numéro se change uniquement par un nouvel OTP.",
+    location: "Ta zone",
+    changeZone: "Changer de zone",
+    blocked: "Personnes bloquées",
+    blockedEmpty: "Tu n’as bloqué personne.",
+    unblock: "Débloquer",
+    viewPublic: "Voir mon profil public",
   },
   onboarding: {
     title: "Complète ton profil",
@@ -1894,6 +1926,22 @@ export const en: Messages = {
     saved: "Changes saved",
     status: "Your status",
     statusHint: "You set it here. Others see it on your profile and around them — they cannot change it.",
+    edit: "Edit",
+    bio: "About you",
+    bioHint: "A few words so people can recognize you in real life.",
+    website: "Website or social",
+    websiteHint: "Without https:// — example: tiptop.cm",
+    birthDate: "Date of birth",
+    country: "Country",
+    avatar: "Profile photo",
+    cover: "Cover photo",
+    phoneLocked: "The number can only change through a new OTP login.",
+    location: "Your area",
+    changeZone: "Change area",
+    blocked: "Blocked people",
+    blockedEmpty: "You haven’t blocked anyone.",
+    unblock: "Unblock",
+    viewPublic: "View my public profile",
   },
   onboarding: {
     title: "Complete your profile",

@@ -3,14 +3,14 @@
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { PrimaryButton } from "@/components/ui";
+import { PrimaryButton, ScreenHeader } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useMoney } from "@/lib/money";
 
 export default function Page() {
   return (
-    <AppShell>
+    <AppShell chrome="nav">
       <Suspense>
         <PaySheet />
       </Suspense>
@@ -76,8 +76,10 @@ function PaySheet() {
   ];
 
   return (
-    <div className="px-4 py-6">
-      <h1 className="text-lg font-semibold">{messages.booking.pay}</h1>
+    <div>
+      <ScreenHeader title={messages.booking.pay} onBack={() => router.back()} />
+      <div className="px-4 pb-6">
+      <h1 className="sr-only">{messages.booking.pay}</h1>
       <p className="mt-1 text-sm text-muted">{messages.booking.mockHint}</p>
       {amount != null ? (
         <p className="mt-3 text-xl font-bold text-accent">{messages.booking.amount.replace("{amount}", formatPrice(amount, payCurrency))}</p>
@@ -103,6 +105,7 @@ function PaySheet() {
         <PrimaryButton loading={loading} disabled={!reservationId} onClick={() => void pay()}>
           {messages.booking.pay}
         </PrimaryButton>
+      </div>
       </div>
     </div>
   );

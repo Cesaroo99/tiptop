@@ -287,6 +287,23 @@ export class ChatService {
     return { ok: true };
   }
 
+  async listBlocks(actorId: string) {
+    const rows = await this.prisma.userBlock.findMany({
+      where: { blockerId: actorId },
+      orderBy: { createdAt: "desc" },
+      include: { blocked: { select: PERSON.select } },
+    });
+    return { items: rows.map((r) => publicPerson(r.blocked)) };
+  }
+
+  async unblock(actorId: string, peerId: string) {
+    const res = await this.prisma.userBlock.deleteMany({
+      where: { blockerId: actorId, blockedId: peerId },
+    });
+    if (res.count === 0) throw new NotFoundException({ code: "NOT_BLOCKED" });
+    return { ok: true };
+  }
+
   async conversationIds(userId: string) {
     const rows = await this.prisma.conversationMember.findMany({
       where: { userId },

@@ -91,6 +91,7 @@ describe("Écran recherche", () => {
       </TestI18nProvider>,
     );
     expect(screen.getByRole("heading", { name: "Recherche" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Retour")).toBeInTheDocument();
     expect(screen.getByText("Yaoundé - Carrefour Damas")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Recherche")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Tout" })).toBeInTheDocument();
