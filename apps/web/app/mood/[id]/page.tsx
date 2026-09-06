@@ -70,6 +70,7 @@ function MoodViewer() {
           ...mood,
           likedByMe: false,
           likeTime: {
+            ...mood.likeTime,
             totalSeconds: mood.likeTime?.totalSeconds ?? 0,
             activeCount: Math.max(0, (mood.likeTime?.activeCount ?? 1) - 1),
             likedByMe: false,
@@ -87,6 +88,7 @@ function MoodViewer() {
         ...mood,
         likedByMe: true,
         likeTime: {
+          ...mood.likeTime,
           totalSeconds: mood.likeTime?.totalSeconds ?? 0,
           activeCount: (mood.likeTime?.activeCount ?? 0) + 1,
           likedByMe: true,

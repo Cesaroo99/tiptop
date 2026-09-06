@@ -318,6 +318,7 @@ export function Modal({
   onConfirm,
   confirmLabel,
   danger,
+  hideActions = false,
 }: {
   open: boolean;
   title: string;
@@ -326,6 +327,7 @@ export function Modal({
   onConfirm?: () => void;
   confirmLabel?: string;
   danger?: boolean;
+  hideActions?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -358,24 +360,26 @@ export function Modal({
           </button>
         </div>
         <div className="type-body-sm mt-3 text-muted">{children}</div>
-        <div className="mt-6 flex gap-2">
-          {onConfirm ? (
+        {hideActions ? null : (
+          <div className="mt-6 flex gap-2">
+            {onConfirm ? (
+              <button
+                type="button"
+                onClick={onClose}
+                className="tap-scale type-button flex-1 rounded-pill border border-border bg-surface py-3.5 text-ink transition hover:bg-surface-sunken"
+              >
+                Annuler
+              </button>
+            ) : null}
             <button
               type="button"
-              onClick={onClose}
-              className="tap-scale type-button flex-1 rounded-pill border border-border bg-surface py-3.5 text-ink transition hover:bg-surface-sunken"
+              onClick={onConfirm ?? onClose}
+              className={`tap-scale type-button flex-1 rounded-pill py-3.5 text-on-primary transition ${danger ? "bg-danger hover:brightness-95" : "bg-accent hover:bg-accent-hover"}`}
             >
-              Annuler
+              {confirmLabel ?? "OK"}
             </button>
-          ) : null}
-          <button
-            type="button"
-            onClick={onConfirm ?? onClose}
-            className={`tap-scale type-button flex-1 rounded-pill py-3.5 text-on-primary transition ${danger ? "bg-danger hover:brightness-95" : "bg-accent hover:bg-accent-hover"}`}
-          >
-            {confirmLabel ?? "OK"}
-          </button>
-        </div>
+          </div>
+        )}
       </div>
     </div>,
     document.body,

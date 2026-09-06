@@ -11,9 +11,12 @@
  * Internes : toujours des secondes entières.
  */
 
+export const LIKE_HOUR_SECONDS = 3_600;
 export const LIKE_DAY_SECONDS = 86_400;
 export const LIKE_MONTH_SECONDS = 30 * LIKE_DAY_SECONDS;
 export const LIKE_YEAR_SECONDS = 365 * LIKE_DAY_SECONDS;
+
+export type LikeDurationLocale = "fr" | "en";
 
 export type LikeTargetType = "user" | "post" | "comment" | "mood" | "wish";
 
@@ -45,7 +48,88 @@ export function sumLikeSeconds(periods: LikePeriodSlice[], now: Date) {
   };
 }
 
-export type LikeDurationLocale = "fr" | "en";
+/** Ne garde que le temps de like qui tombe dans [since, now]. */
+export function clipLikePeriodsSince(periods: LikePeriodSlice[], since: Date, now: Date): LikePeriodSlice[] {
+  const clipped: LikePeriodSlice[] = [];
+  for (const p of periods) {
+    const end = p.endedAt ?? now;
+    if (end <= since || p.startedAt >= now) continue;
+    clipped.push({
+      startedAt: p.startedAt < since ? since : p.startedAt,
+      endedAt: p.endedAt,
+      weight: p.weight,
+    });
+  }
+  return clipped;
+}
+
+/** Temps de like accumulé sur l’heure / le jour / le mois glissants — pas un compteur de cœurs. */
+export function likeTimeWindows(periods: LikePeriodSlice[], now: Date) {
+  const hourSince = new Date(now.getTime() - LIKE_HOUR_SECONDS * 1000);
+  const daySince = new Date(now.getTime() - LIKE_DAY_SECONDS * 1000);
+  const monthSince = new Date(now.getTime() - LIKE_MONTH_SECONDS * 1000);
+  return {
+    hourSeconds: sumLikeSeconds(clipLikePeriodsSince(periods, hourSince, now), now).totalSeconds,
+    daySeconds: sumLikeSeconds(clipLikePeriodsSince(periods, daySince, now), now).totalSeconds,
+    monthSeconds: sumLikeSeconds(clipLikePeriodsSince(periods, monthSince, now), now).totalSeconds,
+  };
+}
+
+/** 32 · 1.5k · 111k · 2.3M — compteurs compact (commentaires, stats). */
+export function formatCompactCount(value: number): string {
+  const n = Math.max(0, Math.floor(value));
+  if (n < 1000) return String(n);
+  if (n < 1_000_000) {
+    const k = n / 1000;
+    if (k >= 100) return `${Math.round(k)}k`;
+    const rounded = Math.round(k * 10) / 10;
+    return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}k`;
+  }
+  const m = n / 1_000_000;
+  if (m >= 100) return `${Math.round(m)}M`;
+  const rounded = Math.round(m * 10) / 10;
+  return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}M`;
+}
+
+export function formatLikeTimeCompact(seconds: number): string {
+  return formatLikeDurationShort(seconds);
+}
+
+/** Rail Mood : temps court qui peut évoluer chaque seconde (12 s, 3 min, 1 h). */
+export function formatLikeDurationShort(seconds: number, locale: LikeDurationLocale = "fr"): string {
+  const s = Math.max(0, Math.floor(seconds));
+  const fr = locale === "fr";
+  if (s < 60) return `${s} s`;
+  if (s < LIKE_HOUR_SECONDS) return `${Math.floor(s / 60)} min`;
+  if (s < LIKE_DAY_SECONDS) {
+    const h = Math.floor(s / LIKE_HOUR_SECONDS);
+    const m = Math.floor((s % LIKE_HOUR_SECONDS) / 60);
+    return m ? `${h} h ${m}` : `${h} h`;
+  }
+  if (s < LIKE_MONTH_SECONDS) {
+    const d = Math.floor(s / LIKE_DAY_SECONDS);
+    const h = Math.floor((s % LIKE_DAY_SECONDS) / LIKE_HOUR_SECONDS);
+    const day = fr ? "j" : "d";
+    return h ? `${d} ${day} ${h} h` : `${d} ${day}`;
+  }
+  const mo = Math.floor(s / LIKE_MONTH_SECONDS);
+  return fr ? `${mo} mois` : `${mo} mo`;
+}
+
+export function likeTimeMeterLabels(
+  windows: {
+    hourSeconds: number;
+    daySeconds: number;
+    monthSeconds: number;
+  },
+  locale: LikeDurationLocale = "fr",
+) {
+  return {
+    hourLabel: formatLikeDurationShort(windows.hourSeconds, locale),
+    dayLabel: formatLikeDurationShort(windows.daySeconds, locale),
+    monthLabel: formatLikeDurationShort(windows.monthSeconds, locale),
+  };
+}
 
 function plural(n: number, one: string, many: string) {
   return n <= 1 ? one : many;

@@ -6,6 +6,10 @@ import {
   formatLikeDuration,
   highestMilestone,
   LIKE_YEAR_SECONDS,
+  formatCompactCount,
+  formatLikeDurationShort,
+  likeTimeMeterLabels,
+  likeTimeWindows,
   liveLikeSeconds,
   periodDurationSeconds,
   sumLikeSeconds,
@@ -118,6 +122,52 @@ describe("paliers", () => {
   it("expose les paliers configurables", () => {
     expect(DEFAULT_LIKE_MILESTONES[0]?.seconds).toBe(60);
     expect(CERTIFIED_LIKE_WEIGHT).toBe(1);
+  });
+});
+
+describe("likeTimeWindows", () => {
+  it("un like actif depuis 2 h compte 1 h sur /H et 2 h sur /J et /M", () => {
+    const now = new Date("2026-09-01T12:00:00Z");
+    const windows = likeTimeWindows(
+      [{ startedAt: new Date("2026-09-01T10:00:00Z"), endedAt: null }],
+      now,
+    );
+    expect(windows.hourSeconds).toBe(3600);
+    expect(windows.daySeconds).toBe(7200);
+    expect(windows.monthSeconds).toBe(7200);
+  });
+
+  it("une période close hors de l’heure glissante n’apparaît pas en /H", () => {
+    const now = new Date("2026-09-01T12:00:00Z");
+    const windows = likeTimeWindows(
+      [
+        {
+          startedAt: new Date("2026-09-01T09:00:00Z"),
+          endedAt: new Date("2026-09-01T09:10:00Z"),
+        },
+      ],
+      now,
+    );
+    expect(windows.hourSeconds).toBe(0);
+    expect(windows.daySeconds).toBe(10 * 60);
+    expect(windows.monthSeconds).toBe(10 * 60);
+  });
+});
+
+describe("formatLikeDurationShort", () => {
+  it("affiche une durée évolutive, jamais un débit de likes", () => {
+    expect(formatLikeDurationShort(0)).toBe("0 s");
+    expect(formatLikeDurationShort(32)).toBe("32 s");
+    expect(formatLikeDurationShort(1500)).toBe("25 min");
+    expect(formatLikeDurationShort(3723)).toBe("1 h 2");
+    expect(formatLikeDurationShort(78_000)).toBe("21 h 40");
+    expect(formatLikeDurationShort(111_000)).toBe("1 j 6 h");
+    expect(formatCompactCount(2300)).toBe("2.3k");
+    expect(likeTimeMeterLabels({ hourSeconds: 45, daySeconds: 1500, monthSeconds: 3723 })).toEqual({
+      hourLabel: "45 s",
+      dayLabel: "25 min",
+      monthLabel: "1 h 2",
+    });
   });
 });
 

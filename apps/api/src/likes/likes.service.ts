@@ -15,6 +15,8 @@ import {
   crossedMilestones,
   formatLikeDuration,
   highestMilestone,
+  likeTimeMeterLabels,
+  likeTimeWindows,
   parseMilestones,
   periodDurationSeconds,
   pickUnitForTarget,
@@ -737,6 +739,12 @@ export class LikesService {
       activeCount: number;
       likedByMe: boolean;
       label: string;
+      hourSeconds: number;
+      daySeconds: number;
+      monthSeconds: number;
+      hourLabel: string;
+      dayLabel: string;
+      monthLabel: string;
     };
     const map = new Map<string, Snap>();
     if (!ids.length) return map;
@@ -749,10 +757,10 @@ export class LikesService {
     });
     for (const id of ids) {
       const subset = periods.filter((p) => p.targetId === id);
-      const sum = sumLikeSeconds(
-        subset.map((p) => ({ startedAt: p.startedAt, endedAt: p.endedAt, weight: p.weight })),
-        now,
-      );
+      const slices = subset.map((p) => ({ startedAt: p.startedAt, endedAt: p.endedAt, weight: p.weight }));
+      const sum = sumLikeSeconds(slices, now);
+      const windows = likeTimeWindows(slices, now);
+      const meters = likeTimeMeterLabels(windows, locale);
       map.set(id, {
         totalSeconds: sum.totalSeconds,
         historicalSeconds: sum.historicalSeconds,
@@ -760,6 +768,12 @@ export class LikesService {
         activeCount: subset.filter((p) => !p.endedAt).length,
         likedByMe: subset.some((p) => !p.endedAt && p.actorId === viewerId),
         label: formatLikeDuration(sum.totalSeconds, locale),
+        hourSeconds: windows.hourSeconds,
+        daySeconds: windows.daySeconds,
+        monthSeconds: windows.monthSeconds,
+        hourLabel: meters.hourLabel,
+        dayLabel: meters.dayLabel,
+        monthLabel: meters.monthLabel,
       });
     }
     return map;

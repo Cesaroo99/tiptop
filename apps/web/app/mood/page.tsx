@@ -3,27 +3,25 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AppShell } from "@/components/AppShell";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
-import { CameraIcon, ClockIcon, CommentIcon, FlagIcon, HeartIcon, ShareIcon, SparklesIcon } from "@/components/Icons";
+import { CameraIcon, MusicIcon, PlayIcon, SearchIcon, SendIcon, SmileIcon, SparklesIcon } from "@/components/Icons";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
+import { MoodLikeRail } from "@/components/MoodLikeRail";
+import { MoodPlaceSheet, MoodPlaceTag, moodPlaceFromItem } from "@/components/MoodPlace";
 import { ReportModal } from "@/components/ReportModal";
 import { SocialInviteModal } from "@/components/SocialInviteModal";
-import { MoodPlaceChip, MoodPlaceSheet, moodPlaceFromItem } from "@/components/MoodPlace";
-import { EmptyState, Modal, Skeleton, TextInput } from "@/components/ui";
+import { EmptyState, Modal, Skeleton } from "@/components/ui";
 import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useLikePlacement } from "@/lib/like-placement";
 import { useSession } from "@/lib/session";
+import { sheetOverlayClass, useSheetPortal } from "@/lib/sheet-portal";
 
 /**
- * Flux Mood vertical, immersif (#4-6) : un mood par écran, défilement vertical
- * naturel (scroll-snap, tactile comme au clavier), actions contextuelles
- * superposées, et passerelles explicites vers le monde réel (profil, événement,
- * lieu). Toute vignette de mood ailleurs dans l'app (stories de l'accueil,
- * profil, recherche, notifications, moods liés à un événement) ouvre ce même
- * flux continu via `?start=<id>` plutôt qu'une vue isolée, pour rester
- * cohérent avec l'expérience façon TikTok demandée.
+ * Flux Mood vertical immersif : un mood par écran, média lisible,
+ * lieu seulement s’il est renseigné, like = temps qui continue d’avancer.
  */
 export default function Page() {
   return (
@@ -37,6 +35,7 @@ export default function Page() {
 
 function MoodFeed() {
   const { messages } = useI18n();
+  const { user } = useSession();
   const params = useSearchParams();
   const startId = params.get("start");
   const [items, setItems] = useState<MoodItem[] | null>(null);
@@ -52,7 +51,7 @@ function MoodFeed() {
             setItems([single, ...d.items]);
             return;
           } catch {
-            // Mood expiré ou inaccessible : on ignore silencieusement et on garde le flux général.
+            /* Mood expiré : on garde le flux. */
           }
         }
         setItems(d.items);
@@ -108,22 +107,37 @@ function MoodFeed() {
   }
 
   return (
-    <div className="relative h-full w-full">
-      <div className="phone-safe-top pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4">
-        <p className="type-h4 text-white drop-shadow">{messages.nav.mood}</p>
-        <Link
-          href="/compose?type=mood"
-          className="tap-scale pointer-events-auto flex items-center gap-1.5 rounded-pill bg-white/90 px-3.5 py-2 text-ink shadow-sm backdrop-blur-sm"
-        >
-          <CameraIcon size={15} />
-          <span className="type-caption font-semibold">{messages.world.moodCreate}</span>
-        </Link>
+    <div className="relative h-full min-h-0 w-full">
+      <div className="phone-safe-top pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4">
+        <p className="text-[22px] font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">{messages.nav.mood}</p>
+        <div className="pointer-events-auto flex items-center gap-2.5">
+          <Link
+            href="/compose?type=mood"
+            aria-label={messages.world.moodCreate}
+            className="tap-scale flex items-center gap-1.5 rounded-pill bg-white px-3.5 py-2 text-ink shadow-sm"
+          >
+            <CameraIcon size={15} />
+            <span className="type-caption font-semibold">{messages.world.moodCreateShort}</span>
+          </Link>
+          <Link
+            href="/search"
+            aria-label={messages.common.search}
+            className="tap-scale grid h-9 w-9 place-items-center text-white drop-shadow"
+          >
+            <SearchIcon size={20} />
+          </Link>
+          {user ? (
+            <Link href={`/u/${user.username}`} aria-label={user.username} className="tap-scale">
+              <Avatar src={user.avatarUrl} firstName={user.firstName} lastName={user.lastName} size={32} />
+            </Link>
+          ) : null}
+        </div>
       </div>
       <div
         ref={containerRef}
         tabIndex={0}
         onKeyDown={onKeyDown}
-        className="no-scrollbar h-full snap-y snap-mandatory overflow-y-scroll scroll-smooth outline-none"
+        className="no-scrollbar absolute inset-0 snap-y snap-mandatory overflow-y-scroll scroll-smooth outline-none"
       >
         {items.map((m) => (
           <MoodSlide
@@ -152,17 +166,27 @@ function MoodSlide({
 }) {
   const { messages } = useI18n();
   const { user } = useSession();
-  const { refresh: refreshPlacement } = useLikePlacement();
+  const { refresh: refreshPlacement, placement } = useLikePlacement();
+  const dock = Boolean(placement);
   const [transfer, setTransfer] = useState<string | null>(null);
   const [buy, setBuy] = useState(false);
   const [joinOpen, setJoinOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [placeOpen, setPlaceOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [captionOpen, setCaptionOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [loadedAt, setLoadedAt] = useState(() => Date.now());
   const place = moodPlaceFromItem(mood);
-
   const liked = mood.likeTime?.likedByMe ?? mood.likedByMe ?? false;
+  const canJoin = Boolean(user && user.id !== mood.author.id);
+  const captionLong = (mood.body ?? "").length > 90;
+
+  useEffect(() => {
+    setLoadedAt(Date.now());
+  }, [mood.likeTime?.activeCount, mood.likeTime?.totalSeconds]);
 
   async function like(confirmTransfer = false) {
     try {
@@ -218,9 +242,9 @@ function MoodSlide({
   }
 
   return (
-    <section ref={registerRef} className="relative h-full w-full snap-start snap-always">
+    <section ref={registerRef} className="relative h-full min-h-full w-full shrink-0 snap-start snap-always">
       {mood.videoUrl ? (
-        <MoodVideo src={mood.videoUrl} />
+        <MoodVideo src={mood.videoUrl} muted={muted} />
       ) : mood.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={mood.imageUrl} alt="" className="h-full w-full object-cover" />
@@ -229,91 +253,89 @@ function MoodSlide({
           <p className="type-h2 text-on-primary">{mood.body || messages.world.typeMood}</p>
         </div>
       )}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/75" />
 
-      <div className="absolute bottom-24 right-3 flex flex-col items-center gap-5 text-white">
-        <button type="button" onClick={() => void like(false)} className="tap-scale flex flex-col items-center gap-1" aria-label={messages.social.likePlace}>
-          <span className={`grid h-11 w-11 place-items-center rounded-full backdrop-blur-sm ${liked ? "bg-accent" : "bg-black/35"}`}>
-            <HeartIcon size={20} filled={liked} />
-          </span>
-          <span className="type-caption font-semibold drop-shadow">
-            {mood.likeTime ? mood.likeTime.label : mood.authorActiveLikes}
-          </span>
-        </button>
-        <button type="button" onClick={() => setCommentsOpen(true)} className="tap-scale flex flex-col items-center gap-1" aria-label={messages.social.comments}>
-          <span className="grid h-11 w-11 place-items-center rounded-full bg-black/35 backdrop-blur-sm">
-            <CommentIcon size={19} />
-          </span>
-          <span className="type-caption font-semibold drop-shadow">{mood.commentsCount}</span>
-        </button>
-        <button type="button" onClick={() => void share()} className="tap-scale flex flex-col items-center gap-1" aria-label={messages.social.share}>
-          <span className="grid h-11 w-11 place-items-center rounded-full bg-black/35 backdrop-blur-sm">
-            <ShareIcon size={17} />
-          </span>
-        </button>
-        {user && user.id !== mood.author.id ? (
-          <button type="button" onClick={() => setReportOpen(true)} className="tap-scale flex flex-col items-center gap-1" aria-label={messages.admin.report}>
-            <span className="grid h-11 w-11 place-items-center rounded-full bg-black/35 backdrop-blur-sm">
-              <FlagIcon size={16} />
-            </span>
-          </button>
-        ) : null}
+      <div className={`absolute right-2.5 z-10 ${dock ? "bottom-[max(11.75rem,calc(11.25rem+env(safe-area-inset-bottom)))]" : "bottom-[max(8.9rem,calc(8.4rem+env(safe-area-inset-bottom)))]"}`}>
+        <MoodLikeRail
+          liked={liked}
+          likeTime={mood.likeTime}
+          loadedAt={loadedAt}
+          commentsCount={mood.commentsCount}
+          onLike={() => void like(false)}
+          onComments={() => setCommentsOpen(true)}
+          onShare={() => void share()}
+          onMore={() => setMoreOpen(true)}
+        />
       </div>
 
-      <div className="absolute inset-x-0 bottom-[max(5.5rem,calc(5.5rem+env(safe-area-inset-bottom)))] px-4 pr-20 text-white">
+      <div className={`absolute inset-x-0 z-10 px-4 pr-[4.75rem] text-white ${dock ? "bottom-[max(11.75rem,calc(11.25rem+env(safe-area-inset-bottom)))]" : "bottom-[max(8.9rem,calc(8.4rem+env(safe-area-inset-bottom)))]"}`}>
         {place ? (
-          <div className="mb-2">
-            <MoodPlaceChip place={place} onOpen={() => setPlaceOpen(true)} />
+          <div className="mb-1.5">
+            <MoodPlaceTag place={place} onOpen={() => setPlaceOpen(true)} />
           </div>
         ) : null}
         <div className="flex items-center gap-2.5">
-          <Link href={`/u/${mood.author.username}`} className="flex items-center gap-2.5">
-            <Avatar src={mood.author.avatarUrl} firstName={mood.author.firstName} lastName={mood.author.lastName} size="sm" ring="accent" />
-            <span className="type-body-sm flex items-center gap-1 font-semibold drop-shadow">
+          <Link href={`/u/${mood.author.username}`} className="flex min-w-0 items-center gap-2.5">
+            <Avatar src={mood.author.avatarUrl} firstName={mood.author.firstName} lastName={mood.author.lastName} size={34} />
+            <span className="type-body-sm flex items-center gap-1 font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
               {mood.author.firstName} {mood.author.lastName}
               {mood.author.certified ? <CertifiedMark /> : null}
             </span>
           </Link>
-          {mood.companion ? (
-            <>
-              <span className="type-body-sm opacity-80">·</span>
-              <Link href={`/u/${mood.companion.username}`} className="type-body-sm font-semibold opacity-90 drop-shadow">
-                {messages.world.moodWith.replace("{name}", mood.companion.firstName)}
-              </Link>
-            </>
+          {user && user.id !== mood.author.id ? (
+            <FollowAuthor
+              authorId={mood.author.id}
+              following={Boolean(mood.following)}
+              onChange={(following) => onChange({ following })}
+            />
           ) : null}
         </div>
-        {mood.activity ? (
-          <p className="type-body-sm mt-2 inline-flex rounded-lg bg-white/20 px-2.5 py-1 font-semibold backdrop-blur-sm">
-            {mood.activity}
-          </p>
-        ) : null}
-        {mood.body ? <p className="type-body mt-2 line-clamp-3 drop-shadow">{mood.body}</p> : null}
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="type-caption inline-flex items-center gap-1 opacity-90">
-            <ClockIcon size={12} />
-            {messages.world.availableUntil.replace("{time}", new Date(mood.expiresAt).toLocaleTimeString())}
-          </span>
-        </div>
-        {mood.event ? (
+        {mood.companion ? (
           <Link
-            href={`/events/${mood.event.id}`}
-            className="type-body-sm mt-2 inline-flex items-center gap-1.5 rounded-pill bg-white text-ink px-3 py-1.5 font-semibold shadow-sm"
+            href={`/u/${mood.companion.username}`}
+            className="type-caption mt-1 block font-semibold opacity-95 drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]"
           >
-            {messages.world.seeEventFromMood} · {mood.event.title}
+            {messages.world.moodWith.replace("{name}", `${mood.companion.firstName} ${mood.companion.lastName}`)}
           </Link>
         ) : null}
-        {user && user.id !== mood.author.id ? (
+        {mood.body ? (
+          <div className={`type-body-sm mt-1.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)] ${captionOpen ? "" : "line-clamp-2"}`}>
+            {mood.body}
+            {!captionOpen && captionLong ? (
+              <>
+                {" "}
+                <button type="button" onClick={() => setCaptionOpen(true)} className="font-semibold">
+                  {messages.world.moodMore}
+                </button>
+              </>
+            ) : null}
+          </div>
+        ) : null}
+        {mood.videoUrl ? (
           <button
             type="button"
-            onClick={() => setJoinOpen(true)}
-            className="tap-scale type-button mt-3 flex items-center gap-1.5 rounded-pill bg-accent px-4 py-2.5 text-on-primary shadow-sm transition hover:bg-accent-hover"
+            onClick={() => setMuted((v) => !v)}
+            className="type-caption mt-2 inline-flex items-center gap-1.5 font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]"
+            aria-label={muted ? "Activer le son" : "Couper le son"}
           >
-            <SparklesIcon size={15} />
-            {messages.socialInvite.joinNow}
+            <span className="grid h-5 w-5 place-items-center rounded-full bg-white/15">
+              <MusicIcon size={11} />
+            </span>
+            {messages.world.moodAudioOriginal}
           </button>
         ) : null}
         {copied ? <p className="type-caption mt-2 font-semibold">{messages.social.copied}</p> : null}
+      </div>
+
+      <div className={`absolute inset-x-0 z-10 px-4 ${dock ? "bottom-[max(8.35rem,calc(7.85rem+env(safe-area-inset-bottom)))]" : "bottom-[max(5.6rem,calc(5.1rem+env(safe-area-inset-bottom)))]"}`}>
+        <button
+          type="button"
+          onClick={() => setCommentsOpen(true)}
+          className="flex h-11 w-full items-center justify-between rounded-full bg-white/15 px-4 text-left text-white/90 backdrop-blur-md"
+        >
+          <span className="type-body-sm">{messages.social.addComment}</span>
+          <SmileIcon size={18} />
+        </button>
       </div>
 
       <LikeDialogs
@@ -332,58 +354,164 @@ function MoodSlide({
       />
       <ReportModal open={reportOpen} kind="MOOD" moodId={mood.id} onClose={() => setReportOpen(false)} />
       <MoodPlaceSheet place={place} open={placeOpen} onClose={() => setPlaceOpen(false)} />
-      <MoodComments moodId={mood.id} open={commentsOpen} onClose={() => setCommentsOpen(false)} onSent={() => onChange({ commentsCount: mood.commentsCount + 1 })} />
+      <MoodComments
+        moodId={mood.id}
+        open={commentsOpen}
+        onClose={() => setCommentsOpen(false)}
+        onSent={() => onChange({ commentsCount: mood.commentsCount + 1 })}
+      />
+      <Modal open={moreOpen} title={messages.world.moodActions} onClose={() => setMoreOpen(false)} hideActions>
+        <div className="space-y-2">
+          {canJoin ? (
+            <button
+              type="button"
+              onClick={() => {
+                setMoreOpen(false);
+                setJoinOpen(true);
+              }}
+              className="tap-scale type-body-sm flex w-full items-center gap-2 rounded-xl bg-accent-soft px-3.5 py-3 font-semibold text-accent"
+            >
+              <SparklesIcon size={15} />
+              {messages.socialInvite.joinNow}
+            </button>
+          ) : null}
+          {mood.event ? (
+            <Link
+              href={`/events/${mood.event.id}`}
+              className="type-body-sm block rounded-xl bg-surface-sunken px-3.5 py-3 font-semibold text-ink"
+            >
+              {messages.world.seeEventFromMood} · {mood.event.title}
+            </Link>
+          ) : null}
+          {canJoin ? (
+            <button
+              type="button"
+              onClick={() => {
+                setMoreOpen(false);
+                setReportOpen(true);
+              }}
+              className="type-body-sm w-full rounded-xl px-3.5 py-3 text-left font-semibold text-danger"
+            >
+              {messages.admin.report}
+            </button>
+          ) : null}
+        </div>
+      </Modal>
     </section>
   );
 }
 
-/**
- * Vidéo courte en boucle, muette par défaut (autoplay navigateur), qui ne joue
- * que lorsque son écran est réellement visible dans le flux — comme Reels/TikTok,
- * pour ne pas faire tourner plusieurs vidéos en même temps (#71 performance).
- */
-function MoodVideo({ src }: { src: string }) {
+/** Vidéo en boucle : joue dès qu’elle est visible, tap pour pause / lecture. */
+function MoodVideo({ src, muted }: { src: string; muted: boolean }) {
+  const { messages } = useI18n();
   const ref = useRef<HTMLVideoElement>(null);
-  const [muted, setMuted] = useState(true);
+  const pausedRef = useRef(false);
+  const [paused, setPaused] = useState(false);
+  const [hint, setHint] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && entry.intersectionRatio > 0.6) void el.play().catch(() => undefined);
+        const on = entry.isIntersecting && entry.intersectionRatio > 0.55;
+        if (on && !pausedRef.current) void el.play().catch(() => undefined);
         else el.pause();
       },
-      { threshold: [0, 0.6, 1] },
+      { threshold: [0, 0.55, 1] },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [src]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || paused) return;
+    void el.play().catch(() => undefined);
+  }, [muted, paused]);
+
+  function toggle() {
+    const el = ref.current;
+    if (!el) return;
+    const next = !pausedRef.current;
+    pausedRef.current = next;
+    setPaused(next);
+    if (next) el.pause();
+    else void el.play().catch(() => undefined);
+    setHint(true);
+    window.setTimeout(() => setHint(false), 700);
+  }
 
   return (
-    <button
-      type="button"
-      aria-label={muted ? "Activer le son" : "Couper le son"}
-      onClick={() => setMuted((v) => !v)}
-      className="relative block h-full w-full"
-    >
+    <div className="absolute inset-0">
       <video
         ref={ref}
         src={src}
         muted={muted}
         loop
         playsInline
-        preload="metadata"
+        autoPlay
+        preload="auto"
         className="h-full w-full object-cover"
+        onClick={toggle}
       />
-      {muted ? (
-        <span className="absolute left-3 top-[max(1rem,env(safe-area-inset-top))] grid h-8 w-8 place-items-center rounded-full bg-black/35 text-white backdrop-blur-sm">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
-            <path d="M11 5 6 9H3v6h3l5 4V5Z" />
-            <line x1="4" y1="4" x2="20" y2="20" />
-          </svg>
-        </span>
+      {hint ? (
+        <div className="pointer-events-none absolute inset-0 grid place-items-center">
+          <span className="grid h-16 w-16 place-items-center rounded-full bg-black/45 text-white">
+            {paused ? <PlayIcon size={28} /> : (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <rect x="6" y="5" width="4.5" height="14" rx="1" />
+                <rect x="13.5" y="5" width="4.5" height="14" rx="1" />
+              </svg>
+            )}
+          </span>
+        </div>
       ) : null}
+      <span className="sr-only">{paused ? messages.world.moodPlay : messages.world.moodPause}</span>
+    </div>
+  );
+}
+
+function FollowAuthor({
+  authorId,
+  following,
+  onChange,
+}: {
+  authorId: string;
+  following: boolean;
+  onChange: (following: boolean) => void;
+}) {
+  const { messages } = useI18n();
+  const [busy, setBusy] = useState(false);
+
+  async function toggle() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (following) {
+        await api(`/users/${authorId}/follow`, { method: "DELETE" });
+        onChange(false);
+      } else {
+        await api(`/users/${authorId}/follow`, { method: "POST" });
+        onChange(true);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => void toggle()}
+      disabled={busy}
+      className={`tap-scale shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold leading-none shadow-[0_1px_6px_rgba(0,0,0,0.28)] ${
+        following
+          ? "border border-white/40 bg-white/10 text-white"
+          : "bg-accent text-on-primary"
+      }`}
+    >
+      {following ? messages.social.following : messages.social.follow}
     </button>
   );
 }
@@ -400,45 +528,101 @@ function MoodComments({
   onSent: () => void;
 }) {
   const { messages } = useI18n();
+  const portal = useSheetPortal();
   const [comments, setComments] = useState<CommentItem[] | null>(null);
   const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
+    setComments(null);
     api<{ items: CommentItem[] }>(`/moods/${moodId}/comments`)
       .then((d) => setComments(d.items))
       .catch(() => setComments([]));
+    const t = window.setTimeout(() => inputRef.current?.focus(), 180);
+    return () => window.clearTimeout(t);
   }, [open, moodId]);
 
   async function send() {
-    if (!body.trim()) return;
-    const c = await api<CommentItem>(`/moods/${moodId}/comments`, { method: "POST", body: JSON.stringify({ body }) });
-    setComments((cur) => [...(cur ?? []), c]);
-    setBody("");
-    onSent();
+    if (!body.trim() || sending) return;
+    setSending(true);
+    try {
+      const c = await api<CommentItem>(`/moods/${moodId}/comments`, { method: "POST", body: JSON.stringify({ body }) });
+      setComments((cur) => [...(cur ?? []), c]);
+      setBody("");
+      onSent();
+    } finally {
+      setSending(false);
+    }
   }
 
-  return (
-    <Modal open={open} title={messages.social.comments} onClose={onClose}>
-      <div className="max-h-[50vh] space-y-2 overflow-y-auto">
-        {comments === null ? (
-          <p className="type-body-sm text-muted">{messages.common.loading}</p>
-        ) : comments.length === 0 ? (
-          <p className="type-body-sm text-muted">{messages.reviews.empty}</p>
-        ) : (
-          comments.map((c) => (
-            <p key={c.id} className="type-body-sm rounded-lg bg-surface-sunken px-3.5 py-2.5">
-              <span className="font-semibold text-accent">{c.author.firstName}</span> {c.body}
-            </p>
-          ))
-        )}
+  if (!open || !portal) return null;
+
+  return createPortal(
+    <div
+      className={sheetOverlayClass(portal)}
+      role="dialog"
+      aria-modal
+      aria-label={messages.social.comments}
+      onClick={onClose}
+    >
+      <div
+        data-testid="mood-comments-sheet"
+        className="sheet-panel flex h-[min(64dvh,488px)] w-full max-w-md flex-col rounded-t-[28px] bg-surface px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 shadow-elevated"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border" aria-hidden />
+        <div className="flex items-center justify-between pb-2">
+          <h2 className="type-h3 text-ink">
+            {messages.social.comments}
+            {comments ? ` · ${comments.length}` : ""}
+          </h2>
+          <button type="button" onClick={onClose} className="type-caption font-semibold text-muted">
+            {messages.common.close}
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto">
+          {comments === null ? (
+            <p className="type-body-sm text-muted">{messages.common.loading}</p>
+          ) : comments.length === 0 ? (
+            <p className="type-body-sm py-6 text-center text-muted">{messages.world.moodCommentsEmpty}</p>
+          ) : (
+            comments.map((c) => (
+              <div key={c.id} className="flex gap-2.5 py-1.5">
+                <Avatar src={c.author.avatarUrl} firstName={c.author.firstName} lastName={c.author.lastName} size={32} />
+                <p className="type-body-sm min-w-0 flex-1 text-ink">
+                  <span className="font-semibold">{c.author.firstName}</span> {c.body}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+        <form
+          className="mt-3 flex items-center gap-2 border-t border-divider pt-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void send();
+          }}
+        >
+          <input
+            ref={inputRef}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder={messages.social.addComment}
+            className="type-body-sm h-11 flex-1 rounded-full bg-surface-sunken px-4 text-ink outline-none"
+          />
+          <button
+            type="submit"
+            disabled={!body.trim() || sending}
+            aria-label={messages.social.addComment}
+            className="tap-scale grid h-11 w-11 place-items-center rounded-full bg-accent text-on-primary disabled:opacity-40"
+          >
+            <SendIcon size={16} />
+          </button>
+        </form>
       </div>
-      <div className="mt-3 flex gap-2">
-        <TextInput value={body} onChange={(e) => setBody(e.target.value)} placeholder={messages.social.addComment} className="flex-1" />
-        <button type="button" onClick={() => void send()} className="tap-scale type-button rounded-pill bg-accent px-5 text-on-primary transition hover:bg-accent-hover">
-          OK
-        </button>
-      </div>
-    </Modal>
+    </div>,
+    portal,
   );
 }

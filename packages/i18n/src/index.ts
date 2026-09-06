@@ -242,6 +242,9 @@ export type Messages = {
     historyTitle: string;
     activeNow: string;
     ofDuration: string;
+    perHour: string;
+    perDay: string;
+    perMonth: string;
   };
   socialInvite: {
     modalTitle: string;
@@ -382,6 +385,13 @@ export type Messages = {
     peopleLinked: string;
     bookLater: string;
     moodCreate: string;
+    moodCreateShort: string;
+    moodMore: string;
+    moodActions: string;
+    moodAudioOriginal: string;
+    moodCommentsEmpty: string;
+    moodPlay: string;
+    moodPause: string;
     moodEmpty: string;
     moodEmptyBody: string;
     moodHours: string;
@@ -969,6 +979,9 @@ export const fr: Messages = {
     historyTitle: "Périodes reçues",
     activeNow: "en cours",
     ofDuration: "{duration} de likes",
+    perHour: "/H",
+    perDay: "/J",
+    perMonth: "/M",
   },
   socialInvite: {
     modalTitle: "Proposer une sortie",
@@ -1109,6 +1122,13 @@ export const fr: Messages = {
     peopleLinked: "Personnes liées",
     bookLater: "Réserver et payer arrive en Phase 4. Ici tu peux t’intéresser, mettre un coup de cœur, ou inviter sur une sortie gratuite.",
     moodCreate: "Créer un mood",
+    moodCreateShort: "Créer",
+    moodMore: "Plus",
+    moodActions: "Autres actions",
+    moodAudioOriginal: "Audio • Original",
+    moodCommentsEmpty: "Sois le premier à commenter.",
+    moodPlay: "Lire",
+    moodPause: "Mettre en pause",
     moodEmpty: "Aucun mood actif",
     moodEmptyBody: "Un mood dure 24 h max. Il montre ce qui se passe maintenant, pas un reel sans fin.",
     moodHours: "Durée (heures)",
@@ -1696,6 +1716,9 @@ export const en: Messages = {
     historyTitle: "Received periods",
     activeNow: "active",
     ofDuration: "{duration} of likes",
+    perHour: "/H",
+    perDay: "/D",
+    perMonth: "/M",
   },
   socialInvite: {
     modalTitle: "Propose an outing",
@@ -1836,6 +1859,13 @@ export const en: Messages = {
     peopleLinked: "People",
     bookLater: "Booking and payment ship in Phase 4. You can mark interest, favorite, or invite to a free meetup.",
     moodCreate: "Create a mood",
+    moodCreateShort: "Create",
+    moodMore: "More",
+    moodActions: "More actions",
+    moodAudioOriginal: "Audio • Original",
+    moodCommentsEmpty: "Be the first to comment.",
+    moodPlay: "Play",
+    moodPause: "Pause",
     moodEmpty: "No active mood",
     moodEmptyBody: "A mood lasts 24h max. It shows what is happening now, not an endless reel.",
     moodHours: "Duration (hours)",

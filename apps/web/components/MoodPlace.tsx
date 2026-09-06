@@ -1,7 +1,7 @@
 "use client";
 
 import { mapsDirectionsUrl, moodHasPlace, moodPlaceLabel, osmBrowseUrl } from "@tiptop/domain";
-import { DirectionsIcon, PinIcon } from "./Icons";
+import { ChevronRightIcon, DirectionsIcon, PinIcon } from "./Icons";
 import { MapThumb } from "./MapThumb";
 import { Modal, SecondaryButton } from "./ui";
 import { useI18n } from "@/lib/i18n";
@@ -21,7 +21,34 @@ export function moodPlaceFromItem(mood: MoodPlaceFields): MoodPlaceFields | null
   return mood;
 }
 
-/** Pastille lieu façon TikTok — n'apparaît que si l'auteur a choisi un lieu. */
+/**
+ * Tag lieu façon TikTok : pin + nom, au-dessus du nom / légende.
+ * N’apparaît que si l’auteur a renseigné une adresse.
+ */
+export function MoodPlaceTag({
+  place,
+  onOpen,
+}: {
+  place: MoodPlaceFields;
+  onOpen: () => void;
+}) {
+  const label = place.placeLabel || moodPlaceLabel(place);
+  if (!label) return null;
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="tap-scale inline-flex max-w-full items-center gap-1 text-white"
+      aria-label={label}
+    >
+      <PinIcon size={14} className="shrink-0 drop-shadow" />
+      <span className="truncate text-[13px] font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">{label}</span>
+      <ChevronRightIcon size={12} className="shrink-0 opacity-90 drop-shadow" />
+    </button>
+  );
+}
+
+/** Pastille lieu — surfaces claires (fiche mood). N'apparaît que si l'auteur a choisi un lieu. */
 export function MoodPlaceChip({
   place,
   onOpen,
@@ -72,7 +99,7 @@ export function MoodPlaceSheet({
   }
 
   return (
-    <Modal open={open} title={messages.world.moodPlaceSheetTitle} onClose={onClose}>
+    <Modal open={open} title={messages.world.moodPlaceSheetTitle} onClose={onClose} hideActions>
       <div className="space-y-3">
         <p className="type-h4 text-ink">{label}</p>
         {place.address ? <p className="type-body-sm text-muted">{place.address}</p> : null}
