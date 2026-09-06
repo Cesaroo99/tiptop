@@ -971,8 +971,8 @@ async function enrichLivingWorld(
   ] as Array<[string, string, "INTERESTED" | "RESERVED"]>) {
     await db.eventParticipant.upsert({
       where: { eventId_userId: { eventId, userId } },
-      update: { status },
-      create: { eventId, userId, status },
+      update: { status, showOnProfile: status === "RESERVED" },
+      create: { eventId, userId, status, showOnProfile: status === "RESERVED" },
     });
   }
 

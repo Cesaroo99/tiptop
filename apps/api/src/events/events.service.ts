@@ -33,6 +33,7 @@ export type CreateEventInput = {
   minAge?: number;
   requiresReservation?: boolean;
   paymentRule?: string;
+  wanted?: boolean;
 };
 
 @Injectable()
@@ -45,6 +46,7 @@ export class EventsService {
   async create(hostId: string, input: CreateEventInput) {
     const title = input.title.trim();
     if (!title) throw new BadRequestException({ code: "EVENT_TITLE_REQUIRED" });
+    const wanted = Boolean(input.wanted);
     const startsAt = new Date(input.startsAt);
     if (Number.isNaN(startsAt.getTime()) || startsAt.getTime() <= Date.now()) {
       throw new BadRequestException({ code: "EVENT_DATE_INVALID" });
@@ -79,9 +81,11 @@ export class EventsService {
         minAge: input.minAge && input.minAge > 0 ? input.minAge : null,
         requiresReservation,
         paymentRule,
+        wanted,
         participants: { create: { userId: hostId, status: "HOST" } },
       },
     });
+    if (wanted) return this.get(hostId, event.id);
     const description = (input.description ?? "").trim();
     await this.prisma.post.create({
       data: {
@@ -101,13 +105,15 @@ export class EventsService {
     const where =
       tab === "mine"
         ? {
+            wanted: false,
             OR: [
               { hostId: viewerId },
               { participants: { some: { userId: viewerId, status: { not: "CANCELLED" } } } },
             ],
           }
-        : {
+          : {
             status: "PUBLISHED" as const,
+            wanted: false,
             startsAt: { gt: now },
             ...(city ? { city } : {}),
           };
@@ -406,6 +412,7 @@ export class EventsService {
       minAge: number | null;
       requiresReservation: boolean;
       paymentRule?: string;
+      wanted?: boolean;
       status: string;
       createdAt: Date;
       host: {
@@ -462,6 +469,7 @@ export class EventsService {
       requiresReservation: e.requiresReservation,
       paymentRule: normalizePaymentRule(e.paymentRule),
       status: e.status,
+      wanted: Boolean(e.wanted),
       phase,
       createdAt: e.createdAt.toISOString(),
       hearts: e._count.hearts,
@@ -470,6 +478,7 @@ export class EventsService {
       viewerStatus: mine?.status ?? null,
       isHost,
       canBook:
+        !Boolean(e.wanted) &&
         !isHost &&
         (e.requiresReservation || e.priceXaf > 0) &&
         !seated &&
@@ -499,5 +508,18 @@ export class EventsService {
           status: p.status,
         })),
     };
+  }
+
+  async setShowOnProfile(userId: string, eventId: string, show: boolean) {
+    const row = await this.prisma.eventParticipant.findUnique({
+      where: { eventId_userId: { eventId, userId } },
+    });
+    if (!row) throw new NotFoundException({ code: "NOT_IN_EVENT" });
+    if (row.status === "HOST") return { showOnProfile: true };
+    await this.prisma.eventParticipant.update({
+      where: { id: row.id },
+      data: { showOnProfile: show },
+    });
+    return { showOnProfile: show };
   }
 }

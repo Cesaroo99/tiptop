@@ -45,6 +45,7 @@ export class SearchService {
         : await this.prisma.event.findMany({
             where: {
               status: "PUBLISHED",
+              wanted: false,
               OR: [
                 { title: { contains: query, mode: Prisma.QueryMode.insensitive } },
                 { description: { contains: query, mode: Prisma.QueryMode.insensitive } },
