@@ -44,15 +44,21 @@ export class FeedService {
         _count: { select: { comments: true } },
       },
     });
-    const [items, eventList, moodList] = await Promise.all([
-      this.posts.decorate(viewerId, rows),
-      this.events.list(viewerId, "all", viewer?.profile?.city ?? undefined),
-      this.moods.list(viewerId, "STATUS"),
-    ]);
-    return {
-      items,
-      events: eventList.items.slice(0, 8),
-      moods: moodList.items.slice(0, 12),
-    };
+    const items = await this.posts.decorate(viewerId, rows);
+    let events: Awaited<ReturnType<EventsService["list"]>>["items"] = [];
+    let moods: Awaited<ReturnType<MoodsService["list"]>>["items"] = [];
+    try {
+      const eventList = await this.events.list(viewerId, "all", viewer?.profile?.city ?? undefined);
+      events = eventList.items.slice(0, 8);
+    } catch (err) {
+      console.error("[feed] events.list", err);
+    }
+    try {
+      const moodList = await this.moods.list(viewerId, "STATUS");
+      moods = moodList.items.slice(0, 12);
+    } catch (err) {
+      console.error("[feed] moods.list", err);
+    }
+    return { items, events, moods };
   }
 }

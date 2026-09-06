@@ -6,7 +6,7 @@ import { PostCard } from "@/components/PostCard";
 import { Avatar } from "@/components/Avatar";
 import { PlusIcon } from "@/components/Icons";
 import { CardSkeleton, EmptyState, ErrorBanner } from "@/components/ui";
-import { api, type FeedItem, type MoodItem } from "@/lib/api";
+import { api, ApiError, type FeedItem, type MoodItem } from "@/lib/api";
 import { applySoleLike, releaseViewerLike, replaceFeedItem } from "@/lib/like-feed";
 import { useI18n } from "@/lib/i18n";
 import { useLikePlacement } from "@/lib/like-placement";
@@ -33,8 +33,14 @@ function HomeFeed() {
       const data = await api<{ items: FeedItem[]; moods: MoodItem[] }>("/feed");
       setItems(data.items);
       setMoods(data.moods ?? []);
-    } catch {
-      setError(messages.auth.networkError);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        setError(messages.auth.connect);
+      } else if (err instanceof ApiError && err.status >= 500) {
+        setError(messages.common.error);
+      } else {
+        setError(messages.auth.networkError);
+      }
       setItems([]);
     }
   }

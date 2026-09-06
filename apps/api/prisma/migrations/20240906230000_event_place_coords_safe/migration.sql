@@ -1,0 +1,4 @@
+-- Filet si 20240906220000 a été enregistrée sans créer les colonnes.
+ALTER TABLE "Event" ADD COLUMN IF NOT EXISTS "address" TEXT;
+ALTER TABLE "Event" ADD COLUMN IF NOT EXISTS "latitude" DOUBLE PRECISION;
+ALTER TABLE "Event" ADD COLUMN IF NOT EXISTS "longitude" DOUBLE PRECISION;

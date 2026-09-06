@@ -171,7 +171,16 @@ async function boot() {
     resolve(root, "apps/web/.next/standalone/server.js"),
   ]);
 
-  await migrateWithRetry(prismaBin);
+  try {
+    await migrateWithRetry(prismaBin);
+  } catch (err) {
+    console.error("[render] migrate échoué, on continue avec ensure-schema", err);
+  }
+  try {
+    await runOnce(process.execPath, [resolve(root, "scripts/ensure-schema.mjs")]);
+  } catch (err) {
+    console.error("[render] ensure-schema", err);
+  }
 
   run(tsxBin, ["src/main.ts"], { API_PORT: String(apiPort), PORT: String(apiPort) }, apiDir);
   await waitFor(`http://127.0.0.1:${apiPort}/api/health`);
