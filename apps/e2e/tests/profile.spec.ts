@@ -18,8 +18,8 @@ test.describe("Profil — visiteur et soi", () => {
   });
 
   test("inconnue : demander amie, pas de message", async ({ page }) => {
-    await page.goto("/u/nadege.atangana");
-    await expect(page.getByRole("heading", { name: "Nadège Atangana" })).toBeVisible();
+    await page.goto("/u/william.ekani");
+    await expect(page.getByRole("heading", { name: "William Ekani" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Ajouter comme amie" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Message" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: /Poser mon like|Mon like est ici/ })).toBeVisible();

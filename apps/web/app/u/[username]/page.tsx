@@ -271,6 +271,7 @@ function ProfileView() {
 
         {profile.isSelf ? (
           <div className="mt-4 space-y-3">
+            <p className="type-caption font-semibold text-muted">{messages.account.status}</p>
             <PresencePicker value={presence} busy={statusBusy} onChange={(k) => void setMyPresence(k)} />
             <p className="type-caption mx-auto max-w-xs leading-5 text-muted">{messages.account.statusHint}</p>
             <Link href="/account" className="type-body-sm inline-block font-semibold text-accent">
