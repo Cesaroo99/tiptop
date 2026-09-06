@@ -17,6 +17,7 @@ import {
   FlagIcon,
   GlobeIcon,
   HeartIcon,
+  InterestedIcon,
   LinkIcon,
   MoreIcon,
   ShareIcon,
@@ -24,7 +25,6 @@ import {
   TrashIcon,
 } from "./Icons";
 import { BookEventSheet } from "./BookEventSheet";
-import { InterestedBadge } from "./InterestedBadge";
 import { LikeDialogs, likeErrorKind } from "./LikeDialogs";
 import { MapThumb } from "./MapThumb";
 import { SeatsLeftBadge, seatsLeftLabel, seatsRemainingOf } from "./SeatsLeftBadge";
@@ -37,17 +37,19 @@ function ActionCircle({
   label,
   onClick,
   active,
+  disabled,
   children,
 }: {
   href?: string;
   label: string;
   onClick?: () => void;
   active?: boolean;
+  disabled?: boolean;
   children: React.ReactNode;
 }) {
   const cls = `tap-scale grid h-10 w-10 shrink-0 place-items-center rounded-full transition hover:brightness-95 ${
     active ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
-  }`;
+  } ${disabled ? "opacity-40" : ""}`;
   if (href) {
     return (
       <Link href={href} aria-label={label} className={cls}>
@@ -56,7 +58,7 @@ function ActionCircle({
     );
   }
   return (
-    <button type="button" aria-label={label} onClick={onClick} className={cls}>
+    <button type="button" aria-label={label} disabled={disabled} onClick={onClick} className={cls}>
       {children}
     </button>
   );
@@ -298,12 +300,7 @@ export function PostCard({
               )}
               {isEvent && event ? (
                 <>
-                  <div className="absolute left-2 top-2 flex flex-col items-start gap-1.5">
-                    <InterestedBadge
-                      variant="stamp"
-                      active={interested}
-                      count={event.interestedCount}
-                    />
+                  <div className="absolute left-2 top-2">
                     <SeatsLeftBadge remaining={remaining} />
                   </div>
                   <Link
@@ -318,53 +315,50 @@ export function PostCard({
             </div>
           ) : null}
           <p className="type-caption mt-3 text-muted">{stats.join(" . ")}</p>
-          <div className="mt-3 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <ActionCircle
-                label={liked ? messages.social.likeHere : messages.social.likePlace}
-                active={liked}
-                onClick={() => void like(false)}
-              >
-                <HeartIcon size={17} filled={liked} />
-              </ActionCircle>
-              <ActionCircle href={`/posts/${post.id}`} label={messages.social.comments}>
-                <CommentIcon size={17} />
-              </ActionCircle>
-              {isEvent && event && !mine ? (
-                <>
-                  <InterestedBadge
-                    active={interested}
-                    count={event.interestedCount}
-                    onClick={() => void toggleInterested()}
-                  />
-                  <button
-                    type="button"
-                    aria-label={reserved ? messages.booking.reserveOthers : messages.booking.reserve}
-                    disabled={eventFull}
-                    onClick={() => setBookOpen(true)}
-                    className="tap-scale type-caption inline-flex h-10 items-center gap-1.5 rounded-pill bg-accent px-3.5 font-semibold text-on-primary shadow-sm disabled:opacity-40"
-                  >
-                    <CalendarPlusIcon size={15} />
-                    {reserved ? messages.booking.reserveOthers : messages.booking.reserve}
-                  </button>
-                  {eventFull ? (
-                    <span className="type-caption rounded-pill bg-danger-soft px-2.5 py-2 font-bold text-danger">
-                      {messages.world.seatsFull}
-                    </span>
-                  ) : null}
-                </>
-              ) : null}
-            </div>
+          <div className="mt-3 flex items-center gap-2">
+            <ActionCircle
+              label={liked ? messages.social.likeHere : messages.social.likePlace}
+              active={liked}
+              onClick={() => void like(false)}
+            >
+              <HeartIcon size={17} filled={liked} />
+            </ActionCircle>
+            <ActionCircle href={`/posts/${post.id}`} label={messages.social.comments}>
+              <CommentIcon size={17} />
+            </ActionCircle>
+            {isEvent && event ? (
+              <>
+                <ActionCircle
+                  label={reserved ? messages.booking.reserveOthers : messages.booking.reserve}
+                  disabled={eventFull}
+                  onClick={() => setBookOpen(true)}
+                >
+                  <CalendarPlusIcon size={17} />
+                </ActionCircle>
+                {eventFull ? (
+                  <span className="type-caption rounded-pill bg-danger-soft px-2.5 py-2 font-bold text-danger">
+                    {messages.world.seatsFull}
+                  </span>
+                ) : null}
+                <ActionCircle
+                  label={interested ? messages.world.notInterested : messages.world.interested}
+                  active={interested}
+                  onClick={() => void toggleInterested()}
+                >
+                  <InterestedIcon size={17} />
+                </ActionCircle>
+              </>
+            ) : null}
             {isEvent && (countdown || seriesLabel) ? (
-              <div className="flex flex-wrap items-center justify-end gap-1.5">
+              <span className="ml-auto flex min-w-0 flex-col items-end gap-0.5">
                 {seriesLabel ? <span className="type-caption font-semibold text-accent">{seriesLabel}</span> : null}
                 {countdown ? (
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex min-w-0 items-center gap-1.5">
                     <span className="type-caption whitespace-nowrap text-muted">{messages.world.eventInLabel}</span>
                     <span className="type-caption shrink-0 rounded-full bg-yellow px-2.5 py-1 font-bold text-ink">{countdown}</span>
                   </span>
                 ) : null}
-              </div>
+              </span>
             ) : null}
           </div>
           {copied ? <p className="type-caption mt-2 text-accent">{messages.social.copied}</p> : null}

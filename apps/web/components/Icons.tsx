@@ -397,14 +397,12 @@ export function SmileIcon({ size = 16, className }: IconProps) {
   );
 }
 
-/** Intéressé — point d’exclamation dans des cercles concentriques (maquette accueil). */
+/** Intéressé — un « i », lisible dans le petit bouton rond. */
 export function InterestedIcon({ size = 17, className }: IconProps) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
-      <circle cx="12" cy="12" r="8.6" />
-      <circle cx="12" cy="12" r="5.2" />
-      <path d="M12 8.4v3.8" />
-      <circle cx="12" cy="15.3" r="0.7" fill="currentColor" stroke="none" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <circle cx="12" cy="6.4" r="1.55" fill="currentColor" />
+      <path d="M12 10.2v8.2" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" />
     </svg>
   );
 }

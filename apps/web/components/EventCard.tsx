@@ -9,9 +9,8 @@ import { useMoney } from "@/lib/money";
 import { recurrenceCaption } from "@/lib/event-series";
 import { eventCountdown, formatEventWhen, formatRelative } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
-import { FlagIcon, HeartIcon, LinkIcon, MoreIcon, PinIcon, ShareIcon } from "./Icons";
+import { FlagIcon, HeartIcon, InterestedIcon, LinkIcon, MoreIcon, PinIcon, ShareIcon } from "./Icons";
 import { BookEventSheet } from "./BookEventSheet";
-import { InterestedBadge } from "./InterestedBadge";
 import { MapThumb } from "./MapThumb";
 import { SeatsLeftBadge, seatsLeftLabel, seatsRemainingOf } from "./SeatsLeftBadge";
 import { OptionsSheet } from "./OptionsSheet";
@@ -149,7 +148,6 @@ export function EventCard({
                 {seriesLabel}
               </span>
             ) : null}
-            <InterestedBadge variant="stamp" active={event.viewerInterested} count={event.interestedCount} />
           </div>
           <div className="flex items-center gap-1.5">
             <SeatsLeftBadge remaining={remaining} />
@@ -224,14 +222,16 @@ export function EventCard({
           <IconButton label={messages.social.share} onClick={() => void share()}>
             <ShareIcon size={15} />
           </IconButton>
+          {showGuestCtas ? (
+            <IconButton
+              label={event.viewerInterested ? messages.world.notInterested : messages.world.interested}
+              tone={event.viewerInterested ? "accent" : "neutral"}
+              onClick={() => void interested()}
+            >
+              <InterestedIcon size={17} />
+            </IconButton>
+          ) : null}
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
-            {showGuestCtas ? (
-              <InterestedBadge
-                active={event.viewerInterested}
-                count={event.interestedCount}
-                onClick={() => void interested()}
-              />
-            ) : null}
             {showGuestCtas ? (
               <button
                 type="button"

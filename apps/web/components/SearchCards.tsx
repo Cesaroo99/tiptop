@@ -6,9 +6,7 @@ import { api, ApiError, type SearchEvent, type SearchPerson } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { formatEventWhen } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
-import { CalendarPlusIcon, HeartIcon, LinkIcon, MoreIcon } from "./Icons";
-import { BookEventSheet } from "./BookEventSheet";
-import { InterestedBadge } from "./InterestedBadge";
+import { HeartIcon, LinkIcon, MoreIcon } from "./Icons";
 import { OptionsSheet } from "./OptionsSheet";
 import { IconButton, Modal } from "./ui";
 import { recurrenceCaption } from "@/lib/event-series";
@@ -76,9 +74,6 @@ export function SearchEventCard({
 }) {
   const { locale, messages } = useI18n();
   const [transfer, setTransfer] = useState<string | null>(null);
-  const [bookOpen, setBookOpen] = useState(false);
-  const [interested, setInterested] = useState(Boolean(event.viewerInterested));
-  const [interestedCount, setInterestedCount] = useState(event.interestedCount ?? 0);
   const place = [event.city, event.zone].filter(Boolean).join(", ");
   const overlayTitle = event.title.includes(event.city) ? event.title : `${event.title}${place ? ` — ${place}` : ""}`;
   const seriesLabel = recurrenceCaption(event.recurrence, messages.world);
@@ -104,13 +99,6 @@ export function SearchEventCard({
     }
   }
 
-  async function toggleInterested() {
-    const res = await api<{ interested: boolean }>(`/events/${event.id}/interested`, { method: "POST" });
-    setInterested(res.interested);
-    setInterestedCount((n) => Math.max(0, n + (res.interested ? 1 : -1)));
-    onChanged?.({ ...event, viewerInterested: res.interested, interestedCount: Math.max(0, interestedCount + (res.interested ? 1 : -1)) });
-  }
-
   return (
     <article className="overflow-hidden rounded-card bg-surface shadow-card">
       <div className="relative">
@@ -124,18 +112,17 @@ export function SearchEventCard({
             </div>
           )}
         </Link>
-        <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
-          <InterestedBadge variant="stamp" active={interested} count={interestedCount} />
-          {seriesLabel ? (
-            <span className="type-caption rounded-pill bg-accent px-2.5 py-1 font-bold text-on-primary shadow-sm">
-              {seriesLabel}
-            </span>
-          ) : null}
+        <div className="absolute left-3 top-3 flex flex-wrap items-center gap-1.5">
           <span className="type-caption rounded-pill bg-white/90 px-3 py-1.5 font-bold text-ink shadow-sm backdrop-blur-sm">
             {event.taken === 1
               ? messages.world.participantsCountOne
               : messages.world.participantsCount.replace("{n}", String(event.taken))}
           </span>
+          {seriesLabel ? (
+            <span className="type-caption rounded-pill bg-accent px-2.5 py-1 font-bold text-on-primary shadow-sm">
+              {seriesLabel}
+            </span>
+          ) : null}
         </div>
         <button
           type="button"
@@ -161,18 +148,6 @@ export function SearchEventCard({
           </div>
         </Link>
       </div>
-      <div className="flex items-center gap-2 px-3 py-3">
-        <InterestedBadge active={interested} count={interestedCount} onClick={() => void toggleInterested()} />
-        <button
-          type="button"
-          aria-label={event.viewerReserved ? messages.booking.reserveOthers : messages.booking.reserve}
-          onClick={() => setBookOpen(true)}
-          className="tap-scale type-caption inline-flex h-10 items-center gap-1.5 rounded-pill bg-accent px-3.5 font-semibold text-on-primary shadow-sm"
-        >
-          <CalendarPlusIcon size={15} />
-          {event.viewerReserved ? messages.booking.reserveOthers : messages.booking.reserve}
-        </button>
-      </div>
       <Modal
         open={Boolean(transfer)}
         title={messages.world.heartTransferTitle}
@@ -182,21 +157,6 @@ export function SearchEventCard({
       >
         {messages.world.heartTransferBody.replace("{title}", transfer ?? "")}
       </Modal>
-      <BookEventSheet
-        open={bookOpen}
-        onClose={() => setBookOpen(false)}
-        preview={{
-          eventId: event.id,
-          title: event.title,
-          body: event.title,
-          startsAt: event.startsAt,
-          author: {
-            firstName: event.host.firstName,
-            lastName: event.host.lastName,
-            avatarUrl: event.host.avatarUrl,
-          },
-        }}
-      />
     </article>
   );
 }

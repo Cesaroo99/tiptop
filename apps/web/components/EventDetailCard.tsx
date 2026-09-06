@@ -11,7 +11,6 @@ import { recurrenceCaption } from "@/lib/event-series";
 import { formatCompactCount, formatCountdownLabel, formatEventWhen, formatFcfa, formatRelative, splitPostLead } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
 import { BookEventSheet } from "./BookEventSheet";
-import { InterestedBadge } from "./InterestedBadge";
 import { CommentThread } from "./CommentThread";
 import {
   CalendarIcon,
@@ -20,6 +19,7 @@ import {
   FlagIcon,
   GlobeIcon,
   HeartIcon,
+  InterestedIcon,
   LinkIcon,
   MoreIcon,
   PlusIcon,
@@ -203,14 +203,11 @@ export function EventDetailCard({
             {event.title}
           </div>
         )}
-        <div className="absolute left-2 top-2 flex flex-col items-start gap-1.5">
-          <InterestedBadge variant="stamp" active={event.viewerInterested} count={event.interestedCount} />
-          {seriesLabel ? (
-            <span className="type-caption rounded-pill bg-accent px-2.5 py-1 font-bold text-on-primary shadow-sm">
-              {seriesLabel}
-            </span>
-          ) : null}
-        </div>
+        {seriesLabel ? (
+          <span className="type-caption absolute left-2 top-2 rounded-pill bg-accent px-2.5 py-1 font-bold text-on-primary shadow-sm">
+            {seriesLabel}
+          </span>
+        ) : null}
         <span className="type-caption absolute right-2 top-2 rounded-lg bg-accent px-2.5 py-1 font-bold text-white shadow-sm">
           {priceLabel}
         </span>
@@ -262,7 +259,7 @@ export function EventDetailCard({
         </p>
       ) : null}
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="mt-3 flex items-center gap-2">
         {hostView ? (
           <Link
             href={`/events/${event.id}/scan`}
@@ -292,11 +289,17 @@ export function EventDetailCard({
           <CommentIcon size={17} />
         </button>
         {showGuestCtas ? (
-          <InterestedBadge
-            active={event.viewerInterested}
-            count={event.interestedCount}
+          <button
+            type="button"
+            aria-label={event.viewerInterested ? messages.world.notInterested : messages.world.interested}
+            aria-pressed={event.viewerInterested}
             onClick={() => void interested()}
-          />
+            className={`tap-scale grid h-10 w-10 shrink-0 place-items-center rounded-full transition hover:brightness-95 ${
+              event.viewerInterested ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
+            }`}
+          >
+            <InterestedIcon size={17} />
+          </button>
         ) : null}
         {showGuestCtas ? (
           <button

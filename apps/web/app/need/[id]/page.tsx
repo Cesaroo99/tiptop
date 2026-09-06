@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
-import { InterestedBadge } from "@/components/InterestedBadge";
 import { MapThumb } from "@/components/MapThumb";
 import { CardSkeleton, ErrorBanner, PrimaryButton, SecondaryButton } from "@/components/ui";
 import { api, type OfferItem } from "@/lib/api";
@@ -52,16 +51,9 @@ function OfferDetail() {
   return (
     <div className="space-y-4 px-4 py-4">
       {offer.imageUrl ? (
-        <div className="relative">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={offer.imageUrl} alt="" className="h-48 w-full rounded-card object-cover" />
-          <span className="absolute left-2 top-2">
-            <InterestedBadge variant="stamp" active={false} />
-          </span>
-        </div>
-      ) : (
-        <InterestedBadge variant="stamp" active={false} />
-      )}
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={offer.imageUrl} alt="" className="h-48 w-full rounded-card object-cover" />
+      ) : null}
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="type-caption text-muted">
@@ -106,29 +98,17 @@ function OfferDetail() {
       {offer.isMine ? (
         <SecondaryButton onClick={() => void hide()}>{messages.need.hide}</SecondaryButton>
       ) : (
-        <div className="flex flex-wrap items-center gap-2">
-          <InterestedBadge
-            active={false}
-            onClick={async () => {
-              const conv = await api<{ id: string }>("/conversations/direct", {
-                method: "POST",
-                body: JSON.stringify({ userId: offer.seller.id }),
-              });
-              router.push(`/messages/${conv.id}`);
-            }}
-          />
-          <PrimaryButton
-            onClick={async () => {
-              const conv = await api<{ id: string }>("/conversations/direct", {
-                method: "POST",
-                body: JSON.stringify({ userId: offer.seller.id }),
-              });
-              router.push(`/messages/${conv.id}`);
-            }}
-          >
-            {messages.world.message}
-          </PrimaryButton>
-        </div>
+        <PrimaryButton
+          onClick={async () => {
+            const conv = await api<{ id: string }>("/conversations/direct", {
+              method: "POST",
+              body: JSON.stringify({ userId: offer.seller.id }),
+            });
+            router.push(`/messages/${conv.id}`);
+          }}
+        >
+          {messages.world.message}
+        </PrimaryButton>
       )}
     </div>
   );
