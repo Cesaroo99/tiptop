@@ -594,28 +594,19 @@ function EventRail({
       </div>
       {items.map((e) => (
         <article key={e.id}>
-          <Link href={`/events/${e.id}`} className="tap-scale block overflow-hidden rounded-card bg-surface shadow-card">
-            <div className="relative h-32 bg-gradient-to-br from-accent/15 to-yellow/15">
+          <Link href={`/events/${e.id}`} className="tap-scale flex gap-3 overflow-hidden rounded-card bg-surface p-2.5 shadow-card">
+            <span className="relative h-[4.75rem] w-[4.75rem] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-accent/15 to-yellow/15">
               {e.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={e.imageUrl} alt="" className="h-full w-full object-cover" />
               ) : (
                 <span className="grid h-full place-items-center text-accent">
-                  <SparklesIcon size={28} />
+                  <SparklesIcon size={22} />
                 </span>
               )}
-              {e.wanted ? (
-                <span className="type-caption absolute left-2.5 top-2.5 rounded-full bg-yellow px-2 py-0.5 font-semibold text-ink">
-                  {isSelf ? messages.world.myWantedEvent : messages.world.theirWantedEvent.replace("{name}", ownerFirstName)}
-                </span>
-              ) : (
-                <span className="type-caption absolute left-2.5 top-2.5 rounded-full bg-surface px-2 py-0.5 font-semibold text-ink shadow-sm">
-                  {messages.world.participantsCount.replace("{n}", String(e.taken))}
-                </span>
-              )}
-            </div>
-            <div className="space-y-1 bg-surface px-3.5 py-3">
-              <p className="type-heading text-ink">
+            </span>
+            <span className="min-w-0 flex-1 py-0.5">
+              <p className="type-heading truncate text-ink">
                 {e.title}
                 {e.minAge ? (
                   <span className="ml-1.5 align-middle rounded-full bg-danger/10 px-1.5 py-0.5 text-[10px] font-bold text-danger">
@@ -623,13 +614,19 @@ function EventRail({
                   </span>
                 ) : null}
               </p>
-              <p className="type-caption font-medium text-accent">{hostLine(e, ownerFirstName, Boolean(isSelf), messages)}</p>
-              <p className="type-caption text-muted">
+              <p className="type-caption mt-0.5 font-medium text-accent">{hostLine(e, ownerFirstName, Boolean(isSelf), messages)}</p>
+              <p className="type-caption mt-0.5 truncate text-muted">
                 {formatEventWhen(e.startsAt, locale)}
                 {e.city ? ` · ${e.city}` : ""}
-                {e.zone ? ` · ${e.zone}` : ""}
               </p>
-            </div>
+              <p className="type-caption mt-0.5 text-muted">
+                {e.wanted
+                  ? isSelf
+                    ? messages.world.myWantedEvent
+                    : messages.world.theirWantedEvent.replace("{name}", ownerFirstName)
+                  : messages.world.participantsCount.replace("{n}", String(e.taken))}
+              </p>
+            </span>
           </Link>
           {isSelf && !e.hosted && !e.wanted && onToggleVisibility ? (
             <button
