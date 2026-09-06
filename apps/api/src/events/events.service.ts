@@ -34,6 +34,7 @@ export type CreateEventInput = {
   requiresReservation?: boolean;
   paymentRule?: string;
   wanted?: boolean;
+  allowGroups?: boolean;
 };
 
 @Injectable()
@@ -82,6 +83,7 @@ export class EventsService {
         requiresReservation,
         paymentRule,
         wanted,
+        allowGroups: Boolean(input.allowGroups),
         participants: { create: { userId: hostId, status: "HOST" } },
       },
     });
@@ -185,6 +187,7 @@ export class EventsService {
     if (patch.zone != null) data.zone = patch.zone;
     if (patch.capacity != null) data.capacity = patch.capacity > 0 ? patch.capacity : null;
     if (patch.minAge != null) data.minAge = patch.minAge > 0 ? patch.minAge : null;
+    if (patch.allowGroups != null) data.allowGroups = Boolean(patch.allowGroups);
 
     let startsAt: Date | undefined;
     if (patch.startsAt != null) {
@@ -246,6 +249,7 @@ export class EventsService {
       capacity: event.capacity ?? undefined,
       minAge: event.minAge ?? undefined,
       requiresReservation: event.requiresReservation,
+      allowGroups: event.allowGroups,
     });
   }
 
@@ -413,6 +417,7 @@ export class EventsService {
       requiresReservation: boolean;
       paymentRule?: string;
       wanted?: boolean;
+      allowGroups?: boolean;
       status: string;
       createdAt: Date;
       host: {
@@ -470,6 +475,7 @@ export class EventsService {
       paymentRule: normalizePaymentRule(e.paymentRule),
       status: e.status,
       wanted: Boolean(e.wanted),
+      allowGroups: Boolean(e.allowGroups),
       phase,
       createdAt: e.createdAt.toISOString(),
       hearts: e._count.hearts,

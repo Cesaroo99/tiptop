@@ -15,6 +15,13 @@ import {
   validateMoodCoords,
 } from "../src/location";
 import {
+  canAdministerGroup,
+  canCreateEventGroup,
+  canLeaveGroup,
+  canRespondToGroupInvite,
+  groupNameOk,
+} from "../src/event-groups";
+import {
   ageCategoryFromMinAge,
   ageCategoryLabel,
   canAcceptInvitation,
@@ -573,5 +580,26 @@ describe("avis post-event", () => {
   it("exige un texte", () => {
     expect(() => assertReviewBody("  ")).toThrow("REVIEW_BODY_REQUIRED");
     expect(assertReviewBody("  Super rooftop  ")).toBe("Super rooftop");
+  });
+});
+
+describe("groupes de participants", () => {
+  it("seul l’hôte crée un groupe si l’événement le permet", () => {
+    expect(canCreateEventGroup(true, true)).toBe(true);
+    expect(canCreateEventGroup(true, false)).toBe(false);
+    expect(canCreateEventGroup(false, true)).toBe(false);
+  });
+
+  it("on accepte une invitation, on quitte sauf le créateur", () => {
+    expect(canRespondToGroupInvite("INVITED")).toBe(true);
+    expect(canRespondToGroupInvite("JOINED")).toBe(false);
+    expect(canLeaveGroup("JOINED", "MEMBER")).toBe(true);
+    expect(canLeaveGroup("JOINED", "ADMIN")).toBe(true);
+    expect(canLeaveGroup("JOINED", "HOST")).toBe(false);
+    expect(canAdministerGroup("ADMIN", false)).toBe(true);
+    expect(canAdministerGroup("MEMBER", false)).toBe(false);
+    expect(canAdministerGroup("MEMBER", true)).toBe(true);
+    expect(groupNameOk("Table 4")).toBe(true);
+    expect(groupNameOk("A")).toBe(false);
   });
 });

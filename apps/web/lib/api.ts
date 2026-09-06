@@ -43,6 +43,7 @@ export type EventCard = {
   paymentRule?: "HOLD" | "PAY_FIRST" | "PAY_REQUIRED";
   status: string;
   wanted?: boolean;
+  allowGroups?: boolean;
   phase?: "upcoming" | "startingSoon" | "ongoing" | "ended" | "cancelled";
   hearts: number;
   viewerHearted: boolean;

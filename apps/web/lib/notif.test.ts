@@ -52,6 +52,12 @@ describe("notifAction / notifLabel", () => {
     );
   });
 
+  it("ouvre une invitation de groupe d’événement", () => {
+    const invite = n({ type: "EVENT_UPDATE", entityType: "event_group_invite", entityId: "evt-9" });
+    expect(notifAction(invite)).toEqual({ kind: "href", href: "/events/evt-9" });
+    expect(notifLabel(invite, fr)).toContain("groupe");
+  });
+
   it("envoie un commentaire mood vers la vidéo", () => {
     expect(notifAction(n({ type: "COMMENT", entityType: "mood", entityId: "m9" }))).toEqual({
       kind: "href",
