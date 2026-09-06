@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { TestI18nProvider } from "@/lib/test-utils";
 import { EventDetailCard } from "./EventDetailCard";
-import { HostPeopleList } from "@/app/events/[id]/manage/page";
+import { HostPeopleList } from "@/components/HostPeopleList";
 import type { EventCard as EventCardType, EventManagePerson } from "@/lib/api";
 
 vi.mock("next/navigation", () => ({
