@@ -23,6 +23,7 @@ import {
   TrashIcon,
 } from "./Icons";
 import { ActionCircle, EventActionRow } from "./EventActionRow";
+import { EventPriceBadge } from "./EventPriceBadge";
 import { BookEventSheet } from "./BookEventSheet";
 import { EventPlaceLine } from "./EventPlaceLine";
 import { LikeTimeBadge } from "./LikeTimeBadge";
@@ -241,14 +242,9 @@ export function PostCard({
             <p className="type-caption mt-0.5 font-medium text-accent">{messages.home.feedHintLocal}</p>
           ) : null}
         </div>
-        <button
-          type="button"
-          aria-label={messages.social.share}
-          onClick={() => void share()}
-          className="tap-scale mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent-soft text-accent transition hover:brightness-95"
-        >
-          <ShareIcon size={15} />
-        </button>
+        <IconButton label={messages.social.share} onClick={() => void share()} size={36} className="mt-0.5">
+          <ShareIcon size={16} />
+        </IconButton>
         <IconButton label={messages.social.moreOptions} onClick={() => setOptionsOpen(true)} size={36} className="mt-0.5">
           <MoreIcon size={16} />
         </IconButton>
@@ -282,6 +278,7 @@ export function PostCard({
                   <div className="absolute left-2 top-2">
                     <SeatsLeftBadge remaining={remaining} />
                   </div>
+                  <EventPriceBadge amount={event.priceXaf} />
                   <Link
                     href={`/events/${event.id}`}
                     aria-label={messages.world.sortie}

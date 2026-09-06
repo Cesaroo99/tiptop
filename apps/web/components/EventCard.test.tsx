@@ -61,6 +61,7 @@ describe("EventCard (#23-25)", () => {
     expect(screen.getByText("Afterwork Bastos")).toBeInTheDocument();
     expect(screen.getAllByText(/Bastos/).length).toBeGreaterThan(0);
     expect(screen.getByText("Gratuit")).toBeInTheDocument();
+    expect(screen.getByLabelText("Partager")).toBeInTheDocument();
     expect(screen.getAllByText(/35 places restantes/).length).toBe(1);
     expect(screen.getByLabelText("Coup de cœur")).toBeInTheDocument();
     expect(screen.getByLabelText("Commentaires")).toBeInTheDocument();

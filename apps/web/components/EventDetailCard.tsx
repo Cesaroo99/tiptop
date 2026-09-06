@@ -9,9 +9,10 @@ import { useEventDestination } from "@/lib/event-destination";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { recurrenceCaption } from "@/lib/event-series";
-import { formatCompactCount, formatEventWhen, formatFcfa, formatRelative, splitPostLead } from "@/lib/time";
+import { formatCompactCount, formatEventWhen, formatRelative, splitPostLead } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
 import { EventActionRow } from "./EventActionRow";
+import { EventPriceBadge } from "./EventPriceBadge";
 import { EventMap } from "./EventMap";
 import { EventPlaceLine } from "./EventPlaceLine";
 import { BookEventSheet } from "./BookEventSheet";
@@ -119,12 +120,6 @@ export function EventDetailCard({
   const canInterest = interactive && !event.isHost;
   const body = event.description ? `${event.title} : ${event.description}` : event.title;
   const { lead, rest } = splitPostLead(body);
-  const priceLabel =
-    event.priceXaf > 0
-      ? event.currency === "XAF" || !event.currency
-        ? formatFcfa(event.priceXaf)
-        : messages.world.paid.replace("{amount}", formatFcfa(event.priceXaf))
-      : messages.world.free;
   const destination = useEventDestination({
     city: event.city,
     zone: event.zone,
@@ -189,14 +184,9 @@ export function EventDetailCard({
             <span>{relative}</span>
           </p>
         </div>
-        <button
-          type="button"
-          aria-label={messages.social.share}
-          onClick={() => void share()}
-          className="tap-scale mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent-soft text-accent transition hover:brightness-95"
-        >
-          <ShareIcon size={15} />
-        </button>
+        <IconButton label={messages.social.share} onClick={() => void share()} size={36} className="mt-0.5">
+          <ShareIcon size={16} />
+        </IconButton>
         <IconButton label={messages.social.moreOptions} onClick={() => setOptionsOpen(true)} size={36} className="mt-0.5">
           <MoreIcon size={16} />
         </IconButton>
@@ -230,9 +220,7 @@ export function EventDetailCard({
             </span>
           ) : null}
         </div>
-        <span className="type-caption absolute right-2 top-2 rounded-lg bg-accent px-2.5 py-1 font-bold text-white shadow-sm">
-          {priceLabel}
-        </span>
+        <EventPriceBadge amount={event.priceXaf} />
         {mapsUrl ? (
           <a
             href={mapsUrl}

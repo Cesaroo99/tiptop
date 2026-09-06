@@ -128,6 +128,7 @@ export class PostsService {
           viewerReserved: seated && !isHost,
           recurrence: p.event.recurrence ?? "NONE",
           seriesId: p.event.seriesId ?? null,
+          priceXaf: p.event.priceXaf ?? 0,
         }
       : null;
     return {

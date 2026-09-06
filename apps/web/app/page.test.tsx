@@ -195,6 +195,7 @@ describe("Accueil — maquette pulse", () => {
     expect(screen.getAllByLabelText("Intéressé").length).toBeGreaterThan(0);
     expect(await screen.findByText("Rooftop Damas")).toBeInTheDocument();
     expect(screen.getByText("Léa Moreau")).toBeInTheDocument();
+    expect(screen.getByText("1 km de vous")).toBeInTheDocument();
     expect(screen.getAllByText("Theo Patel").length).toBeGreaterThan(0);
     expect(document.querySelector("[data-kind=mood]")).toBeTruthy();
     expect(document.querySelector("[data-kind=person]")).toBeTruthy();

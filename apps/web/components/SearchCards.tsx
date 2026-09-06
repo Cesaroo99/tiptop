@@ -8,6 +8,7 @@ import { formatEventWhen } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
 import { BookEventSheet } from "./BookEventSheet";
 import { EventActionRow } from "./EventActionRow";
+import { EventPriceBadge } from "./EventPriceBadge";
 import { LinkIcon, MoreIcon } from "./Icons";
 import { OptionsSheet } from "./OptionsSheet";
 import { IconButton, Modal } from "./ui";
@@ -138,6 +139,7 @@ export function SearchEventCard({
             </span>
           ) : null}
         </div>
+        <EventPriceBadge amount={event.priceXaf} className="absolute right-3 top-3 z-[1] rounded-lg bg-accent px-2.5 py-1 font-bold text-white shadow-sm" />
         <Link
           href={`/events/${event.id}`}
           className="absolute inset-x-3 bottom-3 rounded-2xl bg-white/95 px-3 py-2.5 shadow-sm backdrop-blur-sm"

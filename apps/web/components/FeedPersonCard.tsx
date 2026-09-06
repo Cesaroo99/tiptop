@@ -4,12 +4,15 @@ import Link from "next/link";
 import { useState } from "react";
 import { presenceFromDeclared } from "@tiptop/domain";
 import { api, ApiError, type PersonCard } from "@/lib/api";
+import { personDistanceFromMe } from "@/lib/person-distance";
 import { useI18n } from "@/lib/i18n";
+import { useSession } from "@/lib/session";
 import { viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
+import { useViewerLocation } from "@/lib/viewer-location";
 import { AvailabilityBadge } from "./AvailabilityBadge";
 import { CertifiedMark } from "./Avatar";
-import { HeartIcon, UserPlusIcon, CheckIcon } from "./Icons";
+import { HeartIcon, RouteIcon, UserPlusIcon, CheckIcon } from "./Icons";
 import { SocialInviteModal } from "./SocialInviteModal";
 import { personWhyLines } from "@/lib/discovery-why";
 
@@ -21,7 +24,11 @@ export function FeedPersonCard({
   onChanged?: (next: PersonCard) => void;
 }) {
   const { messages } = useI18n();
+  const { user } = useSession();
+  const { origin } = useViewerLocation(user);
   const { placement, ready, refresh } = useLikePlacement();
+  const distance = personDistanceFromMe(origin, person);
+  const distanceText = distance ? `${distance} ${messages.world.fromYou}` : null;
   const [busy, setBusy] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const liked = viewerLikeActive(placement, "user", person.id, Boolean(person.likedByMe), ready);
@@ -124,9 +131,15 @@ export function FeedPersonCard({
             </span>
           ) : null}
         </h2>
-        <p className="type-caption text-muted">
-          {[person.profession, person.locationLabel ?? person.distanceLabel].filter(Boolean).join(" · ")}
-        </p>
+        {person.profession ? <p className="type-caption text-muted">{person.profession}</p> : null}
+        {distanceText ? (
+          <p className="type-caption inline-flex items-center justify-center gap-1 font-bold text-accent">
+            <RouteIcon size={13} />
+            {distanceText}
+          </p>
+        ) : person.locationLabel ? (
+          <p className="type-caption text-muted">{person.locationLabel}</p>
+        ) : null}
         {personWhyLines(person, messages).map((line) => (
           <p key={line} className="type-caption font-medium text-accent">
             {line}

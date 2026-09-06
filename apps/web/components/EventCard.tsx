@@ -5,11 +5,11 @@ import { useState } from "react";
 import { ageCategoryLabel, canInteractWithEvent, eventLifecycle, eventSocialProof } from "@tiptop/domain";
 import { api, ApiError, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { useMoney } from "@/lib/money";
 import { recurrenceCaption } from "@/lib/event-series";
 import { formatEventWhen, formatRelative } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
 import { EventActionRow } from "./EventActionRow";
+import { EventPriceBadge } from "./EventPriceBadge";
 import { FlagIcon, LinkIcon, MoreIcon, ShareIcon } from "./Icons";
 import { BookEventSheet } from "./BookEventSheet";
 import { EventPlaceLine } from "./EventPlaceLine";
@@ -27,7 +27,6 @@ export function EventCard({
   onChanged?: (next: EventCardType) => void;
 }) {
   const { locale, messages } = useI18n();
-  const { formatPrice } = useMoney();
   const [transfer, setTransfer] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -87,7 +86,6 @@ export function EventCard({
     setTimeout(() => setCopied(false), 1600);
   }
 
-  const price = event.priceXaf > 0 ? messages.world.paid.replace("{amount}", formatPrice(event.priceXaf, event.currency)) : messages.world.free;
   const relative = formatRelative(event.createdAt ?? event.startsAt, messages.social);
   const lifecycle = eventLifecycle(
     new Date(event.startsAt),
@@ -154,10 +152,8 @@ export function EventCard({
             </span>
           ) : null}
         </div>
-        <div className="absolute right-2 top-2 flex items-center gap-1.5">
-          <span className="type-caption rounded-pill bg-surface/90 px-3 py-1.5 font-bold text-ink backdrop-blur-sm">
-            {messages.world.sortie}
-          </span>
+        <div className="absolute right-2 top-2 z-[1] flex flex-col items-end gap-1.5">
+          <EventPriceBadge amount={event.priceXaf} className="rounded-lg bg-accent px-2.5 py-1 font-bold text-white shadow-sm" />
           {phaseBadge}
         </div>
         <div className="absolute bottom-2 right-2 h-16 w-24 overflow-hidden rounded-md ring-2 ring-white/70">
@@ -183,23 +179,14 @@ export function EventCard({
               {ageCategoryLabel(event.minAge)}
             </span>
           ) : null}
-          <button
-            type="button"
-            aria-label={messages.social.share}
-            onClick={() => void share()}
-            className="tap-scale grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent-soft text-accent transition hover:brightness-95"
-          >
-            <ShareIcon size={14} />
-          </button>
+          <IconButton label={messages.social.share} onClick={() => void share()} size={32}>
+            <ShareIcon size={15} />
+          </IconButton>
           <IconButton label={messages.social.moreOptions} onClick={() => setOptionsOpen(true)} size={32}>
             <MoreIcon size={15} />
           </IconButton>
         </div>
-        <p className="type-body-sm mt-3 inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 text-ink">
-          <span className="font-semibold">{formatEventWhen(event.startsAt, locale)}</span>
-          <span className="text-muted">·</span>
-          <span className={price === messages.world.free ? "font-semibold text-success" : "font-semibold text-ink"}>{price}</span>
-        </p>
+        <p className="type-body-sm mt-3 font-semibold text-ink">{formatEventWhen(event.startsAt, locale)}</p>
         <EventPlaceLine
           city={event.city}
           zone={event.zone}

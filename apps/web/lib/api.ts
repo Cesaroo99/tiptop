@@ -294,6 +294,10 @@ export type PersonCard = {
   avatarUrl: string | null;
   locationLabel: string | null;
   approximate: boolean;
+  city?: string | null;
+  zone?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   distanceKm: number | null;
   distanceLabel?: string | null;
   available?: boolean;
@@ -448,6 +452,7 @@ export type FeedItem = {
     viewerReserved?: boolean;
     recurrence?: string;
     seriesId?: string | null;
+    priceXaf?: number;
   } | null;
 };
 

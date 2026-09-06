@@ -65,6 +65,7 @@ describe("Cartes de recherche", () => {
     expect(screen.getByText("Piscine party - Odza, Yaoundé")).toBeInTheDocument();
     expect(screen.getByText("4 participants")).toBeInTheDocument();
     expect(screen.getByText("Alex Moullion")).toBeInTheDocument();
+    expect(screen.getByText("5.000 FCFA")).toBeInTheDocument();
     expect(screen.getByLabelText("Coup de cœur")).toBeInTheDocument();
     expect(screen.getByLabelText("Commentaires")).toBeInTheDocument();
     expect(screen.getByLabelText("Réserver")).toBeInTheDocument();

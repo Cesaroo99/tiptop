@@ -75,6 +75,7 @@ describe("PostCard — publication vs événement", () => {
     expect(screen.getByText("Un tour au Black&White :")).toBeInTheDocument();
     expect(screen.getByText("3.4k Commentaires . 46 Partages . 35 Réservations . 3 Intéressés")).toBeInTheDocument();
     expect(screen.getAllByText(/5 places restantes/).length).toBe(1);
+    expect(screen.getByText("Gratuit")).toBeInTheDocument();
     expect(screen.getByLabelText("Ma vie est ici")).toBeInTheDocument();
     expect(screen.getByText(/de vie/)).toBeInTheDocument();
     expect(screen.getByLabelText("Commentaires")).toHaveAttribute("href", "/posts/p1");
@@ -85,6 +86,15 @@ describe("PostCard — publication vs événement", () => {
     expect(screen.getByText("13min")).toBeInTheDocument();
     expect(screen.queryByText("Suivre")).not.toBeInTheDocument();
     expect(document.querySelector("[data-kind=event]")).toBeTruthy();
+  });
+
+  it("événement payant : prix en haut à droite de l’image", () => {
+    render(
+      <TestI18nProvider>
+        <PostCard post={{ ...post, event: { ...post.event!, priceXaf: 5000 } }} />
+      </TestI18nProvider>,
+    );
+    expect(screen.getByText("5.000 FCFA")).toBeInTheDocument();
   });
 
   it("événement complet : badge Complet, Réserver reste visible mais désactivé", () => {
