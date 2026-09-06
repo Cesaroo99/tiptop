@@ -269,7 +269,7 @@ function PeopleCarousel() {
         ? messages.world.circleLater
         : messages.world.circleAround;
 
-  async function likePerson(confirmTransfer = false) {
+  async function likePerson(confirmTransfer = true) {
     setBusy(true);
     try {
       if (liked) {
@@ -395,7 +395,7 @@ function PeopleCarousel() {
               type="button"
               disabled={busy}
               aria-label={liked ? messages.social.likeHere : messages.social.likePlace}
-              onClick={() => void likePerson(false)}
+              onClick={() => void likePerson()}
               className={`tap-scale absolute right-2.5 top-2.5 z-10 grid h-9 w-9 place-items-center rounded-full shadow-sm ${
                 liked ? "bg-accent text-on-primary" : "bg-black/45 text-white backdrop-blur-sm"
               }`}

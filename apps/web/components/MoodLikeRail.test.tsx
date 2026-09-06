@@ -44,7 +44,7 @@ describe("MoodLikeRail", () => {
     expect(screen.queryByText("/M")).not.toBeInTheDocument();
     expect(screen.getByText("2.3k")).toBeInTheDocument();
     expect(screen.queryByText("1 like")).not.toBeInTheDocument();
-    screen.getByRole("button", { name: "Poser mon like" }).click();
+    screen.getByRole("button", { name: "Poser ma vie" }).click();
     expect(onLike).toHaveBeenCalledOnce();
   });
 });

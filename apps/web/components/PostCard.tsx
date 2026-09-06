@@ -106,7 +106,7 @@ export function PostCard({
   const mapCity = event?.city ?? post.city;
   const mapZone = event?.zone ?? post.zone;
 
-  async function like(confirmTransfer = false) {
+  async function like(confirmTransfer = true) {
     try {
       if (liked) {
         await api("/likes", {
@@ -319,7 +319,7 @@ export function PostCard({
             <ActionCircle
               label={liked ? messages.social.likeHere : messages.social.likePlace}
               active={liked}
-              onClick={() => void like(false)}
+              onClick={() => void like()}
             >
               <HeartIcon size={17} filled={liked} />
             </ActionCircle>

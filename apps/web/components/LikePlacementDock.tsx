@@ -14,7 +14,7 @@ function compactDuration(seconds: number, locale: LikeDurationLocale) {
 
 export function LikePlacementDock() {
   const { messages, locale } = useI18n();
-  const { placement, loadedAt } = useLikePlacement();
+  const { placement, loadedAt, pulse } = useLikePlacement();
   const loc: LikeDurationLocale = locale === "en" ? "en" : "fr";
   const seconds = useLiveLikeSeconds(
     placement
@@ -34,7 +34,10 @@ export function LikePlacementDock() {
       aria-label={aria}
       title={line}
       data-like-dock="active"
-      className="flex min-w-0 items-center gap-1.5 border-b border-divider px-3.5 py-1.5"
+      data-like-dock-pulse={pulse ? "1" : "0"}
+      className={`flex min-w-0 items-center gap-1.5 border-b border-divider px-3.5 py-1.5 transition ${
+        pulse ? "bg-accent-soft" : ""
+      }`}
     >
       <HeartIcon size={12} filled className="shrink-0 text-accent" />
       <span className="type-caption shrink-0 font-bold tabular-nums text-accent">{duration}</span>

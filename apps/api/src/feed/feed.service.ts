@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma.service";
 import { PostsService } from "../posts/posts.service";
 import { EventsService } from "../events/events.service";
 import { MoodsService } from "../moods/moods.service";
+import { DiscoveryService } from "../discovery/discovery.service";
 
 @Injectable()
 export class FeedService {
@@ -11,6 +12,7 @@ export class FeedService {
     @Inject(PostsService) private readonly posts: PostsService,
     @Inject(EventsService) private readonly events: EventsService,
     @Inject(MoodsService) private readonly moods: MoodsService,
+    @Inject(DiscoveryService) private readonly discovery: DiscoveryService,
   ) {}
 
   async list(viewerId: string) {
@@ -47,9 +49,11 @@ export class FeedService {
     const items = await this.posts.decorate(viewerId, rows);
     let events: Awaited<ReturnType<EventsService["list"]>>["items"] = [];
     let moods: Awaited<ReturnType<MoodsService["list"]>>["items"] = [];
+    let reels: Awaited<ReturnType<MoodsService["list"]>>["items"] = [];
+    let people: Awaited<ReturnType<DiscoveryService["people"]>>["items"] = [];
     try {
       const eventList = await this.events.list(viewerId, "all", viewer?.profile?.city ?? undefined);
-      events = eventList.items.slice(0, 8);
+      events = eventList.items.slice(0, 16);
     } catch (err) {
       console.error("[feed] events.list", err);
     }
@@ -59,6 +63,18 @@ export class FeedService {
     } catch (err) {
       console.error("[feed] moods.list", err);
     }
-    return { items, events, moods };
+    try {
+      const reelList = await this.moods.list(viewerId, "MOOD");
+      reels = reelList.items.filter((m) => m.videoUrl).slice(0, 12);
+    } catch (err) {
+      console.error("[feed] moods.reels", err);
+    }
+    try {
+      const found = await this.discovery.people(viewerId, { city: viewer?.profile?.city ?? undefined });
+      people = found.items.filter((p) => p.circle !== "FRIEND").slice(0, 10);
+    } catch (err) {
+      console.error("[feed] people", err);
+    }
+    return { items, events, moods, reels, people };
   }
 }

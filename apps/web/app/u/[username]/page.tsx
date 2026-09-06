@@ -168,7 +168,7 @@ function ProfileView() {
     }
   }
 
-  async function like(confirmTransfer = false) {
+  async function like(confirmTransfer = true) {
     if (!profile || profile.isSelf) return;
     try {
       if (viewerLikeActive(placement, "user", profile.id, profile.likedByMe, ready)) {
@@ -332,7 +332,7 @@ function ProfileView() {
             <button
               type="button"
               aria-label={liked ? messages.social.likeHere : messages.social.likePlace}
-              onClick={() => void like(false)}
+              onClick={() => void like()}
               className={`tap-scale grid h-11 w-11 shrink-0 place-items-center rounded-full ${
                 liked ? "bg-accent text-on-primary" : "border border-border bg-surface text-muted"
               }`}

@@ -20,7 +20,7 @@ test.describe("Profil — visiteur et soi", () => {
     await expect(page.getByRole("heading", { name: "Erica Sinclair" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Message" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Inviter" })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Poser mon like|Mon like est ici/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Poser ma vie|Ma vie est ici/ })).toBeVisible();
     await expect(page.getByRole("button", { name: "Événements" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Intéressé" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Liés" })).toBeVisible();
@@ -37,7 +37,7 @@ test.describe("Profil — visiteur et soi", () => {
     await expect(page.getByRole("heading", { name: "William Ekani" })).toBeVisible();
     await expect(page.getByRole("button", { name: /Amie/ })).toBeVisible();
     await expect(page.getByRole("button", { name: "Message" })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: /Poser mon like|Mon like est ici/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Poser ma vie|Ma vie est ici/ })).toBeVisible();
   });
 
   test("soi : état, pas d’actions visiteur", async ({ page }) => {

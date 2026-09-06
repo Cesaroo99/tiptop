@@ -8,7 +8,7 @@ test.describe("P11 — un like transférable + rythme", () => {
 
   test("affiche mon like, où il est, et ce que je produis", async ({ page }) => {
     await page.goto("/likes");
-    await expect(page.getByRole("heading", { name: "Mon like" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Ma vie" })).toBeVisible();
     await expect(page.getByText(/Tu n.as qu.un like/)).toBeVisible();
     await expect(page.getByText("Rythme des likes reçus")).toBeVisible();
     await expect(page.getByText(/Qui t.a posé son like/)).toBeVisible();

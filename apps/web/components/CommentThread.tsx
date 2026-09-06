@@ -105,7 +105,7 @@ function CommentLike({ comment, onChange }: { comment: CommentItem; onChange: (n
   const extra = Math.max(0, live - (comment.likeTime?.totalSeconds ?? 0));
   const label = formatLikeDurationShort((comment.likeTime?.totalSeconds ?? 0) + extra, loc);
 
-  async function like(confirmTransfer = false) {
+  async function like(confirmTransfer = true) {
     try {
       if (liked) {
         await api("/likes", { method: "DELETE", body: JSON.stringify({ targetType: "comment", targetId: comment.id }) });
@@ -151,7 +151,7 @@ function CommentLike({ comment, onChange }: { comment: CommentItem; onChange: (n
     <>
       <button
         type="button"
-        onClick={() => void like(false)}
+        onClick={() => void like()}
         aria-label={liked ? messages.social.likeHere : messages.social.likePlace}
         className={`tap-scale inline-flex items-center gap-1 type-caption font-semibold tabular-nums ${liked ? "text-accent" : "text-muted"}`}
       >

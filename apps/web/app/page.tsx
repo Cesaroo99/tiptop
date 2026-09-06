@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PostCard } from "@/components/PostCard";
+import { EventCard } from "@/components/EventCard";
+import { FeedMoodCard } from "@/components/FeedMoodCard";
+import { FeedPersonCard } from "@/components/FeedPersonCard";
 import { Avatar } from "@/components/Avatar";
 import { PlusIcon } from "@/components/Icons";
 import { CardSkeleton, EmptyState, ErrorBanner } from "@/components/ui";
-import { api, ApiError, type FeedItem, type MoodItem } from "@/lib/api";
+import { api, ApiError, type EventCard as EventCardType, type FeedItem, type MoodItem, type PersonCard } from "@/lib/api";
+import { mixHomeFeed } from "@/lib/feed-mix";
 import { applySoleLike, releaseViewerLike, replaceFeedItem } from "@/lib/like-feed";
 import { useI18n } from "@/lib/i18n";
 import { useLikePlacement } from "@/lib/like-placement";
@@ -24,15 +28,27 @@ function HomeFeed() {
   const { messages } = useI18n();
   const { placement, ready } = useLikePlacement();
   const [items, setItems] = useState<FeedItem[] | null>(null);
+  const [events, setEvents] = useState<EventCardType[]>([]);
+  const [people, setPeople] = useState<PersonCard[]>([]);
+  const [reels, setReels] = useState<MoodItem[]>([]);
   const [moods, setMoods] = useState<MoodItem[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
     setError(null);
     try {
-      const data = await api<{ items: FeedItem[]; moods: MoodItem[] }>("/feed");
+      const data = await api<{
+        items: FeedItem[];
+        events?: EventCardType[];
+        moods: MoodItem[];
+        reels?: MoodItem[];
+        people?: PersonCard[];
+      }>("/feed");
       setItems(data.items);
+      setEvents(data.events ?? []);
       setMoods(data.moods ?? []);
+      setReels(data.reels ?? []);
+      setPeople(data.people ?? []);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         setError(messages.auth.connect);
@@ -59,7 +75,24 @@ function HomeFeed() {
       }
       return cur.map(releaseViewerLike);
     });
+    setPeople((cur) =>
+      cur.map((p) => ({
+        ...p,
+        likedByMe: placement?.targetType === "user" && placement.targetId === p.id,
+      })),
+    );
+    setReels((cur) =>
+      cur.map((m) => ({
+        ...m,
+        likedByMe: placement?.targetType === "mood" && placement.targetId === m.id,
+      })),
+    );
   }, [ready, placement?.targetType, placement?.targetId]);
+
+  const stream = useMemo(
+    () => mixHomeFeed({ posts: items ?? [], events, people, moods: reels }),
+    [items, events, people, reels],
+  );
 
   return (
     <div className="space-y-4 px-4 py-3">
@@ -108,21 +141,50 @@ function HomeFeed() {
           <CardSkeleton />
         </div>
       ) : null}
-      {items && items.length === 0 && !error ? (
+      {items && stream.length === 0 && !error ? (
         <EmptyState title={messages.home.emptyTitle} body={messages.home.emptyBody} />
       ) : null}
-      {items?.map((post) => (
-        <PostCard
-          key={post.id}
-          post={post}
-          onChanged={(next, meta) =>
-            setItems((cur) => {
-              if (!cur) return cur;
-              return meta?.soleLike ? applySoleLike(cur, next) : replaceFeedItem(cur, next);
-            })
-          }
-        />
-      ))}
+      {stream.map((row) => {
+        if (row.kind === "post") {
+          return (
+            <PostCard
+              key={row.id}
+              post={row.post}
+              onChanged={(next, meta) =>
+                setItems((cur) => {
+                  if (!cur) return cur;
+                  return meta?.soleLike ? applySoleLike(cur, next) : replaceFeedItem(cur, next);
+                })
+              }
+            />
+          );
+        }
+        if (row.kind === "event") {
+          return (
+            <EventCard
+              key={row.id}
+              event={row.event}
+              onChanged={(next) => setEvents((cur) => cur.map((e) => (e.id === next.id ? next : e)))}
+            />
+          );
+        }
+        if (row.kind === "person") {
+          return (
+            <FeedPersonCard
+              key={row.id}
+              person={row.person}
+              onChanged={(next) => setPeople((cur) => cur.map((p) => (p.id === next.id ? next : p)))}
+            />
+          );
+        }
+        return (
+          <FeedMoodCard
+            key={row.id}
+            mood={row.mood}
+            onChanged={(next) => setReels((cur) => cur.map((m) => (m.id === next.id ? next : m)))}
+          />
+        );
+      })}
     </div>
   );
 }

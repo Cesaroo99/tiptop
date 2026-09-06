@@ -61,7 +61,7 @@ function MoodViewer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  async function like(confirmTransfer = false) {
+  async function like(confirmTransfer = true) {
     if (!mood) return;
     const liked = mood.likeTime?.likedByMe ?? mood.likedByMe ?? false;
     try {
@@ -209,7 +209,7 @@ function MoodViewer() {
               : messages.world.moodPermanentHint}
           </p>
           <div className="mt-4 flex items-center gap-2">
-            <IconButton label={liked ? messages.social.likeHere : messages.social.likePlace} tone={liked ? "accent" : "neutral"} onClick={() => void like(false)}>
+            <IconButton label={liked ? messages.social.likeHere : messages.social.likePlace} tone={liked ? "accent" : "neutral"} onClick={() => void like()}>
               <HeartIcon size={17} filled={liked} />
             </IconButton>
             {user && user.id !== mood.author.id ? (

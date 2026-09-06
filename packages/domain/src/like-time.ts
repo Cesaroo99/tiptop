@@ -184,14 +184,14 @@ export type LikeMilestoneDef = {
 
 /** Paliers par défaut — surchargeables via AppConfig `likeMilestones`. */
 export const DEFAULT_LIKE_MILESTONES: readonly LikeMilestoneDef[] = [
-  { id: "1m", seconds: 60, fr: "🎉 Bravo ! Vous avez désormais plus d’une minute de likes !", en: "🎉 You now have more than a minute of likes!" },
-  { id: "1h", seconds: 3600, fr: "🎉 Bravo ! Vous avez désormais plus d’une heure de likes !", en: "🎉 You now have more than an hour of likes!" },
-  { id: "1d", seconds: LIKE_DAY_SECONDS, fr: "🎉 Félicitations ! Vous avez désormais 1 jour de likes !", en: "🎉 Congratulations! You now have 1 day of likes!" },
-  { id: "1w", seconds: 7 * LIKE_DAY_SECONDS, fr: "🎉 Félicitations ! Vous avez désormais 1 semaine de likes !", en: "🎉 You now have 1 week of likes!" },
-  { id: "1mo", seconds: LIKE_MONTH_SECONDS, fr: "🎉 Félicitations ! Vous avez désormais 1 mois de likes !", en: "🎉 You now have 1 month of likes!" },
-  { id: "1y", seconds: LIKE_YEAR_SECONDS, fr: "🏆 Félicitations ! Vous venez d’atteindre 1 an de likes sur TipTop !", en: "🏆 You just reached 1 year of likes on TipTop!" },
-  { id: "5y", seconds: 5 * LIKE_YEAR_SECONDS, fr: "🏆 Félicitations ! 5 ans de likes sur TipTop !", en: "🏆 5 years of likes on TipTop!" },
-  { id: "10y", seconds: 10 * LIKE_YEAR_SECONDS, fr: "🏆 Félicitations ! 10 ans de likes sur TipTop !", en: "🏆 10 years of likes on TipTop!" },
+  { id: "1m", seconds: 60, fr: "🎉 Bravo ! Vous avez désormais plus d’une minute de vie gagnée !", en: "🎉 You now have more than a minute of life gained!" },
+  { id: "1h", seconds: 3600, fr: "🎉 Bravo ! Vous avez désormais plus d’une heure de vie gagnée !", en: "🎉 You now have more than an hour of life gained!" },
+  { id: "1d", seconds: LIKE_DAY_SECONDS, fr: "🎉 Félicitations ! Vous avez désormais 1 jour de vie gagné !", en: "🎉 Congratulations! You now have 1 day of life gained!" },
+  { id: "1w", seconds: 7 * LIKE_DAY_SECONDS, fr: "🎉 Félicitations ! Vous avez désormais 1 semaine de vie gagnée !", en: "🎉 You now have 1 week of life gained!" },
+  { id: "1mo", seconds: LIKE_MONTH_SECONDS, fr: "🎉 Félicitations ! Vous avez désormais 1 mois de vie gagné !", en: "🎉 You now have 1 month of life gained!" },
+  { id: "1y", seconds: LIKE_YEAR_SECONDS, fr: "🏆 Félicitations ! Vous venez d’atteindre 1 an de vie sur TipTop !", en: "🏆 You just reached 1 year of life on TipTop!" },
+  { id: "5y", seconds: 5 * LIKE_YEAR_SECONDS, fr: "🏆 Félicitations ! 5 ans de vie sur TipTop !", en: "🏆 5 years of life on TipTop!" },
+  { id: "10y", seconds: 10 * LIKE_YEAR_SECONDS, fr: "🏆 Félicitations ! 10 ans de vie sur TipTop !", en: "🏆 10 years of life on TipTop!" },
 ];
 
 export function parseMilestones(raw: unknown): LikeMilestoneDef[] {

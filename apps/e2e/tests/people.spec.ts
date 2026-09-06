@@ -45,7 +45,7 @@ test.describe("Amies — cartes, distance, profil", () => {
     await expect(page.getByRole("heading", { level: 2 })).toBeVisible();
     await expect(page.getByText(/km| m$/).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "Voir le profil" })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Poser mon like|Mon like est ici/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Poser ma vie|Ma vie est ici/ })).toBeVisible();
 
     await page.getByRole("button", { name: "Filtres" }).click();
     await expect(page.getByText("Tous les états")).toBeVisible();

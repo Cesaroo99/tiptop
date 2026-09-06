@@ -63,6 +63,83 @@ vi.mock("@/lib/api", async () => {
               },
             },
           ],
+          events: [
+            {
+              id: "evt-mix",
+              title: "Rooftop Damas",
+              description: "",
+              imageUrl: "/seed/events/afterwork.jpg",
+              city: "Yaoundé",
+              zone: "Damas",
+              venue: null,
+              startsAt: new Date(Date.now() + 3600_000).toISOString(),
+              endsAt: null,
+              priceXaf: 0,
+              currency: "XAF",
+              capacity: 40,
+              taken: 2,
+              minAge: 18,
+              requiresReservation: false,
+              status: "PUBLISHED",
+              hearts: 0,
+              viewerHearted: false,
+              viewerInterested: false,
+              viewerStatus: null,
+              isHost: false,
+              host: {
+                id: "u3",
+                username: "mbelle",
+                firstName: "Mbelle",
+                lastName: "Junior",
+                certified: false,
+                avatarUrl: null,
+              },
+            },
+          ],
+          people: [
+            {
+              id: "u-lea",
+              username: "lea",
+              firstName: "Léa",
+              lastName: "Moreau",
+              certified: false,
+              profession: "DJ",
+              age: 24,
+              avatarUrl: null,
+              locationLabel: "Bastos",
+              approximate: true,
+              distanceKm: 1,
+              presence: "AVAILABLE",
+              circle: "NEARBY",
+            },
+          ],
+          reels: [
+            {
+              id: "reel1",
+              body: "Concert live",
+              imageUrl: null,
+              videoUrl: "/seed/moods/video-concert.mp4",
+              expiresAt: null,
+              createdAt: new Date().toISOString(),
+              commentsCount: 0,
+              likedAuthor: false,
+              authorActiveLikes: 0,
+              activity: "Concert",
+              city: "Yaoundé",
+              zone: "Bastos",
+              event: null,
+              companion: null,
+              author: {
+                id: "u4",
+                username: "theo",
+                firstName: "Theo",
+                lastName: "Patel",
+                certified: false,
+                avatarUrl: null,
+                city: "Yaoundé",
+              },
+            },
+          ],
           moods: [
             {
               id: "m1",
@@ -114,7 +191,12 @@ describe("Accueil — maquette pulse", () => {
     expect(await screen.findByText("César Memoli")).toBeInTheDocument();
     expect(screen.queryByText("Tu cherches quoi ?")).not.toBeInTheDocument();
     expect(screen.queryByText("Dehors maintenant")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Réserver")).toBeInTheDocument();
-    expect(screen.getByLabelText("Intéressé")).toBeInTheDocument();
+    expect(screen.getAllByLabelText("Réserver").length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText("Intéressé").length).toBeGreaterThan(0);
+    expect(await screen.findByText("Rooftop Damas")).toBeInTheDocument();
+    expect(screen.getByText("Léa Moreau")).toBeInTheDocument();
+    expect(screen.getAllByText("Theo Patel").length).toBeGreaterThan(0);
+    expect(document.querySelector("[data-kind=mood]")).toBeTruthy();
+    expect(document.querySelector("[data-kind=person]")).toBeTruthy();
   });
 });

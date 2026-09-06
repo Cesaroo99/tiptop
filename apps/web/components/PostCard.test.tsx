@@ -75,7 +75,7 @@ describe("PostCard — publication vs événement", () => {
     expect(screen.getByText("Un tour au Black&White :")).toBeInTheDocument();
     expect(screen.getByText("3.4k Commentaires . 46 Partages . 35 Réservations . 5 places restantes . 3 Intéressés")).toBeInTheDocument();
     expect(screen.getAllByText("5 places restantes").length).toBeGreaterThan(0);
-    expect(screen.getByLabelText("Mon like est ici")).toBeInTheDocument();
+    expect(screen.getByLabelText("Ma vie est ici")).toBeInTheDocument();
     expect(screen.queryByText(/seconde/)).not.toBeInTheDocument();
     expect(screen.getByLabelText("Commentaires")).toHaveAttribute("href", "/posts/p1");
     expect(screen.getByLabelText("Réserver")).toBeInTheDocument();
@@ -121,7 +121,7 @@ describe("PostCard — publication vs événement", () => {
     expect(screen.queryByText("Événement dans :")).not.toBeInTheDocument();
     expect(screen.queryByText("Réservations")).not.toBeInTheDocument();
     expect(screen.queryByText("Intéressés")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Poser mon like")).toBeInTheDocument();
+    expect(screen.getByLabelText("Poser ma vie")).toBeInTheDocument();
     expect(screen.getByLabelText("Commentaires")).toHaveAttribute("href", "/posts/p-organic");
     expect(document.querySelector("[data-kind=post]")).toBeTruthy();
   });

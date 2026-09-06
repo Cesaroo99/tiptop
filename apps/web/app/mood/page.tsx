@@ -197,7 +197,7 @@ function MoodSlide({
     setLoadedAt(Date.now());
   }, [mood.likeTime?.activeCount, mood.likeTime?.totalSeconds]);
 
-  async function like(confirmTransfer = false) {
+  async function like(confirmTransfer = true) {
     try {
       if (liked) {
         await api("/likes", { method: "DELETE", body: JSON.stringify({ targetType: "mood", targetId: mood.id }) });
@@ -274,7 +274,7 @@ function MoodSlide({
           likeTime={mood.likeTime}
           loadedAt={loadedAt}
           commentsCount={mood.commentsCount}
-          onLike={() => void like(false)}
+          onLike={() => void like()}
           onComments={() => setCommentsOpen(true)}
           onShare={() => void share()}
           onMore={() => setMoreOpen(true)}

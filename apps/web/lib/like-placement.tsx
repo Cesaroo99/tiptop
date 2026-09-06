@@ -8,6 +8,7 @@ type LikePlacementState = {
   placement: LikePlacement | null;
   loadedAt: number;
   ready: boolean;
+  pulse: boolean;
   refresh: () => Promise<void>;
 };
 
@@ -15,6 +16,7 @@ const empty: LikePlacementState = {
   placement: null,
   loadedAt: 0,
   ready: false,
+  pulse: false,
   refresh: async () => undefined,
 };
 
@@ -41,6 +43,7 @@ export function LikePlacementProvider({
   const [placement, setPlacement] = useState<LikePlacement | null>(initial);
   const [loadedAt, setLoadedAt] = useState(() => Date.now());
   const [ready, setReady] = useState(false);
+  const [pulse, setPulse] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!user) {
@@ -50,7 +53,14 @@ export function LikePlacementProvider({
     }
     try {
       const me = await api<LikesMe>("/likes/me");
-      setPlacement(me.placement ?? null);
+      const next = me.placement ?? null;
+      setPlacement((prev) => {
+        if (next && prev?.targetId !== next.targetId) {
+          setPulse(true);
+          window.setTimeout(() => setPulse(false), 1600);
+        }
+        return next;
+      });
       setLoadedAt(Date.now());
       setReady(true);
     } catch {
@@ -63,7 +73,10 @@ export function LikePlacementProvider({
     void refresh();
   }, [loading, refresh]);
 
-  const value = useMemo(() => ({ placement, loadedAt, ready, refresh }), [placement, loadedAt, ready, refresh]);
+  const value = useMemo(
+    () => ({ placement, loadedAt, ready, pulse, refresh }),
+    [placement, loadedAt, ready, pulse, refresh],
+  );
 
   return <LikePlacementContext.Provider value={value}>{children}</LikePlacementContext.Provider>;
 }
