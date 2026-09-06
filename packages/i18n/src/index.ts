@@ -509,6 +509,20 @@ export type Messages = {
     eventsInterested: string;
     eventsLinked: string;
     eventsLinkedNamed: string;
+    eventsPaneInterested: string;
+    eventsPaneLinked: string;
+    eventsPaneWishes: string;
+    organizedBy: string;
+    myWantedEvent: string;
+    theirWantedEvent: string;
+    createWanted: string;
+    createWantedHint: string;
+    wantedTitlePlaceholder: string;
+    wantedDate: string;
+    wantedCity: string;
+    wantedSave: string;
+    wantedEmpty: string;
+    wantedEmptySelf: string;
     moreAbout: string;
     profileOffer: string;
     profileMyWishes: string;
@@ -1333,6 +1347,20 @@ export const fr: Messages = {
     eventsInterested: "Événements qui m’intéressent",
     eventsLinked: "{n} événement(s) lié(s)",
     eventsLinkedNamed: "{n} événement(s) lié(s) à {name}",
+    eventsPaneInterested: "Intéressé",
+    eventsPaneLinked: "Liés",
+    eventsPaneWishes: "Envies",
+    organizedBy: "Par {name}",
+    myWantedEvent: "Ton envie",
+    theirWantedEvent: "Envie de {name}",
+    createWanted: "Créer une envie d’événement",
+    createWantedHint: "Un événement que tu veux, même s’il n’existe pas encore ailleurs.",
+    wantedTitlePlaceholder: "Ex. brunch jazz à Bastos",
+    wantedDate: "Quand",
+    wantedCity: "Ville",
+    wantedSave: "Ajouter",
+    wantedEmpty: "Aucun événement ici pour l’instant.",
+    wantedEmptySelf: "Marque un événement ou crée une envie.",
     moreAbout: "Plus d’infos à propos de {name}",
     profileOffer: "À offrir à {name}",
     profileMyWishes: "Tes envies",
@@ -2157,6 +2185,20 @@ export const en: Messages = {
     eventsInterested: "Events I’m interested in",
     eventsLinked: "{n} linked event(s)",
     eventsLinkedNamed: "{n} event(s) linked to {name}",
+    eventsPaneInterested: "Interested",
+    eventsPaneLinked: "Linked",
+    eventsPaneWishes: "Wishes",
+    organizedBy: "By {name}",
+    myWantedEvent: "Your wish",
+    theirWantedEvent: "{name}’s wish",
+    createWanted: "Create an event you want",
+    createWantedHint: "An event you want, even if nobody else created it yet.",
+    wantedTitlePlaceholder: "e.g. jazz brunch in Bastos",
+    wantedDate: "When",
+    wantedCity: "City",
+    wantedSave: "Add",
+    wantedEmpty: "No events here yet.",
+    wantedEmptySelf: "Mark an event or create a wish.",
     moreAbout: "More about {name}",
     profileOffer: "To offer {name}",
     profileMyWishes: "Your wishes",

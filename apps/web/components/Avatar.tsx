@@ -46,29 +46,31 @@ export function Avatar({
 }) {
   const { px, preset } = resolveSize(size);
   const ringClass =
-    ring === "accent" ? "ring-2 ring-accent ring-offset-2 ring-offset-[var(--bg)]" : ring === "yellow" ? "ring-2 ring-yellow ring-offset-2 ring-offset-[var(--bg)]" : "";
+    ring === "accent"
+      ? "ring-2 ring-accent ring-offset-2 ring-offset-[var(--bg)]"
+      : ring === "yellow"
+        ? "ring-2 ring-yellow ring-offset-2 ring-offset-[var(--bg)]"
+        : "";
   return (
-    <span className={`relative inline-grid shrink-0 ${className}`} style={{ width: px, height: px }}>
-      {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={src}
-          alt=""
-          className={`h-full w-full rounded-full object-cover ${ringClass}`}
-        />
-      ) : (
-        <span
-          className={`grid h-full w-full place-items-center rounded-full bg-gradient-to-br from-accent/35 to-yellow/35 font-semibold text-ink ${initialsFontBySize[preset]} ${ringClass}`}
-        >
-          {initials(firstName, lastName)}
-        </span>
-      )}
+    <span className={`relative inline-flex shrink-0 rounded-full ${className}`} style={{ width: px, height: px }}>
+      <span className={`block h-full w-full overflow-hidden rounded-full ${ringClass}`}>
+        {src ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={src} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span
+            className={`grid h-full w-full place-items-center bg-gradient-to-br from-accent/35 to-yellow/35 font-semibold text-ink ${initialsFontBySize[preset]}`}
+          >
+            {initials(firstName, lastName)}
+          </span>
+        )}
+      </span>
       {presence ? (
         <span
-          className={`absolute bottom-0 right-0 h-3 w-3 rounded-full ring-2 ring-[var(--bg)] ${online ? "bg-success" : "bg-border"}`}
+          className={`absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full ring-2 ring-[var(--bg)] ${online ? "bg-success" : "bg-border"}`}
         />
       ) : online ? (
-        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-success ring-2 ring-[var(--bg)]" />
+        <span className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full bg-success ring-2 ring-[var(--bg)]" />
       ) : null}
     </span>
   );

@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { PresencePicker } from "@/components/PresencePicker";
 import {
-  BriefcaseIcon,
   CalendarIcon,
   ChevronRightIcon,
   FlagIcon,
@@ -49,9 +48,20 @@ type EventPreview = {
   minAge: number | null;
   taken: number;
   hosted?: boolean;
+  wanted?: boolean;
   showOnProfile?: boolean;
   host: { firstName: string; lastName: string; avatarUrl: string | null };
 };
+
+type EventPane = "interested" | "linked" | "wishes";
+
+function defaultWantedWhen() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(18, 0, 0, 0);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 type Profile = {
   id: string;
@@ -111,6 +121,7 @@ function ProfileView() {
   const [transfer, setTransfer] = useState<string | null>(null);
   const [buy, setBuy] = useState(false);
   const [tab, setTab] = useState<"posts" | "events" | "moods">("events");
+  const [eventPane, setEventPane] = useState<EventPane>("interested");
   const [reportOpen, setReportOpen] = useState(false);
   const [proposeOpen, setProposeOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -248,13 +259,13 @@ function ProfileView() {
 
   return (
     <div className="pb-10">
-      <div className="relative h-36 bg-gradient-to-br from-accent/20 via-yellow/10 to-transparent">
+      <div className="relative h-28 bg-gradient-to-br from-accent/20 via-yellow/10 to-transparent">
         {profile.coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={profile.coverUrl} alt="" className="h-full w-full object-cover" />
         ) : null}
       </div>
-      <div className="-mt-12 px-4 text-center">
+      <div className="-mt-11 px-4 text-center">
         <Avatar
           src={profile.avatarUrl}
           firstName={profile.firstName}
@@ -330,15 +341,7 @@ function ProfileView() {
         )}
       </div>
 
-      <dl className="mt-5 space-y-2.5 px-5">
-        {profile.profession ? (
-          <div className="flex items-center gap-3 text-left">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-sunken text-muted">
-              <BriefcaseIcon size={14} />
-            </span>
-            <dd className="type-body-sm text-ink">{profile.profession}</dd>
-          </div>
-        ) : null}
+      <dl className="mt-4 space-y-2 px-5">
         {place ? (
           <div className="flex items-center gap-3 text-left">
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-sunken text-muted">
@@ -371,44 +374,66 @@ function ProfileView() {
         {bioOpen && profile.bio ? <p className="type-body-sm pl-11 leading-6 text-muted">{profile.bio}</p> : null}
       </dl>
 
-      {profile.isSelf && profile.likeStats.likeTime ? (
-        <div className="mt-5 px-4">
-          <LikeCapital time={profile.likeStats.likeTime} forSelf />
+      <div className="sticky top-0 z-20 mt-4 bg-[color-mix(in_srgb,var(--bg)_94%,transparent)] px-4 pb-2 pt-1 backdrop-blur-md">
+        <div className="no-scrollbar flex gap-2 overflow-x-auto">
+          {(
+            [
+              ["posts", messages.social.publications, ImageIcon],
+              ["events", messages.social.events, CalendarIcon],
+              ["moods", messages.social.moodsTab, MessageIcon],
+            ] as const
+          ).map(([key, label, Icon]) => {
+            const active = tab === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setTab(key)}
+                className={`type-caption tap-scale inline-flex shrink-0 items-center gap-1.5 rounded-pill px-3.5 py-2 font-semibold ${
+                  active ? "bg-accent text-on-primary" : "bg-accent-soft text-accent"
+                }`}
+              >
+                <Icon size={14} />
+                {label}
+              </button>
+            );
+          })}
         </div>
-      ) : null}
-
-      <div className="no-scrollbar mt-6 flex gap-2 overflow-x-auto px-4">
-        {(
-          [
-            ["posts", messages.social.publications, ImageIcon],
-            ["events", messages.social.events, CalendarIcon],
-            ["moods", messages.social.moodsTab, MessageIcon],
-          ] as const
-        ).map(([key, label, Icon]) => {
-          const active = tab === key;
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setTab(key)}
-              className={`type-caption tap-scale inline-flex shrink-0 items-center gap-1.5 rounded-pill px-3.5 py-2 font-semibold ${
-                active ? "bg-accent text-on-primary" : "bg-accent-soft text-accent"
-              }`}
-            >
-              <Icon size={14} />
-              {label}
-            </button>
-          );
-        })}
+        {tab === "events" ? (
+          <div className="mt-2 grid grid-cols-3 gap-1.5 rounded-2xl bg-surface-sunken p-1">
+            {(
+              [
+                ["interested", messages.world.eventsPaneInterested],
+                ["linked", messages.world.eventsPaneLinked],
+                ["wishes", messages.world.eventsPaneWishes],
+              ] as const
+            ).map(([key, label]) => {
+              const active = eventPane === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setEventPane(key)}
+                  className={`type-caption tap-scale rounded-xl py-2 font-semibold ${
+                    active ? "bg-surface text-ink shadow-sm" : "text-muted"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
       </div>
 
-      <div className="mt-5 px-4">
+      <div className="mt-3 px-4">
         {tab === "posts" ? (
-          profile.posts.length === 0 ? (
-            <EmptyState title={messages.social.postsTab} body={messages.home.emptyBody} />
-          ) : (
-            <div className="space-y-3">
-              {profile.posts.map((p) => (
+          <div className="space-y-3">
+            {profile.isSelf && profile.likeStats.likeTime ? <LikeCapital time={profile.likeStats.likeTime} forSelf /> : null}
+            {profile.posts.length === 0 ? (
+              <EmptyState title={messages.social.postsTab} body={messages.home.emptyBody} />
+            ) : (
+              profile.posts.map((p) => (
                 <PostCard
                   key={p.id}
                   post={p}
@@ -423,35 +448,48 @@ function ProfileView() {
                     )
                   }
                 />
-              ))}
-            </div>
-          )
+              ))
+            )}
+          </div>
         ) : null}
-        {tab === "events" ? (
-          <div className="space-y-7">
+        {tab === "events" && eventPane === "interested" ? (
+          <div className="space-y-3">
+            {profile.isSelf ? (
+              <WantedEventForm
+                defaultCity={profile.city ?? "Yaoundé"}
+                onCreated={(item) =>
+                  setProfile((cur) =>
+                    cur ? { ...cur, eventsInterested: [item, ...(cur.eventsInterested ?? [])] } : cur,
+                  )
+                }
+              />
+            ) : null}
             <EventRail
-              title={messages.world.eventsInterested}
               items={profile.eventsInterested ?? []}
-              empty={messages.world.eventsEmpty}
-            />
-            <section>
-              <p className="type-heading mb-3 text-ink">
-                {profile.isSelf
-                  ? messages.world.profileMyWishes
-                  : messages.world.profileOffer.replace("{name}", profile.firstName)}
-              </p>
-              <WishList ownerId={profile.id} isSelf={profile.isSelf} />
-            </section>
-            <EventRail
-              title={messages.world.eventsLinkedNamed
-                .replace("{n}", String(profile.eventsLinked?.length ?? 0))
-                .replace("{name}", profile.firstName)}
-              items={profile.eventsLinked ?? []}
-              empty={messages.world.eventsEmpty}
+              empty={profile.isSelf ? messages.world.wantedEmptySelf : messages.world.wantedEmpty}
+              ownerFirstName={profile.firstName}
               isSelf={profile.isSelf}
-              onToggleVisibility={(id, show) => void toggleLinkedVisibility(id, show)}
             />
           </div>
+        ) : null}
+        {tab === "events" && eventPane === "linked" ? (
+          <EventRail
+            items={profile.eventsLinked ?? []}
+            empty={messages.world.eventsEmpty}
+            ownerFirstName={profile.firstName}
+            isSelf={profile.isSelf}
+            onToggleVisibility={(id, show) => void toggleLinkedVisibility(id, show)}
+          />
+        ) : null}
+        {tab === "events" && eventPane === "wishes" ? (
+          <section>
+            <p className="type-heading mb-3 text-ink">
+              {profile.isSelf
+                ? messages.world.profileMyWishes
+                : messages.world.profileOffer.replace("{name}", profile.firstName)}
+            </p>
+            <WishList ownerId={profile.id} isSelf={profile.isSelf} />
+          </section>
         ) : null}
         {tab === "moods" ? (
           profile.moods?.length ? (
@@ -532,80 +570,207 @@ function ProfileView() {
   );
 }
 
+function hostLine(e: EventPreview, ownerFirstName: string, isSelf: boolean, messages: ReturnType<typeof useI18n>["messages"]) {
+  if (e.wanted) {
+    return isSelf ? messages.world.myWantedEvent : messages.world.theirWantedEvent.replace("{name}", ownerFirstName);
+  }
+  return messages.world.organizedBy.replace("{name}", `${e.host.firstName} ${e.host.lastName}`.trim());
+}
+
 function EventRail({
-  title,
   items,
   empty,
+  ownerFirstName,
   isSelf,
   onToggleVisibility,
 }: {
-  title: string;
   items: EventPreview[];
   empty: string;
+  ownerFirstName: string;
   isSelf?: boolean;
   onToggleVisibility?: (id: string, show: boolean) => void;
 }) {
   const { locale, messages } = useI18n();
   if (!items.length) {
-    return (
-      <section>
-        <p className="type-heading mb-2 text-ink">{title}</p>
-        <p className="type-caption text-muted">{empty}</p>
-      </section>
-    );
+    return <p className="type-caption text-muted">{empty}</p>;
   }
   return (
-    <section>
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="type-heading min-w-0 text-ink">{title}</p>
-        <Link href="/events" className="type-caption inline-flex shrink-0 items-center gap-0.5 font-semibold text-accent">
+    <section className="space-y-3">
+      <div className="flex justify-end">
+        <Link href="/events" className="type-caption inline-flex items-center gap-0.5 font-semibold text-accent">
           {messages.world.seeAll}
           <ChevronRightIcon size={14} />
         </Link>
       </div>
-      <div className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
-        {items.map((e) => (
-          <article key={e.id} className="w-[17.5rem] shrink-0">
-            <Link href={`/events/${e.id}`} className="tap-scale block overflow-hidden rounded-[22px] bg-surface shadow-card">
-              <div className="relative h-40">
-                {e.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={e.imageUrl} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="h-full bg-accent/10" />
-                )}
-                <span className="type-caption absolute left-2.5 top-2.5 rounded-full bg-white/90 px-2 py-0.5 font-semibold text-ink backdrop-blur-sm">
+      {items.map((e) => (
+        <article key={e.id}>
+          <Link href={`/events/${e.id}`} className="tap-scale block overflow-hidden rounded-card bg-surface shadow-card">
+            <div className="relative h-36 bg-gradient-to-br from-accent/15 to-yellow/15">
+              {e.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={e.imageUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="grid h-full place-items-center text-accent">
+                  <SparklesIcon size={28} />
+                </span>
+              )}
+              {e.wanted ? (
+                <span className="type-caption absolute left-2.5 top-2.5 rounded-full bg-yellow px-2 py-0.5 font-semibold text-ink">
+                  {isSelf ? messages.world.myWantedEvent : messages.world.theirWantedEvent.replace("{name}", ownerFirstName)}
+                </span>
+              ) : (
+                <span className="type-caption absolute left-2.5 top-2.5 rounded-full bg-surface/95 px-2 py-0.5 font-semibold text-ink">
                   {messages.world.participantsCount.replace("{n}", String(e.taken))}
                 </span>
-                <div className="absolute inset-x-2.5 bottom-2.5 rounded-2xl bg-white/92 p-2.5 backdrop-blur-sm">
-                  <p className="type-body-sm truncate font-semibold text-ink">
-                    {e.title}
-                    {e.minAge ? (
-                      <span className="ml-1.5 rounded-full bg-danger/10 px-1.5 py-0.5 text-[10px] font-bold text-danger">
-                        -{e.minAge}
-                      </span>
-                    ) : null}
-                  </p>
-                  <p className="type-caption mt-0.5 truncate text-muted">
-                    {e.host.firstName} {e.host.lastName}
-                    {e.city ? ` · ${e.city}` : ""}
-                  </p>
-                  <p className="type-caption mt-0.5 font-medium text-yellow">{formatEventWhen(e.startsAt, locale)}</p>
-                </div>
-              </div>
-            </Link>
-            {isSelf && !e.hosted && onToggleVisibility ? (
-              <button
-                type="button"
-                onClick={() => onToggleVisibility(e.id, !e.showOnProfile)}
-                className="type-caption mt-1.5 w-full text-center font-semibold text-accent"
-              >
-                {e.showOnProfile ? messages.world.showOnProfile : messages.world.hideOnProfile}
-              </button>
-            ) : null}
-          </article>
-        ))}
-      </div>
+              )}
+            </div>
+            <div className="space-y-1 bg-surface px-3.5 py-3">
+              <p className="type-heading text-ink">
+                {e.title}
+                {e.minAge ? (
+                  <span className="ml-1.5 align-middle rounded-full bg-danger/10 px-1.5 py-0.5 text-[10px] font-bold text-danger">
+                    -{e.minAge}
+                  </span>
+                ) : null}
+              </p>
+              <p className="type-caption font-medium text-accent">{hostLine(e, ownerFirstName, Boolean(isSelf), messages)}</p>
+              <p className="type-caption text-muted">
+                {formatEventWhen(e.startsAt, locale)}
+                {e.city ? ` · ${e.city}` : ""}
+                {e.zone ? ` · ${e.zone}` : ""}
+              </p>
+            </div>
+          </Link>
+          {isSelf && !e.hosted && !e.wanted && onToggleVisibility ? (
+            <button
+              type="button"
+              onClick={() => onToggleVisibility(e.id, !e.showOnProfile)}
+              className="type-caption mt-1.5 w-full text-center font-semibold text-accent"
+            >
+              {e.showOnProfile ? messages.world.showOnProfile : messages.world.hideOnProfile}
+            </button>
+          ) : null}
+        </article>
+      ))}
     </section>
+  );
+}
+
+function WantedEventForm({
+  defaultCity,
+  onCreated,
+}: {
+  defaultCity: string;
+  onCreated: (item: EventPreview) => void;
+}) {
+  const { messages } = useI18n();
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [startsAt, setStartsAt] = useState(defaultWantedWhen);
+  const [city, setCity] = useState(defaultCity);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim()) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const created = await api<EventPreview & { host?: EventPreview["host"]; taken?: number }>(
+        "/events",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            title: title.trim(),
+            city: city.trim() || defaultCity,
+            startsAt: new Date(startsAt).toISOString(),
+            wanted: true,
+          }),
+        },
+      );
+      onCreated({
+        id: created.id,
+        title: created.title,
+        imageUrl: created.imageUrl ?? null,
+        city: created.city,
+        zone: created.zone ?? null,
+        startsAt: created.startsAt,
+        minAge: created.minAge ?? null,
+        taken: created.taken ?? 1,
+        hosted: true,
+        wanted: true,
+        showOnProfile: true,
+        host: created.host ?? { firstName: "", lastName: "", avatarUrl: null },
+      });
+      setTitle("");
+      setStartsAt(defaultWantedWhen());
+      setOpen(false);
+    } catch {
+      setError(messages.common.error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="tap-scale type-button flex w-full items-center justify-center gap-2 rounded-pill border-2 border-dashed border-accent/40 bg-accent-soft py-3 text-accent"
+      >
+        <PlusIcon size={16} />
+        {messages.world.createWanted}
+      </button>
+    );
+  }
+
+  return (
+    <form onSubmit={(e) => void submit(e)} className="space-y-3 rounded-card bg-surface p-4 shadow-card">
+      <p className="type-caption leading-5 text-muted">{messages.world.createWantedHint}</p>
+      <input
+        required
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder={messages.world.wantedTitlePlaceholder}
+        className="type-body w-full rounded-xl border border-border bg-surface px-4 py-3 text-ink"
+      />
+      <label className="block">
+        <span className="type-caption mb-1 block font-semibold text-muted">{messages.world.wantedDate}</span>
+        <input
+          required
+          type="datetime-local"
+          value={startsAt}
+          onChange={(e) => setStartsAt(e.target.value)}
+          className="type-body w-full rounded-xl border border-border bg-surface px-4 py-3 text-ink"
+        />
+      </label>
+      <label className="block">
+        <span className="type-caption mb-1 block font-semibold text-muted">{messages.world.wantedCity}</span>
+        <input
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          className="type-body w-full rounded-xl border border-border bg-surface px-4 py-3 text-ink"
+        />
+      </label>
+      {error ? <p className="type-caption text-danger">{error}</p> : null}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="tap-scale type-button flex-1 rounded-pill border border-border bg-surface py-2.5 text-ink"
+        >
+          {messages.common.cancel}
+        </button>
+        <button
+          type="submit"
+          disabled={busy || !title.trim()}
+          className="tap-scale type-button flex-1 rounded-pill bg-accent py-2.5 text-on-primary disabled:opacity-45"
+        >
+          {messages.world.wantedSave}
+        </button>
+      </div>
+    </form>
   );
 }

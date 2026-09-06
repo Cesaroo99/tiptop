@@ -42,6 +42,7 @@ export type EventCard = {
   requiresReservation: boolean;
   paymentRule?: "HOLD" | "PAY_FIRST" | "PAY_REQUIRED";
   status: string;
+  wanted?: boolean;
   phase?: "upcoming" | "startingSoon" | "ongoing" | "ended" | "cancelled";
   hearts: number;
   viewerHearted: boolean;

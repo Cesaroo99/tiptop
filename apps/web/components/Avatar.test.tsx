@@ -30,4 +30,12 @@ describe("Avatar", () => {
     const { container } = render(<Avatar firstName="A" lastName="B" online />);
     expect(container.querySelector(".bg-success")).toBeTruthy();
   });
+
+  it("reste un disque même avec un halo autour", () => {
+    const { container } = render(
+      <Avatar firstName="A" lastName="B" className="mx-auto ring-4 ring-[var(--bg)]" />,
+    );
+    const wrap = container.querySelector("span");
+    expect(wrap?.className).toContain("rounded-full");
+  });
 });

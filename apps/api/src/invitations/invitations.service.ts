@@ -39,7 +39,7 @@ export class InvitationsService {
     if (!invitee) throw new NotFoundException({ code: "USER_NOT_FOUND" });
     const now = new Date();
     const events = await this.prisma.event.findMany({
-      where: { status: "PUBLISHED", startsAt: { gt: now } },
+      where: { status: "PUBLISHED", wanted: false, startsAt: { gt: now } },
       orderBy: { startsAt: "asc" },
       take: 40,
       include: { participants: true, host: { include: { profile: true } } },

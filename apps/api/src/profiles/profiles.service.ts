@@ -36,15 +36,21 @@ export class ProfilesService {
         this.likes.statsFor(user.id),
         this.posts.listByAuthor(viewerId, user.id),
         this.prisma.event.findMany({
-          where: { hostId: user.id, status: { not: "CANCELLED" } },
+          where: { hostId: user.id, status: { not: "CANCELLED" }, wanted: false },
           orderBy: { startsAt: "desc" },
           take: 8,
           include: { host: { include: { profile: true } }, participants: true },
         }),
         this.prisma.event.findMany({
-          where: { participants: { some: { userId: user.id, status: "INTERESTED" } }, status: { not: "CANCELLED" } },
+          where: {
+            status: { not: "CANCELLED" },
+            OR: [
+              { participants: { some: { userId: user.id, status: "INTERESTED" } } },
+              { hostId: user.id, wanted: true },
+            ],
+          },
           orderBy: { startsAt: "asc" },
-          take: 8,
+          take: 12,
           include: { host: { include: { profile: true } }, participants: true },
         }),
         this.prisma.event.findMany({
@@ -120,6 +126,7 @@ function previewEvent(
     startsAt: Date;
     minAge: number | null;
     hostId: string;
+    wanted: boolean;
     host: { firstName: string; lastName: string; profile: { avatarUrl: string | null } | null };
     participants: Array<{ userId: string; status: string; showOnProfile: boolean }>;
   },
@@ -136,6 +143,7 @@ function previewEvent(
     minAge: e.minAge,
     taken: e.participants.filter((p) => ["RESERVED", "CONFIRMED", "PRESENT", "HOST"].includes(p.status)).length,
     hosted: e.hostId === ownerId,
+    wanted: e.wanted,
     showOnProfile: e.hostId === ownerId ? true : Boolean(mine?.showOnProfile),
     host: {
       firstName: e.host.firstName,

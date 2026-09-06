@@ -67,6 +67,10 @@ class CreateEventDto {
   @IsOptional()
   @IsIn(["HOLD", "PAY_FIRST", "PAY_REQUIRED"])
   paymentRule?: "HOLD" | "PAY_FIRST" | "PAY_REQUIRED";
+
+  @IsOptional()
+  @IsBoolean()
+  wanted?: boolean;
 }
 
 class HeartDto {
