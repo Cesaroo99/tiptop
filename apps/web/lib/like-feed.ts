@@ -1,4 +1,17 @@
-import type { FeedItem } from "./api";
+import type { FeedItem, LikePlacement } from "./api";
+
+/** Like unique : après chargement, seul le placement courant est actif. */
+export function viewerLikeActive(
+  placement: Pick<LikePlacement, "targetType" | "targetId"> | null | undefined,
+  type: LikePlacement["targetType"],
+  id: string,
+  fallback = false,
+  ready = false,
+): boolean {
+  if (!ready) return fallback;
+  if (!placement) return false;
+  return placement.targetType === type && placement.targetId === id;
+}
 
 export function releaseViewerLike(post: FeedItem): FeedItem {
   if (!post.likedByMe && !post.likeTime?.likedByMe) return post;

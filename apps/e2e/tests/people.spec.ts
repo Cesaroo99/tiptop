@@ -11,6 +11,9 @@ test.describe("Amies — cartes, distance, profil", () => {
   test("titre, voyants, distance et profil", async ({ page }) => {
     await page.goto("/people");
     await expect(page.getByRole("heading", { name: "Amies disponibles" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Amies/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Autour/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Mis de côté/ })).toBeVisible();
     await expect(page.getByText("Mon état")).toBeVisible();
     await expect(page.getByRole("button", { name: "Disponible", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Je ne sais pas", exact: true })).toBeVisible();
@@ -20,6 +23,10 @@ test.describe("Amies — cartes, distance, profil", () => {
     await expect(page.getByText(/km| m$/).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "Voir le profil" })).toBeVisible();
 
+    await expect(page.getByRole("button", { name: /Poser mon like|Mon like est ici/ })).toBeVisible();
+    await page.getByRole("button", { name: /Amies/ }).click();
+    await expect(page.getByRole("heading", { name: "Amies" })).toBeVisible();
+    await page.getByRole("button", { name: /Autour/ }).click();
     await page.getByRole("link", { name: "Voir le profil" }).click();
     await expect(page).toHaveURL(/\/u\//);
     await expect(page.getByText(/Disponible|Je ne sais pas|Indisponible/).first()).toBeVisible();

@@ -19,6 +19,7 @@ import { api, ApiError, type FeedItem } from "@/lib/api";
 import { applySoleLike, replaceFeedItem } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { useI18n } from "@/lib/i18n";
+import { viewerLikeActive } from "@/lib/like-feed";
 import { formatEventWhen } from "@/lib/time";
 import { presenceState } from "@tiptop/domain";
 
@@ -93,7 +94,7 @@ export default function ProfilePage() {
 function ProfileView() {
   const { username } = useParams<{ username: string }>();
   const { messages } = useI18n();
-  const { refresh: refreshPlacement } = useLikePlacement();
+  const { refresh: refreshPlacement, placement, ready } = useLikePlacement();
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -131,7 +132,7 @@ function ProfileView() {
   async function like(confirmTransfer = false) {
     if (!profile || profile.isSelf) return;
     try {
-      if (profile.likedByMe) {
+      if (viewerLikeActive(placement, "user", profile.id, profile.likedByMe, ready)) {
         await api(`/users/${profile.id}/like`, { method: "DELETE" });
         setProfile({ ...profile, likedByMe: false });
         await refreshPlacement();
@@ -176,6 +177,7 @@ function ProfileView() {
       | "AVAILABLE",
     availabilityUntil: profile.availabilityUntil ? new Date(profile.availabilityUntil) : null,
   });
+  const liked = viewerLikeActive(placement, "user", profile.id, profile.likedByMe, ready);
 
   return (
     <div className="pb-8">
@@ -253,11 +255,11 @@ function ProfileView() {
             </div>
             <div className="flex items-center gap-2">
               <IconButton
-                label={profile.likedByMe ? messages.social.likeHere : messages.social.likePlace}
-                tone={profile.likedByMe ? "accent" : "neutral"}
+                label={liked ? messages.social.likeHere : messages.social.likePlace}
+                tone={liked ? "accent" : "neutral"}
                 onClick={() => void like(false)}
               >
-                <HeartIcon size={17} filled={profile.likedByMe} />
+                <HeartIcon size={17} filled={liked} />
               </IconButton>
               <Link
                 href={`/invite/${profile.id}`}

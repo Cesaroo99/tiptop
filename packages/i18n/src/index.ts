@@ -354,6 +354,15 @@ export type Messages = {
     peopleNearby: string;
     peopleEmpty: string;
     peopleEmptyBody: string;
+    peopleFriends: string;
+    peopleAround: string;
+    peopleLater: string;
+    peopleFriendsEmpty: string;
+    peopleAroundEmpty: string;
+    peopleLaterEmpty: string;
+    circleFriend: string;
+    circleAround: string;
+    circleLater: string;
     invite: string;
     inviteJoin: string;
     previousPerson: string;
@@ -1148,6 +1157,15 @@ export const fr: Messages = {
     peopleNearby: "Amies disponibles",
     peopleEmpty: "Personne dispo dans ta zone",
     peopleEmptyBody: "Élargis tes filtres ou déclare-toi disponible. TipTop ne remplit pas ce carousel avec le monde entier.",
+    peopleFriends: "Amies",
+    peopleAround: "Autour",
+    peopleLater: "Mis de côté",
+    peopleFriendsEmpty: "Tes amies apparaissent après une invitation acceptée.",
+    peopleAroundEmpty: "Personne autour de toi dans cette zone.",
+    peopleLaterEmpty: "Personne de côté. Tu peux y poser quelqu’un pour plus tard.",
+    circleFriend: "Amie",
+    circleAround: "Autour",
+    circleLater: "De côté",
     invite: "Inviter",
     inviteJoin: "Inviter à me rejoindre",
     previousPerson: "Précédent",
@@ -1941,6 +1959,15 @@ export const en: Messages = {
     peopleTitle: "Friends nearby",
     peopleNearby: "Friends nearby",
     peopleEmpty: "Nobody available in your area",
+    peopleFriends: "Friends",
+    peopleAround: "Nearby",
+    peopleLater: "Saved",
+    peopleFriendsEmpty: "Friends appear after an accepted invite.",
+    peopleAroundEmpty: "Nobody around you in this area.",
+    peopleLaterEmpty: "Nobody saved. You can set someone aside for later.",
+    circleFriend: "Friend",
+    circleAround: "Nearby",
+    circleLater: "Saved",
     peopleEmptyBody: "Widen your filters or go available. TipTop will not fill this with the whole world.",
     invite: "Invite",
     inviteJoin: "Invite to join me",

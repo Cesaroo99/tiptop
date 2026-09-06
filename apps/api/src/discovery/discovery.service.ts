@@ -44,28 +44,52 @@ export class DiscoveryService {
     });
     const filterCity = filters.city || viewer?.profile?.city || "Yaoundé";
     const now = new Date();
-    const rows = await this.prisma.user.findMany({
-      where: {
-        id: { not: viewerId },
-        status: "ACTIVE",
-        profileCompleted: true,
-        profile: {
-          city: filterCity,
-          locationPrecision: { not: "HIDDEN" },
-        ...(filters.profession
-            ? { profession: { contains: filters.profession, mode: "insensitive" as const } }
-            : {}),
-        },
+    const personInclude = {
+      profile: true,
+      wishes: {
+        where: { visibility: "PUBLIC" },
+        orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
+        take: 4,
       },
-      include: {
-        profile: true,
-        wishes: {
-          where: { visibility: "PUBLIC" },
-          orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
-          take: 4,
+    } as const;
+    const [nearbyRows, contactRows, laterRows, myLike] = await Promise.all([
+      this.prisma.user.findMany({
+        where: {
+          id: { not: viewerId },
+          status: "ACTIVE",
+          profileCompleted: true,
+          profile: {
+            city: filterCity,
+            locationPrecision: { not: "HIDDEN" },
+            ...(filters.profession
+              ? { profession: { contains: filters.profession, mode: "insensitive" as const } }
+              : {}),
+          },
         },
-      },
-    });
+        include: personInclude,
+      }),
+      this.prisma.contact.findMany({
+        where: { ownerId: viewerId },
+        select: { personId: true, person: { include: personInclude } },
+      }),
+      this.prisma.inviteLater.findMany({
+        where: { ownerId: viewerId },
+        select: { personId: true, person: { include: personInclude } },
+      }),
+      this.prisma.likePeriod.findFirst({
+        where: { actorId: viewerId, endedAt: null },
+        select: { targetType: true, targetId: true },
+      }),
+    ]);
+    const friendIds = new Set(contactRows.map((c) => c.personId));
+    const laterIds = new Set(laterRows.map((r) => r.personId));
+    const byId = new Map(nearbyRows.map((u) => [u.id, u]));
+    for (const row of [...contactRows, ...laterRows]) {
+      if (row.person.status === "ACTIVE" && row.person.profileCompleted && !byId.has(row.person.id)) {
+        byId.set(row.person.id, row.person);
+      }
+    }
+    const rows = [...byId.values()];
     const gps =
       filters.lat != null && filters.lng != null && Number.isFinite(filters.lat) && Number.isFinite(filters.lng)
         ? { latitude: filters.lat, longitude: filters.lng }
@@ -150,6 +174,8 @@ export class DiscoveryService {
           available,
           availability: presence === "AVAILABLE" ? "AVAILABLE" : presence === "UNSURE" ? "BUSY" : "HIDDEN",
           presence,
+          circle: friendIds.has(u.id) ? "FRIEND" : laterIds.has(u.id) ? "LATER" : "NEARBY",
+          likedByMe: myLike?.targetType === "USER" && myLike.targetId === u.id,
           likeTime: {
             totalSeconds: likeSum.totalSeconds,
             label: formatLikeDuration(likeSum.totalSeconds, "fr"),

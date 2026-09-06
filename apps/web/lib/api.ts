@@ -193,6 +193,8 @@ export type PersonCard = {
   available?: boolean;
   availability?: string;
   presence?: "AVAILABLE" | "UNSURE" | "UNAVAILABLE";
+  circle?: "FRIEND" | "NEARBY" | "LATER";
+  likedByMe?: boolean;
   likeTime?: { totalSeconds: number; label: string };
   wishes?: Array<{ id: string; title: string; category: string }>;
   activeMood?: { id: string; activity: string | null; body: string; expiresAt: string } | null;

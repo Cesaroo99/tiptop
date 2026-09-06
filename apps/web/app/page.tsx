@@ -7,8 +7,9 @@ import { Avatar } from "@/components/Avatar";
 import { PlusIcon } from "@/components/Icons";
 import { CardSkeleton, EmptyState, ErrorBanner } from "@/components/ui";
 import { api, type FeedItem, type MoodItem } from "@/lib/api";
-import { applySoleLike, replaceFeedItem } from "@/lib/like-feed";
+import { applySoleLike, releaseViewerLike, replaceFeedItem } from "@/lib/like-feed";
 import { useI18n } from "@/lib/i18n";
+import { useLikePlacement } from "@/lib/like-placement";
 import Link from "next/link";
 
 export default function HomePage() {
@@ -21,6 +22,7 @@ export default function HomePage() {
 
 function HomeFeed() {
   const { messages } = useI18n();
+  const { placement, ready } = useLikePlacement();
   const [items, setItems] = useState<FeedItem[] | null>(null);
   const [moods, setMoods] = useState<MoodItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +43,17 @@ function HomeFeed() {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    setItems((cur) => {
+      if (!cur) return cur;
+      if (placement?.targetType === "post") {
+        return cur.map((p) => (p.id === placement.targetId ? p : releaseViewerLike(p)));
+      }
+      return cur.map(releaseViewerLike);
+    });
+  }, [ready, placement?.targetType, placement?.targetId]);
 
   return (
     <div className="space-y-4 px-4 py-3">
