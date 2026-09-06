@@ -351,18 +351,31 @@ function PeopleCarousel() {
           onPointerCancel={onPointerEnd}
           onDragStart={(e) => e.preventDefault()}
         >
-          <Link href={`/u/${person.username}`} className="relative block h-52 bg-gradient-to-br from-accent/15 to-yellow/15">
-            {person.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={person.avatarUrl} alt="" draggable={false} className="h-full w-full object-cover" />
-            ) : (
-              <div className="grid h-full place-items-center type-display text-accent">{person.firstName[0]}</div>
-            )}
-            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-10">
-              <AvailabilityBadge presence={presence} compact />
-              <span className="type-caption rounded-full bg-white/15 px-2 py-0.5 font-semibold text-white">{circleLabel}</span>
-            </div>
-          </Link>
+          <div className="relative">
+            <Link href={`/u/${person.username}`} className="relative block h-52 bg-gradient-to-br from-accent/15 to-yellow/15">
+              {person.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={person.avatarUrl} alt="" draggable={false} className="h-full w-full object-cover" />
+              ) : (
+                <div className="grid h-full place-items-center type-display text-accent">{person.firstName[0]}</div>
+              )}
+              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-10">
+                <AvailabilityBadge presence={presence} compact />
+                <span className="type-caption rounded-full bg-white/15 px-2 py-0.5 font-semibold text-white">{circleLabel}</span>
+              </div>
+            </Link>
+            <button
+              type="button"
+              disabled={busy}
+              aria-label={liked ? messages.social.likeHere : messages.social.likePlace}
+              onClick={() => void likePerson(false)}
+              className={`tap-scale absolute right-2.5 top-2.5 z-10 grid h-9 w-9 place-items-center rounded-full shadow-sm ${
+                liked ? "bg-accent text-on-primary" : "bg-black/45 text-white backdrop-blur-sm"
+              }`}
+            >
+              <HeartIcon size={16} filled={liked} />
+            </button>
+          </div>
           <div className="space-y-2.5 px-4 pb-4 pt-3 text-center">
             <h2 className="min-w-0">
               <span className="type-h2 line-clamp-2 break-words text-ink">
@@ -384,17 +397,6 @@ function PeopleCarousel() {
                 ) : null}
               </span>
             </h2>
-            <button
-              type="button"
-              disabled={busy}
-              aria-label={liked ? messages.social.likeHere : messages.social.likePlace}
-              onClick={() => void likePerson(false)}
-              className={`tap-scale mx-auto grid h-10 w-10 place-items-center rounded-full ${
-                liked ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
-              }`}
-            >
-              <HeartIcon size={17} filled={liked} />
-            </button>
             <p className="type-caption inline-flex max-w-full items-center justify-center gap-1.5 text-muted">
               <RouteIcon size={13} />
               <span className="truncate">
