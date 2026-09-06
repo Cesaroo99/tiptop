@@ -15,7 +15,7 @@ export type FeedCache = {
   at: number;
 };
 
-const KEY = "tiptop.home.feed.v2";
+const KEY = "tiptop.home.feed.v3";
 const TTL_MS = 30 * 60 * 1000;
 let memory: FeedCache | null = null;
 
