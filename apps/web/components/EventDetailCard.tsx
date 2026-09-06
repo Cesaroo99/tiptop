@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ageCategoryLabel, canInteractWithEvent, eventLifecycle, mapsDirectionsUrl } from "@tiptop/domain";
 import { api, ApiError, type CommentItem, type EventCard as EventCardType } from "@/lib/api";
@@ -11,12 +12,15 @@ import { Avatar, CertifiedMark } from "./Avatar";
 import { BookEventSheet } from "./BookEventSheet";
 import { CommentThread } from "./CommentThread";
 import {
+  CalendarIcon,
+  CameraIcon,
   CommentIcon,
   FlagIcon,
   GlobeIcon,
   HeartIcon,
   LinkIcon,
   MoreIcon,
+  PlusIcon,
   ShareIcon,
 } from "./Icons";
 import { MapThumb } from "./MapThumb";
@@ -28,11 +32,19 @@ import { IconButton, Modal, TextInput } from "./ui";
 export function EventDetailCard({
   event,
   onChanged,
+  variant = "guest",
+  onHostDuplicate,
+  onHostCancel,
 }: {
   event: EventCardType;
   onChanged?: (next: EventCardType) => void;
+  variant?: "guest" | "host";
+  onHostDuplicate?: () => void;
+  onHostCancel?: () => void;
 }) {
   const { messages } = useI18n();
+  const router = useRouter();
+  const hostView = variant === "host";
   const [transfer, setTransfer] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -112,11 +124,16 @@ export function EventDetailCard({
     zone: event.zone,
     placeName: event.venue,
   });
-  const stats = [
-    `${formatCompactCount(event.commentsCount ?? 0)} ${messages.social.comments}`,
-    `${formatCompactCount(event.reservedCount ?? event.taken)} ${messages.world.reservationsCount}`,
-    `${formatCompactCount(event.interestedCount ?? 0)} ${messages.world.interestedCount}`,
-  ];
+  const stats = hostView
+    ? [
+        `${formatCompactCount(event.commentsCount ?? 0)} ${messages.social.comments}`,
+        `${formatCompactCount(event.reservedCount ?? event.taken)} ${messages.world.reservationsCount}`,
+      ]
+    : [
+        `${formatCompactCount(event.commentsCount ?? 0)} ${messages.social.comments}`,
+        `${formatCompactCount(event.reservedCount ?? event.taken)} ${messages.world.reservationsCount}`,
+        `${formatCompactCount(event.interestedCount ?? 0)} ${messages.world.interestedCount}`,
+      ];
   const age = ageCategoryLabel(event.minAge);
 
   return (
@@ -215,6 +232,16 @@ export function EventDetailCard({
       ) : null}
 
       <div className="mt-3 flex items-center gap-2">
+        {hostView ? (
+          <Link
+            href={`/events/${event.id}/scan`}
+            className="tap-scale type-caption inline-flex items-center gap-2 rounded-pill border-2 border-accent px-3.5 py-2 font-bold uppercase tracking-wide text-accent"
+          >
+            <CameraIcon size={16} />
+            {messages.booking.validateTicket}
+          </Link>
+        ) : (
+          <>
         <button
           type="button"
           aria-label={messages.world.heartEvent}
@@ -259,6 +286,8 @@ export function EventDetailCard({
             {messages.booking.viewTicket}
           </Link>
         ) : null}
+          </>
+        )}
         {countdown && lifecycle.phase !== "ended" && lifecycle.phase !== "cancelled" ? (
           <span className="ml-auto flex min-w-0 items-center gap-1.5">
             <span className="type-caption whitespace-nowrap text-muted">{messages.world.eventInLabel}</span>
@@ -290,9 +319,24 @@ export function EventDetailCard({
         onClose={() => setOptionsOpen(false)}
         actions={[
           { key: "copy", label: messages.social.copyLink, icon: <LinkIcon size={17} />, onClick: () => void copyLink() },
-          ...(event.isHost
-            ? []
-            : [{ key: "report", label: messages.admin.report, icon: <FlagIcon size={15} />, onClick: () => setReportOpen(true) }]),
+          ...(hostView
+            ? [
+                {
+                  key: "edit",
+                  label: messages.world.manageEdit,
+                  icon: <CalendarIcon size={16} />,
+                  onClick: () => router.push(`/events/${event.id}/edit`),
+                },
+                ...(onHostDuplicate
+                  ? [{ key: "dup", label: messages.world.manageDuplicate, icon: <PlusIcon size={16} />, onClick: onHostDuplicate }]
+                  : []),
+                ...(onHostCancel && event.status !== "CANCELLED"
+                  ? [{ key: "cancel", label: messages.world.manageCancel, icon: <FlagIcon size={15} />, onClick: onHostCancel, danger: true }]
+                  : []),
+              ]
+            : event.isHost
+              ? []
+              : [{ key: "report", label: messages.admin.report, icon: <FlagIcon size={15} />, onClick: () => setReportOpen(true) }]),
         ]}
       />
       <ReportModal open={reportOpen} kind="EVENT" eventId={event.id} onClose={() => setReportOpen(false)} />

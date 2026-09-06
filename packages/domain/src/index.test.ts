@@ -30,6 +30,9 @@ import {
   eventLifecycle,
   EVENT_INVITE_DAILY_LIMIT,
   evaluateInvite,
+  filterHostPeople,
+  hostPeopleCounts,
+  hostPersonBucket,
   isEventParticipationPublic,
   remainingSeats,
   seatedGuestCount,
@@ -356,6 +359,26 @@ describe("visibilité des personnes liées", () => {
     expect(
       isEventParticipationPublic({ userId: "a", status: "CANCELLED", showOnProfile: true, viewerId: "a" }),
     ).toBe(false);
+  });
+});
+
+describe("onglets organisateur", () => {
+  it("classe intéressé / réservé / validé", () => {
+    expect(hostPersonBucket({ status: "INTERESTED" })).toBe("interested");
+    expect(hostPersonBucket({ status: "RESERVED", ticketStatus: "AWAITING_PAYMENT" })).toBe("reserved");
+    expect(hostPersonBucket({ status: "CONFIRMED", ticketStatus: "CONFIRMED" })).toBe("reserved");
+    expect(hostPersonBucket({ status: "PRESENT", ticketStatus: "CONSUMED" })).toBe("validated");
+    expect(hostPersonBucket({ status: "RESERVED", ticketStatus: "CONSUMED" })).toBe("validated");
+  });
+
+  it("filtre et compte sans doublon", () => {
+    const people = [
+      { status: "INTERESTED" },
+      { status: "RESERVED", ticketStatus: "CONFIRMED" },
+      { status: "PRESENT", ticketStatus: "CONSUMED" },
+    ];
+    expect(hostPeopleCounts(people)).toEqual({ all: 3, interested: 1, reserved: 1, validated: 1 });
+    expect(filterHostPeople(people, "interested")).toHaveLength(1);
   });
 });
 

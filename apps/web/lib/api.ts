@@ -227,6 +227,42 @@ export type TicketItem = {
   };
 };
 
+export type EventManagePerson = {
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  certified: boolean;
+  avatarUrl: string | null;
+  profession: string | null;
+  available: boolean;
+  status: string;
+  ticketId: string | null;
+  ticketStatus: string | null;
+  paid: boolean;
+  consumedAt: string | null;
+};
+
+export type EventManage = {
+  eventId: string;
+  counts: {
+    all: number;
+    interested: number;
+    reserved: number;
+    validated: number;
+    confirmed: number;
+    present: number;
+  };
+  tickets: Array<{
+    id: string;
+    status: string;
+    consumedAt: string | null;
+    paid: boolean;
+    holder: { id: string; firstName: string; lastName: string; username: string; certified: boolean };
+  }>;
+  people: EventManagePerson[];
+};
+
 export type ReservationItem = {
   id: string;
   eventId: string;
