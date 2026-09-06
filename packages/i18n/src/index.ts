@@ -387,6 +387,7 @@ export type Messages = {
     savedForLater: string;
     removeFromLater: string;
     addFriend: string;
+    addedFriend: string;
     age: string;
     distance: string;
     nextPerson: string;
@@ -1201,6 +1202,7 @@ export const fr: Messages = {
     savedForLater: "Mis de côté",
     removeFromLater: "Retirer",
     addFriend: "Ajouter comme amie",
+    addedFriend: "Déjà amie",
     age: "{age} ans",
     distance: "{km} km",
     nextPerson: "Suivant",
@@ -2015,6 +2017,7 @@ export const en: Messages = {
     savedForLater: "Saved for later",
     removeFromLater: "Remove",
     addFriend: "Add as friend",
+    addedFriend: "Already a friend",
     age: "{age} yrs",
     distance: "{km} km",
     nextPerson: "Next",

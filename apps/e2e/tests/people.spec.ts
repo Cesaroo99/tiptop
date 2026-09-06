@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { loginOnPage } from "../helpers/auth";
+import { fetchSessionToken, loginOnPage } from "../helpers/auth";
+
+const apiBase = () => process.env.E2E_API_URL ?? "http://localhost:3001";
 
 test.describe("Amies — cartes, distance, profil", () => {
   test.beforeEach(async ({ page, context }) => {
@@ -43,13 +45,33 @@ test.describe("Amies — cartes, distance, profil", () => {
     await expect(page.getByText("Tu le choisis ici")).toHaveCount(0);
   });
 
-  test("mis de côté : Retirer + ajouter comme amie", async ({ page }) => {
+  test("mis de côté : Retirer + ajouter comme amie sans disparaître", async ({ page }) => {
     await page.goto("/people");
     await page.getByRole("button", { name: /Mis de côté/ }).click();
     await expect(page.getByRole("heading", { name: "Mis de côté" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Retirer" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Mis de côté", exact: true })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Ajouter comme amie" })).toBeVisible();
+
+    const heading = page.getByRole("heading", { level: 2 });
+    const name = (await heading.innerText()).trim();
+    await page.getByRole("button", { name: "Ajouter comme amie" }).click();
+    await expect(page.getByRole("button", { name: "Déjà amie" })).toBeVisible();
+    await expect(heading).toHaveText(name);
+    await page.getByRole("button", { name: "Passer" }).click();
+    await page.getByRole("button", { name: "Précédent" }).click();
+    await expect(heading).toHaveText(name);
+    await expect(page.getByRole("button", { name: "Déjà amie" })).toBeVisible();
+
+    const token = await fetchSessionToken();
+    const headers = { Authorization: `Bearer ${token}` };
+    const res = await fetch(`${apiBase()}/api/discovery/people?city=${encodeURIComponent("Yaoundé")}`, { headers });
+    const data = (await res.json()) as { items: Array<{ id: string; firstName: string; lastName: string }> };
+    const person = data.items.find((p) => `${p.firstName} ${p.lastName}` === name);
+    if (person) {
+      await fetch(`${apiBase()}/api/contacts/${person.id}`, { method: "DELETE", headers });
+      await fetch(`${apiBase()}/api/invite-later/${person.id}`, { method: "POST", headers });
+    }
   });
 
   test("profil soi : régler l’état, pas les actions visiteur", async ({ page }) => {

@@ -194,6 +194,7 @@ export type PersonCard = {
   availability?: string;
   presence?: "AVAILABLE" | "UNSURE" | "UNAVAILABLE";
   circle?: "FRIEND" | "NEARBY" | "LATER";
+  addedAsFriend?: boolean;
   likedByMe?: boolean;
   likeTime?: { totalSeconds: number; label: string };
   wishes?: Array<{ id: string; title: string; category: string }>;
