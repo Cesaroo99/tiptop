@@ -176,6 +176,7 @@ export class SearchService {
     const rows = await this.prisma.mood.findMany({
       where: {
         kind: "MOOD",
+        hiddenAt: null,
         AND: [
           { OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
           {

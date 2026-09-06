@@ -36,6 +36,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
     { href: "/admin", label: messages.admin.home },
     { href: "/admin/users", label: messages.admin.users },
     { href: "/admin/posts", label: messages.admin.posts },
+    { href: "/admin/moods", label: messages.admin.moods },
     { href: "/admin/events", label: messages.admin.events },
     { href: "/admin/payments", label: messages.admin.payments },
     { href: "/admin/likes", label: messages.admin.likes },

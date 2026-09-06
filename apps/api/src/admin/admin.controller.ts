@@ -125,6 +125,16 @@ export class AdminController {
     return this.admin.hidePost(req.user.id, id, body.hide);
   }
 
+  @Get("moods")
+  moods() {
+    return this.admin.moods();
+  }
+
+  @Post("moods/:id/hide")
+  hideMood(@Req() req: Request & { user: PublicUser }, @Param("id") id: string, @Body() body: HideDto) {
+    return this.admin.hideMood(req.user.id, id, body.hide);
+  }
+
   @Get("events")
   events() {
     return this.admin.events();

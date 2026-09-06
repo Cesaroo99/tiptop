@@ -26,7 +26,10 @@ Base : décisions D01–D38 + fil mixte `dc8988d`.
 | `POST /payments/webhook` | Secret obligatoire en production |
 | `/upload/video`, `/upload/chat` | Session obligatoire |
 | `/terms` | « likes » → « vies » |
-| Docs | `AUDIT_TIPTOP.md`, `LAUNCH_READINESS.md`, `TIPTOP_PAYMENTS.md`, `TIPTOP_COMMISSION.md` |
+| Docs | `AUDIT_TIPTOP.md`, `LAUNCH_READINESS.md`, `TIPTOP_PAYMENTS.md`, `TIPTOP_COMMISSION.md`, `TIPTOP_ANALYTICS.md`, `TIPTOP_AI.md`, `TIPTOP_SECURITY.md` |
+| `Mood.hiddenAt` + Admin Moods | Liste / hide, ACTIONED masque post et mood |
+| Refund total réservation | Tickets non consommés → `REFUNDED` |
+| `AnalyticsService` | Catalogue + hooks signup/login/mood/like/follow/résa/paiement/check-in/profil/invite |
 
 ## Conflits tranchés
 

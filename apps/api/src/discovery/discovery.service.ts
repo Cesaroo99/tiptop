@@ -114,7 +114,7 @@ export class DiscoveryService {
 
     const activeMoods = ids.length
       ? await this.prisma.mood.findMany({
-          where: { authorId: { in: ids }, kind: "STATUS", expiresAt: { gt: now } },
+          where: { authorId: { in: ids }, kind: "STATUS", hiddenAt: null, expiresAt: { gt: now } },
           orderBy: { createdAt: "desc" },
         })
       : [];

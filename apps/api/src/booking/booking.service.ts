@@ -5,6 +5,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
   UnauthorizedException,
 } from "@nestjs/common";
 import {
@@ -37,6 +38,7 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { LikesService } from "../likes/likes.service";
 import { hmac } from "../crypto";
 import { loadEnv } from "../env";
+import { AnalyticsService } from "../analytics/analytics.service";
 
 const env = loadEnv();
 
@@ -46,6 +48,7 @@ export class BookingService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(NotificationsService) private readonly notifications: NotificationsService,
     @Inject(LikesService) private readonly likes: LikesService,
+    @Optional() @Inject(AnalyticsService) private readonly analytics?: AnalyticsService,
   ) {}
 
   async checkout(
@@ -217,6 +220,10 @@ export class BookingService {
         }
         return row;
       });
+      this.analytics?.track("reservation.create", {
+        userId: bookerId,
+        props: { eventId: event.id, amountXaf, seats: holders.length },
+      });
       return this.mapReservation(reservation);
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
@@ -331,6 +338,10 @@ export class BookingService {
         entityType: "reservation",
         entityId: reservation.id,
       });
+      this.analytics?.track("payment.succeed", {
+        userId,
+        props: { reservationId: reservation.id, amountXaf: reservation.amountXaf },
+      });
     }
 
     const next = await this.prisma.reservation.findUnique({
@@ -407,6 +418,10 @@ export class BookingService {
       entityId: ticket.id,
     });
     void updated;
+    this.analytics?.track("ticket.checkin", {
+      userId: actorId,
+      props: { ticketId: ticket.id, eventId: ticket.eventId, holderId: ticket.holderId },
+    });
     return {
       ok: true,
       code: "OK",

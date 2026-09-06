@@ -5,6 +5,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import {
   canAcceptInvitation,
@@ -20,6 +21,7 @@ import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { BookingService } from "../booking/booking.service";
 import { ChatService } from "../chat/chat.service";
+import { AnalyticsService } from "../analytics/analytics.service";
 
 @Injectable()
 export class InvitationsService {
@@ -28,6 +30,7 @@ export class InvitationsService {
     @Inject(NotificationsService) private readonly notifications: NotificationsService,
     @Inject(BookingService) private readonly booking: BookingService,
     @Inject(ChatService) private readonly chat: ChatService,
+    @Optional() @Inject(AnalyticsService) private readonly analytics?: AnalyticsService,
   ) {}
 
   async relevantEvents(inviterId: string, inviteeId: string) {
@@ -155,6 +158,7 @@ export class InvitationsService {
       entityType: "invitation",
       entityId: invitation.id,
     });
+    this.analytics?.track("invite.send", { userId: inviterId, props: { inviteeId, eventId } });
     try {
       await this.chat.postDirectInvite(inviterId, inviteeId, {
         inviteType: "EVENT",

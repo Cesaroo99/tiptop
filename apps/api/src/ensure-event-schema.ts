@@ -42,6 +42,7 @@ export const EVENT_SCHEMA_STATEMENTS = [
     CONSTRAINT "EventGroupMember_pkey" PRIMARY KEY ("id")
   )`,
   `ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'SETTINGS_UPDATE'`,
+  `ALTER TABLE "Mood" ADD COLUMN IF NOT EXISTS "hiddenAt" TIMESTAMP(3)`,
 ] as const;
 
 export async function applyEventSchemaFixes(

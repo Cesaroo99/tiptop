@@ -1,12 +1,14 @@
-import { BadRequestException, ConflictException, Inject, Injectable } from "@nestjs/common";
+import { BadRequestException, ConflictException, Inject, Injectable, Optional } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { AnalyticsService } from "../analytics/analytics.service";
 
 @Injectable()
 export class FollowsService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(NotificationsService) private readonly notifications: NotificationsService,
+    @Optional() @Inject(AnalyticsService) private readonly analytics?: AnalyticsService,
   ) {}
 
   async follow(followerId: string, followeeId: string) {
@@ -23,6 +25,7 @@ export class FollowsService {
       entityType: "user",
       entityId: followeeId,
     });
+    this.analytics?.track("follow.create", { userId: followerId, props: { followeeId } });
     return { ok: true, following: true };
   }
 

@@ -724,12 +724,14 @@ model Mood {
   soundKey   String?
   soundLabel String?
   expiresAt  DateTime?
+  hiddenAt   DateTime?
   createdAt  DateTime       @default(now())
   comments   MoodComment[]
   reports    Report[]
 
   @@index([expiresAt])
   @@index([kind, expiresAt])
+  @@index([hiddenAt])
 }
 
 model MoodComment {

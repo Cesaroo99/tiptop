@@ -22,9 +22,11 @@ import { WishesModule } from "./wishes/wishes.module";
 import { SocialInvitesModule } from "./social-invites/social-invites.module";
 import { OffersModule } from "./offers/offers.module";
 import { InvitePoolModule } from "./invite-pool/invite-pool.module";
+import { AnalyticsModule } from "./analytics/analytics.module";
 
 @Module({
   imports: [
+    AnalyticsModule,
     PrismaModule,
     AuthModule,
     UsersModule,

@@ -45,6 +45,7 @@ import {
 import { interestFromActivity, isMoodInterest, parseMoodInterests, statusExpiresAt, STATUS_HOURS } from "../src/moods";
 import { canConsumeTicket, canShowQr, isInEntryWindow, signTicketQr, verifyTicketQr } from "../src/tickets";
 import { cityCoords, osmEmbedUrl, WORLD_CITIES } from "../src/world-cities";
+import { ANALYTICS_EVENTS, isAnalyticsEvent } from "../src/analytics";
 import {
   applyWebhook,
   chargeBreakdown,
@@ -596,6 +597,14 @@ describe("tickets & paiement", () => {
     expect(later.chargeTotalXaf).toBe(5000);
     expect(later.platformFeeXaf).toBe(500);
     expect(later.organizerNetXaf).toBe(4400);
+  });
+
+  it("catalogue les événements analytics de lancement", () => {
+    expect(isAnalyticsEvent("auth.signup")).toBe(true);
+    expect(isAnalyticsEvent("ticket.checkin")).toBe(true);
+    expect(isAnalyticsEvent("unknown")).toBe(false);
+    expect(ANALYTICS_EVENTS).toContain("mood.view");
+    expect(ANALYTICS_EVENTS).toContain("payment.succeed");
   });
 
   it("refuse un webhook de production sans secret", () => {

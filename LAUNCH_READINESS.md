@@ -25,8 +25,9 @@ Ces écrans restent **distincts**. La richesse vient des liens, pas d’un écra
 | Réservation | Prêt | Gratuit = 0. Payant = prix billet. |
 | Paiement | Prêt **mock** | D25. Pas de vrai PSP. |
 | Billet / QR / check-in | Prêt | HMAC + consume atomique. |
-| Admin | Prêt | + monétisation 0 %. |
+| Admin | Prêt | + monétisation 0 % + Moods. |
 | Commission | Prêt | 0 %, configurable, auditée. |
+| Analytics | Prêt (logs) | Catalogue + hooks. Pas de dashboard. |
 
 ## Go / no-go
 
@@ -36,22 +37,20 @@ Ces écrans restent **distincts**. La richesse vient des liens, pas d’un écra
 - l’OTP `1234` est un mode démo (`OTP_ALLOW_MOCK`) ;
 - les CGU `/terms` sont encore un brouillon juridique.
 
-**No-go argent réel** tant que : PSP choisi, secret webhook en prod, `SESSION_SECRET` unique, OTP SMS, CGU validées, refund → invalidation ticket.
+**No-go argent réel** tant que : PSP choisi, secret webhook en prod, `SESSION_SECRET` unique, OTP SMS, CGU validées.
 
 ## Reste à développer (hors ce tour)
 
 1. Provider de paiement réel (ports déjà prévus).
 2. SMS OTP + retrait progressif du mock.
 3. `SESSION_SECRET` / CORS / `PAYMENT_WEBHOOK_SECRET` en variables prod.
-4. Refund / cancel → void tickets.
-5. Hide Mood côté admin (colonne + filtres).
-6. ACTIONED report → masquage mood / message.
-7. Suppression de compte.
-8. CGU / privacy UI juridiques.
-9. Analytics produit (inscription, vue, mood, paiement, check-in…).
-10. Compteurs follow sur le profil (sans changer l’architecture).
-11. Push réel (D27).
-12. IA reco / modération — **pas** un prérequis lancement.
+4. Cancel event → remboursement auto (volontairement non fait : mock).
+5. ACTIONED → hide message (pas de colonne Message).
+6. Suppression de compte.
+7. CGU / privacy UI juridiques.
+8. Hooks analytics restants (`post.create`, `message.send`, `friend.accept`, `availability.set`, `event.create`).
+9. Push réel (D27).
+10. IA reco / modération — **pas** un prérequis lancement.
 
 ## Vérifications automatisées
 

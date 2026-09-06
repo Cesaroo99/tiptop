@@ -210,6 +210,36 @@ export class AdminService {
     return { ok: true, hidden: hide };
   }
 
+  async moods() {
+    const items = await this.prisma.mood.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: { author: { select: person } },
+    });
+    return {
+      items: items.map((m) => ({
+        id: m.id,
+        body: m.body,
+        kind: m.kind,
+        videoUrl: m.videoUrl,
+        hidden: Boolean(m.hiddenAt),
+        createdAt: m.createdAt.toISOString(),
+        author: m.author,
+      })),
+    };
+  }
+
+  async hideMood(actorId: string, moodId: string, hide: boolean) {
+    const mood = await this.prisma.mood.findUnique({ where: { id: moodId } });
+    if (!mood) throw new NotFoundException({ code: "MOOD_NOT_FOUND" });
+    await this.prisma.mood.update({
+      where: { id: moodId },
+      data: { hiddenAt: hide ? new Date() : null },
+    });
+    await this.audit(actorId, hide ? "POST_HIDE" : "POST_UNHIDE", "mood", moodId);
+    return { ok: true, hidden: hide };
+  }
+
   async events() {
     const items = await this.prisma.event.findMany({
       orderBy: { startsAt: "desc" },
@@ -354,10 +384,20 @@ export class AdminService {
         refundedAt: new Date(),
       },
     });
+    if (!partial && payment.kind === "RESERVATION" && payment.reservationId) {
+      await this.prisma.ticket.updateMany({
+        where: {
+          reservationId: payment.reservationId,
+          status: { in: ["DRAFT", "AWAITING_PAYMENT", "CONFIRMED"] },
+        },
+        data: { status: "REFUNDED" },
+      });
+    }
     await this.audit(actor.id, "PAYMENT_REFUND", "payment", paymentId, {
       likesKept: payment.kind === "LIKE_PACK",
       amountXaf: requested,
       partial,
+      ticketsVoided: !partial && payment.kind === "RESERVATION",
     });
     await this.notifications.create({
       userId: payment.userId,
@@ -436,6 +476,10 @@ export class AdminService {
       where: { id: reportId },
       data: { status, reviewedById: actorId, reviewedAt: new Date() },
     });
+    if (status === "ACTIONED") {
+      if (report.postId) await this.hidePost(actorId, report.postId, true);
+      if (report.moodId) await this.hideMood(actorId, report.moodId, true);
+    }
     await this.audit(actorId, "REPORT_REVIEW", "report", reportId, { status });
     return { ok: true };
   }

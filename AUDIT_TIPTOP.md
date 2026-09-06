@@ -98,14 +98,14 @@ Socle audité : `main` / `dc8988d` (fil mixte + libellé « vie »).
 | Webhook `POST /payments/webhook` | Aucune auth : un idempotencyKey connu permet de confirmer un paiement (IDOR) | Sécu | **Corrigé** : secret requis en production |
 | Uploads `/upload/video` et `/upload/chat` | Aucune session | Sécu | **Corrigé** : session obligatoire |
 | CGU `/terms` | Texte encore « likes » alors que le produit dit « vie » | Cohérence | **Corrigé** |
-| Refund admin | Change le statut Payment, ne void pas les tickets | Produit | Documenté, **non modifié** (mock D25, éviter de casser les billets démo) |
+| Refund admin | Change le statut Payment, ne void pas les tickets | Produit | **Corrigé** : refund total RESERVATION → tickets non consommés `REFUNDED` |
 | Cancel event | Ne rembourse pas automatiquement | Produit | Conservé (décision implicite mock) |
 | OTP mock en prod | `OTP_ALLOW_MOCK` volontaire pour la démo téléphone | Sécu / démo | **Conservé** (D31 + `TIPTOP_ENVIRONMENT.md`) |
 | `SESSION_SECRET` défaut `dev-only-secret` | Dangereux si oublié en prod | Sécu | Documenté — ne pas casser le local |
 | CORS `origin: true` | Permissif | Sécu | Documenté, pas de changement à l’aveugle |
-| Reports ACTIONED | Ne masque pas moods / messages | Modération | Restant |
-| Follow | API + Mood « Suivre », compteurs profil incomplets | Produit | Restant (ne pas inventer une UI profil) |
-| Analytics produit | Aucun événement mesurable structuré | Lancement | Restant (architecture à préparer, pas un produit IA) |
+| Reports ACTIONED | Ne masque pas moods / messages | Modération | **Corrigé** pour posts et moods. Messages : pas de `hiddenAt` (reste) |
+| Follow | API + Mood « Suivre », compteurs profil incomplets | Produit | **Déjà en place** (`followersCount` / `followingCount` sur le profil) |
+| Analytics produit | Aucun événement mesurable structuré | Lancement | **Corrigé** : catalogue + `AnalyticsService` + hooks clés |
 
 ---
 
@@ -117,6 +117,9 @@ Socle audité : `main` / `dc8988d` (fil mixte + libellé « vie »).
 - Distinction prix du billet / frais prestataire / commission TipTop.
 - Admin → Monétisation / Paiements.
 - Durcissement webhook et uploads.
+- Admin Moods + `hiddenAt` + ACTIONED.
+- Analytics mesurable (logs structurés).
+- Refund total → invalidation des billets non consommés.
 
 ### Requis par ce prompt mais **en conflit ou hors phase** — ne pas inventer
 
@@ -130,7 +133,7 @@ Socle audité : `main` / `dc8988d` (fil mixte + libellé « vie »).
 | SMS OTP réel | Adaptateur prévu, provider non choisi. |
 | Push réel | D27 no-op volontaire. |
 | IA recommandations / anti-spam | Non nécessaire au lancement. |
-| Admin Moods dédié (hide) | `Mood` n’a pas `hiddenAt`. Ajouter une colonne + filtres partout est trop invasif pour ce tour. Les signalements MOOD existent déjà. |
+| Admin Moods dédié (hide) | **Livré** (liste + hide, filet schéma). |
 
 ---
 
@@ -143,14 +146,14 @@ Les plus importants :
 1. **Paiements réels vs mock (D25)** — ce prompt dit « le paiement du billet DOIT fonctionner ». L’existant fait payer le **prix du billet** via mock (0 $ si gratuit, montant sinon). Un vrai PSP n’a jamais été validé. **On conserve le mock** et on rend le fonctionnement du billet + la commission 0 % explicites.
 2. **Moods partout** — intention = découvrabilité contextuelle (déjà : fil mixte, page Moods, onglet profil existant). **Pas** de nouvelles galeries.
 3. **OTP mock prod** — ce prompt pousse la sécu ; D31 + environnement imposent le code 1234 pour la démo téléphone. **On conserve**.
-4. **Analytics / IA** — préparer plus tard, ne pas inventer un produit.
+4. **Analytics / IA** — catalogue + logs ; pas de produit IA (`TIPTOP_AI.md`).
 
 ---
 
 ## RECOMMANDATIONS
 
 1. **Lancer** avec le mock de paiement documenté, commission 0 % configurable, parcours social + billet QR opérationnels.
-2. **Avant un vrai argent** : choisir le PSP, brancher les ports déjà prévus, secret webhook, void tickets au refund, CGU juridiques.
+2. **Avant un vrai argent** : choisir le PSP, brancher les ports déjà prévus, secret webhook, CGU juridiques.
 3. **Ne pas** élargir le Home, le Mood ou le Profil « pour tout mettre partout ».
 4. **Suivre** le filet schéma (`ensure-schema`) : les 500 prod venaient de colonnes manquantes, pas d’un manque de features.
 
@@ -174,8 +177,41 @@ Les plus importants :
 | Uploads ouverts | Next routes sans session | Audit sécu | Non | **Exiger** la session. |
 | OTP 1234 en prod | D31 / env démo | Durcir l’auth | Oui | **Conserver** le mock démo. SMS réel = reste à faire. |
 | Push | No-op D27 | Vérifier les notifs | Non | In-app suffit au lancement. |
-| Admin Moods | Reports MOOD seulement | Admin doit gérer les Moods | Partiel | Signalements conservés. Hide Mood = reste (schéma). |
-| Analytics | Aucun | Mesurer les événements clés | Non bloquant | Documenté comme reste. Pas de produit IA. |
-| Refund → void ticket | Non | Auditer check-in / remboursement | Partiel | **Ne pas casser** les billets mock existants. Documenté. |
+| Admin Moods | Reports MOOD seulement | Admin doit gérer les Moods | Non | **Ajouter** liste + hide. Pas de galerie utilisateur. |
+| Analytics | Aucun | Mesurer les événements clés | Non | Catalogue + logs. Pas de dashboard. |
+| Refund → void ticket | Non | Auditer check-in / remboursement | Non | Refund **total** void les billets non consommés. |
 
 **Règle appliquée :** une instruction récente n’est jamais supérieure à une décision produit déjà validée.
+
+---
+
+## COUVERTURE DU PROMPT (sections 1–40)
+
+| § | Demande | Statut |
+| --- | --- | --- |
+| 1–5 | Hiérarchie, ne pas redéfinir, pas Moods partout | Respecté |
+| 6–7 | Philosophie + catégories existantes | Préservé |
+| 8 | Feed vivant, ne pas réinventer la structure | Préservé (mix existant) |
+| 9 | Moods immersifs | Préservé |
+| 10 | Profil = personne | Préservé |
+| 11 | Follow vs ami | Préservé |
+| 12 | Découverte / proximité | Préservé |
+| 13–14 | Disponibilité / rencontres volontaires | Préservé |
+| 15 | Wishlist / envies | Préservé (pas marketplace) |
+| 16 | Invitations existantes | Préservé |
+| 17 | Événements | Préservé |
+| 18–20 | Paiement billet + commission 0 % centrale | Livré |
+| 21 | Admin (dont Moods) | Livré + Moods |
+| 22 | Admin monétisation + audit | Livré |
+| 23–24 | Billetterie / check-in | Audité + void au refund total |
+| 25–26 | Messagerie / notifs | Préservé (pas de notifs inutiles) |
+| 27 | Privacy localisation | Préservé |
+| 28 | Sécu BOLA/IDOR | Webhook, uploads, tickets — `TIPTOP_SECURITY.md` |
+| 29 | Performance | Pas de dégradation volontaire |
+| 30 | Analytics mesurable | Livré (`TIPTOP_ANALYTICS.md`) |
+| 31 | Préparer IA, ne pas développer | `TIPTOP_AI.md` |
+| 32–34 | Ne pas casser / ne pas surinterpréter | Respecté |
+| 35–36 | AUDIT + CONFLICT REVIEW | Ce fichier |
+| 37–38 | Parcours + une fonction par écran | `LAUNCH_READINESS.md` |
+| 39 | Livrables | Tous présents |
+| 40 | Identité TipTop | Préservée |

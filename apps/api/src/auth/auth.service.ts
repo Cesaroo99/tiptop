@@ -4,6 +4,7 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  Optional,
   UnauthorizedException,
 } from "@nestjs/common";
 import { Availability, LocationPrecision, UserStatus } from "@prisma/client";
@@ -17,6 +18,7 @@ import {
   resolveUserCurrency,
 } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
+import { AnalyticsService } from "../analytics/analytics.service";
 import { loadEnv } from "../env";
 import { hashesEqual, hmac, randomToken, usernameFromName } from "../crypto";
 
@@ -54,7 +56,10 @@ export type PublicUser = {
 
 @Injectable()
 export class AuthService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Optional() @Inject(AnalyticsService) private readonly analytics?: AnalyticsService,
+  ) {}
 
   toPublic(user: {
     id: string;
@@ -201,6 +206,7 @@ export class AuthService {
       where: { phoneE164: parsed.e164 },
       include: { profile: true },
     });
+    const isNew = !user;
 
     if (!user) {
       const username = usernameFromName("membre", parsed.national.slice(-4));
@@ -243,6 +249,7 @@ export class AuthService {
         expiresAt,
       },
     });
+    this.analytics?.track(isNew ? "auth.signup" : "auth.login", { userId: user.id });
 
     return {
       token: raw,

@@ -1,8 +1,9 @@
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { Inject, Injectable, NotFoundException, Optional } from "@nestjs/common";
 import { PrismaService } from "../prisma.service";
 import { FollowsService } from "../follows/follows.service";
 import { LikesService } from "../likes/likes.service";
 import { PostsService } from "../posts/posts.service";
+import { AnalyticsService } from "../analytics/analytics.service";
 
 @Injectable()
 export class ProfilesService {
@@ -11,6 +12,7 @@ export class ProfilesService {
     @Inject(FollowsService) private readonly follows: FollowsService,
     @Inject(LikesService) private readonly likes: LikesService,
     @Inject(PostsService) private readonly posts: PostsService,
+    @Optional() @Inject(AnalyticsService) private readonly analytics?: AnalyticsService,
   ) {}
 
   async byUsername(viewerId: string, username: string) {
@@ -73,12 +75,14 @@ export class ProfilesService {
           where: {
             authorId: user.id,
             kind: "MOOD",
+            hiddenAt: null,
             OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
           },
           orderBy: { createdAt: "desc" },
           take: 12,
         }),
       ]);
+    this.analytics?.track("profile.view", { userId: viewerId, props: { profileId: user.id } });
     return {
       id: user.id,
       username: user.username,

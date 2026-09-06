@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from "@nestjs/common";
 import {
   interestFromActivity,
   isMoodActive,
@@ -15,6 +15,7 @@ import {
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { LikesService } from "../likes/likes.service";
+import { AnalyticsService } from "../analytics/analytics.service";
 
 @Injectable()
 export class MoodsService {
@@ -22,6 +23,7 @@ export class MoodsService {
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(NotificationsService) private readonly notifications: NotificationsService,
     @Inject(LikesService) private readonly likes: LikesService,
+    @Optional() @Inject(AnalyticsService) private readonly analytics?: AnalyticsService,
   ) {}
 
   async create(
@@ -122,6 +124,7 @@ export class MoodsService {
         expiresAt,
       },
     });
+    this.analytics?.track("mood.create", { userId: authorId, props: { kind, id: mood.id } });
     return this.get(authorId, mood.id);
   }
 
@@ -139,8 +142,8 @@ export class MoodsService {
     const rows = await this.prisma.mood.findMany({
       where:
         kind === "STATUS"
-          ? { kind: "STATUS", expiresAt: { gt: now } }
-          : { kind: "MOOD", OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+          ? { kind: "STATUS", hiddenAt: null, expiresAt: { gt: now } }
+          : { kind: "MOOD", hiddenAt: null, OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
       orderBy: { createdAt: "desc" },
       take: 40,
       include: {
@@ -197,6 +200,7 @@ export class MoodsService {
       },
     });
     if (!mood) throw new NotFoundException({ code: "MOOD_NOT_FOUND" });
+    if (mood.hiddenAt) throw new NotFoundException({ code: "MOOD_NOT_FOUND" });
     if (!isMoodActive(mood.expiresAt)) throw new NotFoundException({ code: "MOOD_EXPIRED" });
     if (mood.kind === "STATUS" && mood.authorId !== viewerId) {
       const [follow, contact] = await Promise.all([
@@ -217,12 +221,13 @@ export class MoodsService {
       where: { followerId: viewerId, followeeId: mood.authorId },
       select: { id: true },
     });
+    this.analytics?.track("mood.view", { userId: viewerId, props: { id: mood.id } });
     return this.map(mood, extras, likeTimes.get(mood.id), Boolean(follow));
   }
 
   async comments(viewerId: string, moodId: string) {
     const mood = await this.prisma.mood.findUnique({ where: { id: moodId } });
-    if (!mood) throw new NotFoundException({ code: "MOOD_NOT_FOUND" });
+    if (!mood || mood.hiddenAt) throw new NotFoundException({ code: "MOOD_NOT_FOUND" });
     const rows = await this.prisma.moodComment.findMany({
       where: { moodId },
       orderBy: { createdAt: "asc" },
@@ -240,7 +245,7 @@ export class MoodsService {
     const text = body.trim();
     if (!text) throw new BadRequestException({ code: "COMMENT_EMPTY" });
     const mood = await this.prisma.mood.findUnique({ where: { id: moodId } });
-    if (!mood) throw new NotFoundException({ code: "MOOD_NOT_FOUND" });
+    if (!mood || mood.hiddenAt) throw new NotFoundException({ code: "MOOD_NOT_FOUND" });
     let parent: { id: string; authorId: string } | null = null;
     if (parentId) {
       parent = await this.prisma.moodComment.findFirst({

@@ -3,6 +3,7 @@ import {
   ConflictException,
   Inject,
   Injectable,
+  Optional,
 } from "@nestjs/common";
 import {
   likeProduction,
@@ -27,6 +28,7 @@ import {
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { AnalyticsService } from "../analytics/analytics.service";
 import {
   likePlacementHref,
   likePlacementLabel,
@@ -73,6 +75,7 @@ export class LikesService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(NotificationsService) private readonly notifications: NotificationsService,
+    @Optional() @Inject(AnalyticsService) private readonly analytics?: AnalyticsService,
   ) {}
 
   packs() {
@@ -197,6 +200,7 @@ export class LikesService {
       entityId: toUserId,
     });
     const unlocked = await this.syncMilestones(toUserId);
+    this.analytics?.track("like.place", { userId: ownerId, props: { toUserId } });
     return { ok: true, transferredFrom: result.fromTargetKey, unlocked };
   }
 

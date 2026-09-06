@@ -871,6 +871,7 @@ export type Messages = {
     home: string;
     users: string;
     posts: string;
+    moods: string;
     events: string;
     payments: string;
     likes: string;
@@ -1802,6 +1803,7 @@ export const fr: Messages = {
     home: "Vue d’ensemble",
     users: "Utilisateurs",
     posts: "Contenus",
+    moods: "Moods",
     events: "Sorties",
     payments: "Paiements",
     likes: "Anomalies vie",
@@ -2733,6 +2735,7 @@ export const en: Messages = {
     home: "Overview",
     users: "Users",
     posts: "Content",
+    moods: "Moods",
     events: "Meetups",
     payments: "Payments",
     likes: "Life anomalies",

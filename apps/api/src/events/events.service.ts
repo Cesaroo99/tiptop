@@ -208,7 +208,7 @@ export class EventsService {
   /** Moods liés à l'événement (#4-6, #46) : boucle contenu social ↔ monde réel, y compris les souvenirs après coup. */
   async moods(eventId: string) {
     const rows = await this.prisma.mood.findMany({
-      where: { eventId },
+      where: { eventId, hiddenAt: null },
       orderBy: { createdAt: "desc" },
       take: 24,
       include: {
