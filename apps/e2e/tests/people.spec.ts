@@ -104,7 +104,6 @@ test.describe("Amies — cartes, distance, profil", () => {
     await expect(page.getByRole("button", { name: "Disponible", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Je ne sais pas", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Indisponible", exact: true })).toBeVisible();
-    await expect(page.getByText(/Tu le choisis ici/)).toBeVisible();
     await expect(page.getByRole("link", { name: "Mon compte" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Message" })).toHaveCount(0);
     await page.getByRole("button", { name: "Je ne sais pas", exact: true }).click();

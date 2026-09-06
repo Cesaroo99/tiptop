@@ -259,33 +259,33 @@ function ProfileView() {
 
   return (
     <div className="pb-10">
-      <div className="relative h-28 bg-gradient-to-br from-accent/20 via-yellow/10 to-transparent">
+      <div className="relative h-24 bg-gradient-to-br from-accent/20 via-yellow/10 to-transparent">
         {profile.coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={profile.coverUrl} alt="" className="h-full w-full object-cover" />
         ) : null}
       </div>
-      <div className="-mt-11 px-4 text-center">
-        <Avatar
-          src={profile.avatarUrl}
-          firstName={profile.firstName}
-          lastName={profile.lastName}
-          size="xl"
-          online={presence === "AVAILABLE"}
-          className="mx-auto ring-4 ring-[var(--bg)]"
-        />
-        <h1 className="type-h2 mt-3 flex items-center justify-center gap-1.5 text-ink">
+      <div className="-mt-10 px-4 text-center">
+        <span className="mx-auto grid h-24 w-24 place-items-center rounded-full bg-[var(--bg)]">
+          <Avatar
+            src={profile.avatarUrl}
+            firstName={profile.firstName}
+            lastName={profile.lastName}
+            size={88}
+            online={presence === "AVAILABLE"}
+          />
+        </span>
+        <h1 className="type-h2 mt-2 flex items-center justify-center gap-1.5 text-ink">
           {profile.firstName} {profile.lastName}
           {profile.certified ? <CertifiedMark /> : null}
         </h1>
-        {profile.profession ? <p className="type-body-sm mt-1 text-muted">{profile.profession}</p> : null}
+        {profile.profession ? <p className="type-body-sm mt-0.5 text-muted">{profile.profession}</p> : null}
 
         {profile.isSelf ? (
-          <div className="mt-4 space-y-3">
+          <div className="mt-3 space-y-2">
             <p className="type-caption font-semibold text-muted">{messages.account.status}</p>
             <PresencePicker value={presence} busy={statusBusy} onChange={(k) => void setMyPresence(k)} />
-            <p className="type-caption mx-auto max-w-xs leading-5 text-muted">{messages.account.statusHint}</p>
-            <Link href="/account" className="type-body-sm inline-block font-semibold text-accent">
+            <Link href="/account" className="type-caption inline-block font-semibold text-accent">
               {messages.account.title}
             </Link>
           </div>
@@ -341,38 +341,28 @@ function ProfileView() {
         )}
       </div>
 
-      <dl className="mt-4 space-y-2 px-5">
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4">
         {place ? (
-          <div className="flex items-center gap-3 text-left">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-sunken text-muted">
-              <PinIcon size={14} />
-            </span>
-            <dd className="type-body-sm text-ink">
-              {messages.world.livesAt.replace("{place}", place)}
-              {profile.zone ? <span className="text-muted"> · {profile.zone}</span> : null}
-            </dd>
-          </div>
+          <span className="type-caption inline-flex items-center gap-1 text-muted">
+            <PinIcon size={12} />
+            {place}
+            {profile.zone ? ` · ${profile.zone}` : ""}
+          </span>
         ) : null}
         {websiteLabel ? (
-          <div className="flex items-center gap-3 text-left">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-sunken text-muted">
-              <LinkIcon size={14} />
-            </span>
-            <dd className="type-body-sm truncate text-accent">{websiteLabel}</dd>
-          </div>
+          <span className="type-caption inline-flex items-center gap-1 truncate text-accent">
+            <LinkIcon size={12} />
+            {websiteLabel}
+          </span>
         ) : null}
         {profile.bio ? (
-          <button type="button" className="flex w-full items-center gap-3 text-left" onClick={() => setBioOpen((v) => !v)}>
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-surface-sunken text-muted">
-              <InfoIcon size={14} />
-            </span>
-            <span className="type-body-sm text-ink">
-              {messages.world.moreAbout.replace("{name}", profile.firstName)}
-            </span>
+          <button type="button" className="type-caption inline-flex items-center gap-1 font-semibold text-ink" onClick={() => setBioOpen((v) => !v)}>
+            <InfoIcon size={12} />
+            {messages.world.moreAbout.replace("{name}", profile.firstName)}
           </button>
         ) : null}
-        {bioOpen && profile.bio ? <p className="type-body-sm pl-11 leading-6 text-muted">{profile.bio}</p> : null}
-      </dl>
+      </div>
+      {bioOpen && profile.bio ? <p className="type-caption px-5 pt-1 leading-5 text-muted">{profile.bio}</p> : null}
 
       <div className="sticky top-0 z-20 mt-4 bg-[color-mix(in_srgb,var(--bg)_94%,transparent)] px-4 pb-2 pt-1 backdrop-blur-md">
         <div className="no-scrollbar flex gap-2 overflow-x-auto">
@@ -605,7 +595,7 @@ function EventRail({
       {items.map((e) => (
         <article key={e.id}>
           <Link href={`/events/${e.id}`} className="tap-scale block overflow-hidden rounded-card bg-surface shadow-card">
-            <div className="relative h-36 bg-gradient-to-br from-accent/15 to-yellow/15">
+            <div className="relative h-32 bg-gradient-to-br from-accent/15 to-yellow/15">
               {e.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={e.imageUrl} alt="" className="h-full w-full object-cover" />
@@ -619,7 +609,7 @@ function EventRail({
                   {isSelf ? messages.world.myWantedEvent : messages.world.theirWantedEvent.replace("{name}", ownerFirstName)}
                 </span>
               ) : (
-                <span className="type-caption absolute left-2.5 top-2.5 rounded-full bg-surface/95 px-2 py-0.5 font-semibold text-ink">
+                <span className="type-caption absolute left-2.5 top-2.5 rounded-full bg-surface px-2 py-0.5 font-semibold text-ink shadow-sm">
                   {messages.world.participantsCount.replace("{n}", String(e.taken))}
                 </span>
               )}
@@ -736,24 +726,26 @@ function WantedEventForm({
         placeholder={messages.world.wantedTitlePlaceholder}
         className="type-body w-full rounded-xl border border-border bg-surface px-4 py-3 text-ink"
       />
-      <label className="block">
-        <span className="type-caption mb-1 block font-semibold text-muted">{messages.world.wantedDate}</span>
-        <input
-          required
-          type="datetime-local"
-          value={startsAt}
-          onChange={(e) => setStartsAt(e.target.value)}
-          className="type-body w-full rounded-xl border border-border bg-surface px-4 py-3 text-ink"
-        />
-      </label>
-      <label className="block">
-        <span className="type-caption mb-1 block font-semibold text-muted">{messages.world.wantedCity}</span>
-        <input
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          className="type-body w-full rounded-xl border border-border bg-surface px-4 py-3 text-ink"
-        />
-      </label>
+      <div className="grid grid-cols-2 gap-2">
+        <label className="block">
+          <span className="type-caption mb-1 block font-semibold text-muted">{messages.world.wantedDate}</span>
+          <input
+            required
+            type="datetime-local"
+            value={startsAt}
+            onChange={(e) => setStartsAt(e.target.value)}
+            className="type-caption w-full rounded-xl border border-border bg-surface px-2 py-2.5 text-ink"
+          />
+        </label>
+        <label className="block">
+          <span className="type-caption mb-1 block font-semibold text-muted">{messages.world.wantedCity}</span>
+          <input
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            className="type-caption w-full rounded-xl border border-border bg-surface px-2 py-2.5 text-ink"
+          />
+        </label>
+      </div>
       {error ? <p className="type-caption text-danger">{error}</p> : null}
       <div className="flex gap-2">
         <button
