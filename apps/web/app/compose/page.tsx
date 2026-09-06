@@ -9,7 +9,7 @@ import { InterestChips } from "@/components/InterestChips";
 import { MoodPlacePicker, type PickedPlace } from "@/components/MoodPlacePicker";
 import { TextInput } from "@/components/ui";
 import { isMoodInterest, resolveUserCurrency, type MoodInterestId } from "@tiptop/domain";
-import { api, type EventCard as EventCardType } from "@/lib/api";
+import { api, getStoredToken, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 
@@ -36,6 +36,9 @@ function uploadVideo(file: File, onProgress: (pct: number) => void): Promise<str
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/upload/video");
+    xhr.withCredentials = true;
+    const token = getStoredToken();
+    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
     };

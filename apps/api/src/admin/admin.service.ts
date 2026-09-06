@@ -9,11 +9,16 @@ import {
 import {
   assertNotSelf,
   canCertifyUsers,
+  canChangePlatformFee,
   canRefundPayments,
   canSubmitReport,
+  chargeBreakdown,
   isValidReportReason,
   likeAnomalyFlags,
+  normalizePlatformFeePercent,
+  PLATFORM_FEE_CONFIG_KEY,
   refundAllowed,
+  TIPTOP_PLATFORM_FEE_PERCENT,
 } from "@tiptop/domain";
 import type { AdminAction, Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma.service";
@@ -254,6 +259,42 @@ export class AdminService {
         this.notifications.create({ userId, actorId, type: "EVENT_UPDATE", entityType, entityId: eventId }),
       ),
     );
+  }
+
+  async monetization() {
+    const percent = await this.platformFeePercent();
+    return {
+      platformFeePercent: percent,
+      defaultPlatformFeePercent: TIPTOP_PLATFORM_FEE_PERCENT,
+      ticketPaymentsEnabled: true,
+      providerFeeXaf: 0,
+      sample: chargeBreakdown({ ticketAmountXaf: 5000, platformFeePercent: percent }),
+    };
+  }
+
+  async updatePlatformFee(actor: { id: string; role: string }, raw: unknown) {
+    if (!canChangePlatformFee(actor.role)) throw new ForbiddenException({ code: "ADMIN_ONLY" });
+    const n = typeof raw === "number" ? raw : Number(raw);
+    if (!Number.isFinite(n) || n < 0 || n > 100) {
+      throw new BadRequestException({ code: "PLATFORM_FEE_INVALID" });
+    }
+    const next = normalizePlatformFeePercent(n);
+    const previous = await this.platformFeePercent();
+    await this.prisma.appConfig.upsert({
+      where: { key: PLATFORM_FEE_CONFIG_KEY },
+      create: { key: PLATFORM_FEE_CONFIG_KEY, value: next },
+      update: { value: next },
+    });
+    await this.audit(actor.id, "SETTINGS_UPDATE", "AppConfig", PLATFORM_FEE_CONFIG_KEY, {
+      previous,
+      next,
+    });
+    return this.monetization();
+  }
+
+  async platformFeePercent(): Promise<number> {
+    const row = await this.prisma.appConfig.findUnique({ where: { key: PLATFORM_FEE_CONFIG_KEY } });
+    return normalizePlatformFeePercent(row?.value ?? TIPTOP_PLATFORM_FEE_PERCENT);
   }
 
   async payments() {

@@ -21,6 +21,10 @@ export function canChangeRoles(role: string): boolean {
   return role === "ADMIN";
 }
 
+export function canChangePlatformFee(role: string): boolean {
+  return role === "ADMIN";
+}
+
 export function assertNotSelf(actorId: string, targetId: string): void {
   if (actorId === targetId) throw new Error("ADMIN_SELF");
 }

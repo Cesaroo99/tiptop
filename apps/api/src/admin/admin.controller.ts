@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Inject, Param, Patch, Post, Query, Req, UseGuards } from "@nestjs/common";
-import { IsBoolean, IsIn, IsInt, IsOptional, IsString, Min } from "class-validator";
+import { IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, Min } from "class-validator";
 import { Type } from "class-transformer";
 import type { Request } from "express";
 import { SessionGuard } from "../auth/session.guard";
@@ -33,6 +33,14 @@ class RefundDto {
   @IsInt()
   @Min(1)
   amountXaf?: number;
+}
+
+class PatchSettingsDto {
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  platformFeePercent!: number;
 }
 
 class CreateReportDto {
@@ -130,6 +138,16 @@ export class AdminController {
   @Get("payments")
   payments() {
     return this.admin.payments();
+  }
+
+  @Get("settings")
+  settings() {
+    return this.admin.monetization();
+  }
+
+  @Patch("settings")
+  patchSettings(@Req() req: Request & { user: PublicUser }, @Body() body: PatchSettingsDto) {
+    return this.admin.updatePlatformFee({ id: req.user.id, role: req.user.role }, body.platformFeePercent);
   }
 
   @Post("payments/:id/refund")

@@ -42,3 +42,5 @@ CREATE TABLE IF NOT EXISTS "EventGroupMember" (
     "respondedAt" TIMESTAMP(3),
     CONSTRAINT "EventGroupMember_pkey" PRIMARY KEY ("id")
 );
+
+ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'SETTINGS_UPDATE';

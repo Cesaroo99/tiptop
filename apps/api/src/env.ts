@@ -15,6 +15,7 @@ export type Env = {
   OTP_ALLOW_MOCK: boolean;
   OTP_EXPIRY_SECONDS: number;
   OTP_MAX_ATTEMPTS: number;
+  PAYMENT_WEBHOOK_SECRET: string;
 };
 
 export function loadEnv(): Env {
@@ -35,5 +36,6 @@ export function loadEnv(): Env {
     OTP_ALLOW_MOCK: flag === "1" || flag === "true" || flag === "yes",
     OTP_EXPIRY_SECONDS: Number(process.env.OTP_EXPIRY_SECONDS ?? 90),
     OTP_MAX_ATTEMPTS: Number(process.env.OTP_MAX_ATTEMPTS ?? 5),
+    PAYMENT_WEBHOOK_SECRET: process.env.PAYMENT_WEBHOOK_SECRET ?? "",
   };
 }

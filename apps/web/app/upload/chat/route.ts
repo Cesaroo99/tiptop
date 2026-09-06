@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
+import { requireUploadSession } from "@/lib/require-upload-session";
 
 export const runtime = "nodejs";
 
@@ -50,6 +51,9 @@ function kindOf(type: string): "IMAGE" | "AUDIO" | "FILE" | null {
 }
 
 export async function POST(request: Request) {
+  if (!(await requireUploadSession(request))) {
+    return NextResponse.json({ code: "UNAUTHENTICATED" }, { status: 401 });
+  }
   let form: FormData;
   try {
     form = await request.formData();

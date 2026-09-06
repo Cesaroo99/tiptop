@@ -919,6 +919,13 @@ export type Messages = {
     roleMod: string;
     statusActive: string;
     statusBlocked: string;
+    monetization: string;
+    platformFee: string;
+    platformFeeHint: string;
+    platformFeeSaved: string;
+    platformFeeInvalid: string;
+    ticketVsFee: string;
+    saveFee: string;
   };
 };
 
@@ -1843,6 +1850,13 @@ export const fr: Messages = {
     roleMod: "Modération",
     statusActive: "Actif",
     statusBlocked: "Bloqué",
+    monetization: "Monétisation",
+    platformFee: "Commission TipTop",
+    platformFeeHint: "Phase initiale : 0 %. Les organisateurs ne paient rien. Les billets payants restent dus par l’utilisateur.",
+    platformFeeSaved: "Commission enregistrée.",
+    platformFeeInvalid: "Pourcentage invalide (0–100).",
+    ticketVsFee: "Le prix du billet, les frais du prestataire de paiement et la commission TipTop sont trois montants distincts.",
+    saveFee: "Enregistrer",
   },
 };
 
@@ -2767,6 +2781,13 @@ export const en: Messages = {
     roleMod: "Moderation",
     statusActive: "Active",
     statusBlocked: "Blocked",
+    monetization: "Monetization",
+    platformFee: "TipTop commission",
+    platformFeeHint: "Initial phase: 0%. Hosts pay nothing. Paid tickets are still charged to the guest.",
+    platformFeeSaved: "Commission saved.",
+    platformFeeInvalid: "Invalid percentage (0–100).",
+    ticketVsFee: "Ticket price, payment-provider fees, and TipTop commission are three distinct amounts.",
+    saveFee: "Save",
   },
 };
 

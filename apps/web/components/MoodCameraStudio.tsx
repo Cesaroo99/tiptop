@@ -7,7 +7,7 @@ import { isMoodInterest, moodSoundSrc, type MoodInterestId, type MoodKind, type 
 import { CloseIcon, LocateIcon, MusicIcon, PinIcon } from "./Icons";
 import { InterestChips } from "./InterestChips";
 import { MoodPlacePicker, type PickedPlace } from "./MoodPlacePicker";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, getStoredToken } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { moodSoundChoices } from "@/lib/mood-sounds";
 import { sheetOverlayClass, useSheetPortal } from "@/lib/sheet-portal";
@@ -25,6 +25,9 @@ function uploadVideo(file: File, onProgress: (pct: number) => void): Promise<str
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/upload/video");
+    xhr.withCredentials = true;
+    const token = getStoredToken();
+    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
     };

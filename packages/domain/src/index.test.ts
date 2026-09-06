@@ -45,7 +45,15 @@ import {
 import { interestFromActivity, isMoodInterest, parseMoodInterests, statusExpiresAt, STATUS_HOURS } from "../src/moods";
 import { canConsumeTicket, canShowQr, isInEntryWindow, signTicketQr, verifyTicketQr } from "../src/tickets";
 import { cityCoords, osmEmbedUrl, WORLD_CITIES } from "../src/world-cities";
-import { applyWebhook, mockCharge, reservationAmountXaf } from "../src/payments";
+import {
+  applyWebhook,
+  chargeBreakdown,
+  mockCharge,
+  normalizePlatformFeePercent,
+  reservationAmountXaf,
+  TIPTOP_PLATFORM_FEE_PERCENT,
+  webhookRequestAllowed,
+} from "../src/payments";
 import {
   canOpenNewDirectConversation,
   canSendMessage,
@@ -58,6 +66,7 @@ import {
 import {
   assertNotSelf,
   canAccessAdmin,
+  canChangePlatformFee,
   canRefundPayments,
   canSubmitReport,
   isValidReportReason,
@@ -571,6 +580,42 @@ describe("tickets & paiement", () => {
     expect(applyWebhook("SUCCEEDED", "FAILED")).toEqual({ applied: false, status: "SUCCEEDED" });
     expect(applyWebhook("PENDING", "SUCCEEDED")).toEqual({ applied: true, status: "SUCCEEDED" });
   });
+
+  it("garde la commission TipTop à 0 % sans l’ajouter au prix acheteur", () => {
+    expect(TIPTOP_PLATFORM_FEE_PERCENT).toBe(0);
+    expect(normalizePlatformFeePercent(-1)).toBe(0);
+    expect(normalizePlatformFeePercent(250)).toBe(0);
+    const free = chargeBreakdown({ ticketAmountXaf: 0 });
+    expect(free.chargeTotalXaf).toBe(0);
+    expect(free.platformFeeXaf).toBe(0);
+    const paid = chargeBreakdown({ ticketAmountXaf: 5000 });
+    expect(paid.chargeTotalXaf).toBe(5000);
+    expect(paid.platformFeePercent).toBe(0);
+    expect(paid.organizerNetXaf).toBe(5000);
+    const later = chargeBreakdown({ ticketAmountXaf: 5000, platformFeePercent: 10, providerFeeXaf: 100 });
+    expect(later.chargeTotalXaf).toBe(5000);
+    expect(later.platformFeeXaf).toBe(500);
+    expect(later.organizerNetXaf).toBe(4400);
+  });
+
+  it("refuse un webhook de production sans secret", () => {
+    expect(webhookRequestAllowed({ nodeEnv: "production" })).toBe(false);
+    expect(webhookRequestAllowed({ nodeEnv: "test" })).toBe(true);
+    expect(
+      webhookRequestAllowed({
+        nodeEnv: "production",
+        configuredSecret: "s3cret",
+        providedSecret: "s3cret",
+      }),
+    ).toBe(true);
+    expect(
+      webhookRequestAllowed({
+        nodeEnv: "production",
+        configuredSecret: "s3cret",
+        providedSecret: "nope",
+      }),
+    ).toBe(false);
+  });
 });
 
 describe("chat", () => {
@@ -616,6 +661,8 @@ describe("admin", () => {
     expect(canAccessAdmin("USER")).toBe(false);
     expect(canRefundPayments("ADMIN")).toBe(true);
     expect(canRefundPayments("MODERATOR")).toBe(false);
+    expect(canChangePlatformFee("ADMIN")).toBe(true);
+    expect(canChangePlatformFee("MODERATOR")).toBe(false);
   });
 
   it("interdit de se bloquer soi-même et un remboursement non réussi", () => {

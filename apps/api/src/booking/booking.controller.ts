@@ -69,8 +69,8 @@ export class PaymentsWebhookController {
   constructor(@Inject(BookingService) private readonly booking: BookingService) {}
 
   @Post("payments/webhook")
-  webhook(@Body() body: WebhookDto) {
-    return this.booking.webhook(body.idempotencyKey, body.status);
+  webhook(@Body() body: WebhookDto, @Headers("x-tiptop-webhook-secret") secret?: string) {
+    return this.booking.webhook(body.idempotencyKey, body.status, secret);
   }
 }
 

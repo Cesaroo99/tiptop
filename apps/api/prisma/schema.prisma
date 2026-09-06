@@ -1011,6 +1011,7 @@ enum AdminAction {
   EVENT_CANCEL
   PAYMENT_REFUND
   REPORT_REVIEW
+  SETTINGS_UPDATE
 }
 
 model Report {

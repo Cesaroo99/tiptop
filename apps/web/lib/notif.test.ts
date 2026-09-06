@@ -39,7 +39,7 @@ describe("notifAction / notifLabel", () => {
   it("envoie un like mood vers le flux et parle de temps, pas d’un compteur", () => {
     const like = n({ type: "LIKE", entityType: "mood", entityId: "m1" });
     expect(notifAction(like)).toEqual({ kind: "href", href: "/mood?start=m1" });
-    expect(notifLabel(like, fr)).toContain("like sur ton mood");
+    expect(notifLabel(like, fr)).toContain("posé sa vie sur ton mood");
     expect(notifLabel(like, fr)).not.toMatch(/ont aimé|likes/);
   });
 

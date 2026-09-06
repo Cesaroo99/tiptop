@@ -5,23 +5,29 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from "@nestjs/common";
 import {
   applyWebhook,
   canConsumeTicket,
   canShowQr,
+  chargeBreakdown,
   hostPeopleCounts,
   isCurrentlyAvailable,
   isInEntryWindow,
   mockCharge,
   normalizePaymentRule,
+  normalizePlatformFeePercent,
   planEventBooking,
+  PLATFORM_FEE_CONFIG_KEY,
   seatedGuestCount,
   qrExpiry,
   reservationAmountXaf,
   signTicketQr,
+  TIPTOP_PLATFORM_FEE_PERCENT,
   unpaidReservationNeedsPay,
   verifyTicketQr,
+  webhookRequestAllowed,
   type AvailabilityStatus,
   type PaymentProviderKind,
 } from "@tiptop/domain";
@@ -167,7 +173,12 @@ export class BookingService {
       }
     }
 
-    const amountXaf = reservationAmountXaf(event.priceXaf, holders.length);
+    const ticketAmountXaf = reservationAmountXaf(event.priceXaf, holders.length);
+    const charge = chargeBreakdown({
+      ticketAmountXaf,
+      platformFeePercent: await this.platformFeePercent(),
+    });
+    const amountXaf = charge.chargeTotalXaf;
     const holdCapacity = amountXaf === 0 || normalizePaymentRule(event.paymentRule) === "HOLD";
     const ticketStatus = amountXaf === 0 ? "CONFIRMED" : holdCapacity ? "AWAITING_PAYMENT" : "DRAFT";
     const resStatus = ticketStatus;
@@ -329,7 +340,16 @@ export class BookingService {
     return { ...this.mapReservation(next!), paymentStatus: payment.status };
   }
 
-  async webhook(idempotencyKey: string, status: "SUCCEEDED" | "FAILED") {
+  async webhook(idempotencyKey: string, status: "SUCCEEDED" | "FAILED", providedSecret?: string) {
+    if (
+      !webhookRequestAllowed({
+        providedSecret,
+        configuredSecret: env.PAYMENT_WEBHOOK_SECRET,
+        nodeEnv: env.NODE_ENV,
+      })
+    ) {
+      throw new UnauthorizedException({ code: "WEBHOOK_UNAUTHORIZED" });
+    }
     const payment = await this.prisma.payment.findUnique({ where: { idempotencyKey } });
     if (!payment) throw new NotFoundException({ code: "PAYMENT_NOT_FOUND" });
     const result = applyWebhook(payment.status, status);
@@ -626,6 +646,15 @@ export class BookingService {
     }
   }
 
+  private async platformFeePercent(): Promise<number> {
+    try {
+      const row = await this.prisma.appConfig.findUnique({ where: { key: PLATFORM_FEE_CONFIG_KEY } });
+      return normalizePlatformFeePercent(row?.value ?? TIPTOP_PLATFORM_FEE_PERCENT);
+    } catch {
+      return TIPTOP_PLATFORM_FEE_PERCENT;
+    }
+  }
+
   mapReservation(r: {
     id: string;
     eventId: string;
@@ -648,6 +677,7 @@ export class BookingService {
       status: r.status,
       seats: r.seats,
       amountXaf: r.amountXaf,
+      charge: chargeBreakdown({ ticketAmountXaf: r.amountXaf }),
       currency: r.currency,
       createdAt: r.createdAt.toISOString(),
       needsPayment: unpaidReservationNeedsPay(r.status, r.amountXaf),
