@@ -1,0 +1,43 @@
+# Lu par Render sur la branche par défaut (main).
+# Le code de l’app est sur cursor/tiptop-render-apk-5897 — pas sur main.
+
+databases:
+  - name: tiptop-db
+    plan: free
+    postgresMajorVersion: "16"
+    databaseName: tiptop
+    user: tiptop
+
+services:
+  - type: web
+    runtime: node
+    name: tiptop-cesar99
+    plan: free
+    region: frankfurt
+    branch: cursor/tiptop-render-apk-5897
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @tiptop/api exec prisma generate && pnpm --filter @tiptop/web build
+    startCommand: node scripts/render-start.mjs
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: NODE_ENV
+        value: production
+      - key: API_PORT
+        value: "3001"
+      - key: WEB_PORT
+        value: "3000"
+      - key: API_INTERNAL_URL
+        value: http://127.0.0.1:3001
+      - key: NEXT_PUBLIC_API_URL
+        value: ""
+      - key: OTP_ALLOW_MOCK
+        value: "1"
+      - key: OTP_MOCK_CODE
+        value: "1234"
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tiptop-db
+          property: connectionString
