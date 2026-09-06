@@ -1,4 +1,4 @@
-import { IsIn, IsNumber, IsOptional, IsString, Length, Matches, Max, MaxLength, Min } from "class-validator";
+import { IsArray, IsIn, IsNumber, IsOptional, IsString, Length, Matches, Max, MaxLength, Min } from "class-validator";
 import { CURRENCY_CODES } from "@tiptop/domain";
 
 export class UpdateMeDto {
@@ -98,4 +98,9 @@ export class UpdateMeDto {
   @IsString()
   @Matches(/^$|^[A-Za-z]{2}$/)
   country?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  interests?: string[];
 }

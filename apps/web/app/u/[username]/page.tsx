@@ -98,7 +98,7 @@ type Profile = {
   posts: FeedItem[];
   eventsInterested?: EventPreview[];
   eventsLinked?: EventPreview[];
-  moods?: Array<{ id: string; body: string; imageUrl: string | null; videoUrl: string | null; expiresAt: string }>;
+  moods?: Array<{ id: string; body: string; imageUrl: string | null; videoUrl: string | null; expiresAt: string | null }>;
 };
 
 export default function ProfilePage() {

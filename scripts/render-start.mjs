@@ -189,6 +189,7 @@ async function boot() {
       PORT: String(webPort),
       HOSTNAME: "127.0.0.1",
       API_INTERNAL_URL: `http://127.0.0.1:${apiPort}`,
+      UPLOAD_DIR: process.env.UPLOAD_DIR || "/tmp/tiptop-uploads",
     },
     dirname(webEntry),
   );

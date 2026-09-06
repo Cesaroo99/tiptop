@@ -5,9 +5,10 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { AgeCategoryPicker } from "@/components/AgeCategoryPicker";
 import { CameraIcon, ImageIcon, PlayIcon } from "@/components/Icons";
+import { InterestChips } from "@/components/InterestChips";
 import { MoodPlacePicker, type PickedPlace } from "@/components/MoodPlacePicker";
 import { TextInput } from "@/components/ui";
-import { resolveUserCurrency } from "@tiptop/domain";
+import { isMoodInterest, resolveUserCurrency, type MoodInterestId } from "@tiptop/domain";
 import { api, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -109,9 +110,8 @@ function Composer() {
   const [recurrence, setRecurrence] = useState<"NONE" | "DAILY" | "WEEKLY" | "MONTHLY">("NONE");
   const [formatId, setFormatId] = useState<"afterwork" | "brunch" | "club" | "daily" | null>(null);
   const [paymentRule, setPaymentRule] = useState<"HOLD" | "PAY_FIRST" | "PAY_REQUIRED">("HOLD");
-  const [hours, setHours] = useState("12");
-  const [visibility, setVisibility] = useState("ZONE");
   const [activity, setActivity] = useState("");
+  const [interest, setInterest] = useState<MoodInterestId | "">("");
   const [eventId, setEventId] = useState("");
   const [myEvents, setMyEvents] = useState<EventCardType[]>([]);
   const [companionId, setCompanionId] = useState("");
@@ -250,12 +250,12 @@ function Composer() {
         await api("/moods", {
           method: "POST",
           body: JSON.stringify({
+            kind: "MOOD",
             body,
             imageUrl: finalVideoUrl ? undefined : imageUrl || undefined,
             videoUrl: finalVideoUrl || undefined,
             activity: activity || undefined,
-            hours: Number(hours) || 12,
-            visibility,
+            interest: interest || undefined,
             city: place?.city || undefined,
             zone: place?.zone || undefined,
             placeName: place?.placeName || undefined,
@@ -282,7 +282,7 @@ function Composer() {
         ? Boolean(title.trim() && startsAt)
         : kind === "offer"
           ? Boolean(title.trim())
-          : Boolean(body.trim() || imageUrl || videoUrl || videoFile || activity.trim());
+          : Boolean(videoUrl || videoFile);
 
   return (
     <div className="px-4 py-4">
@@ -515,16 +515,13 @@ function Composer() {
             onChange={(e) => setActivity(e.target.value)}
             placeholder={messages.world.activityPlaceholder}
           />
-        <div className="grid grid-cols-2 gap-2">
-          <TextInput value={hours} onChange={(e) => setHours(e.target.value)} type="number" min={1} max={24} placeholder={messages.world.moodHours} />
-          <select
-            value={visibility}
-            onChange={(e) => setVisibility(e.target.value)}
-            className="type-body rounded-xl border border-border bg-surface px-4 py-3.5 text-ink"
-          >
-            <option value="ZONE">{messages.world.visZone}</option>
-            <option value="FOLLOWERS">{messages.world.visFollowers}</option>
-          </select>
+        <p className="type-caption text-muted">{messages.world.moodPermanentHint}</p>
+        <div>
+          <p className="type-label mb-2 text-subtle">{messages.world.moodInterest}</p>
+          <InterestChips
+            value={interest}
+            onChange={(next) => setInterest(typeof next === "string" && isMoodInterest(next) ? next : Array.isArray(next) ? next[0] ?? "" : "")}
+          />
         </div>
         {myEvents.length > 0 ? (
           <select

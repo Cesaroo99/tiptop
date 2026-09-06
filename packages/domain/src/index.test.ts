@@ -40,7 +40,9 @@ import {
   occurrenceCount,
   shiftOccurrence,
   moodExpiresAt,
+  isMoodActive,
 } from "../src/events";
+import { interestFromActivity, isMoodInterest, parseMoodInterests, statusExpiresAt, STATUS_HOURS } from "../src/moods";
 import { canConsumeTicket, canShowQr, isInEntryWindow, signTicketQr, verifyTicketQr } from "../src/tickets";
 import { applyWebhook, mockCharge, reservationAmountXaf } from "../src/payments";
 import {
@@ -494,6 +496,25 @@ describe("invitations & moods", () => {
     expect(moodExpiresAt(new Date("2026-08-31T00:00:00Z"), 12).toISOString()).toBe(
       "2026-08-31T12:00:00.000Z",
     );
+  });
+
+  it("un mood sans expiration reste actif", () => {
+    expect(isMoodActive(null)).toBe(true);
+    expect(isMoodActive(undefined)).toBe(true);
+    expect(isMoodActive(new Date(Date.now() - 1000))).toBe(false);
+  });
+
+  it("un statut expire après 24 h", () => {
+    const from = new Date("2026-09-06T00:00:00Z");
+    expect(STATUS_HOURS).toBe(24);
+    expect(statusExpiresAt(from).toISOString()).toBe("2026-09-07T00:00:00.000Z");
+  });
+
+  it("reconnaît un centre d’intérêt depuis l’activité", () => {
+    expect(interestFromActivity("🎵 Concert")).toBe("concert");
+    expect(interestFromActivity("🍣 Restaurant japonais")).toBe("food");
+    expect(isMoodInterest("rooftop")).toBe(true);
+    expect(parseMoodInterests(["food", "nope", "food"])).toEqual(["food"]);
   });
 
   it("anti-spam (#56) : limite le nombre d’invitations événement par jour", () => {

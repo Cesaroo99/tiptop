@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { moodSoundSrc, type MoodSoundKey } from "@tiptop/domain";
+import { isMoodInterest, moodSoundSrc, type MoodInterestId, type MoodKind, type MoodSoundKey } from "@tiptop/domain";
 import { CloseIcon, LocateIcon, MusicIcon, PinIcon } from "./Icons";
+import { InterestChips } from "./InterestChips";
 import { MoodPlacePicker, type PickedPlace } from "./MoodPlacePicker";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { moodSoundChoices } from "@/lib/mood-sounds";
 import { sheetOverlayClass, useSheetPortal } from "@/lib/sheet-portal";
@@ -28,13 +29,15 @@ function uploadVideo(file: File, onProgress: (pct: number) => void): Promise<str
       if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
     };
     xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          resolve((JSON.parse(xhr.responseText) as { url: string }).url);
-        } catch {
-          reject(new Error("UPLOAD_PARSE_ERROR"));
-        }
-      } else reject(new Error("UPLOAD_FAILED"));
+      let data: { url?: string; code?: string } = {};
+      try {
+        data = JSON.parse(xhr.responseText) as { url?: string; code?: string };
+      } catch {
+        reject(new Error("UPLOAD_PARSE_ERROR"));
+        return;
+      }
+      if (xhr.status >= 200 && xhr.status < 300 && data.url) resolve(data.url);
+      else reject(new Error(data.code || "UPLOAD_FAILED"));
     };
     xhr.onerror = () => reject(new Error("UPLOAD_FAILED"));
     const form = new FormData();
@@ -43,8 +46,9 @@ function uploadVideo(file: File, onProgress: (pct: number) => void): Promise<str
   });
 }
 
-export function MoodCameraStudio() {
+export function MoodCameraStudio({ mode = "mood" }: { mode?: "mood" | "status" }) {
   const { messages } = useI18n();
+  const kind: MoodKind = mode === "status" ? "STATUS" : "MOOD";
   const router = useRouter();
   const liveRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -64,6 +68,7 @@ export function MoodCameraStudio() {
   const [body, setBody] = useState("");
   const [soundKey, setSoundKey] = useState<MoodSoundKey>("original");
   const [place, setPlace] = useState<PickedPlace | null>(null);
+  const [interest, setInterest] = useState<MoodInterestId | "">("");
   const [sheet, setSheet] = useState<"text" | "sound" | "place" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
@@ -117,11 +122,12 @@ export function MoodCameraStudio() {
     if (liveRef.current) liveRef.current.srcObject = null;
   }
 
-  function useClip(nextFile: File | null, nextUrl: string, objectUrl?: string) {
+  function useClip(nextFile: File | null, nextUrl: string, objectUrl?: string, nextInterest?: MoodInterestId) {
     stopLive();
     setFile(nextFile);
     setVideoUrl(nextUrl);
     setPreview(objectUrl || nextUrl);
+    if (nextInterest) setInterest(nextInterest);
     setStage("edit");
     setRecording(false);
     setElapsed(0);
@@ -181,6 +187,7 @@ export function MoodCameraStudio() {
     setBody("");
     setSoundKey("original");
     setPlace(null);
+    setInterest("");
     setSheet(null);
     setStage("capture");
   }
@@ -201,8 +208,10 @@ export function MoodCameraStudio() {
       await api("/moods", {
         method: "POST",
         body: JSON.stringify({
+          kind,
           body: body.trim() || undefined,
           videoUrl: finalUrl,
+          interest: interest || undefined,
           soundKey,
           soundLabel: soundKey === "original" || soundKey === "off" ? undefined : sound?.label,
           placeName: place?.placeName || undefined,
@@ -213,9 +222,16 @@ export function MoodCameraStudio() {
           longitude: place?.longitude ?? undefined,
         }),
       });
-      router.replace("/mood");
-    } catch {
-      setError(messages.world.videoUploadError);
+      router.replace(kind === "STATUS" ? "/" : "/mood");
+    } catch (err) {
+      const code = err instanceof ApiError ? err.code : err instanceof Error ? err.message : "";
+      setError(
+        code === "VIDEO_TYPE_NOT_ALLOWED"
+          ? messages.world.videoTypeNotAllowed
+          : code === "MOOD_VIDEO_REQUIRED"
+            ? messages.world.moodVideoRequired
+            : messages.world.videoUploadError,
+      );
       setProgress(null);
     } finally {
       setPublishing(false);
@@ -250,7 +266,9 @@ export function MoodCameraStudio() {
             {recording ? (
               <span className="rounded-pill bg-danger px-2.5 py-1 text-[12px] font-bold tabular-nums">{elapsed}s</span>
             ) : (
-              <p className="type-caption font-semibold drop-shadow">{messages.world.moodCameraHint}</p>
+              <p className="type-caption font-semibold drop-shadow">
+                {kind === "STATUS" ? messages.world.statusCameraHint : messages.world.moodCameraHint}
+              </p>
             )}
             <button
               type="button"
@@ -287,7 +305,7 @@ export function MoodCameraStudio() {
                 <button
                   key={t.id}
                   type="button"
-                  onClick={() => useClip(null, t.src)}
+                  onClick={() => useClip(null, t.src, undefined, t.id as MoodInterestId)}
                   className="shrink-0 rounded-xl bg-white/15 px-3 py-2 type-caption font-semibold backdrop-blur"
                 >
                   {t.label}
@@ -331,6 +349,17 @@ export function MoodCameraStudio() {
                 <PinIcon size={12} /> {place.placeName}
               </p>
             ) : null}
+            {kind === "MOOD" ? (
+              <div className="mb-2">
+                <p className="type-caption mb-1.5 font-semibold text-white/80">{messages.world.moodInterest}</p>
+                <InterestChips
+                  value={interest}
+                  onChange={(next) => setInterest(typeof next === "string" && isMoodInterest(next) ? next : Array.isArray(next) ? next[0] ?? "" : "")}
+                />
+              </div>
+            ) : (
+              <p className="type-caption mb-2 font-semibold text-white/80">{messages.world.statusFriendsHint}</p>
+            )}
             {body ? <p className="type-body-sm mb-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">{body}</p> : null}
             <p className="type-caption font-semibold opacity-90">
               {soundKey === "original"

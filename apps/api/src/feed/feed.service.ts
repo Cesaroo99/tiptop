@@ -47,7 +47,7 @@ export class FeedService {
     const [items, eventList, moodList] = await Promise.all([
       this.posts.decorate(viewerId, rows),
       this.events.list(viewerId, "all", viewer?.profile?.city ?? undefined),
-      this.moods.list(viewerId),
+      this.moods.list(viewerId, "STATUS"),
     ]);
     return {
       items,

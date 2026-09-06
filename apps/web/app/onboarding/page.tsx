@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarIcon, HeartIcon, SparklesIcon, UsersIcon } from "@/components/Icons";
 import { PrimaryButton, ScreenHeader, TextInput } from "@/components/ui";
+import { InterestChips } from "@/components/InterestChips";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -68,6 +69,7 @@ function ProfileForm() {
   const [profession, setProfession] = useState(user?.profession || "");
   const [city, setCity] = useState(user?.city || "Yaoundé");
   const [zone, setZone] = useState(user?.zone || "Carrefour Damas");
+  const [interests, setInterests] = useState<string[]>(user?.interests ?? []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,7 +80,7 @@ function ProfileForm() {
     try {
       await api("/users/me", {
         method: "PATCH",
-        body: JSON.stringify({ firstName, lastName, profession, city, zone }),
+        body: JSON.stringify({ firstName, lastName, profession, city, zone, interests }),
       });
       await refresh();
       router.replace("/");
@@ -99,6 +101,11 @@ function ProfileForm() {
         <TextInput placeholder={messages.account.profession} value={profession} onChange={(e) => setProfession(e.target.value)} />
         <TextInput placeholder="Ville" value={city} onChange={(e) => setCity(e.target.value)} />
         <TextInput placeholder="Zone" value={zone} onChange={(e) => setZone(e.target.value)} />
+        <div>
+          <p className="type-label mb-2 text-subtle">{messages.onboarding.interestsTitle}</p>
+          <p className="type-caption mb-2 text-muted">{messages.onboarding.interestsHint}</p>
+          <InterestChips value={interests} multiple onChange={(next) => setInterests(Array.isArray(next) ? next : [next])} />
+        </div>
         {error ? <p className="text-sm text-danger">{error}</p> : null}
         <PrimaryButton type="submit" loading={loading}>
           {messages.onboarding.continue}

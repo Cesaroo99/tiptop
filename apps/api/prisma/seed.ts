@@ -32,6 +32,7 @@ async function main() {
           birthDate: new Date("1994-03-12"),
           latitude: 3.848,
           longitude: 11.5021,
+          interests: ["concert", "rooftop", "food"],
         },
       },
       likeUnits: {
@@ -61,6 +62,7 @@ async function main() {
           birthDate: new Date("1996-07-22"),
           latitude: 3.89,
           longitude: 11.512,
+          interests: ["culture", "rooftop", "fashion"],
         },
       },
       likeUnits: { create: [{ source: LikeUnitSource.FREE }] },
@@ -314,6 +316,23 @@ async function main() {
     });
   }
 
+  await prisma.profile.update({
+    where: { userId: cesar.id },
+    data: { interests: ["concert", "rooftop", "food"] },
+  });
+  await prisma.profile.update({
+    where: { userId: erica.id },
+    data: { interests: ["culture", "rooftop", "fashion"] },
+  });
+  await prisma.mood.updateMany({
+    where: { videoUrl: { not: null } },
+    data: { kind: "MOOD", visibility: "PUBLIC", expiresAt: null },
+  });
+  await prisma.mood.updateMany({
+    where: { videoUrl: null },
+    data: { kind: "STATUS", visibility: "FOLLOWERS" },
+  });
+
   const moodCount = await prisma.mood.count({ where: { authorId: erica.id } });
   if (moodCount === 0) {
     await prisma.mood.create({
@@ -321,7 +340,8 @@ async function main() {
         authorId: erica.id,
         body: "Lumière de Bastos — qui sort ce soir ?",
         imageUrl: "/seed/moods/bastos.jpg",
-        visibility: "ZONE",
+        kind: "STATUS",
+        visibility: "FOLLOWERS",
         expiresAt: new Date(Date.now() + 20 * 3600_000),
       },
     });
@@ -1082,7 +1102,8 @@ async function enrichLivingWorld(
       await db.mood.create({
         data: {
           ...m,
-          visibility: "ZONE",
+          kind: "STATUS",
+          visibility: "FOLLOWERS",
           expiresAt: new Date(Date.now() + 18 * 3600_000),
         },
       });
@@ -1171,8 +1192,16 @@ async function enrichLivingWorld(
           latitude: m.latitude ?? null,
           longitude: m.longitude ?? null,
           eventId: m.eventId ?? null,
-          visibility: "ZONE",
-          expiresAt: new Date(Date.now() + 18 * 3600_000),
+          kind: "MOOD",
+          interest: m.videoUrl.includes("concert")
+            ? "concert"
+            : m.videoUrl.includes("piscine")
+              ? "piscine"
+              : m.videoUrl.includes("rooftop")
+                ? "rooftop"
+                : "food",
+          visibility: "PUBLIC",
+          expiresAt: null,
         },
       });
     } else {
@@ -1185,7 +1214,16 @@ async function enrichLivingWorld(
           address: m.address ?? exists.address,
           latitude: m.latitude ?? exists.latitude,
           longitude: m.longitude ?? exists.longitude,
-          expiresAt: new Date(Date.now() + 18 * 3600_000),
+          kind: "MOOD",
+          interest: m.videoUrl.includes("concert")
+            ? "concert"
+            : m.videoUrl.includes("piscine")
+              ? "piscine"
+              : m.videoUrl.includes("rooftop")
+                ? "rooftop"
+                : "food",
+          visibility: "PUBLIC",
+          expiresAt: null,
         },
       });
     }
@@ -1854,7 +1892,8 @@ async function enrichMassCatalog(db: PrismaClient, ctx: { availableUntil: Date }
           activity: i % 2 === 0 ? "🌆 Dehors" : "☕ Café",
           city: "Yaoundé",
           zone: zones[i % zones.length],
-          visibility: "ZONE",
+          kind: "STATUS",
+          visibility: "FOLLOWERS",
           expiresAt: new Date(Date.now() + 18 * 3600_000),
         },
       });

@@ -12,6 +12,7 @@ import {
   eventIsFull,
   eventLifecycle,
   isCurrentlyAvailable,
+  isMoodActive,
   isEventParticipationPublic,
   isEventRecurrence,
   normalizePaymentRule,
@@ -194,7 +195,7 @@ export class EventsService {
         videoUrl: m.videoUrl,
         activity: m.activity,
         createdAt: m.createdAt.toISOString(),
-        active: m.expiresAt.getTime() > Date.now(),
+        active: isMoodActive(m.expiresAt),
         author: {
           id: m.author.id,
           username: m.author.username,

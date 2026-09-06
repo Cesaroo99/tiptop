@@ -204,7 +204,9 @@ function MoodViewer() {
               : messages.social.likesNow.replace("{n}", String(mood.authorActiveLikes))}
             <span className="text-border">·</span>
             <ClockIcon size={12} />
-            {messages.world.availableUntil.replace("{time}", new Date(mood.expiresAt).toLocaleTimeString())}
+            {mood.expiresAt
+              ? messages.world.availableUntil.replace("{time}", new Date(mood.expiresAt).toLocaleTimeString())
+              : messages.world.moodPermanentHint}
           </p>
           <div className="mt-4 flex items-center gap-2">
             <IconButton label={liked ? messages.social.likeHere : messages.social.likePlace} tone={liked ? "accent" : "neutral"} onClick={() => void like(false)}>

@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Inject, Param, Post, Req, UseGuards } from "@nestjs/common";
-import { IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
+import { Body, Controller, Get, Inject, Param, Post, Query, Req, UseGuards } from "@nestjs/common";
+import { IsIn, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from "class-validator";
+import { isMoodKind } from "@tiptop/domain";
 import { Type } from "class-transformer";
 import type { Request } from "express";
 import { SessionGuard } from "../auth/session.guard";
@@ -85,6 +86,15 @@ class CreateMoodDto {
   @IsString()
   @MaxLength(80)
   soundLabel?: string;
+
+  @IsOptional()
+  @IsIn(["MOOD", "STATUS"])
+  kind?: "MOOD" | "STATUS";
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  interest?: string;
 }
 
 class CreateCommentDto {
@@ -108,8 +118,8 @@ export class MoodsController {
   }
 
   @Get()
-  list(@Req() req: Request & { user: PublicUser }) {
-    return this.moods.list(req.user.id);
+  list(@Req() req: Request & { user: PublicUser }, @Query("kind") kind?: string) {
+    return this.moods.list(req.user.id, isMoodKind(kind) ? kind : "MOOD");
   }
 
   @Get(":id/comments")

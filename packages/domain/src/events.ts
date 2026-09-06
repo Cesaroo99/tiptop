@@ -177,7 +177,8 @@ export function moodExpiresAt(from: Date, hours?: number): Date {
   return new Date(from.getTime() + h * 3600_000);
 }
 
-export function isMoodActive(expiresAt: Date, now = new Date()): boolean {
+export function isMoodActive(expiresAt: Date | null | undefined, now = new Date()): boolean {
+  if (!expiresAt) return true;
   return expiresAt.getTime() > now.getTime();
 }
 
