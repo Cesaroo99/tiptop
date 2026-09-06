@@ -38,6 +38,9 @@ export type Messages = {
     outNowEmpty: string;
     seeAll: string;
     needHint: string;
+    feedHintFollowed: string;
+    feedHintLocal: string;
+    feedHintAlive: string;
   };
   need: {
     title: string;
@@ -220,7 +223,14 @@ export type Messages = {
     notifLikeMood: string;
     notifLikeComment: string;
     notifLikeWish: string;
+    notifLikePostMany: string;
+    notifLikeMoodMany: string;
+    notifLikeCommentMany: string;
+    notifLikeWishMany: string;
+    notifLikeProfileMany: string;
     notifComment: string;
+    notifCommentMany: string;
+    notifCommentMoodMany: string;
     notifCommentMood: string;
     notifFollow: string;
     notifInviteConsult: string;
@@ -613,6 +623,14 @@ export type Messages = {
     seatsLeftOne: string;
     seatsFull: string;
     interestedCount: string;
+    friendsGoing: string;
+    friendsGoingOne: string;
+    networkGoing: string;
+    networkGoingOne: string;
+    whySharedInterests: string;
+    whySharedInterestsOne: string;
+    whyNearbyAvailable: string;
+    whyMood: string;
     livesAt: string;
     ongoingBadge: string;
     endedBadge: string;
@@ -970,6 +988,9 @@ export const fr: Messages = {
     outNowEmpty: "Personne de dispo autour de toi. Déclare-toi disponible pour apparaître ici.",
     seeAll: "Voir",
     needHint: "Pain, pressing, coiffeur…",
+    feedHintFollowed: "Vient de publier · tu la suis",
+    feedHintLocal: "Près de toi",
+    feedHintAlive: "Beaucoup de vie en ce moment",
   },
   need: {
     title: "Autour de moi",
@@ -1152,7 +1173,14 @@ export const fr: Messages = {
     notifLikeMood: "t’a posé sa vie sur ton mood",
     notifLikeComment: "t’a posé sa vie sur ton commentaire",
     notifLikeWish: "t’a posé sa vie sur ton envie",
+    notifLikePostMany: "{name} et d’autres ont posé leur vie sur ta publication",
+    notifLikeMoodMany: "{name} et d’autres ont posé leur vie sur ton mood",
+    notifLikeCommentMany: "{name} et d’autres ont posé leur vie sur ton commentaire",
+    notifLikeWishMany: "{name} et d’autres ont posé leur vie sur ton envie",
+    notifLikeProfileMany: "{name} et d’autres ont posé leur vie",
     notifComment: "a commenté ta publication",
+    notifCommentMany: "{name} et d’autres ont commenté ta publication",
+    notifCommentMoodMany: "{name} et d’autres ont commenté ton mood",
     notifCommentMood: "a commenté ton mood",
     notifFollow: "t’a suivi",
     notifInviteConsult: "Consulter l’invitation",
@@ -1545,6 +1573,14 @@ export const fr: Messages = {
     seatsLeftOne: "1 place restante",
     seatsFull: "Complet",
     interestedCount: "Intéressés",
+    friendsGoing: "{count} amies participent",
+    friendsGoingOne: "1 amie participe",
+    networkGoing: "{count} personnes de ton réseau y vont",
+    networkGoingOne: "1 personne de ton réseau y va",
+    whySharedInterests: "{count} centres d’intérêt en commun",
+    whySharedInterestsOne: "1 centre d’intérêt en commun",
+    whyNearbyAvailable: "Disponible près de toi",
+    whyMood: "Mood en cours près de tes goûts",
     livesAt: "Vie à {place}",
     ongoingBadge: "En cours",
     endedBadge: "Terminé",
@@ -1902,6 +1938,9 @@ export const en: Messages = {
     outNowEmpty: "Nobody available around you. Go available to show up here.",
     seeAll: "See all",
     needHint: "Bread, laundry, haircut…",
+    feedHintFollowed: "Just posted · you follow them",
+    feedHintLocal: "Near you",
+    feedHintAlive: "A lot of life right now",
   },
   need: {
     title: "Around me",
@@ -2084,7 +2123,14 @@ export const en: Messages = {
     notifLikeMood: "placed their life on your mood",
     notifLikeComment: "placed their life on your comment",
     notifLikeWish: "placed their life on your wish",
+    notifLikePostMany: "{name} and others placed their life on your post",
+    notifLikeMoodMany: "{name} and others placed their life on your mood",
+    notifLikeCommentMany: "{name} and others placed their life on your comment",
+    notifLikeWishMany: "{name} and others placed their life on your wish",
+    notifLikeProfileMany: "{name} and others placed their life on you",
     notifComment: "commented on your post",
+    notifCommentMany: "{name} and others commented on your post",
+    notifCommentMoodMany: "{name} and others commented on your mood",
     notifCommentMood: "commented on your mood",
     notifFollow: "followed you",
     notifInviteConsult: "View invitation",
@@ -2477,6 +2523,14 @@ export const en: Messages = {
     seatsLeftOne: "1 seat left",
     seatsFull: "Sold out",
     interestedCount: "Interested",
+    friendsGoing: "{count} friends are going",
+    friendsGoingOne: "1 friend is going",
+    networkGoing: "{count} people in your network are going",
+    networkGoingOne: "1 person in your network is going",
+    whySharedInterests: "{count} interests in common",
+    whySharedInterestsOne: "1 interest in common",
+    whyNearbyAvailable: "Available near you",
+    whyMood: "A mood matching your tastes",
     livesAt: "Lives in {place}",
     ongoingBadge: "Ongoing",
     endedBadge: "Ended",

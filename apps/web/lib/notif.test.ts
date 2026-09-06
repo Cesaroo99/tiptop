@@ -58,6 +58,12 @@ describe("notifAction / notifLabel", () => {
     expect(notifLabel(invite, fr)).toContain("groupe");
   });
 
+  it("regroupe plusieurs vies sur la même publication", () => {
+    const like = n({ type: "LIKE", entityType: "post", entityId: "p1", count: 3 });
+    expect(notifLabel(like, fr)).toContain("et d’autres ont posé leur vie");
+    expect(notifAction(like)).toEqual({ kind: "href", href: "/posts/p1" });
+  });
+
   it("envoie un commentaire mood vers la vidéo", () => {
     expect(notifAction(n({ type: "COMMENT", entityType: "mood", entityId: "m9" }))).toEqual({
       kind: "href",

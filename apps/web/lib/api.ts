@@ -74,6 +74,8 @@ export type EventCard = {
     avatarUrl: string | null;
   };
   interestedCount?: number;
+  friendsGoing?: number;
+  networkGoing?: number;
   reservedCount?: number;
   commentsCount?: number;
   postId?: string | null;
@@ -303,6 +305,7 @@ export type PersonCard = {
   likeTime?: { totalSeconds: number; label: string };
   wishes?: Array<{ id: string; title: string; category: string }>;
   activeMood?: { id: string; activity: string | null; body: string; expiresAt: string } | null;
+  why?: Array<{ key: string; count?: number }>;
 };
 
 export type TicketItem = {
@@ -414,6 +417,7 @@ export type FeedItem = {
   viewerFollows: boolean;
   authorActiveLikes: number;
   likeTime?: LikeTimeSnap;
+  hint?: "followed" | "local" | "alive" | null;
   sharesCount?: number;
   author: {
     id: string;
@@ -471,6 +475,7 @@ export type NotifItem = {
   entityType: string | null;
   entityId: string | null;
   read: boolean;
+  count?: number;
   createdAt: string;
   actor: { id: string; firstName: string; lastName: string; username: string; certified: boolean; avatarUrl?: string | null } | null;
 };

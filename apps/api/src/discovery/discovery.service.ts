@@ -1,11 +1,13 @@
 import { Inject, Injectable } from "@nestjs/common";
 import {
   ageFromBirthDate,
+  discoveryWhy,
   displayLocation,
   findZone,
   formatApproxDistance,
   formatLikeDuration,
   haversineKm,
+  interestFromActivity,
   isCurrentlyAvailable,
   presenceState,
   publicCoords,
@@ -14,6 +16,7 @@ import {
   YAOUNDE_ZONES,
 } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
+import { viewerHiddenIds } from "../graph/viewer-graph";
 
 export type NearbyFilters = {
   city?: string;
@@ -45,6 +48,9 @@ export class DiscoveryService {
     });
     const filterCity = filters.city || viewer?.profile?.city || "Yaoundé";
     const now = new Date();
+    const hidden = await viewerHiddenIds(this.prisma, viewerId);
+    const hiddenIds = [...hidden];
+    const viewerInterests = new Set(viewer?.profile?.interests ?? []);
     const personInclude = {
       profile: true,
       wishes: {
@@ -56,7 +62,7 @@ export class DiscoveryService {
     const [nearbyRows, contactRows, laterRows, myLike] = await Promise.all([
       this.prisma.user.findMany({
         where: {
-          id: { not: viewerId },
+          id: { notIn: [viewerId, ...hiddenIds] },
           status: "ACTIVE",
           profileCompleted: true,
           profile: {
@@ -86,6 +92,7 @@ export class DiscoveryService {
     const laterIds = new Set(laterRows.map((r) => r.personId));
     const byId = new Map(nearbyRows.map((u) => [u.id, u]));
     for (const row of [...contactRows, ...laterRows]) {
+      if (hidden.has(row.person.id)) continue;
       if (row.person.status === "ACTIVE" && row.person.profileCompleted && !byId.has(row.person.id)) {
         byId.set(row.person.id, row.person);
       }
@@ -155,6 +162,13 @@ export class DiscoveryService {
         const wishCategory = filters.wishCategory?.toUpperCase();
         const mood = moodByUser.get(u.id);
         const canReveal = mood && (mood.visibility === "ZONE" ? mood.city === filterCity : true);
+        const sharedInterestCount = (u.profile?.interests ?? []).filter((interest) =>
+          viewerInterests.has(interest),
+        ).length;
+        const nearbyAvailable =
+          available && precision !== "HIDDEN" && (sameZone || (distanceKm != null && distanceKm <= 3));
+        const moodInterest = mood?.activity ? interestFromActivity(mood.activity) : null;
+        const moodAffinity = Boolean(canReveal && moodInterest && viewerInterests.has(moodInterest));
         return {
           id: u.id,
           username: u.username,
@@ -195,6 +209,7 @@ export class DiscoveryService {
                   expiresAt: mood.expiresAt?.toISOString() ?? null,
                 }
               : null,
+          why: discoveryWhy({ sharedInterestCount, nearbyAvailable, moodAffinity }),
           _wishMatch: wishCategory ? u.wishes.some((w) => w.category === wishCategory) : true,
         };
       })

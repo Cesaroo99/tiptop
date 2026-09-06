@@ -26,6 +26,7 @@ import {
   type EventRecurrence,
 } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
+import { viewerNetwork } from "../graph/viewer-graph";
 import { NotificationsService } from "../notifications/notifications.service";
 import { applyEventSchemaFixes } from "../ensure-event-schema";
 
@@ -179,7 +180,8 @@ export class EventsService {
         include: this.include(),
       });
       const items = await Promise.all(rows.map((e) => this.map(viewerId, e)));
-      return { items: tab === "all" ? dedupeSeriesOccurrences(items) : items };
+      const listed = tab === "all" ? dedupeSeriesOccurrences(items) : items;
+      return { items: await this.withNetworkSignals(viewerId, listed) };
     } catch (err) {
       console.error("[events.list]", err);
       await applyEventSchemaFixes((sql) => this.prisma.$executeRawUnsafe(sql));
@@ -191,7 +193,8 @@ export class EventsService {
           include: this.include(),
         });
         const items = await Promise.all(rows.map((e) => this.map(viewerId, e)));
-        return { items: tab === "all" ? dedupeSeriesOccurrences(items) : items };
+        const listed = tab === "all" ? dedupeSeriesOccurrences(items) : items;
+        return { items: await this.withNetworkSignals(viewerId, listed) };
       } catch (err2) {
         console.error("[events.list.retry]", err2);
         return { items: [] };
@@ -202,7 +205,22 @@ export class EventsService {
   async get(viewerId: string, id: string) {
     const event = await this.prisma.event.findUnique({ where: { id }, include: this.include() });
     if (!event) throw new NotFoundException({ code: "EVENT_NOT_FOUND" });
-    return this.map(viewerId, event);
+    const [item] = await this.withNetworkSignals(viewerId, [await this.map(viewerId, event)]);
+    return item;
+  }
+
+  private async withNetworkSignals<
+    T extends { people?: Array<{ id: string; status: string }> },
+  >(viewerId: string, items: T[]): Promise<Array<T & { friendsGoing: number; networkGoing: number }>> {
+    if (items.length === 0) return [];
+    const { friendIds, networkIds } = await viewerNetwork(this.prisma, viewerId);
+    const going = new Set(["HOST", "RESERVED", "CONFIRMED", "PRESENT"]);
+    return items.map((item) => {
+      const people = item.people ?? [];
+      const friendsGoing = people.filter((p) => friendIds.has(p.id) && going.has(p.status)).length;
+      const networkGoing = people.filter((p) => networkIds.has(p.id) && p.id !== viewerId).length;
+      return { ...item, friendsGoing, networkGoing };
+    });
   }
 
   /** Moods liés à l'événement (#4-6, #46) : boucle contenu social ↔ monde réel, y compris les souvenirs après coup. */

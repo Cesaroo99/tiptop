@@ -25,6 +25,12 @@ TipTop n'a pas de graphe « amis » symétrique classique. Il combine plusieurs 
 
 Les fusionner aurait forcé chaque invitation à transiter par un événement — contraire à l'exemple central du brief (« Je suis au restaurant, j'invite Alice à me rejoindre »).
 
+## Usage runtime
+
+`apps/api/src/graph/viewer-graph.ts` expose `viewerHiddenIds` (blocages des deux côtés) et `viewerNetwork` (follows + contacts TipTop). Le feed, les événements et la découverte s’en servent pour le ranking, la preuve sociale et le `why`.
+
+Les contacts **téléphone** ne font pas partie du graphe.
+
 ## Formation du graphe de contacts
 
 Un `Contact` est créé dans les deux sens lorsque :

@@ -99,6 +99,16 @@ describe("EventCard (#23-25)", () => {
     expect(screen.getByText(/a été annulé par l’organisateur/)).toBeInTheDocument();
   });
 
+  it("montre la preuve sociale seulement si le réseau participe", () => {
+    render(
+      <TestI18nProvider>
+        <EventCard event={{ ...baseEvent, friendsGoing: 2, networkGoing: 5 }} />
+      </TestI18nProvider>,
+    );
+    expect(screen.getByText("2 amies participent")).toBeInTheDocument();
+    expect(screen.queryByText(/personnes de ton réseau/)).not.toBeInTheDocument();
+  });
+
   it("bientôt : badge « Commence bientôt » dans les 30 dernières minutes (#7-8)", () => {
     const soon = { ...baseEvent, startsAt: new Date(Date.now() + 10 * 60_000).toISOString() };
     render(

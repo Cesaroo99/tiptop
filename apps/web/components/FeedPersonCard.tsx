@@ -11,6 +11,7 @@ import { AvailabilityBadge } from "./AvailabilityBadge";
 import { CertifiedMark } from "./Avatar";
 import { HeartIcon, UserPlusIcon, CheckIcon } from "./Icons";
 import { SocialInviteModal } from "./SocialInviteModal";
+import { personWhyLines } from "@/lib/discovery-why";
 
 export function FeedPersonCard({
   person,
@@ -126,6 +127,11 @@ export function FeedPersonCard({
         <p className="type-caption text-muted">
           {[person.profession, person.locationLabel ?? person.distanceLabel].filter(Boolean).join(" · ")}
         </p>
+        {personWhyLines(person, messages).map((line) => (
+          <p key={line} className="type-caption font-medium text-accent">
+            {line}
+          </p>
+        ))}
         {person.activeMood ? (
           <p className="type-caption truncate rounded-lg bg-accent-soft px-3 py-1.5 font-medium text-accent">
             {person.activeMood.activity || person.activeMood.body}

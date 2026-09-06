@@ -17,6 +17,7 @@ import { viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { useSession } from "@/lib/session";
 import { CertifiedMark } from "@/components/Avatar";
+import { personWhyLines } from "@/lib/discovery-why";
 
 type Circle = "FRIEND" | "NEARBY" | "LATER";
 type PresenceFilter = "ALL" | "AVAILABLE" | "UNSURE" | "UNAVAILABLE";
@@ -435,6 +436,11 @@ function PeopleCarousel() {
                 {messages.world.retryGeo}
               </button>
             ) : null}
+            {personWhyLines(person, messages).map((line) => (
+              <p key={line} className="type-caption mx-auto font-medium text-accent">
+                {line}
+              </p>
+            ))}
             {person.activeMood ? (
               <p className="type-caption mx-auto truncate rounded-lg bg-accent-soft px-3 py-1.5 font-medium text-accent">
                 {person.activeMood.activity || person.activeMood.body}

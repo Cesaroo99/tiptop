@@ -1,5 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { NotificationType } from "@prisma/client";
+import { groupNotifications } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 
 @Injectable()
@@ -46,26 +47,27 @@ export class NotificationsService {
     const unreadCount = await this.prisma.notification.count({
       where: { userId, readAt: null },
     });
+    const mapped = items.map((n) => ({
+      id: n.id,
+      type: n.type,
+      entityType: n.entityType,
+      entityId: n.entityId,
+      read: Boolean(n.readAt),
+      createdAt: n.createdAt.toISOString(),
+      actor: n.actor
+        ? {
+            id: n.actor.id,
+            firstName: n.actor.firstName,
+            lastName: n.actor.lastName,
+            username: n.actor.username,
+            certified: n.actor.certified,
+            avatarUrl: n.actor.profile?.avatarUrl ?? null,
+          }
+        : null,
+    }));
     return {
       unreadCount,
-      items: items.map((n) => ({
-        id: n.id,
-        type: n.type,
-        entityType: n.entityType,
-        entityId: n.entityId,
-        read: Boolean(n.readAt),
-        createdAt: n.createdAt.toISOString(),
-        actor: n.actor
-          ? {
-              id: n.actor.id,
-              firstName: n.actor.firstName,
-              lastName: n.actor.lastName,
-              username: n.actor.username,
-              certified: n.actor.certified,
-              avatarUrl: n.actor.profile?.avatarUrl ?? null,
-            }
-          : null,
-      })),
+      items: groupNotifications(mapped),
     };
   }
 

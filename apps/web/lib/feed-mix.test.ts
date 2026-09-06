@@ -101,7 +101,7 @@ function mood(id: string): MoodItem {
 }
 
 describe("mixHomeFeed", () => {
-  it("alterne moods, personnes et events parmi les posts", () => {
+  it("mélange moods, personnes et events sans motif figé", () => {
     const mixed = mixHomeFeed(
       {
         posts: [post("p1", { imageUrl: "/x.jpg" }), post("p2"), post("p3", { imageUrl: "/y.jpg" })],
@@ -111,10 +111,13 @@ describe("mixHomeFeed", () => {
       },
       () => 0,
     );
-    expect(mixed.map((row) => row.kind)).toEqual(["mood", "post", "person", "event", "post", "post"]);
     expect(mixed.some((row) => row.kind === "mood")).toBe(true);
     expect(mixed.some((row) => row.kind === "person")).toBe(true);
     expect(mixed.some((row) => row.kind === "event")).toBe(true);
+    expect(mixed.filter((row) => row.kind === "post")).toHaveLength(3);
+    for (let i = 1; i < mixed.length; i += 1) {
+      expect(mixed[i]!.kind).not.toBe(mixed[i - 1]!.kind);
+    }
   });
 
   it("n’ajoute pas un event déjà lié à un post", () => {
