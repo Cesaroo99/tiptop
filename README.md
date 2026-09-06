@@ -45,3 +45,7 @@ pnpm --filter @tiptop/domain test
 pnpm --filter @tiptop/api test
 pnpm test:e2e
 ```
+
+## Téléphone (Render + APK)
+
+[docs/DEPLOY_RENDER.md](./docs/DEPLOY_RENDER.md) — Blueprint Render (`https://tiptop-cesar99.onrender.com`) et APK Android dans `apps/android`.

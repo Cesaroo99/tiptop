@@ -14,13 +14,10 @@ import { AuthService } from "../auth/auth.service";
 import { ChatRealtime } from "./chat.realtime";
 import { ChatService } from "./chat.service";
 import { PushService } from "./push.service";
-import { loadEnv } from "../env";
-
-const env = loadEnv();
 
 @WebSocketGateway({
   namespace: "/realtime",
-  cors: { origin: env.WEB_ORIGIN, credentials: true },
+  cors: { origin: true, credentials: true },
 })
 @Injectable()
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
