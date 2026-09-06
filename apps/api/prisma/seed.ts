@@ -1327,6 +1327,65 @@ async function enrichLivingWorld(
     }
   }
 
+  const pendingEventInvites = await db.invitation.findMany({
+    where: { inviteeId: cesar.id, status: "PENDING" },
+    include: { event: { select: { title: true } } },
+  });
+  for (const inv of pendingEventInvites) {
+    const already = await db.message.findFirst({ where: { kind: "INVITE", inviteId: inv.id } });
+    if (already) continue;
+    const key = directKey(inv.inviterId, inv.inviteeId);
+    let conv = await db.conversation.findUnique({ where: { directKey: key } });
+    if (!conv) {
+      conv = await db.conversation.create({
+        data: {
+          kind: "DIRECT",
+          directKey: key,
+          members: { create: [{ userId: inv.inviterId }, { userId: inv.inviteeId }] },
+        },
+      });
+    }
+    await db.message.create({
+      data: {
+        conversationId: conv.id,
+        senderId: inv.inviterId,
+        kind: "INVITE",
+        body: inv.event.title,
+        inviteType: "EVENT",
+        inviteId: inv.id,
+      },
+    });
+    await db.conversation.update({ where: { id: conv.id }, data: { updatedAt: new Date() } });
+  }
+
+  const pendingSocial = await db.socialInvite.findMany({ where: { inviteeId: cesar.id, status: "SENT" } });
+  for (const inv of pendingSocial) {
+    const already = await db.message.findFirst({ where: { kind: "INVITE", inviteId: inv.id } });
+    if (already) continue;
+    const key = directKey(inv.inviterId, inv.inviteeId);
+    let conv = await db.conversation.findUnique({ where: { directKey: key } });
+    if (!conv) {
+      conv = await db.conversation.create({
+        data: {
+          kind: "DIRECT",
+          directKey: key,
+          members: { create: [{ userId: inv.inviterId }, { userId: inv.inviteeId }] },
+        },
+      });
+    }
+    await db.message.create({
+      data: {
+        conversationId: conv.id,
+        senderId: inv.inviterId,
+        kind: "INVITE",
+        body: inv.label || inv.message || "Invitation",
+        inviteType: "SOCIAL",
+        inviteId: inv.id,
+      },
+    });
+    await db.conversation.update({ where: { id: conv.id }, data: { updatedAt: new Date() } });
+  }
+
   const everyone = [cesar, erica, mbelle, onguene, amina, fouda, nadege, koffi, sarah, alex, rachel, william, mireille];
   for (const person of everyone) {
     await ensureOnePersonalLike(db, person.id);

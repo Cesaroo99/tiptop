@@ -15,7 +15,7 @@ import { formatInboxClock } from "@/lib/time";
 
 export default function Page() {
   return (
-    <AppShell chrome="none">
+    <AppShell chrome="nav">
       <Inbox />
     </AppShell>
   );
@@ -66,17 +66,20 @@ function Inbox() {
     if (c.lastMessage.kind === "AUDIO")
       return (
         <span className="inline-flex items-center gap-1">
-          <MicIcon size={13} /> {messages.chat.voiceMock}
+          <MicIcon size={13} /> {messages.chat.voice}
         </span>
       );
+    if (c.lastMessage.kind === "FILE") return messages.chat.file;
+    if (c.lastMessage.kind === "STICKER") return c.lastMessage.body || messages.chat.sticker;
+    if (c.lastMessage.kind === "INVITE") return messages.chat.inviteCard;
     return c.lastMessage.body;
   }
 
   return (
-    <main className="relative mx-auto h-full min-h-0 max-w-lg overflow-y-auto bg-[var(--bg)] px-4 pb-28 pt-4">
+    <main className="relative mx-auto max-w-lg bg-[var(--bg)] px-4 pb-8 pt-4">
       <ScreenHeader
         title={messages.chat.inbox}
-        onBack={() => router.back()}
+        onBack={() => router.replace("/")}
         right={
           <button
             type="button"
@@ -151,7 +154,7 @@ function Inbox() {
       <Link
         href="/messages/new"
         aria-label={messages.chat.newTitle}
-        className="tap-scale absolute bottom-6 right-5 grid h-14 w-14 place-items-center rounded-full bg-accent text-on-primary shadow-elevated"
+        className="tap-scale fixed bottom-24 right-5 z-30 grid h-14 w-14 place-items-center rounded-full bg-accent text-on-primary shadow-elevated"
       >
         <span className="relative">
           <MessageIcon size={22} />

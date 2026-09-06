@@ -54,7 +54,7 @@ function NewChat() {
 
   return (
     <main className="mx-auto min-h-dvh max-w-lg px-4 py-4">
-      <ScreenHeader title={messages.chat.newTitle} onBack={() => router.back()} />
+      <ScreenHeader title={messages.chat.newTitle} onBack={() => router.replace("/messages")} />
       <TextInput value={q} onChange={(e) => setQ(e.target.value)} placeholder={messages.chat.searchContact} className="!rounded-full" />
       {filtered.length === 0 ? <EmptyState title={messages.chat.newTitle} body={messages.world.contactsEmpty} /> : null}
       <div className="mt-4 space-y-1">

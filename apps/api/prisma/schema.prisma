@@ -794,6 +794,9 @@ enum MessageKind {
   TEXT
   IMAGE
   AUDIO
+  FILE
+  STICKER
+  INVITE
 }
 
 model Conversation {
@@ -831,6 +834,13 @@ model Message {
   kind           MessageKind  @default(TEXT)
   body           String       @default("")
   imageUrl       String?
+  audioUrl       String?
+  fileUrl        String?
+  fileName       String?
+  mimeType       String?
+  durationMs     Int?
+  inviteType     String?
+  inviteId       String?
   createdAt      DateTime     @default(now())
   reports        Report[]
 

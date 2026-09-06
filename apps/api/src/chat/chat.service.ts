@@ -163,10 +163,36 @@ export class ChatService {
     return this.serializeList(await this.load(conv.id), actorId);
   }
 
+  async postDirectInvite(
+    inviterId: string,
+    inviteeId: string,
+    input: { inviteType: "EVENT" | "SOCIAL"; inviteId: string; body: string },
+  ) {
+    const conv = await this.openDirect(inviterId, inviteeId);
+    await this.send(inviterId, conv.id, {
+      kind: "INVITE",
+      inviteType: input.inviteType,
+      inviteId: input.inviteId,
+      body: input.body,
+    });
+    return conv.id;
+  }
+
   async send(
     actorId: string,
     conversationId: string,
-    input: { kind?: MessageKind; body?: string; imageUrl?: string },
+    input: {
+      kind?: MessageKind;
+      body?: string;
+      imageUrl?: string;
+      audioUrl?: string;
+      fileUrl?: string;
+      fileName?: string;
+      mimeType?: string;
+      durationMs?: number;
+      inviteType?: "EVENT" | "SOCIAL";
+      inviteId?: string;
+    },
   ) {
     const conv = await this.load(conversationId);
     this.assertMember(conv, actorId);
@@ -182,6 +208,9 @@ export class ChatService {
       kind,
       body: input.body,
       imageUrl: input.imageUrl,
+      audioUrl: input.audioUrl,
+      fileUrl: input.fileUrl,
+      inviteId: input.inviteId,
       recentMessageCount,
     });
     if (gate !== "OK") {
@@ -195,7 +224,14 @@ export class ChatService {
         senderId: actorId,
         kind,
         body: kind === "AUDIO" ? "" : (input.body ?? "").trim(),
-        imageUrl: kind === "IMAGE" ? input.imageUrl : kind === "AUDIO" ? "/seed/black-white.svg" : null,
+        imageUrl: kind === "IMAGE" || kind === "STICKER" ? input.imageUrl ?? null : null,
+        audioUrl: kind === "AUDIO" ? input.audioUrl ?? null : null,
+        fileUrl: kind === "FILE" ? input.fileUrl ?? null : null,
+        fileName: kind === "FILE" ? input.fileName ?? null : null,
+        mimeType: input.mimeType ?? null,
+        durationMs: kind === "AUDIO" ? input.durationMs ?? null : null,
+        inviteType: kind === "INVITE" ? input.inviteType ?? null : null,
+        inviteId: kind === "INVITE" ? input.inviteId ?? null : null,
       },
       include: { sender: PERSON },
     });
@@ -340,12 +376,14 @@ export class ChatService {
     const members = [];
     let onlineCount = 0;
     for (const m of row.members) {
-      const online = await this.isOnline(m.user.id);
+      const seen = await this.push.lastSeen(m.user.id);
+      const online = this.realtime.isConnected(m.user.id) || isRecentlyOnline(seen?.lastSeenAt ?? null);
       if (online) onlineCount += 1;
       members.push({
         ...publicPerson(m.user),
         host: Boolean(row.event?.hostId && row.event.hostId === m.user.id),
         online,
+        lastSeenAt: seen?.lastSeenAt?.toISOString() ?? null,
       });
     }
     const lastFromMe = Boolean(last && last.senderId === viewerId);
@@ -380,17 +418,18 @@ export class ChatService {
     };
   }
 
-  private async isOnline(userId: string) {
-    if (this.realtime.isConnected(userId)) return true;
-    const seen = await this.push.lastSeen(userId);
-    return isRecentlyOnline(seen?.lastSeenAt ?? null);
-  }
-
   private serializeMessage(m: {
     id: string;
     kind: string;
     body: string;
     imageUrl: string | null;
+    audioUrl?: string | null;
+    fileUrl?: string | null;
+    fileName?: string | null;
+    mimeType?: string | null;
+    durationMs?: number | null;
+    inviteType?: string | null;
+    inviteId?: string | null;
     createdAt: Date;
     senderId: string;
     sender: { id: string; username: string; firstName: string; lastName: string; certified: boolean; profile?: { avatarUrl: string | null } | null };
@@ -400,6 +439,13 @@ export class ChatService {
       kind: m.kind,
       body: m.body,
       imageUrl: m.imageUrl,
+      audioUrl: m.audioUrl ?? null,
+      fileUrl: m.fileUrl ?? null,
+      fileName: m.fileName ?? null,
+      mimeType: m.mimeType ?? null,
+      durationMs: m.durationMs ?? null,
+      inviteType: m.inviteType ?? null,
+      inviteId: m.inviteId ?? null,
       createdAt: m.createdAt.toISOString(),
       sender: publicPerson(m.sender),
     };

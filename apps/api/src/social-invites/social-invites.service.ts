@@ -71,6 +71,15 @@ export class SocialInvitesService {
       entityType: "social_invite_sent",
       entityId: invite.id,
     });
+    try {
+      await this.chat.postDirectInvite(inviterId, input.inviteeId, {
+        inviteType: "SOCIAL",
+        inviteId: invite.id,
+        body: invite.label || invite.message || "Invitation",
+      });
+    } catch {
+      /* le DM n’empêche pas l’invitation */
+    }
     return this.mapOne(invite.id);
   }
 
@@ -113,6 +122,16 @@ export class SocialInvitesService {
     await this.prisma.socialInvite.update({
       where: { id },
       data: { status: "ACCEPTED", respondedAt: new Date() },
+    });
+    await this.prisma.contact.upsert({
+      where: { ownerId_personId: { ownerId: inv.inviterId, personId: inv.inviteeId } },
+      create: { ownerId: inv.inviterId, personId: inv.inviteeId },
+      update: {},
+    });
+    await this.prisma.contact.upsert({
+      where: { ownerId_personId: { ownerId: inv.inviteeId, personId: inv.inviterId } },
+      create: { ownerId: inv.inviteeId, personId: inv.inviterId },
+      update: {},
     });
     const conversation = await this.chat.openDirect(actorId, inv.inviterId);
     await this.notifications.create({

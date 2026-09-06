@@ -74,9 +74,10 @@ function TicketsPage() {
 
   async function act(id: string, action: "accept" | "refuse") {
     try {
-      const res = await api<InvitationItem & { reservation?: ReservationItem }>(`/invitations/${id}/${action}`, {
-        method: "POST",
-      });
+      const res = await api<InvitationItem & { reservation?: ReservationItem; conversationId?: string }>(
+        `/invitations/${id}/${action}`,
+        { method: "POST" },
+      );
       if (res.awaitingHostPay) {
         setNote(messages.booking.awaitingHostPay);
         await loadInvites();
@@ -84,6 +85,10 @@ function TicketsPage() {
       }
       if (res.needsPayment && res.reservation) {
         router.push(`/events/${res.event.id}/pay?reservationId=${res.reservation.id}`);
+        return;
+      }
+      if (action === "accept" && res.conversationId) {
+        router.replace(`/messages/${res.conversationId}`);
         return;
       }
       await loadInvites();
