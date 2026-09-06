@@ -30,6 +30,7 @@ import {
   eventLifecycle,
   EVENT_INVITE_DAILY_LIMIT,
   evaluateInvite,
+  isEventParticipationPublic,
   remainingSeats,
   seatedGuestCount,
   moodExpiresAt,
@@ -326,6 +327,35 @@ describe("cycle de vie événement", () => {
     expect(canInteractWithEvent("ongoing")).toBe(true);
     expect(canInteractWithEvent("ended")).toBe(false);
     expect(canInteractWithEvent("cancelled")).toBe(false);
+  });
+});
+
+describe("visibilité des personnes liées", () => {
+  it("l’hôte est toujours public", () => {
+    expect(
+      isEventParticipationPublic({ userId: "h", status: "HOST", showOnProfile: false, viewerId: "x" }),
+    ).toBe(true);
+  });
+
+  it("un participant masqué n’apparaît que pour lui-même", () => {
+    expect(
+      isEventParticipationPublic({ userId: "a", status: "INTERESTED", showOnProfile: false, viewerId: "b" }),
+    ).toBe(false);
+    expect(
+      isEventParticipationPublic({ userId: "a", status: "INTERESTED", showOnProfile: false, viewerId: "a" }),
+    ).toBe(true);
+  });
+
+  it("un participant qui a accepté est visible de tous", () => {
+    expect(
+      isEventParticipationPublic({ userId: "a", status: "RESERVED", showOnProfile: true, viewerId: "b" }),
+    ).toBe(true);
+  });
+
+  it("une participation annulée n’apparaît jamais", () => {
+    expect(
+      isEventParticipationPublic({ userId: "a", status: "CANCELLED", showOnProfile: true, viewerId: "a" }),
+    ).toBe(false);
   });
 });
 

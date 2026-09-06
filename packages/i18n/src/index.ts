@@ -446,6 +446,12 @@ export type Messages = {
     paid: string;
     host: string;
     peopleLinked: string;
+    peopleLinkedNamed: string;
+    peopleLinkedEmpty: string;
+    peopleHiddenHint: string;
+    peopleOnlyYou: string;
+    showParticipation: string;
+    hideParticipation: string;
     bookLater: string;
     moodCreate: string;
     moodCreateShort: string;
@@ -1305,6 +1311,12 @@ export const fr: Messages = {
     paid: "{amount}",
     host: "Hôte",
     peopleLinked: "Personnes liées",
+    peopleLinkedNamed: "Personnes liées à l’événement ({n})",
+    peopleLinkedEmpty: "Personne n’a encore accepté d’apparaître ici.",
+    peopleHiddenHint: "Ta participation est masquée. Les autres ne te voient pas dans cette liste.",
+    peopleOnlyYou: "Toi seulement",
+    showParticipation: "Afficher ma participation",
+    hideParticipation: "Masquer ma participation",
     bookLater: "Réserver et payer arrive en Phase 4. Ici tu peux t’intéresser, mettre un coup de cœur, ou inviter sur une sortie gratuite.",
     moodCreate: "Créer un mood",
     moodCreateShort: "Créer",
@@ -2164,6 +2176,12 @@ export const en: Messages = {
     paid: "{amount}",
     host: "Host",
     peopleLinked: "People",
+    peopleLinkedNamed: "People linked to the event ({n})",
+    peopleLinkedEmpty: "Nobody has chosen to appear here yet.",
+    peopleHiddenHint: "Your attendance is hidden. Others cannot see you in this list.",
+    peopleOnlyYou: "Only you",
+    showParticipation: "Show my attendance",
+    hideParticipation: "Hide my attendance",
     bookLater: "Booking and payment ship in Phase 4. You can mark interest, favorite, or invite to a free meetup.",
     moodCreate: "Create a mood",
     moodCreateShort: "Create",
