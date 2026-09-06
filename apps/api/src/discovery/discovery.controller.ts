@@ -23,9 +23,14 @@ export class DiscoveryController {
     @Query("minAge") minAge?: string,
     @Query("maxAge") maxAge?: string,
     @Query("available") available?: string,
+    @Query("presence") presence?: string,
     @Query("profession") profession?: string,
     @Query("wishCategory") wishCategory?: string,
+    @Query("lat") lat?: string,
+    @Query("lng") lng?: string,
   ) {
+    const latitude = lat != null ? Number(lat) : undefined;
+    const longitude = lng != null ? Number(lng) : undefined;
     return this.discovery.people(req.user.id, {
       city,
       zone,
@@ -33,8 +38,12 @@ export class DiscoveryController {
       minAge: minAge ? Number(minAge) : undefined,
       maxAge: maxAge ? Number(maxAge) : undefined,
       availableOnly: available === "1" || available === "true",
+      presence:
+        presence === "AVAILABLE" || presence === "UNSURE" || presence === "UNAVAILABLE" ? presence : undefined,
       profession,
       wishCategory,
+      lat: Number.isFinite(latitude) ? latitude : undefined,
+      lng: Number.isFinite(longitude) ? longitude : undefined,
     });
   }
 }

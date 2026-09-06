@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applySoleLike, releaseViewerLike } from "./like-feed";
+import { applySoleLike, releaseViewerLike, viewerLikeActive } from "./like-feed";
 import type { FeedItem } from "./api";
 
 function item(id: string, liked: boolean): FeedItem {
@@ -44,5 +44,13 @@ describe("like unique dans le fil", () => {
     expect(out[0]?.likeTime?.activeCount).toBe(0);
     expect(out[1]?.likedByMe).toBe(true);
     expect(out[1]?.likeTime?.activeCount).toBe(1);
+  });
+
+  it("un like mood/commentaire éteint le like de la publication", () => {
+    expect(viewerLikeActive({ targetType: "mood", targetId: "m1" }, "post", "p1", true, true)).toBe(false);
+    expect(viewerLikeActive({ targetType: "comment", targetId: "c1" }, "post", "p1", true, true)).toBe(false);
+    expect(viewerLikeActive({ targetType: "post", targetId: "p1" }, "post", "p1", false, true)).toBe(true);
+    expect(viewerLikeActive(null, "post", "p1", true, true)).toBe(false);
+    expect(viewerLikeActive(null, "post", "p1", true, false)).toBe(true);
   });
 });

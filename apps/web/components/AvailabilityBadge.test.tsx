@@ -4,23 +4,35 @@ import { AvailabilityBadge } from "./AvailabilityBadge";
 import { TestI18nProvider } from "@/lib/test-utils";
 
 describe("AvailabilityBadge (#16, #22)", () => {
-  it("affiche « Disponible » avec une pastille active", () => {
+  it("affiche « Disponible » avec une pastille verte", () => {
     const { container } = render(
       <TestI18nProvider>
-        <AvailabilityBadge available />
+        <AvailabilityBadge presence="AVAILABLE" />
       </TestI18nProvider>,
     );
     expect(screen.getByText("Disponible")).toBeInTheDocument();
     expect(container.querySelector(".bg-success")).toBeTruthy();
   });
 
-  it("affiche « Masqué » quand indisponible, sans animation de pastille", () => {
+  it("affiche « Je ne sais pas » en orange", () => {
     const { container } = render(
       <TestI18nProvider>
-        <AvailabilityBadge available={false} />
+        <AvailabilityBadge presence="BUSY" />
       </TestI18nProvider>,
     );
-    expect(screen.getByText("Masqué")).toBeInTheDocument();
+    expect(screen.getByText("Je ne sais pas")).toBeInTheDocument();
+    expect(container.querySelector(".bg-warning")).toBeTruthy();
+    expect(container.querySelector(".animate-ping")).toBeNull();
+  });
+
+  it("affiche « Indisponible » en rouge, sans animation", () => {
+    const { container } = render(
+      <TestI18nProvider>
+        <AvailabilityBadge presence="HIDDEN" />
+      </TestI18nProvider>,
+    );
+    expect(screen.getByText("Indisponible")).toBeInTheDocument();
+    expect(container.querySelector(".bg-danger")).toBeTruthy();
     expect(container.querySelector(".animate-ping")).toBeNull();
   });
 

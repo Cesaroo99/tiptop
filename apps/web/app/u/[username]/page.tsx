@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { AvailabilityBadge } from "@/components/AvailabilityBadge";
+import { PresencePicker } from "@/components/PresencePicker";
 import { CalendarIcon, ChevronRightIcon, FlagIcon, HeartIcon, MessageIcon, PinIcon, PlayIcon, SparklesIcon } from "@/components/Icons";
 import { LikeCapital } from "@/components/LikeCapital";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
@@ -19,7 +20,10 @@ import { api, ApiError, type FeedItem } from "@/lib/api";
 import { applySoleLike, replaceFeedItem } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { useI18n } from "@/lib/i18n";
+import { viewerLikeActive } from "@/lib/like-feed";
+import { useSession } from "@/lib/session";
 import { formatEventWhen } from "@/lib/time";
+import { presenceState } from "@tiptop/domain";
 
 type EventPreview = {
   id: string;
@@ -47,6 +51,7 @@ type Profile = {
   zone: string | null;
   website: string | null;
   availability: string;
+  availabilityUntil?: string | null;
   isSelf: boolean;
   following: boolean;
   followersCount: number;
@@ -91,10 +96,12 @@ export default function ProfilePage() {
 function ProfileView() {
   const { username } = useParams<{ username: string }>();
   const { messages } = useI18n();
-  const { refresh: refreshPlacement } = useLikePlacement();
+  const { refresh: refreshSession } = useSession();
+  const { refresh: refreshPlacement, placement, ready } = useLikePlacement();
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [statusBusy, setStatusBusy] = useState(false);
   const [soon, setSoon] = useState<string | null>(null);
   const [transfer, setTransfer] = useState<string | null>(null);
   const [buy, setBuy] = useState(false);
@@ -129,7 +136,7 @@ function ProfileView() {
   async function like(confirmTransfer = false) {
     if (!profile || profile.isSelf) return;
     try {
-      if (profile.likedByMe) {
+      if (viewerLikeActive(placement, "user", profile.id, profile.likedByMe, ready)) {
         await api(`/users/${profile.id}/like`, { method: "DELETE" });
         setProfile({ ...profile, likedByMe: false });
         await refreshPlacement();
@@ -164,10 +171,38 @@ function ProfileView() {
     }
   }
 
+  async function setMyPresence(availability: "AVAILABLE" | "BUSY" | "HIDDEN") {
+    if (!profile?.isSelf) return;
+    setStatusBusy(true);
+    try {
+      await api("/users/me", {
+        method: "PATCH",
+        body: JSON.stringify({ availability, ttlHours: 4 }),
+      });
+      await refreshSession();
+      setProfile({
+        ...profile,
+        availability,
+        availabilityUntil: availability === "AVAILABLE" ? new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString() : null,
+      });
+    } catch {
+      setError(messages.common.error);
+    } finally {
+      setStatusBusy(false);
+    }
+  }
+
   if (error) return <ErrorBanner message={error} onRetry={() => void load()} />;
   if (!profile) return <Skeleton className="mx-4 mt-4 h-80" />;
 
-  const available = profile.availability === "AVAILABLE";
+  const presence = presenceState({
+    availability: (profile.availability === "BUSY" || profile.availability === "AVAILABLE" ? profile.availability : "HIDDEN") as
+      | "HIDDEN"
+      | "BUSY"
+      | "AVAILABLE",
+    availabilityUntil: profile.availabilityUntil ? new Date(profile.availabilityUntil) : null,
+  });
+  const liked = viewerLikeActive(placement, "user", profile.id, profile.likedByMe, ready);
 
   return (
     <div className="pb-8">
@@ -191,9 +226,11 @@ function ProfileView() {
         </h1>
         <p className="type-body-sm text-muted">@{profile.username}</p>
 
-        <div className="mt-3 flex justify-center">
-          <AvailabilityBadge available={available} compact />
-        </div>
+        {!profile.isSelf ? (
+          <div className="mt-3 flex justify-center">
+            <AvailabilityBadge presence={presence} compact />
+          </div>
+        ) : null}
 
         {profile.profession ? <p className="type-body-sm mt-2 text-ink">{profile.profession}</p> : null}
         {profile.bio ? <p className="type-body-sm mx-auto mt-2 max-w-sm leading-6 text-muted">{profile.bio}</p> : null}
@@ -245,11 +282,11 @@ function ProfileView() {
             </div>
             <div className="flex items-center gap-2">
               <IconButton
-                label={profile.likedByMe ? messages.social.likeHere : messages.social.likePlace}
-                tone={profile.likedByMe ? "accent" : "neutral"}
+                label={liked ? messages.social.likeHere : messages.social.likePlace}
+                tone={liked ? "accent" : "neutral"}
                 onClick={() => void like(false)}
               >
-                <HeartIcon size={17} filled={profile.likedByMe} />
+                <HeartIcon size={17} filled={liked} />
               </IconButton>
               <Link
                 href={`/invite/${profile.id}`}
@@ -267,8 +304,11 @@ function ProfileView() {
             </div>
           </div>
         ) : (
-          <div className="mt-4 space-y-2">
-            <Link href="/account" className="type-body-sm font-semibold text-accent">
+          <div className="mt-5 space-y-3">
+            <p className="type-caption font-semibold text-muted">{messages.account.status}</p>
+            <PresencePicker value={presence} busy={statusBusy} onChange={(k) => void setMyPresence(k)} />
+            <p className="type-caption mx-auto max-w-xs leading-5 text-muted">{messages.account.statusHint}</p>
+            <Link href="/account" className="type-body-sm inline-block font-semibold text-accent">
               {messages.account.title}
             </Link>
           </div>

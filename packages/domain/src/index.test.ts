@@ -3,7 +3,7 @@ import { maskPhone, parsePhone } from "../src/phone";
 import { canResendOtp, evaluateOtp } from "../src/otp";
 import { availableBalance, displayLikeRatio, likeProduction, pickUnitForLike, pickUnitForTarget, planHeartTransfer, planTransfer } from "../src/likes";
 import { getLikePack, likeCreditAllowed, LIKE_PACKS, needsLikePurchase } from "../src/wallet";
-import { availabilityUntil, isCurrentlyAvailable } from "../src/availability";
+import { availabilityUntil, isCurrentlyAvailable, presenceState } from "../src/availability";
 import {
   displayLocation,
   formatApproxDistance,
@@ -255,6 +255,19 @@ describe("disponibilité", () => {
         availabilityUntil: new Date(Date.now() + 3600_000),
       }),
     ).toBe(false);
+  });
+
+  it("mappe les 3 voyants (dispo / je ne sais pas / indisponible)", () => {
+    const until = new Date(Date.now() + 3600_000);
+    expect(presenceState({ availability: "AVAILABLE", availabilityUntil: until })).toBe("AVAILABLE");
+    expect(presenceState({ availability: "BUSY", availabilityUntil: until })).toBe("UNSURE");
+    expect(presenceState({ availability: "HIDDEN", availabilityUntil: null })).toBe("UNAVAILABLE");
+    expect(
+      presenceState({
+        availability: "AVAILABLE",
+        availabilityUntil: new Date(Date.now() - 1000),
+      }),
+    ).toBe("UNAVAILABLE");
   });
 });
 

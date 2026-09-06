@@ -26,3 +26,22 @@ export function isCurrentlyAvailable(input: {
   const now = input.now ?? new Date();
   return input.availabilityUntil.getTime() > now.getTime();
 }
+
+/** Voyant public : vert / orange / rouge — jamais déduit du scroll. */
+export type PresenceState = "AVAILABLE" | "UNSURE" | "UNAVAILABLE";
+
+export function presenceState(input: {
+  availability: AvailabilityStatus;
+  availabilityUntil: Date | null;
+  now?: Date;
+}): PresenceState {
+  if (isCurrentlyAvailable(input)) return "AVAILABLE";
+  if (input.availability === "BUSY") return "UNSURE";
+  return "UNAVAILABLE";
+}
+
+export function presenceFromDeclared(availability?: string | null): PresenceState {
+  if (availability === "AVAILABLE") return "AVAILABLE";
+  if (availability === "BUSY" || availability === "UNSURE") return "UNSURE";
+  return "UNAVAILABLE";
+}

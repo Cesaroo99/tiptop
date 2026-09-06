@@ -106,6 +106,8 @@ export type Messages = {
     username: string;
     save: string;
     saved: string;
+    status: string;
+    statusHint: string;
   };
   onboarding: {
     title: string;
@@ -331,9 +333,16 @@ export type Messages = {
   world: {
     available: string;
     unavailable: string;
+    unsure: string;
     availableUntil: string;
     goAvailable: string;
     goHidden: string;
+    goUnsure: string;
+    myStatus: string;
+    seeProfile: string;
+    locating: string;
+    geoDenied: string;
+    retryGeo: string;
     ttlHint: string;
     zoneTitle: string;
     zoneBody: string;
@@ -345,13 +354,29 @@ export type Messages = {
     approximate: string;
     peopleTitle: string;
     peopleNearby: string;
+    peopleAvailableAround: string;
+    peopleFriendsAvailable: string;
     peopleEmpty: string;
     peopleEmptyBody: string;
+    peopleFriends: string;
+    peopleAround: string;
+    peopleLater: string;
+    peopleFriendsEmpty: string;
+    peopleAroundEmpty: string;
+    peopleLaterEmpty: string;
+    circleFriend: string;
+    circleAround: string;
+    circleLater: string;
     invite: string;
     inviteJoin: string;
     previousPerson: string;
     passPerson: string;
     filters: string;
+    filtersActive: string;
+    applyFilters: string;
+    clearFilters: string;
+    presenceAll: string;
+    presenceFilter: string;
     onlyAvailable: string;
     maxDistance: string;
     minAge: string;
@@ -360,6 +385,9 @@ export type Messages = {
     message: string;
     saveForLater: string;
     savedForLater: string;
+    removeFromLater: string;
+    addFriend: string;
+    addedFriend: string;
     age: string;
     distance: string;
     nextPerson: string;
@@ -893,6 +921,8 @@ export const fr: Messages = {
     username: "Identifiant",
     save: "Enregistrer les modifications",
     saved: "Modifications enregistrées",
+    status: "Ton état",
+    statusHint: "Tu le choisis ici. Les autres le voient sur ton profil et autour d’elles — elles ne peuvent pas le changer.",
   },
   onboarding: {
     title: "Complète ton profil",
@@ -1117,10 +1147,17 @@ export const fr: Messages = {
   },
   world: {
     available: "Disponible",
-    unavailable: "Masqué",
+    unavailable: "Indisponible",
+    unsure: "Je ne sais pas",
     availableUntil: "Dispo jusqu’à {time}",
     goAvailable: "Je suis dispo",
-    goHidden: "Masquer ma dispo",
+    goHidden: "Indisponible",
+    goUnsure: "Je ne sais pas",
+    myStatus: "Ton état",
+    seeProfile: "Voir le profil",
+    locating: "Distance depuis ta position…",
+    geoDenied: "Distance depuis ta zone — active le GPS pour plus de précision",
+    retryGeo: "Activer le GPS",
     ttlHint: "Visible 4 heures, puis tu disparais du carousel.",
     zoneTitle: "Ta zone",
     zoneBody: "La zone filtre les personnes et les sorties près de toi. Le GPS propose, il ne force pas.",
@@ -1130,15 +1167,31 @@ export const fr: Messages = {
     precisionCity: "Ville",
     precisionHidden: "Masquée",
     approximate: "Zone approximative",
-    peopleTitle: "Personnes autour de moi",
-    peopleNearby: "Personnes autour de moi",
-    peopleEmpty: "Personne dans ta zone",
-    peopleEmptyBody: "Élargis tes filtres ou déclare-toi disponible. TipTop ne remplit pas ce carousel avec le monde entier.",
+    peopleTitle: "Autour de moi",
+    peopleNearby: "Autour de moi",
+    peopleAvailableAround: "Disponibles autour",
+    peopleFriendsAvailable: "Amies disponibles",
+    peopleEmpty: "Personne ici",
+    peopleEmptyBody: "Élargis tes filtres ou change d’onglet. TipTop ne remplit pas ce carousel avec le monde entier.",
+    peopleFriends: "Amies",
+    peopleAround: "Autour",
+    peopleLater: "Mis de côté",
+    peopleFriendsEmpty: "Tes amies apparaissent après une invitation acceptée.",
+    peopleAroundEmpty: "Personne autour de toi dans cette zone.",
+    peopleLaterEmpty: "Personne de côté. Tu peux y poser quelqu’un pour plus tard.",
+    circleFriend: "Amie",
+    circleAround: "Autour",
+    circleLater: "De côté",
     invite: "Inviter",
     inviteJoin: "Inviter à me rejoindre",
     previousPerson: "Précédent",
     passPerson: "Passer",
     filters: "Filtres",
+    filtersActive: "Filtres · {n}",
+    applyFilters: "Appliquer",
+    clearFilters: "Effacer",
+    presenceAll: "Tous les états",
+    presenceFilter: "État",
     onlyAvailable: "Disponibles seulement",
     maxDistance: "Distance max (km)",
     minAge: "Âge min",
@@ -1147,6 +1200,9 @@ export const fr: Messages = {
     message: "Message",
     saveForLater: "Plus tard",
     savedForLater: "Mis de côté",
+    removeFromLater: "Retirer",
+    addFriend: "Ajouter comme amie",
+    addedFriend: "Déjà amie",
     age: "{age} ans",
     distance: "{km} km",
     nextPerson: "Suivant",
@@ -1680,6 +1736,8 @@ export const en: Messages = {
     username: "Username",
     save: "Save changes",
     saved: "Changes saved",
+    status: "Your status",
+    statusHint: "You set it here. Others see it on your profile and around them — they cannot change it.",
   },
   onboarding: {
     title: "Complete your profile",
@@ -1904,10 +1962,17 @@ export const en: Messages = {
   },
   world: {
     available: "Available",
-    unavailable: "Hidden",
+    unavailable: "Unavailable",
+    unsure: "I don't know",
     availableUntil: "Available until {time}",
     goAvailable: "I'm available",
-    goHidden: "Hide availability",
+    goHidden: "Unavailable",
+    goUnsure: "I don't know",
+    myStatus: "My status",
+    seeProfile: "View profile",
+    locating: "Distance from your position…",
+    geoDenied: "Distance from your area — turn on GPS for a better reading",
+    retryGeo: "Enable GPS",
     ttlHint: "Visible for 4 hours, then you leave the carousel.",
     zoneTitle: "Your area",
     zoneBody: "The area filters people and meetups near you. GPS suggests, it does not force.",
@@ -1917,15 +1982,31 @@ export const en: Messages = {
     precisionCity: "City",
     precisionHidden: "Hidden",
     approximate: "Approximate area",
-    peopleTitle: "People nearby",
-    peopleNearby: "People nearby",
-    peopleEmpty: "Nobody in your area",
-    peopleEmptyBody: "Widen your filters or go available. TipTop will not fill this with the whole world.",
+    peopleTitle: "Around me",
+    peopleNearby: "Around me",
+    peopleAvailableAround: "Available around",
+    peopleFriendsAvailable: "Available friends",
+    peopleEmpty: "Nobody here",
+    peopleFriends: "Friends",
+    peopleAround: "Nearby",
+    peopleLater: "Saved",
+    peopleFriendsEmpty: "Friends appear after an accepted invite.",
+    peopleAroundEmpty: "Nobody around you in this area.",
+    peopleLaterEmpty: "Nobody saved. You can set someone aside for later.",
+    circleFriend: "Friend",
+    circleAround: "Nearby",
+    circleLater: "Saved",
+    peopleEmptyBody: "Widen your filters or switch tab. TipTop will not fill this with the whole world.",
     invite: "Invite",
     inviteJoin: "Invite to join me",
     previousPerson: "Previous",
     passPerson: "Skip",
     filters: "Filters",
+    filtersActive: "Filters · {n}",
+    applyFilters: "Apply",
+    clearFilters: "Clear",
+    presenceAll: "All statuses",
+    presenceFilter: "Status",
     onlyAvailable: "Available only",
     maxDistance: "Max distance (km)",
     minAge: "Min age",
@@ -1934,6 +2015,9 @@ export const en: Messages = {
     message: "Message",
     saveForLater: "Later",
     savedForLater: "Saved for later",
+    removeFromLater: "Remove",
+    addFriend: "Add as friend",
+    addedFriend: "Already a friend",
     age: "{age} yrs",
     distance: "{km} km",
     nextPerson: "Next",

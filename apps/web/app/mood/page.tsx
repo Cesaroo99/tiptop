@@ -17,6 +17,7 @@ import { EmptyState, Modal, Skeleton } from "@/components/ui";
 import { moodSoundSrc } from "@tiptop/domain";
 import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { useSession } from "@/lib/session";
 import { sheetOverlayClass, useSheetPortal } from "@/lib/sheet-portal";
@@ -168,7 +169,7 @@ function MoodSlide({
 }) {
   const { messages } = useI18n();
   const { user } = useSession();
-  const { refresh: refreshPlacement, placement } = useLikePlacement();
+  const { refresh: refreshPlacement, placement, ready } = useLikePlacement();
   const dock = Boolean(placement);
   const [transfer, setTransfer] = useState<string | null>(null);
   const [buy, setBuy] = useState(false);
@@ -182,7 +183,13 @@ function MoodSlide({
   const [muted, setMuted] = useState(true);
   const [loadedAt, setLoadedAt] = useState(() => Date.now());
   const place = moodPlaceFromItem(mood);
-  const liked = mood.likeTime?.likedByMe ?? mood.likedByMe ?? false;
+  const liked = viewerLikeActive(
+    placement,
+    "mood",
+    mood.id,
+    mood.likeTime?.likedByMe ?? mood.likedByMe ?? false,
+    ready,
+  );
   const canJoin = Boolean(user && user.id !== mood.author.id);
   const captionLong = (mood.body ?? "").length > 90;
 

@@ -14,6 +14,7 @@ import { SocialInviteModal } from "@/components/SocialInviteModal";
 import { ErrorBanner, IconButton, TextInput } from "@/components/ui";
 import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { useSession } from "@/lib/session";
 
@@ -29,7 +30,7 @@ function MoodViewer() {
   const { id } = useParams<{ id: string }>();
   const { messages } = useI18n();
   const { user } = useSession();
-  const { refresh: refreshPlacement } = useLikePlacement();
+  const { refresh: refreshPlacement, placement, ready } = useLikePlacement();
   const [mood, setMood] = useState<MoodItem | null>(null);
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [body, setBody] = useState("");
@@ -128,7 +129,13 @@ function MoodViewer() {
   if (error) return <ErrorBanner message={error} />;
   if (!mood) return <p className="p-4 text-sm text-muted">{messages.common.loading}</p>;
 
-  const liked = mood.likeTime?.likedByMe ?? mood.likedByMe;
+  const liked = viewerLikeActive(
+    placement,
+    "mood",
+    mood.id,
+    mood.likeTime?.likedByMe ?? mood.likedByMe ?? false,
+    ready,
+  );
 
   return (
     <div className="px-4 py-4">

@@ -1,17 +1,36 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { presenceFromDeclared, type PresenceState } from "@tiptop/domain";
 import { AppShell } from "@/components/AppShell";
 import { AvailabilityBadge } from "@/components/AvailabilityBadge";
-import { BriefcaseIcon, ChevronLeftIcon, ChevronRightIcon, MessageIcon, PinIcon } from "@/components/Icons";
+import { BriefcaseIcon, CheckIcon, ChevronLeftIcon, ChevronRightIcon, HeartIcon, RouteIcon, UserPlusIcon } from "@/components/Icons";
+import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { SocialInviteModal } from "@/components/SocialInviteModal";
-import { Chip, EmptyState, ErrorBanner, PrimaryButton, SecondaryButton, Skeleton, TextInput } from "@/components/ui";
+import { Chip, EmptyState, ErrorBanner, Skeleton } from "@/components/ui";
 import { api, ApiError, type PersonCard } from "@/lib/api";
+import { useViewerGeo } from "@/lib/geo";
 import { useI18n } from "@/lib/i18n";
+import { viewerLikeActive } from "@/lib/like-feed";
+import { useLikePlacement } from "@/lib/like-placement";
 import { useSession } from "@/lib/session";
 import { CertifiedMark } from "@/components/Avatar";
+
+type Circle = "FRIEND" | "NEARBY" | "LATER";
+type PresenceFilter = "ALL" | "AVAILABLE" | "UNSURE" | "UNAVAILABLE";
+
+type PeopleFilters = {
+  presence: PresenceFilter;
+  maxKm: string;
+  profession: string;
+};
+
+const EMPTY_FILTERS: PeopleFilters = { presence: "ALL", maxKm: "", profession: "" };
+
+function filterCount(f: PeopleFilters) {
+  return (f.presence !== "ALL" ? 1 : 0) + (f.maxKm.trim() ? 1 : 0) + (f.profession.trim() ? 1 : 0);
+}
 
 export default function Page() {
   return (
@@ -24,36 +43,38 @@ export default function Page() {
 function PeopleCarousel() {
   const { messages } = useI18n();
   const { user } = useSession();
-  const router = useRouter();
+  const { placement, ready, refresh: refreshPlacement } = useLikePlacement();
+  const { coords, status: geoStatus, retry: retryGeo } = useViewerGeo();
   const [items, setItems] = useState<PersonCard[] | null>(null);
+  const [circle, setCircle] = useState<Circle>("NEARBY");
   const [index, setIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [availableOnly, setAvailableOnly] = useState(false);
-  const [maxKm, setMaxKm] = useState("");
-  const [profession, setProfession] = useState("");
+  const [applied, setApplied] = useState<PeopleFilters>(EMPTY_FILTERS);
+  const [draft, setDraft] = useState<PeopleFilters>(EMPTY_FILTERS);
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [laterIds, setLaterIds] = useState<Set<string>>(new Set());
+  const [transfer, setTransfer] = useState<string | null>(null);
+  const [buy, setBuy] = useState(false);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
   const dragStart = useRef<{ x: number; id: number } | null>(null);
   const SWIPE_THRESHOLD = 90;
 
-  async function load() {
+  async function load(next = applied) {
     try {
       const params = new URLSearchParams();
       params.set("city", user?.city ?? "Yaoundé");
       if (user?.zone) params.set("zone", user.zone);
-      if (availableOnly) params.set("available", "1");
-      if (maxKm) params.set("maxKm", maxKm);
-      if (profession.trim()) params.set("profession", profession.trim());
-      const [data, later] = await Promise.all([
-        api<{ items: PersonCard[] }>(`/discovery/people?${params.toString()}`),
-        api<{ items: Array<{ id: string }> }>("/invite-later").catch(() => ({ items: [] as Array<{ id: string }> })),
-      ]);
+      if (next.presence !== "ALL") params.set("presence", next.presence);
+      if (next.maxKm.trim()) params.set("maxKm", next.maxKm.trim());
+      if (next.profession.trim()) params.set("profession", next.profession.trim());
+      if (coords) {
+        params.set("lat", String(coords.latitude));
+        params.set("lng", String(coords.longitude));
+      }
+      const data = await api<{ items: PersonCard[] }>(`/discovery/people?${params.toString()}`);
       setItems(data.items);
-      setLaterIds(new Set(later.items.map((p) => p.id)));
       setIndex(0);
     } catch {
       setError(messages.common.error);
@@ -63,30 +84,151 @@ function PeopleCarousel() {
   useEffect(() => {
     if (user) void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.city, user?.zone, availableOnly]);
+  }, [user?.city, user?.zone, applied.presence, applied.maxKm, applied.profession, coords?.latitude, coords?.longitude]);
+
+  const filtered = useMemo(() => {
+    if (!items) return null;
+    return items.filter((p) => {
+      if ((p.circle ?? "NEARBY") !== circle) return false;
+      if (applied.presence === "ALL") return true;
+      const presence = (p.presence ?? presenceFromDeclared(p.availability)) as PresenceState;
+      return presence === applied.presence;
+    });
+  }, [items, circle, applied.presence]);
+
+  function setCircleTab(next: Circle) {
+    setCircle(next);
+    setIndex(0);
+  }
+
+  function applyFilters(next: PeopleFilters) {
+    setApplied(next);
+    setDraft(next);
+    setFiltersOpen(false);
+    setIndex(0);
+  }
 
   if (error) return <ErrorBanner message={error} onRetry={() => void load()} />;
-  if (!items) return <Skeleton className="mx-4 mt-6 h-96" />;
-  const person = items[index];
+  if (!items || !filtered) return <Skeleton className="mx-4 mt-6 h-96" />;
+
+  const person = filtered[index];
+  const activeFilters = filterCount(applied);
+  const title =
+    circle === "FRIEND"
+      ? applied.presence === "AVAILABLE"
+        ? messages.world.peopleFriendsAvailable
+        : messages.world.peopleFriends
+      : circle === "LATER"
+        ? messages.world.peopleLater
+        : applied.presence === "AVAILABLE"
+          ? messages.world.peopleAvailableAround
+          : messages.world.peopleNearby;
+  const empty =
+    activeFilters > 0
+      ? messages.world.peopleEmptyBody
+      : circle === "FRIEND"
+        ? messages.world.peopleFriendsEmpty
+        : circle === "LATER"
+          ? messages.world.peopleLaterEmpty
+          : messages.world.peopleAroundEmpty;
+
+  const counts = {
+    FRIEND: items.filter((p) => p.circle === "FRIEND").length,
+    NEARBY: items.filter((p) => (p.circle ?? "NEARBY") === "NEARBY").length,
+    LATER: items.filter((p) => p.circle === "LATER").length,
+  };
+
+  const chrome = (
+    <PeopleChrome
+      title={title}
+      circle={circle}
+      counts={counts}
+      filtersOpen={filtersOpen}
+      filterCount={activeFilters}
+      onToggleFilters={() => {
+        setFiltersOpen((v) => {
+          if (!v) setDraft(applied);
+          return !v;
+        });
+      }}
+      onCircle={setCircleTab}
+    />
+  );
+
+  const filterForm = filtersOpen ? (
+    <form
+      className="mb-3 space-y-2.5 rounded-card bg-surface p-3 text-center shadow-card"
+      onSubmit={(e) => {
+        e.preventDefault();
+        applyFilters(draft);
+      }}
+    >
+      <p className="type-caption font-semibold text-muted">{messages.world.presenceFilter}</p>
+      <div className="flex flex-wrap justify-center gap-1.5">
+        {(
+          [
+            ["ALL", messages.world.presenceAll],
+            ["AVAILABLE", messages.world.available],
+            ["UNSURE", messages.world.unsure],
+            ["UNAVAILABLE", messages.world.unavailable],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setDraft((cur) => ({ ...cur, presence: key }))}
+            className={`type-caption rounded-full px-2.5 py-1.5 font-semibold ${
+              draft.presence === key ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <input
+        value={draft.maxKm}
+        onChange={(e) => setDraft((cur) => ({ ...cur, maxKm: e.target.value }))}
+        placeholder={messages.world.maxDistance}
+        inputMode="numeric"
+        className="h-10 w-full rounded-full bg-surface-sunken px-4 text-center type-body-sm text-ink outline-none"
+      />
+      <input
+        value={draft.profession}
+        onChange={(e) => setDraft((cur) => ({ ...cur, profession: e.target.value }))}
+        placeholder={messages.world.professionFilter}
+        className="h-10 w-full rounded-full bg-surface-sunken px-4 text-center type-body-sm text-ink outline-none"
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => applyFilters(EMPTY_FILTERS)}
+          className="type-button tap-scale h-9 rounded-full bg-surface-sunken text-ink"
+        >
+          {messages.world.clearFilters}
+        </button>
+        <button type="submit" className="type-button tap-scale h-9 rounded-full bg-accent text-on-primary">
+          {messages.world.applyFilters}
+        </button>
+      </div>
+    </form>
+  ) : null;
+
   if (!person) {
     return (
-      <EmptyState
-        title={messages.world.peopleEmpty}
-        body={messages.world.peopleEmptyBody}
-        action={
-          <Link href="/" className="font-semibold text-accent">
-            {messages.world.goAvailable}
-          </Link>
-        }
-      />
+      <div className="px-4 py-3">
+        {chrome}
+        {filterForm}
+        <EmptyState title={title} body={empty} />
+      </div>
     );
   }
 
-  const prev = items[index - 1];
-  const next = items[index + 1];
-  const available = Boolean(person.available);
+  const prev = filtered[index - 1];
+  const next = filtered[index + 1];
+  const presence = (person.presence ?? presenceFromDeclared(person.availability)) as PresenceState;
+  const count = filtered.length;
+  const liked = viewerLikeActive(placement, "user", person.id, Boolean(person.likedByMe), ready);
 
-  const count = items.length;
   function goNext() {
     setIndex((i) => Math.min(count - 1, i + 1));
   }
@@ -95,6 +237,7 @@ function PeopleCarousel() {
   }
 
   function onPointerDown(e: React.PointerEvent<HTMLElement>) {
+    if ((e.target as HTMLElement).closest("a,button")) return;
     e.preventDefault();
     dragStart.current = { x: e.clientX, id: e.pointerId };
     setDragging(true);
@@ -114,56 +257,105 @@ function PeopleCarousel() {
     setDragX(0);
   }
 
+  const distanceText =
+    person.distanceLabel ??
+    (person.distanceKm != null ? messages.world.distance.replace("{km}", String(person.distanceKm)) : null);
+
+  const circleLabel =
+    person.circle === "FRIEND"
+      ? messages.world.circleFriend
+      : person.circle === "LATER"
+        ? messages.world.circleLater
+        : messages.world.circleAround;
+
+  async function likePerson(confirmTransfer = false) {
+    setBusy(true);
+    try {
+      if (liked) {
+        await api(`/users/${person.id}/like`, { method: "DELETE" });
+        setItems((cur) => cur?.map((p) => (p.id === person.id ? { ...p, likedByMe: false } : p)) ?? cur);
+        await refreshPlacement();
+        return;
+      }
+      await api(`/users/${person.id}/like`, {
+        method: "POST",
+        body: JSON.stringify({ confirmTransfer }),
+      });
+      setItems((cur) => cur?.map((p) => ({ ...p, likedByMe: p.id === person.id })) ?? cur);
+      await refreshPlacement();
+      setTransfer(null);
+      setBuy(false);
+    } catch (e) {
+      if (e instanceof ApiError) {
+        const kind = likeErrorKind(String(e.code));
+        if (kind === "buy") {
+          setBuy(true);
+          return;
+        }
+        if (kind === "transfer") setTransfer(`${person.firstName} ${person.lastName}`);
+      } else {
+        setError(messages.common.error);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function addFriend() {
+    if (person.addedAsFriend || person.circle === "FRIEND") return;
+    setBusy(true);
+    try {
+      await api(`/contacts/${person.id}`, { method: "POST" });
+      setItems((cur) => cur?.map((p) => (p.id === person.id ? { ...p, addedAsFriend: true } : p)) ?? cur);
+    } catch {
+      setError(messages.common.error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function toggleLater() {
+    setBusy(true);
+    try {
+      const saved = person.circle === "LATER";
+      await api(`/invite-later/${person.id}`, { method: saved ? "DELETE" : "POST" });
+      setItems((cur) => {
+        if (!cur) return cur;
+        return cur.map((p) => {
+          if (p.id !== person.id) return p;
+          return { ...p, circle: saved ? "NEARBY" : "LATER" };
+        });
+      });
+      if (saved && circle === "LATER") setIndex(0);
+    } catch {
+      setError(messages.common.error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <div className="px-4 py-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="type-h1 text-ink">{messages.world.peopleNearby}</h1>
-        <Chip active={filtersOpen} onClick={() => setFiltersOpen((v) => !v)}>
-          {messages.world.filters}
-        </Chip>
-      </div>
-      {filtersOpen ? (
-        <form
-          className="mb-4 space-y-3 rounded-card bg-surface p-4 shadow-card"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void load();
-          }}
-        >
-          <label className="type-body-sm flex items-center gap-2 text-ink">
-            <input type="checkbox" checked={availableOnly} onChange={(e) => setAvailableOnly(e.target.checked)} />
-            {messages.world.onlyAvailable}
-          </label>
-          <TextInput value={maxKm} onChange={(e) => setMaxKm(e.target.value)} placeholder={messages.world.maxDistance} />
-          <TextInput
-            value={profession}
-            onChange={(e) => setProfession(e.target.value)}
-            placeholder={messages.world.professionFilter}
-          />
-          <PrimaryButton type="submit">{messages.common.apply}</PrimaryButton>
-        </form>
-      ) : null}
+    <div className="px-4 py-3">
+      {chrome}
+      {filterForm}
+
       <div className="relative mx-auto max-w-sm">
-        {prev ? (
-          <div className="pointer-events-none absolute -left-8 top-10 h-72 w-14 overflow-hidden rounded-card opacity-30 blur-[1px]">
-            {prev.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={prev.avatarUrl} alt="" className="h-full w-full object-cover" />
-            ) : null}
+        {prev?.avatarUrl ? (
+          <div className="pointer-events-none absolute -left-8 top-10 h-48 w-12 overflow-hidden rounded-[22px] opacity-30 blur-[1px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={prev.avatarUrl} alt="" className="h-full w-full object-cover" />
           </div>
         ) : null}
-        {next ? (
-          <div className="pointer-events-none absolute -right-8 top-10 h-72 w-14 overflow-hidden rounded-card opacity-30 blur-[1px]">
-            {next.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={next.avatarUrl} alt="" className="h-full w-full object-cover" />
-            ) : null}
+        {next?.avatarUrl ? (
+          <div className="pointer-events-none absolute -right-8 top-10 h-48 w-12 overflow-hidden rounded-[22px] opacity-30 blur-[1px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={next.avatarUrl} alt="" className="h-full w-full object-cover" />
           </div>
         ) : null}
         <article
-          className="fade-in touch-pan-y select-none overflow-hidden rounded-[28px] bg-surface shadow-elevated"
+          className="fade-in touch-pan-y select-none overflow-hidden rounded-[26px] bg-surface shadow-elevated"
           style={{
-            transform: `translateX(${dragX}px) rotate(${dragX / 24}deg)`,
+            transform: `translateX(${dragX}px) rotate(${dragX / 28}deg)`,
             transition: dragging ? "none" : "transform 220ms var(--ease-standard)",
           }}
           onPointerDown={onPointerDown}
@@ -172,129 +364,112 @@ function PeopleCarousel() {
           onPointerCancel={onPointerEnd}
           onDragStart={(e) => e.preventDefault()}
         >
-          {dragX <= -40 ? (
-            <span className="type-label absolute left-1/2 top-6 z-10 -translate-x-1/2 rounded-pill bg-ink/70 px-3 py-1.5 text-white">
-              {messages.world.passPerson}
-            </span>
-          ) : dragX >= 40 && prev ? (
-            <span className="type-label absolute left-1/2 top-6 z-10 -translate-x-1/2 rounded-pill bg-accent/80 px-3 py-1.5 text-white">
-              {messages.world.previousPerson}
-            </span>
-          ) : null}
-          <div className="relative h-80 bg-gradient-to-br from-accent/15 to-yellow/15">
-            {person.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={person.avatarUrl} alt="" draggable={false} className="h-full w-full object-cover" />
-            ) : (
-              <div className="grid h-full place-items-center type-display text-accent">{person.firstName[0]}</div>
-            )}
-            <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/35 to-transparent" aria-hidden />
-            <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/70 to-transparent" aria-hidden />
-            <span className="absolute left-3 top-3">
-              <AvailabilityBadge available={available} compact />
-            </span>
-            <div className="absolute inset-x-4 bottom-3">
-              <p className="type-h2 flex items-center gap-1.5 text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.3)]">
-                {person.firstName}
-                {person.age != null ? `, ${person.age}` : ""}
-                {person.certified ? <CertifiedMark /> : null}
-              </p>
-              <p className="type-body-sm inline-flex items-center gap-1 text-white/90">
-                <PinIcon size={13} />
-                {person.locationLabel}
-                {person.distanceLabel
-                  ? ` · ${person.distanceLabel}`
-                  : person.distanceKm != null
-                    ? ` · ${messages.world.distance.replace("{km}", String(person.distanceKm))}`
-                    : ""}
-              </p>
-            </div>
-          </div>
-          <div className="space-y-2.5 p-5">
-            {person.profession ? (
-              <p className="type-body-sm inline-flex items-center gap-1.5 text-muted">
-                <BriefcaseIcon />
-                {person.profession}
-              </p>
-            ) : null}
-            {person.activeMood ? (
-              <p className="type-body-sm inline-flex items-center gap-1.5 rounded-lg bg-accent-soft px-3 py-2 font-medium text-accent">
-                {person.activeMood.activity || person.activeMood.body}
-              </p>
-            ) : null}
-            {person.likeTime ? (
-              <p className="type-meta inline-flex items-center gap-1 text-accent">
-                {messages.likeTime.ofDuration.replace("{duration}", person.likeTime.label)}
-              </p>
-            ) : null}
-            {person.wishes?.length ? (
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {person.wishes.slice(0, 3).map((w) => (
-                  <Chip key={w.id}>{w.title}</Chip>
-                ))}
-              </div>
-            ) : null}
-            <div className="grid grid-cols-2 gap-2 pt-2">
-              <SecondaryButton
-                className="!w-full"
-                disabled={busy}
-                onClick={async () => {
-                  setBusy(true);
-                  try {
-                    const conv = await api<{ id: string }>("/conversations/direct", {
-                      method: "POST",
-                      body: JSON.stringify({ userId: person.id }),
-                    });
-                    router.push(`/messages/${conv.id}`);
-                  } catch (e) {
-                    setError(e instanceof ApiError && e.code === "BLOCKED" ? messages.chat.blockedPeer : messages.common.error);
-                  } finally {
-                    setBusy(false);
-                  }
-                }}
-              >
-                <span className="inline-flex items-center justify-center gap-1.5">
-                  <MessageIcon size={15} />
-                  {messages.world.message}
-                </span>
-              </SecondaryButton>
-              {available ? (
-                <PrimaryButton className="!w-full" onClick={() => setInviteOpen(true)}>
-                  {person.activeMood ? messages.socialInvite.joinNow : messages.world.inviteJoin}
-                </PrimaryButton>
+          <div className="relative">
+            <Link href={`/u/${person.username}`} className="relative block h-52 bg-gradient-to-br from-accent/15 to-yellow/15">
+              {person.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={person.avatarUrl} alt="" draggable={false} className="h-full w-full object-cover" />
               ) : (
-                <span className="type-button grid place-items-center rounded-pill bg-surface-sunken py-3.5 text-muted">
-                  {messages.world.unavailable}
-                </span>
+                <div className="grid h-full place-items-center type-display text-accent">{person.firstName[0]}</div>
               )}
-            </div>
+              <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2.5 pt-10">
+                <AvailabilityBadge presence={presence} compact />
+                <span className="type-caption rounded-full bg-white/15 px-2 py-0.5 font-semibold text-white">{circleLabel}</span>
+              </div>
+            </Link>
+            {person.circle !== "FRIEND" ? (
+              <button
+                type="button"
+                disabled={busy || person.addedAsFriend}
+                aria-label={person.addedAsFriend ? messages.world.addedFriend : messages.world.addFriend}
+                onClick={() => void addFriend()}
+                className={`tap-scale absolute left-2.5 top-2.5 z-10 grid h-9 w-9 place-items-center rounded-full shadow-sm ${
+                  person.addedAsFriend ? "bg-accent text-on-primary" : "bg-black/45 text-white backdrop-blur-sm"
+                }`}
+              >
+                {person.addedAsFriend ? <CheckIcon size={15} /> : <UserPlusIcon size={16} />}
+              </button>
+            ) : null}
             <button
               type="button"
               disabled={busy}
-              onClick={async () => {
-                setBusy(true);
-                try {
-                  const saved = laterIds.has(person.id);
-                  await api(`/invite-later/${person.id}`, { method: saved ? "DELETE" : "POST" });
-                  setLaterIds((cur) => {
-                    const next = new Set(cur);
-                    if (saved) next.delete(person.id);
-                    else next.add(person.id);
-                    return next;
-                  });
-                } catch {
-                  setError(messages.common.error);
-                } finally {
-                  setBusy(false);
-                }
-              }}
-              className="type-button tap-scale mt-1 w-full rounded-pill bg-surface-sunken py-3 text-ink"
+              aria-label={liked ? messages.social.likeHere : messages.social.likePlace}
+              onClick={() => void likePerson(false)}
+              className={`tap-scale absolute right-2.5 top-2.5 z-10 grid h-9 w-9 place-items-center rounded-full shadow-sm ${
+                liked ? "bg-accent text-on-primary" : "bg-black/45 text-white backdrop-blur-sm"
+              }`}
             >
-              {laterIds.has(person.id) ? messages.world.savedForLater : messages.world.saveForLater}
+              <HeartIcon size={16} filled={liked} />
             </button>
-            <Link href={`/u/${person.username}`} className="type-caption block pt-1 text-center font-semibold text-accent">
-              @{person.username}
-            </Link>
+          </div>
+          <div className="space-y-2.5 px-4 pb-4 pt-3 text-center">
+            <h2 className="min-w-0">
+              <span className="type-h2 line-clamp-2 break-words text-ink">
+                {person.firstName} {person.lastName}
+                {person.certified ? (
+                  <span className="ml-1 inline-block align-middle">
+                    <CertifiedMark />
+                  </span>
+                ) : null}
+              </span>
+              <span className="type-caption mt-1 flex min-w-0 items-center justify-center gap-1.5 text-muted">
+                {person.age != null ? <span className="shrink-0">{messages.world.age.replace("{age}", String(person.age))}</span> : null}
+                {person.age != null && person.profession ? <span aria-hidden>·</span> : null}
+                {person.profession ? (
+                  <span className="inline-flex min-w-0 items-center gap-1 truncate">
+                    <BriefcaseIcon size={13} />
+                    <span className="truncate">{person.profession}</span>
+                  </span>
+                ) : null}
+              </span>
+            </h2>
+            <p className="type-caption inline-flex max-w-full items-center justify-center gap-1.5 text-muted">
+              <RouteIcon size={13} />
+              <span className="truncate">
+                {distanceText ?? (geoStatus === "idle" ? messages.world.locating : messages.world.approximate)}
+              </span>
+            </p>
+            {geoStatus === "denied" || geoStatus === "unsupported" ? (
+              <button type="button" onClick={retryGeo} className="type-caption font-semibold text-accent">
+                {messages.world.retryGeo}
+              </button>
+            ) : null}
+            {person.activeMood ? (
+              <p className="type-caption mx-auto truncate rounded-lg bg-accent-soft px-3 py-1.5 font-medium text-accent">
+                {person.activeMood.activity || person.activeMood.body}
+              </p>
+            ) : null}
+            <div className="grid grid-cols-2 gap-2 pt-0.5">
+              {presence === "AVAILABLE" ? (
+                <button
+                  type="button"
+                  onClick={() => setInviteOpen(true)}
+                  className="tap-scale type-caption h-9 truncate rounded-full bg-accent px-3 font-semibold text-on-primary shadow-xs"
+                >
+                  {messages.world.inviteNamed.replace("{name}", person.firstName)}
+                </button>
+              ) : (
+                <span className="type-caption grid h-9 place-items-center rounded-full bg-surface-sunken font-semibold text-muted">
+                  {messages.world.unavailable}
+                </span>
+              )}
+              <Link
+                href={`/u/${person.username}`}
+                className="tap-scale type-caption grid h-9 place-items-center rounded-full bg-surface-sunken px-3 font-semibold text-ink"
+              >
+                {messages.world.seeProfile}
+              </Link>
+            </div>
+            {person.circle !== "FRIEND" ? (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void toggleLater()}
+                className="type-caption w-full py-0.5 text-center font-medium text-muted"
+              >
+                {person.circle === "LATER" ? messages.world.removeFromLater : messages.world.saveForLater}
+              </button>
+            ) : null}
           </div>
         </article>
       </div>
@@ -302,15 +477,15 @@ function PeopleCarousel() {
         <button
           type="button"
           aria-label={messages.world.previousPerson}
-          className="tap-scale grid h-12 w-12 place-items-center rounded-full bg-surface-sunken text-ink shadow-xs disabled:opacity-30"
+          className="tap-scale grid h-11 w-11 place-items-center rounded-full bg-surface-sunken text-ink shadow-xs disabled:opacity-30"
           disabled={index === 0}
           onClick={goPrev}
         >
-          <ChevronLeftIcon size={20} />
+          <ChevronLeftIcon size={18} />
         </button>
         <button
           type="button"
-          className="type-button tap-scale rounded-pill bg-surface-sunken px-6 py-3 text-ink shadow-xs"
+          className="type-caption tap-scale rounded-full bg-surface-sunken px-5 py-2.5 font-semibold text-ink shadow-xs"
           onClick={goNext}
         >
           {messages.world.passPerson}
@@ -318,10 +493,10 @@ function PeopleCarousel() {
         <button
           type="button"
           aria-label={messages.world.nextPerson}
-          className="tap-scale grid h-12 w-12 place-items-center rounded-full bg-accent text-on-primary shadow-sm"
+          className="tap-scale grid h-11 w-11 place-items-center rounded-full bg-accent text-on-primary shadow-sm"
           onClick={goNext}
         >
-          <ChevronRightIcon size={20} />
+          <ChevronRightIcon size={18} />
         </button>
       </div>
       <SocialInviteModal
@@ -331,6 +506,63 @@ function PeopleCarousel() {
         defaultLabel={person.activeMood?.activity ?? ""}
         onClose={() => setInviteOpen(false)}
       />
+      <LikeDialogs
+        transferName={transfer}
+        buyOpen={buy}
+        onCloseTransfer={() => setTransfer(null)}
+        onConfirmTransfer={() => void likePerson(true)}
+        onCloseBuy={() => setBuy(false)}
+      />
     </div>
+  );
+}
+
+function PeopleChrome({
+  title,
+  circle,
+  counts,
+  filtersOpen,
+  filterCount: active,
+  onToggleFilters,
+  onCircle,
+}: {
+  title: string;
+  circle: Circle;
+  counts: Record<Circle, number>;
+  filtersOpen: boolean;
+  filterCount: number;
+  onToggleFilters: () => void;
+  onCircle: (c: Circle) => void;
+}) {
+  const { messages } = useI18n();
+  const tabs: Array<[Circle, string]> = [
+    ["FRIEND", messages.world.peopleFriends],
+    ["NEARBY", messages.world.peopleAround],
+    ["LATER", messages.world.peopleLater],
+  ];
+  return (
+    <>
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <h1 className="type-h1 text-accent">{title}</h1>
+        <Chip active={filtersOpen || active > 0} onClick={onToggleFilters} tone={active > 0 ? "info" : "neutral"}>
+          {active > 0 ? messages.world.filtersActive.replace("{n}", String(active)) : messages.world.filters}
+        </Chip>
+      </div>
+      <div className="mb-3 grid grid-cols-3 gap-1 rounded-full bg-surface-sunken p-1">
+        {tabs.map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onCircle(key)}
+            className={`type-caption h-8 truncate rounded-full font-semibold ${
+              circle === key ? "bg-surface text-ink shadow-xs" : "text-muted"
+            }`}
+          >
+            {label}
+            {counts[key] ? ` ${counts[key]}` : ""}
+          </button>
+        ))}
+      </div>
+    </>
   );
 }

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { api, ApiError, type FeedItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
+import { viewerLikeActive } from "@/lib/like-feed";
 import { useLikePlacement } from "@/lib/like-placement";
 import { formatCompactCount, formatCountdownLabel, formatRelative, splitPostLead } from "@/lib/time";
 import { ageCategoryLabel } from "@tiptop/domain";
@@ -69,7 +70,7 @@ export function PostCard({
 }) {
   const { messages } = useI18n();
   const { user } = useSession();
-  const { refresh: refreshPlacement } = useLikePlacement();
+  const { placement, ready, refresh: refreshPlacement } = useLikePlacement();
   const [transfer, setTransfer] = useState<{ name: string } | null>(null);
   const [soon, setSoon] = useState<string | null>(null);
   const [buy, setBuy] = useState(false);
@@ -85,7 +86,13 @@ export function PostCard({
   const event = post.event ?? null;
   const isEvent = Boolean(event);
   const countdown = event ? formatCountdownLabel(event.startsAt) : null;
-  const liked = post.likeTime?.likedByMe ?? post.likedByMe ?? false;
+  const liked = viewerLikeActive(
+    placement,
+    "post",
+    post.id,
+    post.likeTime?.likedByMe ?? post.likedByMe ?? false,
+    ready,
+  );
   const interested = event?.viewerInterested ?? false;
   const remaining = event ? seatsRemainingOf(event.capacity, event.reservedCount, event.remaining) : null;
   const eventFull = remaining != null && remaining <= 0;

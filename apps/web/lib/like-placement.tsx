@@ -7,12 +7,14 @@ import { useSession } from "./session";
 type LikePlacementState = {
   placement: LikePlacement | null;
   loadedAt: number;
+  ready: boolean;
   refresh: () => Promise<void>;
 };
 
 const empty: LikePlacementState = {
   placement: null,
   loadedAt: 0,
+  ready: false,
   refresh: async () => undefined,
 };
 
@@ -38,16 +40,19 @@ export function LikePlacementProvider({
   const { user, loading } = useSession();
   const [placement, setPlacement] = useState<LikePlacement | null>(initial);
   const [loadedAt, setLoadedAt] = useState(() => Date.now());
+  const [ready, setReady] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!user) {
       setPlacement(null);
+      setReady(true);
       return;
     }
     try {
       const me = await api<LikesMe>("/likes/me");
       setPlacement(me.placement ?? null);
       setLoadedAt(Date.now());
+      setReady(true);
     } catch {
       /* session encore en cours de chargement, ou réseau : on garde l’état */
     }
@@ -58,7 +63,7 @@ export function LikePlacementProvider({
     void refresh();
   }, [loading, refresh]);
 
-  const value = useMemo(() => ({ placement, loadedAt, refresh }), [placement, loadedAt, refresh]);
+  const value = useMemo(() => ({ placement, loadedAt, ready, refresh }), [placement, loadedAt, ready, refresh]);
 
   return <LikePlacementContext.Provider value={value}>{children}</LikePlacementContext.Provider>;
 }

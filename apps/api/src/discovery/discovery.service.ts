@@ -7,6 +7,7 @@ import {
   formatLikeDuration,
   haversineKm,
   isCurrentlyAvailable,
+  presenceState,
   publicCoords,
   roundDistanceKm,
   sumLikeSeconds,
@@ -21,8 +22,11 @@ export type NearbyFilters = {
   minAge?: number;
   maxAge?: number;
   availableOnly?: boolean;
+  presence?: "AVAILABLE" | "UNSURE" | "UNAVAILABLE";
   profession?: string;
   wishCategory?: string;
+  lat?: number;
+  lng?: number;
 };
 
 @Injectable()
@@ -41,32 +45,61 @@ export class DiscoveryService {
     });
     const filterCity = filters.city || viewer?.profile?.city || "Yaoundé";
     const now = new Date();
-    const rows = await this.prisma.user.findMany({
-      where: {
-        id: { not: viewerId },
-        status: "ACTIVE",
-        profileCompleted: true,
-        profile: {
-          city: filterCity,
-          locationPrecision: { not: "HIDDEN" },
-        ...(filters.profession
-            ? { profession: { contains: filters.profession, mode: "insensitive" as const } }
-            : {}),
-        },
+    const personInclude = {
+      profile: true,
+      wishes: {
+        where: { visibility: "PUBLIC" },
+        orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
+        take: 4,
       },
-      include: {
-        profile: true,
-        wishes: {
-          where: { visibility: "PUBLIC" },
-          orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
-          take: 4,
+    } as const;
+    const [nearbyRows, contactRows, laterRows, myLike] = await Promise.all([
+      this.prisma.user.findMany({
+        where: {
+          id: { not: viewerId },
+          status: "ACTIVE",
+          profileCompleted: true,
+          profile: {
+            city: filterCity,
+            locationPrecision: { not: "HIDDEN" },
+            ...(filters.profession
+              ? { profession: { contains: filters.profession, mode: "insensitive" as const } }
+              : {}),
+          },
         },
-      },
-    });
+        include: personInclude,
+      }),
+      this.prisma.contact.findMany({
+        where: { ownerId: viewerId },
+        select: { personId: true, person: { include: personInclude } },
+      }),
+      this.prisma.inviteLater.findMany({
+        where: { ownerId: viewerId },
+        select: { personId: true, person: { include: personInclude } },
+      }),
+      this.prisma.likePeriod.findFirst({
+        where: { actorId: viewerId, endedAt: null },
+        select: { targetType: true, targetId: true },
+      }),
+    ]);
+    const friendIds = new Set(contactRows.map((c) => c.personId));
+    const laterIds = new Set(laterRows.map((r) => r.personId));
+    const byId = new Map(nearbyRows.map((u) => [u.id, u]));
+    for (const row of [...contactRows, ...laterRows]) {
+      if (row.person.status === "ACTIVE" && row.person.profileCompleted && !byId.has(row.person.id)) {
+        byId.set(row.person.id, row.person);
+      }
+    }
+    const rows = [...byId.values()];
+    const gps =
+      filters.lat != null && filters.lng != null && Number.isFinite(filters.lat) && Number.isFinite(filters.lng)
+        ? { latitude: filters.lat, longitude: filters.lng }
+        : null;
     const origin =
-      viewer?.profile?.latitude != null && viewer.profile.longitude != null
+      gps ??
+      (viewer?.profile?.latitude != null && viewer.profile.longitude != null
         ? { latitude: viewer.profile.latitude, longitude: viewer.profile.longitude }
-        : findZone(viewer?.profile?.city, viewer?.profile?.zone) ?? findZone(filterCity, filters.zone);
+        : findZone(viewer?.profile?.city, viewer?.profile?.zone) ?? findZone(filterCity, filters.zone));
 
     const ids = rows.map((u) => u.id);
     const periods = ids.length
@@ -92,11 +125,13 @@ export class DiscoveryService {
 
     const items = rows
       .map((u) => {
-        const available = isCurrentlyAvailable({
-          availability: u.profile?.availability ?? "HIDDEN",
+        const declared = {
+          availability: (u.profile?.availability ?? "HIDDEN") as "HIDDEN" | "BUSY" | "AVAILABLE",
           availabilityUntil: u.profile?.availabilityUntil ?? null,
           now,
-        });
+        };
+        const available = isCurrentlyAvailable(declared);
+        const presence = presenceState(declared);
         const precision = u.profile?.locationPrecision ?? "ZONE";
         const loc = displayLocation({
           precision,
@@ -138,7 +173,10 @@ export class DiscoveryService {
           zone: precision === "ZONE" || precision === "EXACT" ? u.profile?.zone ?? null : null,
           sameZone,
           available,
-          availability: available ? "AVAILABLE" : (u.profile?.availability ?? "HIDDEN"),
+          availability: presence === "AVAILABLE" ? "AVAILABLE" : presence === "UNSURE" ? "BUSY" : "HIDDEN",
+          presence,
+          circle: friendIds.has(u.id) ? "FRIEND" : laterIds.has(u.id) ? "LATER" : "NEARBY",
+          likedByMe: myLike?.targetType === "USER" && myLike.targetId === u.id,
           likeTime: {
             totalSeconds: likeSum.totalSeconds,
             label: formatLikeDuration(likeSum.totalSeconds, "fr"),
@@ -161,7 +199,8 @@ export class DiscoveryService {
         };
       })
       .filter((a) => {
-        if (filters.availableOnly && !a.available) return false;
+        const wanted = filters.presence ?? (filters.availableOnly ? "AVAILABLE" : undefined);
+        if (wanted && a.presence !== wanted) return false;
         if (filters.maxKm != null && a.distanceKm != null && a.distanceKm > filters.maxKm) return false;
         if (filters.minAge != null && (a.age == null || a.age < filters.minAge)) return false;
         if (filters.maxAge != null && (a.age == null || a.age > filters.maxAge)) return false;
