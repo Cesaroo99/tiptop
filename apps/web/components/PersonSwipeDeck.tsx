@@ -11,15 +11,12 @@ export function PersonSwipeDeck<T>({
   index,
   onIndexChange,
   peekSrc,
-  fill = false,
   children,
 }: {
   items: T[];
   index: number;
   onIndexChange: (next: number) => void;
   peekSrc: (item: T) => string | null | undefined;
-  /** Occupe la hauteur restante (Amies) au lieu d’une carte compacte. */
-  fill?: boolean;
   children: (item: T, index: number) => ReactNode;
 }) {
   const { messages } = useI18n();
@@ -64,30 +61,22 @@ export function PersonSwipeDeck<T>({
   const nextSrc = next ? peekSrc(next) : null;
 
   return (
-    <div className={fill ? "flex h-full min-h-0 flex-col" : ""}>
-      <div className={`relative mx-auto max-w-sm ${fill ? "flex min-h-0 w-full flex-1 flex-col" : ""}`}>
+    <div>
+      <div className="relative mx-auto max-w-sm">
         {prevSrc ? (
-          <div
-            className={`pointer-events-none absolute -left-8 w-12 overflow-hidden rounded-[22px] opacity-30 blur-[1px] ${
-              fill ? "top-[12%] h-[58%]" : "top-12 h-64"
-            }`}
-          >
+          <div className="pointer-events-none absolute -left-8 top-10 h-48 w-12 overflow-hidden rounded-[22px] opacity-30 blur-[1px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={prevSrc} alt="" className="h-full w-full object-cover" />
           </div>
         ) : null}
         {nextSrc ? (
-          <div
-            className={`pointer-events-none absolute -right-8 w-12 overflow-hidden rounded-[22px] opacity-30 blur-[1px] ${
-              fill ? "top-[12%] h-[58%]" : "top-12 h-64"
-            }`}
-          >
+          <div className="pointer-events-none absolute -right-8 top-10 h-48 w-12 overflow-hidden rounded-[22px] opacity-30 blur-[1px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={nextSrc} alt="" className="h-full w-full object-cover" />
           </div>
         ) : null}
         <div
-          className={`touch-pan-y select-none ${fill ? "flex min-h-0 flex-1 flex-col" : ""}`}
+          className="touch-pan-y select-none"
           style={{
             transform: `translateX(${dragX}px) rotate(${dragX / 28}deg)`,
             transition: dragging ? "none" : "transform 220ms var(--ease-standard)",
@@ -102,7 +91,7 @@ export function PersonSwipeDeck<T>({
         </div>
       </div>
       {count > 1 ? (
-        <div className={`flex shrink-0 items-center justify-center gap-3 ${fill ? "mt-2 pb-1" : "mt-4"}`}>
+        <div className="mt-4 flex items-center justify-center gap-3">
           <button
             type="button"
             aria-label={messages.world.previousPerson}

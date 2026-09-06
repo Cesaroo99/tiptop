@@ -10,7 +10,6 @@ import { Chip, EmptyState, ErrorBanner, Skeleton } from "@/components/ui";
 import { api, type PersonCard } from "@/lib/api";
 import { useViewerLocation } from "@/lib/viewer-location";
 import { useI18n } from "@/lib/i18n";
-import { useLikePlacement } from "@/lib/like-placement";
 import { useSession } from "@/lib/session";
 
 type Circle = "FRIEND" | "NEARBY" | "LATER";
@@ -39,7 +38,6 @@ export default function Page() {
 function PeopleCarousel() {
   const { messages } = useI18n();
   const { user } = useSession();
-  const { placement } = useLikePlacement();
   const { origin: coords } = useViewerLocation(user ?? undefined);
   const [items, setItems] = useState<PersonCard[] | null>(null);
   const [circle, setCircle] = useState<Circle>("NEARBY");
@@ -212,36 +210,28 @@ function PeopleCarousel() {
   }
 
   return (
-    <div
-      className={`flex min-h-0 flex-col overflow-hidden px-4 pt-3 ${
-        placement ? "-mb-36 h-[calc(100%+9rem)] pb-[6.25rem]" : "-mb-24 h-[calc(100%+6rem)] pb-[4.75rem]"
-      }`}
-    >
+    <div className="px-4 py-3">
       {chrome}
       {filterForm}
-      <div className="min-h-0 flex-1">
-        <PersonSwipeDeck
-          items={filtered}
-          index={Math.min(index, filtered.length - 1)}
-          onIndexChange={setIndex}
-          peekSrc={(p) => p.avatarUrl}
-          fill
-        >
-          {(current) => (
-            <NearbyPersonCard
-              layout="fill"
-              person={current}
-              onChanged={(next) => {
-                setItems((cur) => {
-                  if (!cur) return cur;
-                  return cur.map((p) => (p.id === next.id ? next : p));
-                });
-                if (circle === "LATER" && next.circle !== "LATER") setIndex(0);
-              }}
-            />
-          )}
-        </PersonSwipeDeck>
-      </div>
+      <PersonSwipeDeck
+        items={filtered}
+        index={Math.min(index, filtered.length - 1)}
+        onIndexChange={setIndex}
+        peekSrc={(p) => p.avatarUrl}
+      >
+        {(current) => (
+          <NearbyPersonCard
+            person={current}
+            onChanged={(next) => {
+              setItems((cur) => {
+                if (!cur) return cur;
+                return cur.map((p) => (p.id === next.id ? next : p));
+              });
+              if (circle === "LATER" && next.circle !== "LATER") setIndex(0);
+            }}
+          />
+        )}
+      </PersonSwipeDeck>
     </div>
   );
 }
@@ -271,7 +261,7 @@ function PeopleChrome({
   ];
   return (
     <>
-      <div className="mb-2 flex items-end justify-between gap-3">
+      <div className="mb-3 flex items-end justify-between gap-3">
         <h1 className="type-h1 min-w-0 flex-1 truncate text-accent">{title}</h1>
         <div className="flex shrink-0 items-center gap-2">
           <SearchEntry
@@ -284,7 +274,7 @@ function PeopleChrome({
           </Chip>
         </div>
       </div>
-      <div className="mb-2 grid grid-cols-3 gap-1 rounded-full bg-surface-sunken p-1">
+      <div className="mb-3 grid grid-cols-3 gap-1 rounded-full bg-surface-sunken p-1">
         {tabs.map(([key, label]) => (
           <button
             key={key}
