@@ -66,8 +66,8 @@ export function AppShell({
 
   if (fullBleed) {
     return (
-      <div className="relative flex h-full min-h-0 flex-col overflow-hidden">
-        <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
+      <div className="relative flex h-full min-h-0 flex-col overflow-hidden bg-ink">
+        <main className="min-h-0 flex-1 overflow-hidden bg-ink">{children}</main>
         <LikeMilestoneCelebration />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/75 to-transparent pt-10">
           <div className="pointer-events-auto">
