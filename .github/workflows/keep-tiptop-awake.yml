@@ -1,0 +1,34 @@
+name: Garder TipTop allumé
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/keep-tiptop-awake.yml"
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Réveiller /api/health jusqu’à ce que l’app réponde
+        run: |
+          set -euo pipefail
+          url="https://tiptop-phone.onrender.com/api/health"
+          for i in 1 2 3 4 5 6 7 8; do
+            code="$(curl -sS -o /tmp/tiptop-health.txt -w "%{http_code}" --max-time 90 "$url" || echo 000)"
+            echo "essai $i → HTTP $code"
+            if [ "$code" = "200" ] && grep -q '"ok":true' /tmp/tiptop-health.txt; then
+              cat /tmp/tiptop-health.txt
+              echo
+              echo "TipTop est allumé"
+              exit 0
+            fi
+            sleep 12
+          done
+          echo "health encore indisponible" >&2
+          cat /tmp/tiptop-health.txt >&2 || true
+          exit 1

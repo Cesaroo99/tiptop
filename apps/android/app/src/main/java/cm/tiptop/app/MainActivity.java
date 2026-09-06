@@ -3,6 +3,7 @@ package cm.tiptop.app;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
@@ -15,6 +16,11 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
   private static final int REQ = 42;
@@ -45,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     cookies.setAcceptCookie(true);
     cookies.setAcceptThirdPartyCookies(webView, true);
 
+    webView.setBackgroundColor(Color.parseColor("#0D0D0D"));
     webView.setWebViewClient(new WebViewClient());
     webView.setWebChromeClient(
         new WebChromeClient() {
@@ -63,7 +70,53 @@ public class MainActivity extends AppCompatActivity {
           }
         });
 
-    webView.loadUrl(getString(R.string.app_url));
+    final String appUrl = getString(R.string.app_url);
+    final String healthUrl = getString(R.string.health_url);
+    new Thread(
+            () -> {
+              waitUntilHealthy(healthUrl, 90_000);
+              runOnUiThread(() -> webView.loadUrl(appUrl));
+            },
+            "tiptop-health")
+        .start();
+  }
+
+  /** Attend le JSON Render réel pour éviter la page « se réveille ». */
+  private static void waitUntilHealthy(String healthUrl, long timeoutMs) {
+    long deadline = System.currentTimeMillis() + timeoutMs;
+    while (System.currentTimeMillis() < deadline) {
+      if (healthLooksReady(healthUrl)) return;
+      try {
+        Thread.sleep(2000);
+      } catch (InterruptedException ignored) {
+        return;
+      }
+    }
+  }
+
+  private static boolean healthLooksReady(String healthUrl) {
+    HttpURLConnection conn = null;
+    try {
+      URL url = new URL(healthUrl);
+      conn = (HttpURLConnection) url.openConnection();
+      conn.setConnectTimeout(15_000);
+      conn.setReadTimeout(20_000);
+      conn.setInstanceFollowRedirects(true);
+      conn.setRequestProperty("Accept", "application/json");
+      int code = conn.getResponseCode();
+      InputStream stream = code >= 200 && code < 400 ? conn.getInputStream() : conn.getErrorStream();
+      if (stream == null) return false;
+      StringBuilder body = new StringBuilder();
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
+        String line;
+        while ((line = reader.readLine()) != null) body.append(line);
+      }
+      return code == 200 && body.toString().contains("\"ok\":true");
+    } catch (Exception ignored) {
+      return false;
+    } finally {
+      if (conn != null) conn.disconnect();
+    }
   }
 
   private void requestNativePermissions() {

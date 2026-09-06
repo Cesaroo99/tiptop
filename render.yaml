@@ -1,6 +1,9 @@
 # Blueprint Render — code sur main. Runtime Docker (build fiable, health immédiat).
 # URL : https://tiptop-phone.onrender.com
 #
+# Le web est en Starter (always-on) : le plan Free s’endort après 15 min
+# et affiche « TipTop se réveille ». Starter reste allumé en continu.
+#
 # Si create/deploy échoue : supprimer tiptop-phone, tiptop-cesar99, tiptop-db
 # et l’ancien Blueprint, puis New → Blueprint → main.
 
@@ -15,7 +18,7 @@ services:
   - type: web
     runtime: docker
     name: tiptop-phone
-    plan: free
+    plan: starter
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
     envVars:

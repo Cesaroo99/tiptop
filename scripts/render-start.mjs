@@ -213,8 +213,39 @@ const server = http.createServer((req, res) => {
 server.on("upgrade", (req, socket, head) => {
   proxyUpgrade(req, socket, head, isApi(req.url) ? apiPort : webPort);
 });
+function publicBaseUrl() {
+  const raw = process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_URL || "";
+  return raw.replace(/\/$/, "");
+}
+
+function startKeepAwake() {
+  const base = publicBaseUrl();
+  if (!base) {
+    console.log("[render] keep-awake ignoré (pas d’URL publique)");
+    return;
+  }
+  const url = `${base}/api/health`;
+  const ping = () => {
+    fetch(url, { redirect: "follow" })
+      .then(async (res) => {
+        const text = await res.text();
+        if (res.ok && text.includes("\"ok\":true")) {
+          console.log("[render] keep-awake ok");
+          return;
+        }
+        console.warn("[render] keep-awake", res.status);
+      })
+      .catch((err) => console.warn("[render] keep-awake", err.message));
+  };
+  const everyMs = 8 * 60 * 1000;
+  setInterval(ping, everyMs);
+  setTimeout(ping, 20_000);
+  console.log(`[render] keep-awake → ${url} toutes les 8 min`);
+}
+
 server.listen(publicPort, "0.0.0.0", () => {
   console.log(`[render] écoute :${publicPort} (health immédiat)`);
+  startKeepAwake();
   void boot().catch((err) => {
     console.error("[render] boot fatal", err);
     process.exit(1);

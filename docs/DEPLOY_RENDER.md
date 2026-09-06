@@ -18,7 +18,7 @@ Attends que la suppression soit **terminée** (plus de ligne grise).
 2. **New → Blueprint**.
 3. Repo `Cesaroo99/tiptop`, branche **`main`**.
 4. Apply. Render crée Postgres `tiptop-db` (30 jours) + le web Docker `tiptop-phone`.
-5. Premier deploy (build image) : 8–15 min. Le free s’endort après 15 min.
+5. Premier deploy (build image) : 8–15 min. Le web est en **Starter** (always-on) : plus de page « se réveille ».
 
 **URL :** [https://tiptop-phone.onrender.com](https://tiptop-phone.onrender.com)
 
@@ -32,7 +32,7 @@ Téléchargement direct : [https://tiptop-phone.onrender.com/tiptop.apk](https:/
 
 WebView plein écran (caméra / localisation autorisées), splash animé au lancement.
 
-Sur le téléphone : autorise « sources inconnues », installe, ouvre TipTop. Au réveil Render, le premier chargement peut prendre ~1 min.
+Sur le téléphone : autorise « sources inconnues », installe, ouvre TipTop. L’APK attend `/api/health` avant d’ouvrir le WebView, donc pas d’écran Render « se réveille ».
 
 ## 4. Sans APK
 
