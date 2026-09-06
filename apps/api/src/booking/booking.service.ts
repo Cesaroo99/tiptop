@@ -10,6 +10,8 @@ import {
   applyWebhook,
   canConsumeTicket,
   canShowQr,
+  hostPeopleCounts,
+  isCurrentlyAvailable,
   isInEntryWindow,
   mockCharge,
   normalizePaymentRule,
@@ -20,6 +22,7 @@ import {
   signTicketQr,
   unpaidReservationNeedsPay,
   verifyTicketQr,
+  type AvailabilityStatus,
   type PaymentProviderKind,
 } from "@tiptop/domain";
 import { Prisma } from "@prisma/client";
@@ -347,7 +350,10 @@ export class BookingService {
   async consume(actorId: string, ticketId: string) {
     const ticket = await this.prisma.ticket.findUnique({
       where: { id: ticketId },
-      include: { event: true },
+      include: {
+        event: true,
+        holder: { select: { id: true, firstName: true, lastName: true, username: true } },
+      },
     });
     if (!ticket) throw new NotFoundException({ code: "TICKET_NOT_FOUND" });
     if (ticket.event.hostId !== actorId) throw new ForbiddenException({ code: "NOT_HOST" });
@@ -380,7 +386,13 @@ export class BookingService {
       entityId: ticket.id,
     });
     void updated;
-    return { ok: true, code: "OK" };
+    return {
+      ok: true,
+      code: "OK",
+      ticketId: ticket.id,
+      eventId: ticket.eventId,
+      holder: ticket.holder,
+    };
   }
 
   async scan(actorId: string, token: string) {
@@ -397,19 +409,65 @@ export class BookingService {
     if (!event) throw new NotFoundException({ code: "EVENT_NOT_FOUND" });
     if (event.hostId !== actorId) throw new ForbiddenException({ code: "NOT_HOST" });
     const tickets = await this.prisma.ticket.findMany({
-      where: { eventId },
-      include: { holder: { select: { id: true, firstName: true, lastName: true, username: true, certified: true } } },
+      where: { eventId, status: { not: "CANCELLED" } },
+      include: {
+        holder: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            username: true,
+            certified: true,
+            profile: { select: { avatarUrl: true, profession: true, availability: true, availabilityUntil: true } },
+          },
+        },
+      },
       orderBy: { createdAt: "asc" },
     });
     const participants = await this.prisma.eventParticipant.findMany({
-      where: { eventId },
-      include: { user: { select: { id: true, firstName: true, lastName: true, username: true, certified: true } } },
+      where: { eventId, status: { not: "CANCELLED" } },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            username: true,
+            certified: true,
+            profile: { select: { avatarUrl: true, profession: true, availability: true, availabilityUntil: true } },
+          },
+        },
+      },
     });
+    const ticketByHolder = new Map(tickets.map((t) => [t.holderId, t]));
+    const people = participants
+      .filter((p) => p.status !== "HOST")
+      .map((p) => {
+        const ticket = ticketByHolder.get(p.userId);
+        return {
+          id: p.user.id,
+          username: p.user.username,
+          firstName: p.user.firstName,
+          lastName: p.user.lastName,
+          certified: p.user.certified,
+          avatarUrl: p.user.profile?.avatarUrl ?? null,
+          profession: p.user.profile?.profession ?? null,
+          available: isCurrentlyAvailable({
+            availability: (p.user.profile?.availability ?? "HIDDEN") as AvailabilityStatus,
+            availabilityUntil: p.user.profile?.availabilityUntil ?? null,
+          }),
+          status: p.status,
+          ticketId: ticket?.id ?? null,
+          ticketStatus: ticket?.status ?? null,
+          paid: ticket ? ticket.status === "CONFIRMED" || ticket.status === "CONSUMED" : false,
+          consumedAt: ticket?.consumedAt?.toISOString() ?? null,
+        };
+      });
+    const counts = hostPeopleCounts(people);
     return {
       eventId,
       counts: {
-        interested: participants.filter((p) => p.status === "INTERESTED").length,
-        reserved: participants.filter((p) => p.status === "RESERVED").length,
+        ...counts,
         confirmed: participants.filter((p) => p.status === "CONFIRMED").length,
         present: participants.filter((p) => p.status === "PRESENT").length,
       },
@@ -417,10 +475,16 @@ export class BookingService {
         id: t.id,
         status: t.status,
         consumedAt: t.consumedAt?.toISOString() ?? null,
-        holder: t.holder,
+        holder: {
+          id: t.holder.id,
+          firstName: t.holder.firstName,
+          lastName: t.holder.lastName,
+          username: t.holder.username,
+          certified: t.holder.certified,
+        },
         paid: t.status === "CONFIRMED" || t.status === "CONSUMED",
       })),
-      people: participants.map((p) => ({ ...p.user, status: p.status })),
+      people,
     };
   }
 

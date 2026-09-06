@@ -664,6 +664,14 @@ export type Messages = {
     ticketQrLater: string;
     ticketQrHint: string;
     validateTicket: string;
+    tabAllNamed: string;
+    tabInterestedNamed: string;
+    tabReservedNamed: string;
+    tabValidatedNamed: string;
+    scanCameraHint: string;
+    scanCameraDenied: string;
+    scanNext: string;
+    hostPeopleEmpty: string;
     scanTitle: string;
     scanPaste: string;
     scanOk: string;
@@ -1529,6 +1537,14 @@ export const fr: Messages = {
     ticketQrLater: "Le QR s’active 2 h avant l’entrée.",
     ticketQrHint: "L’organisateur colle ce code pour valider. Pas de faux scanner caméra.",
     validateTicket: "Valider ticket",
+    tabAllNamed: "Tout ({n})",
+    tabInterestedNamed: "Intéressés ({n})",
+    tabReservedNamed: "Réservés ({n})",
+    tabValidatedNamed: "Validés ({n})",
+    scanCameraHint: "Cadre le QR du ticket dans le viseur.",
+    scanCameraDenied: "Caméra indisponible. Colle le code du ticket.",
+    scanNext: "Scanner le suivant",
+    hostPeopleEmpty: "Personne dans cet onglet pour l’instant.",
     scanTitle: "Valider une entrée",
     scanPaste: "Colle le code du ticket",
     scanOk: "Entrée validée",
@@ -2394,6 +2410,14 @@ export const en: Messages = {
     ticketQrLater: "The QR turns on 2h before entry.",
     ticketQrHint: "The host pastes this code to validate. No fake camera scanner.",
     validateTicket: "Validate ticket",
+    tabAllNamed: "All ({n})",
+    tabInterestedNamed: "Interested ({n})",
+    tabReservedNamed: "Reserved ({n})",
+    tabValidatedNamed: "Checked in ({n})",
+    scanCameraHint: "Line up the ticket QR in the viewfinder.",
+    scanCameraDenied: "Camera unavailable. Paste the ticket code.",
+    scanNext: "Scan next",
+    hostPeopleEmpty: "Nobody in this tab yet.",
     scanTitle: "Validate entry",
     scanPaste: "Paste the ticket code",
     scanOk: "Entry validated",

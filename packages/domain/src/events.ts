@@ -53,6 +53,35 @@ export function meetsMinAge(birthDate: Date | null | undefined, minAge: number |
   return age >= minAge;
 }
 
+export type HostPeopleTab = "all" | "interested" | "reserved" | "validated";
+
+export type HostPersonBucket = Exclude<HostPeopleTab, "all">;
+
+/** Classement organisateur : intéressé / réservé / déjà entré. */
+export function hostPersonBucket(input: {
+  status: string;
+  ticketStatus?: string | null;
+}): HostPersonBucket {
+  if (input.status === "PRESENT" || input.ticketStatus === "CONSUMED") return "validated";
+  if (input.status === "INTERESTED") return "interested";
+  return "reserved";
+}
+
+export function filterHostPeople<T extends { status: string; ticketStatus?: string | null }>(
+  people: T[],
+  tab: HostPeopleTab,
+): T[] {
+  if (tab === "all") return people;
+  return people.filter((p) => hostPersonBucket(p) === tab);
+}
+
+export function hostPeopleCounts(people: Array<{ status: string; ticketStatus?: string | null }>) {
+  const interested = people.filter((p) => hostPersonBucket(p) === "interested").length;
+  const reserved = people.filter((p) => hostPersonBucket(p) === "reserved").length;
+  const validated = people.filter((p) => hostPersonBucket(p) === "validated").length;
+  return { all: people.length, interested, reserved, validated };
+}
+
 /**
  * Qui apparaît dans « Personnes liées » sur la fiche publique.
  * L’hôte est toujours visible. Les autres seulement s’ils ont accepté
