@@ -19,7 +19,7 @@ export function AvailableInviteCard({
 }) {
   const { messages } = useI18n();
   const { user } = useSession();
-  const { origin } = useViewerLocation(user);
+  const { origin } = useViewerLocation(user ?? undefined);
   const [inviteOpen, setInviteOpen] = useState(false);
   const distance = personDistanceFromMe(origin, person);
   const why = personWhyLines(person, messages)[0];

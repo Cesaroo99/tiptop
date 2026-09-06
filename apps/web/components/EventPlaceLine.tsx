@@ -25,7 +25,7 @@ export function EventPlaceLine({
 }) {
   const { messages } = useI18n();
   const { user } = useSession();
-  const { origin } = useViewerLocation(user);
+  const { origin } = useViewerLocation(user ?? undefined);
   const place = eventPlaceLabel({ venue, address, city, zone });
   const distance = showDistance ? eventDistanceLabel(origin, { city, zone, latitude, longitude }) : null;
   if (!place && !distance) return null;
