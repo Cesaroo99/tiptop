@@ -3,6 +3,29 @@ import { fetchSessionToken, loginOnPage } from "../helpers/auth";
 
 const apiBase = () => process.env.E2E_API_URL ?? "http://localhost:3001";
 
+async function authHeaders() {
+  const token = await fetchSessionToken();
+  return { Authorization: `Bearer ${token}` };
+}
+
+async function profileId(username: string, headers: HeadersInit) {
+  const res = await fetch(`${apiBase()}/api/profiles/${username}`, { headers });
+  const data = (await res.json()) as { id: string };
+  return data.id;
+}
+
+async function restoreLaterSeed() {
+  const headers = await authHeaders();
+  for (const username of ["sarah.nkodo", "rachel.essomba"]) {
+    const id = await profileId(username, headers);
+    await fetch(`${apiBase()}/api/contacts/${id}`, { method: "DELETE", headers });
+    await fetch(`${apiBase()}/api/invite-later/${id}`, { method: "POST", headers });
+  }
+  const fouda = await profileId("jp.fouda", headers);
+  await fetch(`${apiBase()}/api/contacts/${fouda}`, { method: "DELETE", headers });
+  await fetch(`${apiBase()}/api/invite-later/${fouda}`, { method: "DELETE", headers });
+}
+
 test.describe("Amies — cartes, distance, profil", () => {
   test.beforeEach(async ({ page, context }) => {
     await context.grantPermissions(["geolocation"]);
@@ -46,6 +69,7 @@ test.describe("Amies — cartes, distance, profil", () => {
   });
 
   test("mis de côté : Retirer + ajouter comme amie sans disparaître", async ({ page }) => {
+    await restoreLaterSeed();
     await page.goto("/people");
     await page.getByRole("button", { name: /Mis de côté/ }).click();
     await expect(page.getByRole("heading", { name: "Mis de côté" })).toBeVisible();
