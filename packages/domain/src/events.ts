@@ -53,6 +53,25 @@ export function meetsMinAge(birthDate: Date | null | undefined, minAge: number |
   return age >= minAge;
 }
 
+/**
+ * Qui apparaît dans « Personnes liées » sur la fiche publique.
+ * L’hôte est toujours visible. Les autres seulement s’ils ont accepté
+ * (`showOnProfile`). Le viewer se voit lui-même, même masqué — pour
+ * pouvoir gérer sa visibilité. L’annulation n’apparaît jamais.
+ */
+export function isEventParticipationPublic(input: {
+  userId: string;
+  status: string;
+  showOnProfile: boolean;
+  viewerId?: string | null;
+}): boolean {
+  if (input.status === "CANCELLED") return false;
+  if (input.status === "HOST") return true;
+  if (input.showOnProfile) return true;
+  if (input.viewerId && input.userId === input.viewerId) return true;
+  return false;
+}
+
 /** Places occupées par des invités — l’organisateur ne compte pas. */
 export const SEATED_GUEST_STATUSES = ["RESERVED", "CONFIRMED", "PRESENT"] as const;
 

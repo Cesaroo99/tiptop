@@ -63,6 +63,9 @@ export type EventCard = {
   };
   interestedCount?: number;
   reservedCount?: number;
+  commentsCount?: number;
+  postId?: string | null;
+  viewerShowOnProfile?: boolean | null;
   createdAt?: string;
   people?: Array<{
     id: string;
@@ -72,6 +75,8 @@ export type EventCard = {
     certified: boolean;
     avatarUrl: string | null;
     status: string;
+    profession?: string | null;
+    available?: boolean;
   }>;
 };
 

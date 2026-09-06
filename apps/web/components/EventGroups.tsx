@@ -143,7 +143,7 @@ export function EventGroups({ eventId, isHost }: { eventId: string; isHost: bool
   if (!allowGroups && !isHost) return null;
 
   return (
-    <section className="rounded-card bg-surface p-4 shadow-card">
+    <section data-testid="event-groups" className="rounded-card bg-surface p-4 shadow-card">
       <p className="type-heading flex items-center gap-2 text-ink">
         <UsersIcon size={16} />
         {messages.world.groupsTitle}

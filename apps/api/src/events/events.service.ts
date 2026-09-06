@@ -10,11 +10,14 @@ import {
   canInteractWithEvent,
   eventIsFull,
   eventLifecycle,
+  isCurrentlyAvailable,
+  isEventParticipationPublic,
   normalizePaymentRule,
   planHeartTransfer,
   remainingSeats,
   resolveUserCurrency,
   seatedGuestCount,
+  type AvailabilityStatus,
 } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -388,11 +391,12 @@ export class EventsService {
               firstName: true,
               lastName: true,
               certified: true,
-              profile: { select: { avatarUrl: true } },
+              profile: { select: { avatarUrl: true, profession: true, availability: true, availabilityUntil: true } },
             },
           },
         },
       },
+      posts: { select: { id: true, _count: { select: { comments: true } } }, take: 1, orderBy: { createdAt: "asc" as const } },
       _count: { select: { hearts: { where: { releasedAt: null } } } },
     };
   }
@@ -431,15 +435,22 @@ export class EventsService {
       participants: Array<{
         userId: string;
         status: string;
+        showOnProfile: boolean;
         user: {
           id: string;
           username: string;
           firstName: string;
           lastName: string;
           certified: boolean;
-          profile: { avatarUrl: string | null } | null;
+          profile: {
+            avatarUrl: string | null;
+            profession?: string | null;
+            availability?: string | null;
+            availabilityUntil?: Date | null;
+          } | null;
         };
       }>;
+      posts?: Array<{ id: string; _count: { comments: number } }>;
       _count: { hearts: number };
     },
   ) {
@@ -494,6 +505,9 @@ export class EventsService {
       canChatGroup: seated,
       interestedCount: e.participants.filter((p) => p.status === "INTERESTED").length,
       reservedCount: taken,
+      commentsCount: e.posts?.[0]?._count.comments ?? 0,
+      postId: e.posts?.[0]?.id ?? null,
+      viewerShowOnProfile: !mine ? null : mine.status === "HOST" ? true : Boolean(mine.showOnProfile),
       host: {
         id: e.host.id,
         username: e.host.username,
@@ -503,7 +517,14 @@ export class EventsService {
         avatarUrl: e.host.profile?.avatarUrl ?? null,
       },
       people: e.participants
-        .filter((p) => p.status !== "CANCELLED")
+        .filter((p) =>
+          isEventParticipationPublic({
+            userId: p.userId,
+            status: p.status,
+            showOnProfile: p.showOnProfile,
+            viewerId,
+          }),
+        )
         .map((p) => ({
           id: p.user.id,
           username: p.user.username,
@@ -512,6 +533,11 @@ export class EventsService {
           certified: p.user.certified,
           avatarUrl: p.user.profile?.avatarUrl ?? null,
           status: p.status,
+          profession: p.user.profile?.profession ?? null,
+          available: isCurrentlyAvailable({
+            availability: (p.user.profile?.availability ?? "HIDDEN") as AvailabilityStatus,
+            availabilityUntil: p.user.profile?.availabilityUntil ?? null,
+          }),
         })),
     };
   }

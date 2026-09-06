@@ -4,18 +4,17 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
-import { Avatar, CertifiedMark } from "@/components/Avatar";
-import { EventCard } from "@/components/EventCard";
+import { CertifiedMark } from "@/components/Avatar";
+import { EventDetailCard, EventLinkedPeople } from "@/components/EventDetailCard";
 import { EventGroups } from "@/components/EventGroups";
-import { MapThumb } from "@/components/MapThumb";
 import { MessageIcon, PlayIcon } from "@/components/Icons";
-import { CardSkeleton, ErrorBanner, PrimaryButton, SecondaryButton } from "@/components/ui";
+import { CardSkeleton, ErrorBanner, PrimaryButton, ScreenHeader, SecondaryButton } from "@/components/ui";
 import { api, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 
 export default function Page() {
   return (
-    <AppShell>
+    <AppShell chrome="nav">
       <EventDetail />
     </AppShell>
   );
@@ -45,57 +44,37 @@ function EventDetail() {
   if (!event) return <CardSkeleton />;
 
   return (
-    <div className="space-y-4 px-4 py-4">
-      <EventCard event={event} onChanged={setEvent} />
-      <div className="overflow-hidden rounded-card shadow-xs">
-        <MapThumb city={event.city} zone={event.zone} className="h-40 w-full border-0" />
-        <p className="type-caption bg-surface px-4 py-2.5 text-muted">
-          {messages.world.approximate} · {event.city}
-          {event.zone ? ` - ${event.zone}` : ""}
-          {event.venue ? ` · ${event.venue}` : ""}
-        </p>
+    <div>
+      <ScreenHeader title={event.title} onBack={() => router.back()} />
+      <div className="space-y-4 px-4 pb-4">
+        <EventDetailCard event={event} onChanged={setEvent} />
+        <div className="h-px bg-divider" />
+        <EventLinkedPeople event={event} onChanged={setEvent} />
+        <EventMoods eventId={event.id} />
+        <EventGroups eventId={event.id} isHost={event.isHost} />
+        <EventReviews eventId={event.id} />
+        {event.isHost ? (
+          <PrimaryButton onClick={() => router.push(`/events/${event.id}/manage`)}>
+            {messages.booking.manageEvent}
+          </PrimaryButton>
+        ) : null}
+        {event.canChatGroup ? (
+          <SecondaryButton
+            onClick={async () => {
+              const conv = await api<{ id: string }>("/conversations/event", {
+                method: "POST",
+                body: JSON.stringify({ eventId: event.id }),
+              });
+              router.push(`/messages/${conv.id}`);
+            }}
+          >
+            <span className="inline-flex items-center justify-center gap-2">
+              <MessageIcon size={15} />
+              {messages.chat.groupFromEvent}
+            </span>
+          </SecondaryButton>
+        ) : null}
       </div>
-      {event.description ? <p className="type-body leading-6 text-ink">{event.description}</p> : null}
-      <EventMoods eventId={event.id} />
-      <EventGroups eventId={event.id} isHost={event.isHost} />
-      {event.people?.length ? (
-        <section className="rounded-card bg-surface p-4 shadow-card">
-          <p className="type-heading text-ink">{messages.world.peopleLinked}</p>
-          <div className="mt-3 space-y-2.5">
-            {event.people.map((p) => (
-              <Link key={p.id} href={`/u/${p.username}`} className="flex items-center gap-3">
-                <Avatar src={p.avatarUrl} firstName={p.firstName} lastName={p.lastName} size="sm" />
-                <span className="type-body-sm flex-1 text-ink">
-                  {p.firstName} {p.lastName} {p.certified ? <CertifiedMark /> : null}
-                </span>
-                <span className="type-caption text-muted">{p.status}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      ) : null}
-      <EventReviews eventId={event.id} />
-      {event.isHost ? (
-        <PrimaryButton onClick={() => router.push(`/events/${event.id}/manage`)}>
-          {messages.booking.manageEvent}
-        </PrimaryButton>
-      ) : null}
-      {event.canChatGroup ? (
-        <SecondaryButton
-          onClick={async () => {
-            const conv = await api<{ id: string }>("/conversations/event", {
-              method: "POST",
-              body: JSON.stringify({ eventId: event.id }),
-            });
-            router.push(`/messages/${conv.id}`);
-          }}
-        >
-          <span className="inline-flex items-center justify-center gap-2">
-            <MessageIcon size={15} />
-            {messages.chat.groupFromEvent}
-          </span>
-        </SecondaryButton>
-      ) : null}
     </div>
   );
 }
@@ -110,7 +89,6 @@ type EventMood = {
   author: { id: string; firstName: string; lastName: string; avatarUrl: string | null };
 };
 
-/** Boucle contenu social ↔ monde réel (#4-6, #46) : ce que les gens vivent/ont vécu ici. */
 function EventMoods({ eventId }: { eventId: string }) {
   const { messages } = useI18n();
   const [items, setItems] = useState<EventMood[] | null>(null);

@@ -32,7 +32,7 @@ test.describe("Groupes d’événement", () => {
     const eventId = await createGroupedEvent(token);
     await loginOnPage(page);
     await page.goto(`/events/${eventId}`);
-    await expect(page.getByText("Groupes")).toBeVisible();
+    await expect(page.getByTestId("event-groups")).toBeVisible();
     await page.getByRole("button", { name: "Créer un groupe" }).click();
     await page.getByPlaceholder("Ex. Table 4, Voiture A").fill("Voiture A");
     await page.getByRole("button", { name: "Créer un groupe" }).click();
