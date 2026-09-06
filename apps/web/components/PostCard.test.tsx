@@ -79,6 +79,7 @@ describe("PostCard — publication vs événement", () => {
     expect(screen.getByText(/de vie/)).toBeInTheDocument();
     expect(screen.getByLabelText("Commentaires")).toHaveAttribute("href", "/posts/p1");
     expect(screen.getByLabelText("Réserver")).toBeInTheDocument();
+    expect(screen.queryByText("Réserver")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Intéressé")).toBeInTheDocument();
     expect(screen.getByText("Événement dans :")).toBeInTheDocument();
     expect(screen.getByText("13min")).toBeInTheDocument();

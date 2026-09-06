@@ -62,8 +62,12 @@ describe("EventCard (#23-25)", () => {
     expect(screen.getAllByText(/Bastos/).length).toBeGreaterThan(0);
     expect(screen.getByText("Gratuit")).toBeInTheDocument();
     expect(screen.getAllByText(/35 places restantes/).length).toBe(1);
-    expect(screen.getByRole("button", { name: "Intéressé" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Réserver" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Coup de cœur")).toBeInTheDocument();
+    expect(screen.getByLabelText("Commentaires")).toBeInTheDocument();
+    expect(screen.getByLabelText("Intéressé")).toBeInTheDocument();
+    expect(screen.getByLabelText("Réserver")).toBeInTheDocument();
+    expect(screen.queryByText("Réserver")).not.toBeInTheDocument();
+    expect(screen.getByText("Événement dans :")).toBeInTheDocument();
   });
 
   it("garde Intéressé et Réserver ensemble, même déjà réservé", () => {
@@ -72,8 +76,9 @@ describe("EventCard (#23-25)", () => {
         <EventCard event={{ ...baseEvent, canBook: true, viewerReserved: true, viewerTicketId: "t1" }} />
       </TestI18nProvider>,
     );
-    expect(screen.getByRole("button", { name: "Intéressé" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Réserver pour un autre" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Intéressé")).toBeInTheDocument();
+    expect(screen.getByLabelText("Réserver pour un autre")).toBeInTheDocument();
+    expect(screen.queryByText("Réserver pour un autre")).not.toBeInTheDocument();
   });
 
   it("affiche le badge « Terminé » pour un événement passé (#9, #25)", () => {
@@ -83,7 +88,7 @@ describe("EventCard (#23-25)", () => {
         <EventCard event={past} />
       </TestI18nProvider>,
     );
-    expect(screen.getByText("Terminé")).toBeInTheDocument();
+    expect(screen.getAllByText("Terminé").length).toBeGreaterThan(0);
   });
 
   it("annulé : aucun CTA de réservation/intérêt, message explicite (#8, #14)", () => {
@@ -93,9 +98,11 @@ describe("EventCard (#23-25)", () => {
         <EventCard event={cancelled} />
       </TestI18nProvider>,
     );
-    expect(screen.getByText("Annulé")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Intéressé" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Réserver" })).not.toBeInTheDocument();
+    expect(screen.getAllByText("Annulé").length).toBeGreaterThan(0);
+    expect(screen.getByLabelText("Intéressé")).toBeDisabled();
+    expect(screen.getByLabelText("Réserver")).toBeDisabled();
+    expect(screen.getByLabelText("Commentaires")).toBeInTheDocument();
+    expect(screen.getByLabelText("Coup de cœur")).toBeDisabled();
     expect(screen.getByText(/a été annulé par l’organisateur/)).toBeInTheDocument();
   });
 

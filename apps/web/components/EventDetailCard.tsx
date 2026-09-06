@@ -9,8 +9,9 @@ import { useEventDestination } from "@/lib/event-destination";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { recurrenceCaption } from "@/lib/event-series";
-import { formatCompactCount, formatCountdownLabel, formatEventWhen, formatFcfa, formatRelative, splitPostLead } from "@/lib/time";
+import { formatCompactCount, formatEventWhen, formatFcfa, formatRelative, splitPostLead } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
+import { EventActionRow } from "./EventActionRow";
 import { EventMap } from "./EventMap";
 import { EventPlaceLine } from "./EventPlaceLine";
 import { BookEventSheet } from "./BookEventSheet";
@@ -18,11 +19,8 @@ import { CommentThread } from "./CommentThread";
 import {
   CalendarIcon,
   CameraIcon,
-  CommentIcon,
   FlagIcon,
   GlobeIcon,
-  HeartIcon,
-  InterestedIcon,
   LinkIcon,
   MoreIcon,
   PlusIcon,
@@ -117,8 +115,8 @@ export function EventDetailCard({
   const remaining = seatsRemainingOf(event.capacity, event.reservedCount ?? event.taken, event.remaining);
   const seriesLabel = recurrenceCaption(event.recurrence, messages.world);
   const eventFull = remaining != null && remaining <= 0;
-  const showGuestCtas = !event.isHost && interactive && !event.wanted;
-  const countdown = formatCountdownLabel(event.startsAt);
+  const canReserve = interactive && !event.isHost && !event.wanted && !eventFull;
+  const canInterest = interactive && !event.isHost;
   const body = event.description ? `${event.title} : ${event.description}` : event.title;
   const { lead, rest } = splitPostLead(body);
   const priceLabel =
@@ -317,84 +315,44 @@ export function EventDetailCard({
         </p>
       ) : null}
 
-      <div className="mt-3 flex items-center gap-2">
-        {hostView && event.isHost && !event.viewerTicketId ? (
-          <Link
-            href={`/events/${event.id}/scan`}
-            className="tap-scale type-caption inline-flex items-center gap-2 rounded-pill border-2 border-accent px-3.5 py-2 font-bold uppercase tracking-wide text-accent"
-          >
-            <CameraIcon size={16} />
-            {messages.booking.validateTicket}
-          </Link>
-        ) : null}
-        {!hostView ? (
-          <>
-        <button
-          type="button"
-          aria-label={messages.world.heartEvent}
-          disabled={!interactive}
-          onClick={() => interactive && void heart(false)}
-          className={`tap-scale grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent text-white shadow-sm transition hover:bg-accent-hover ${!interactive ? "opacity-40" : ""}`}
+      {hostView && event.isHost && !event.viewerTicketId ? (
+        <Link
+          href={`/events/${event.id}/scan`}
+          className="tap-scale type-caption mt-3 inline-flex items-center gap-2 rounded-pill border-2 border-accent px-3.5 py-2 font-bold uppercase tracking-wide text-accent"
         >
-          <HeartIcon size={18} filled={event.viewerHearted} />
-        </button>
-        <button
-          type="button"
-          aria-label={messages.social.comments}
-          disabled={!event.postId}
-          onClick={() => event.postId && setCommentsOpen(true)}
-          className="tap-scale grid h-10 w-10 shrink-0 place-items-center rounded-full bg-surface-sunken text-muted transition hover:brightness-95 disabled:opacity-40"
-        >
-          <CommentIcon size={17} />
-        </button>
-        {showGuestCtas ? (
-          <button
-            type="button"
-            aria-label={event.viewerInterested ? messages.world.notInterested : messages.world.interested}
-            aria-pressed={event.viewerInterested}
-            onClick={() => void interested()}
-            className={`tap-scale grid h-10 w-10 shrink-0 place-items-center rounded-full transition hover:brightness-95 ${
-              event.viewerInterested ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
-            }`}
-          >
-            <InterestedIcon size={17} />
-          </button>
-        ) : null}
-        {showGuestCtas ? (
-          <button
-            type="button"
-            disabled={eventFull}
-            onClick={() => setBookOpen(true)}
-            className="tap-scale type-caption rounded-pill bg-accent px-3.5 py-2 font-semibold text-on-primary shadow-sm disabled:opacity-40"
-          >
-            {event.viewerReserved ? messages.booking.reserveOthers : messages.booking.reserve}
-          </button>
-        ) : null}
-        {event.viewerTicketId ? (
-          <Link
-            href={`/tickets/${event.viewerTicketId}`}
-            className="tap-scale type-caption rounded-pill border border-border px-3 py-2 font-semibold text-ink"
-          >
-            {messages.booking.viewTicket}
-          </Link>
-        ) : null}
-          </>
-        ) : null}
-        {countdown && lifecycle.phase !== "ended" && lifecycle.phase !== "cancelled" ? (
-          <span className="ml-auto flex items-center gap-1.5">
-            <span className="type-caption whitespace-nowrap text-muted">{messages.world.eventInLabel}</span>
-            <span className="type-caption shrink-0 rounded-full bg-yellow px-2.5 py-1 font-bold text-ink">{countdown}</span>
-          </span>
-        ) : lifecycle.phase === "ongoing" ? (
-          <span className="type-caption ml-auto rounded-pill bg-success px-2.5 py-1 font-bold text-white">
-            {messages.world.ongoingBadge}
-          </span>
-        ) : lifecycle.phase === "ended" ? (
-          <span className="type-caption ml-auto rounded-pill bg-black/55 px-2.5 py-1 font-bold text-white">
-            {messages.world.endedBadge}
-          </span>
-        ) : null}
-      </div>
+          <CameraIcon size={16} />
+          {messages.booking.validateTicket}
+        </Link>
+      ) : null}
+      <EventActionRow
+        likeLabel={messages.world.heartEvent}
+        liked={event.viewerHearted}
+        likeDisabled={!interactive}
+        onLike={() => interactive && void heart(false)}
+        commentLabel={messages.social.comments}
+        commentDisabled={!event.postId}
+        onComment={() => event.postId && setCommentsOpen(true)}
+        reserveLabel={event.viewerReserved ? messages.booking.reserveOthers : messages.booking.reserve}
+        reserveDisabled={!canReserve}
+        onReserve={() => setBookOpen(true)}
+        interestedLabel={event.viewerInterested ? messages.world.notInterested : messages.world.interested}
+        interested={event.viewerInterested}
+        interestedDisabled={!canInterest}
+        onInterested={() => void interested()}
+        startsAt={event.startsAt}
+        endsAt={event.endsAt}
+        status={event.status}
+        extras={
+          event.viewerTicketId ? (
+            <Link
+              href={`/tickets/${event.viewerTicketId}`}
+              className="tap-scale type-caption rounded-pill border border-border px-3 py-2 font-semibold text-ink"
+            >
+              {messages.booking.viewTicket}
+            </Link>
+          ) : null
+        }
+      />
       {copied ? <p className="type-caption mt-2 text-accent">{messages.social.copied}</p> : null}
 
       <Modal

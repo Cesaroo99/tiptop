@@ -8,6 +8,10 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
 }));
 
+vi.mock("@/lib/session", () => ({
+  useSession: () => ({ user: { id: "viewer", profileCompleted: true }, loading: false }),
+}));
+
 const person: SearchPerson = {
   id: "u-erica",
   username: "erica.sinclair",
@@ -62,6 +66,11 @@ describe("Cartes de recherche", () => {
     expect(screen.getByText("4 participants")).toBeInTheDocument();
     expect(screen.getByText("Alex Moullion")).toBeInTheDocument();
     expect(screen.getByLabelText("Coup de cœur")).toBeInTheDocument();
+    expect(screen.getByLabelText("Commentaires")).toBeInTheDocument();
+    expect(screen.getByLabelText("Réserver")).toBeInTheDocument();
+    expect(screen.queryByText("Réserver")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Intéressé")).toBeInTheDocument();
+    expect(screen.getByText("Événement dans :")).toBeInTheDocument();
     expect(screen.getAllByRole("link")[0]).toHaveAttribute("href", "/events/evt-piscine");
   });
 });
