@@ -627,23 +627,50 @@ export class ApiError extends Error {
   }
 }
 
-export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+function apiUrl(path: string) {
+  const rel = path.startsWith("/api") ? path : `/api${path}`;
+  if (typeof window === "undefined") return rel;
+  return new URL(rel, window.location.origin).toString();
+}
+
+async function apiOnce<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getStoredToken();
   const headers = new Headers(init.headers);
   headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
-  const res = await fetch(path.startsWith("/api") ? path : `/api${path}`, {
+  const res = await fetch(apiUrl(path), {
     ...init,
     headers,
-    credentials: "include",
+    credentials: "same-origin",
   });
   const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
+  let data: Record<string, unknown> | null = null;
+  try {
+    data = text ? (JSON.parse(text) as Record<string, unknown>) : null;
+  } catch {
+    throw new ApiError(res.status || 502, "BAD_RESPONSE", text.slice(0, 120) || res.statusText);
+  }
   if (!res.ok) {
-    const nested = typeof data?.message === "object" && data.message ? data.message : data;
+    const nested =
+      data && typeof data.message === "object" && data.message ? (data.message as Record<string, unknown>) : data;
     const code = nested?.code || data?.error || data?.message || "ERROR";
     const msg = nested?.message || (typeof data?.message === "string" ? data.message : res.statusText);
     throw new ApiError(res.status, String(code), String(msg));
   }
   return data as T;
+}
+
+export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+  let last: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await apiOnce<T>(path, init);
+    } catch (err) {
+      last = err;
+      const retry = !(err instanceof ApiError) || err.status >= 502 || err.status === 503;
+      if (!retry || attempt === 2) throw err;
+      await new Promise((r) => setTimeout(r, 450 * (attempt + 1)));
+    }
+  }
+  throw last;
 }

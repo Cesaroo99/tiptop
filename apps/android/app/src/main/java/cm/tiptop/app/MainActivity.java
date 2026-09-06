@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
@@ -37,7 +38,12 @@ public class MainActivity extends AppCompatActivity {
     settings.setGeolocationEnabled(true);
     settings.setAllowFileAccess(true);
     settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+    settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
     settings.setUserAgentString(settings.getUserAgentString() + " TipTopApp/1.0");
+
+    CookieManager cookies = CookieManager.getInstance();
+    cookies.setAcceptCookie(true);
+    cookies.setAcceptThirdPartyCookies(webView, true);
 
     webView.setWebViewClient(new WebViewClient());
     webView.setWebChromeClient(
