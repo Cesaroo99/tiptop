@@ -10,6 +10,7 @@ import { Chip, EmptyState, ErrorBanner, Skeleton } from "@/components/ui";
 import { api, type PersonCard } from "@/lib/api";
 import { useViewerLocation } from "@/lib/viewer-location";
 import { useI18n } from "@/lib/i18n";
+import { useLikePlacement } from "@/lib/like-placement";
 import { useSession } from "@/lib/session";
 
 type Circle = "FRIEND" | "NEARBY" | "LATER";
@@ -38,6 +39,7 @@ export default function Page() {
 function PeopleCarousel() {
   const { messages } = useI18n();
   const { user } = useSession();
+  const { placement } = useLikePlacement();
   const { origin: coords } = useViewerLocation(user ?? undefined);
   const [items, setItems] = useState<PersonCard[] | null>(null);
   const [circle, setCircle] = useState<Circle>("NEARBY");
@@ -210,28 +212,41 @@ function PeopleCarousel() {
   }
 
   return (
-    <div className="px-4 py-3">
-      {chrome}
-      {filterForm}
-      <PersonSwipeDeck
-        items={filtered}
-        index={Math.min(index, filtered.length - 1)}
-        onIndexChange={setIndex}
-        peekSrc={(p) => p.avatarUrl}
-      >
-        {(current) => (
-          <NearbyPersonCard
-            person={current}
-            onChanged={(next) => {
-              setItems((cur) => {
-                if (!cur) return cur;
-                return cur.map((p) => (p.id === next.id ? next : p));
-              });
-              if (circle === "LATER" && next.circle !== "LATER") setIndex(0);
-            }}
-          />
-        )}
-      </PersonSwipeDeck>
+    <div
+      data-people-fill
+      className={`flex min-h-0 flex-col overflow-hidden px-4 pt-3 ${
+        placement
+          ? "-mb-36 h-[calc(100%+9rem)] pb-[max(6.25rem,calc(5.25rem+env(safe-area-inset-bottom,0px)))]"
+          : "-mb-24 h-[calc(100%+6rem)] pb-[max(5rem,calc(4rem+env(safe-area-inset-bottom,0px)))]"
+      }`}
+    >
+      <div className="shrink-0">
+        {chrome}
+        {filterForm}
+      </div>
+      <div className="min-h-0 flex-1">
+        <PersonSwipeDeck
+          items={filtered}
+          index={Math.min(index, filtered.length - 1)}
+          onIndexChange={setIndex}
+          peekSrc={(p) => p.avatarUrl}
+          fill
+        >
+          {(current) => (
+            <NearbyPersonCard
+              fill
+              person={current}
+              onChanged={(next) => {
+                setItems((cur) => {
+                  if (!cur) return cur;
+                  return cur.map((p) => (p.id === next.id ? next : p));
+                });
+                if (circle === "LATER" && next.circle !== "LATER") setIndex(0);
+              }}
+            />
+          )}
+        </PersonSwipeDeck>
+      </div>
     </div>
   );
 }
