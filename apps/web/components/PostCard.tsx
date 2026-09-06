@@ -261,6 +261,13 @@ export function PostCard({
             <GlobeIcon size={12} />
             <span>{relative}</span>
           </p>
+          {post.hint === "followed" ? (
+            <p className="type-caption mt-0.5 font-medium text-accent">{messages.home.feedHintFollowed}</p>
+          ) : post.hint === "alive" ? (
+            <p className="type-caption mt-0.5 font-medium text-accent">{messages.home.feedHintAlive}</p>
+          ) : post.hint === "local" ? (
+            <p className="type-caption mt-0.5 font-medium text-accent">{messages.home.feedHintLocal}</p>
+          ) : null}
         </div>
         <button
           type="button"

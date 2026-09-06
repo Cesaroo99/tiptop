@@ -46,6 +46,8 @@ import { interestFromActivity, isMoodInterest, parseMoodInterests, statusExpires
 import { canConsumeTicket, canShowQr, isInEntryWindow, signTicketQr, verifyTicketQr } from "../src/tickets";
 import { cityCoords, osmEmbedUrl, WORLD_CITIES } from "../src/world-cities";
 import { ANALYTICS_EVENTS, isAnalyticsEvent } from "../src/analytics";
+import { discoveryWhy, eventSocialProof, feedHint, feedItemScore } from "../src/feed-rank";
+import { groupNotifications } from "../src/notifications";
 import {
   applyWebhook,
   chargeBreakdown,
@@ -605,6 +607,69 @@ describe("tickets & paiement", () => {
     expect(isAnalyticsEvent("unknown")).toBe(false);
     expect(ANALYTICS_EVENTS).toContain("mood.view");
     expect(ANALYTICS_EVENTS).toContain("payment.succeed");
+    expect(ANALYTICS_EVENTS).toContain("app.open");
+    expect(ANALYTICS_EVENTS).toContain("notification.open");
+    expect(ANALYTICS_EVENTS).toContain("event.join");
+  });
+
+  it("score le feed : suivi et vie battent un post isolé", () => {
+    const now = "2026-09-06T12:00:00.000Z";
+    const followed = feedItemScore({
+      isFollowed: true,
+      isFriend: false,
+      sameCity: false,
+      createdAt: "2026-09-06T11:00:00.000Z",
+      now,
+      lifeSeconds: 0,
+      commentCount: 0,
+    });
+    const alive = feedItemScore({
+      isFollowed: false,
+      isFriend: false,
+      sameCity: false,
+      createdAt: "2026-09-06T11:00:00.000Z",
+      now,
+      lifeSeconds: 10_800,
+      commentCount: 0,
+    });
+    const cold = feedItemScore({
+      isFollowed: false,
+      isFriend: false,
+      sameCity: false,
+      createdAt: "2026-09-01T12:00:00.000Z",
+      now,
+      lifeSeconds: 0,
+      commentCount: 0,
+    });
+    expect(followed).toBeGreaterThan(alive);
+    expect(alive).toBeGreaterThan(cold);
+    expect(feedItemScore({ ...cold, blocked: true, createdAt: now, now, lifeSeconds: 0, commentCount: 0, isFollowed: false, isFriend: false, sameCity: false })).toBe(
+      Number.NEGATIVE_INFINITY,
+    );
+    expect(feedHint({ isFollowed: true, isFriend: false, sameCity: true, createdAt: now, lifeSeconds: 4000, commentCount: 0 })).toBe(
+      "followed",
+    );
+    expect(feedHint({ isFollowed: false, isFriend: false, sameCity: false, createdAt: now, lifeSeconds: 4000, commentCount: 0 })).toBe(
+      "alive",
+    );
+    expect(discoveryWhy({ sharedInterestCount: 2, nearbyAvailable: true, moodAffinity: false })).toEqual([
+      { key: "shared_interests", count: 2 },
+      { key: "nearby_available" },
+    ]);
+    expect(eventSocialProof({ friendsGoing: 2, networkGoing: 5 })).toBe("friends");
+    expect(eventSocialProof({ friendsGoing: 0, networkGoing: 3 })).toBe("network");
+    expect(eventSocialProof({ friendsGoing: 0, networkGoing: 0 })).toBeNull();
+  });
+
+  it("regroupe les notifications LIKE d’une même publication", () => {
+    const grouped = groupNotifications([
+      { type: "LIKE", entityType: "post", entityId: "p1", createdAt: "2026-09-06T12:00:00.000Z", actor: { id: "a" } },
+      { type: "LIKE", entityType: "post", entityId: "p1", createdAt: "2026-09-06T11:30:00.000Z", actor: { id: "b" } },
+      { type: "MESSAGE", entityType: "chat", entityId: "c1", createdAt: "2026-09-06T11:00:00.000Z", actor: { id: "c" } },
+    ]);
+    expect(grouped).toHaveLength(2);
+    expect(grouped[0]?.count).toBe(2);
+    expect(grouped[1]?.type).toBe("MESSAGE");
   });
 
   it("refuse un webhook de production sans secret", () => {

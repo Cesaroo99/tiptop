@@ -26,6 +26,13 @@ Architecture de mesure, **pas** un dashboard ni une IA.
 | invitation | `invite.send` |
 | disponibilité | `availability.set` (catalogue) |
 | check-in | `ticket.checkin` |
+| ouverture app / fin de session | `app.open`, `session.end` (catalogue) |
+| contenu ignoré | `content.ignore` (catalogue) |
+| mood regardé | `mood.watch` (catalogue, distinct de `mood.view`) |
+| vie reçue | `like.receive` (catalogue) |
+| événement consulté / enregistré / rejoint | `event.view`, `event.save`, `event.join` (catalogue) |
+| invitation acceptée | `invite.accept` (catalogue) |
+| notification ouverte | `notification.open` (catalogue) |
 
 Les noms du catalogue existent même s’ils ne sont pas encore émis : on ne « invente » pas un produit analytics.
 

@@ -48,8 +48,15 @@ export function notifLabel(
       notifLikeMood: string;
       notifLikeComment: string;
       notifLikeWish: string;
+      notifLikePostMany: string;
+      notifLikeMoodMany: string;
+      notifLikeCommentMany: string;
+      notifLikeWishMany: string;
+      notifLikeProfileMany: string;
       notifComment: string;
+      notifCommentMany: string;
       notifCommentMood: string;
+      notifCommentMoodMany: string;
       notifFollow: string;
       notifWish: string;
       notifMilestone: string;
@@ -71,20 +78,43 @@ export function notifLabel(
   },
 ) {
   const name = n.actor ? `${n.actor.firstName} ${n.actor.lastName}` : messages.brand.name;
+  const many = (n.count ?? 1) > 1;
   if (n.type === "LIKE") {
-    if (n.entityType === "post") return `${name} ${messages.social.notifLikePost}`;
-    if (n.entityType === "mood") return `${name} ${messages.social.notifLikeMood}`;
-    if (n.entityType === "comment" || n.entityType === "comment_post" || n.entityType === "comment_mood") {
-      return `${name} ${messages.social.notifLikeComment}`;
+    if (n.entityType === "post") {
+      return many
+        ? messages.social.notifLikePostMany.replace("{name}", name)
+        : `${name} ${messages.social.notifLikePost}`;
     }
-    if (n.entityType === "wish") return `${name} ${messages.social.notifLikeWish}`;
-    return `${name} ${messages.social.notifLikeProfile}`;
+    if (n.entityType === "mood") {
+      return many
+        ? messages.social.notifLikeMoodMany.replace("{name}", name)
+        : `${name} ${messages.social.notifLikeMood}`;
+    }
+    if (n.entityType === "comment" || n.entityType === "comment_post" || n.entityType === "comment_mood") {
+      return many
+        ? messages.social.notifLikeCommentMany.replace("{name}", name)
+        : `${name} ${messages.social.notifLikeComment}`;
+    }
+    if (n.entityType === "wish") {
+      return many
+        ? messages.social.notifLikeWishMany.replace("{name}", name)
+        : `${name} ${messages.social.notifLikeWish}`;
+    }
+    return many
+      ? messages.social.notifLikeProfileMany.replace("{name}", name)
+      : `${name} ${messages.social.notifLikeProfile}`;
   }
   if (n.type === "WISH_OFFER") return `${name} ${messages.social.notifWish}`;
   if (n.type === "LIKE_MILESTONE") return messages.social.notifMilestone;
   if (n.type === "COMMENT") {
-    if (n.entityType === "mood") return `${name} ${messages.social.notifCommentMood}`;
-    return `${name} ${messages.social.notifComment}`;
+    if (n.entityType === "mood") {
+      return many
+        ? messages.social.notifCommentMoodMany.replace("{name}", name)
+        : `${name} ${messages.social.notifCommentMood}`;
+    }
+    return many
+      ? messages.social.notifCommentMany.replace("{name}", name)
+      : `${name} ${messages.social.notifComment}`;
   }
   if (n.type === "SOCIAL_INVITE") {
     return `${name} ${n.entityType === "social_invite_accepted" ? messages.social.notifSocialInviteAccepted : messages.social.notifSocialInvite}`;

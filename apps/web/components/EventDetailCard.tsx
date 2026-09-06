@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ageCategoryLabel, canInteractWithEvent, eventLifecycle, mapsDirectionsUrl } from "@tiptop/domain";
+import { ageCategoryLabel, canInteractWithEvent, eventLifecycle, eventSocialProof, mapsDirectionsUrl } from "@tiptop/domain";
 import { api, ApiError, type CommentItem, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
@@ -144,6 +144,20 @@ export function EventDetailCard({
         `${formatCompactCount(event.interestedCount ?? 0)} ${messages.world.interestedCount}`,
       ];
   const age = ageCategoryLabel(event.minAge);
+  const socialProof = eventSocialProof({
+    friendsGoing: event.friendsGoing ?? 0,
+    networkGoing: event.networkGoing ?? 0,
+  });
+  const socialProofLabel =
+    socialProof === "friends"
+      ? (event.friendsGoing ?? 0) === 1
+        ? messages.world.friendsGoingOne
+        : messages.world.friendsGoing.replace("{count}", String(event.friendsGoing))
+      : socialProof === "network"
+        ? (event.networkGoing ?? 0) === 1
+          ? messages.world.networkGoingOne
+          : messages.world.networkGoing.replace("{count}", String(event.networkGoing))
+        : null;
 
   return (
     <article className="overflow-hidden rounded-card bg-surface px-3.5 py-3.5 shadow-card">
@@ -242,6 +256,7 @@ export function EventDetailCard({
       />
 
       <p className="type-caption mt-3 text-muted">{stats.join(" · ")}</p>
+      {socialProofLabel ? <p className="type-caption mt-1.5 font-medium text-accent">{socialProofLabel}</p> : null}
       {event.occurrences && event.occurrences.length > 1 ? (
         <div className="mt-3">
           <p className="type-label text-subtle">{messages.world.nextDates}</p>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ageCategoryLabel, canInteractWithEvent, eventLifecycle } from "@tiptop/domain";
+import { ageCategoryLabel, canInteractWithEvent, eventLifecycle, eventSocialProof } from "@tiptop/domain";
 import { api, ApiError, type EventCard as EventCardType } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useMoney } from "@/lib/money";
@@ -100,6 +100,20 @@ export function EventCard({
   const seriesLabel = recurrenceCaption(event.recurrence, messages.world);
   const eventFull = remaining != null && remaining <= 0;
   const showGuestCtas = !event.isHost && interactive && !event.wanted;
+  const socialProof = eventSocialProof({
+    friendsGoing: event.friendsGoing ?? 0,
+    networkGoing: event.networkGoing ?? 0,
+  });
+  const socialProofLabel =
+    socialProof === "friends"
+      ? (event.friendsGoing ?? 0) === 1
+        ? messages.world.friendsGoingOne
+        : messages.world.friendsGoing.replace("{count}", String(event.friendsGoing))
+      : socialProof === "network"
+        ? (event.networkGoing ?? 0) === 1
+          ? messages.world.networkGoingOne
+          : messages.world.networkGoing.replace("{count}", String(event.networkGoing))
+        : null;
 
   const phaseBadge =
     lifecycle.phase === "cancelled" ? (
@@ -203,6 +217,9 @@ export function EventCard({
           {" · "}
           {event.interestedCount ?? 0} {messages.world.interestedCount} · {event.hearts} {messages.world.heartEvent.toLowerCase()}
         </p>
+        {socialProofLabel ? (
+          <p className="type-caption mt-1.5 font-medium text-accent">{socialProofLabel}</p>
+        ) : null}
         {lifecycle.phase === "cancelled" ? (
           <p className="type-body-sm mt-3 rounded-lg bg-danger-soft px-3 py-2.5 font-semibold text-danger">
             {messages.world.cancelledBody}
