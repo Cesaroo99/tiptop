@@ -7,7 +7,7 @@ import {
   highestMilestone,
   LIKE_YEAR_SECONDS,
   formatCompactCount,
-  formatLikeTimeCompact,
+  formatLikeDurationShort,
   likeTimeMeterLabels,
   likeTimeWindows,
   liveLikeSeconds,
@@ -154,17 +154,19 @@ describe("likeTimeWindows", () => {
   });
 });
 
-describe("formatLikeTimeCompact", () => {
-  it("reste un temps compact, jamais un compteur de likes", () => {
-    expect(formatLikeTimeCompact(32)).toBe("32");
-    expect(formatLikeTimeCompact(1500)).toBe("1.5k");
-    expect(formatLikeTimeCompact(78_000)).toBe("78k");
-    expect(formatLikeTimeCompact(111_000)).toBe("111k");
+describe("formatLikeDurationShort", () => {
+  it("affiche une durée évolutive, jamais un débit de likes", () => {
+    expect(formatLikeDurationShort(0)).toBe("0 s");
+    expect(formatLikeDurationShort(32)).toBe("32 s");
+    expect(formatLikeDurationShort(1500)).toBe("25 min");
+    expect(formatLikeDurationShort(3723)).toBe("1 h 2");
+    expect(formatLikeDurationShort(78_000)).toBe("21 h 40");
+    expect(formatLikeDurationShort(111_000)).toBe("1 j 6 h");
     expect(formatCompactCount(2300)).toBe("2.3k");
-    expect(likeTimeMeterLabels({ hourSeconds: 111_000, daySeconds: 78_000, monthSeconds: 32 })).toEqual({
-      hourLabel: "111k",
-      dayLabel: "78k",
-      monthLabel: "32",
+    expect(likeTimeMeterLabels({ hourSeconds: 45, daySeconds: 1500, monthSeconds: 3723 })).toEqual({
+      hourLabel: "45 s",
+      dayLabel: "25 min",
+      monthLabel: "1 h 2",
     });
   });
 });

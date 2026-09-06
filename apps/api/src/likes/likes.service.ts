@@ -760,7 +760,7 @@ export class LikesService {
       const slices = subset.map((p) => ({ startedAt: p.startedAt, endedAt: p.endedAt, weight: p.weight }));
       const sum = sumLikeSeconds(slices, now);
       const windows = likeTimeWindows(slices, now);
-      const meters = likeTimeMeterLabels(windows);
+      const meters = likeTimeMeterLabels(windows, locale);
       map.set(id, {
         totalSeconds: sum.totalSeconds,
         historicalSeconds: sum.historicalSeconds,

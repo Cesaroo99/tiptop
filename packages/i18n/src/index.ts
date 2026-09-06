@@ -389,6 +389,9 @@ export type Messages = {
     moodMore: string;
     moodActions: string;
     moodAudioOriginal: string;
+    moodCommentsEmpty: string;
+    moodPlay: string;
+    moodPause: string;
     moodEmpty: string;
     moodEmptyBody: string;
     moodHours: string;
@@ -1123,6 +1126,9 @@ export const fr: Messages = {
     moodMore: "Plus",
     moodActions: "Autres actions",
     moodAudioOriginal: "Audio • Original",
+    moodCommentsEmpty: "Sois le premier à commenter.",
+    moodPlay: "Lire",
+    moodPause: "Mettre en pause",
     moodEmpty: "Aucun mood actif",
     moodEmptyBody: "Un mood dure 24 h max. Il montre ce qui se passe maintenant, pas un reel sans fin.",
     moodHours: "Durée (heures)",
@@ -1857,6 +1863,9 @@ export const en: Messages = {
     moodMore: "More",
     moodActions: "More actions",
     moodAudioOriginal: "Audio • Original",
+    moodCommentsEmpty: "Be the first to comment.",
+    moodPlay: "Play",
+    moodPause: "Pause",
     moodEmpty: "No active mood",
     moodEmptyBody: "A mood lasts 24h max. It shows what is happening now, not an endless reel.",
     moodHours: "Duration (hours)",

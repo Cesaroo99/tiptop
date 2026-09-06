@@ -1,21 +1,29 @@
 "use client";
 
-import { formatCompactCount, formatLikeTimeCompact } from "@tiptop/domain";
+import { formatCompactCount, formatLikeDurationShort, type LikeDurationLocale } from "@tiptop/domain";
+import { useLiveLikeSeconds } from "./LikeTimeBadge";
 import { CommentIcon, HeartIcon, MoreIcon, ShareIcon } from "./Icons";
 import type { LikeTimeSnap } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 
-export function moodLikeMeters(time?: LikeTimeSnap) {
+export function moodLikeMeters(
+  time: LikeTimeSnap | undefined,
+  extraSeconds = 0,
+  locale: LikeDurationLocale = "fr",
+) {
+  const extra = Math.max(0, extraSeconds);
   return {
-    hour: time?.hourLabel ?? formatLikeTimeCompact(time?.hourSeconds ?? 0),
-    day: time?.dayLabel ?? formatLikeTimeCompact(time?.daySeconds ?? 0),
-    month: time?.monthLabel ?? formatLikeTimeCompact(time?.monthSeconds ?? 0),
+    total: formatLikeDurationShort((time?.totalSeconds ?? 0) + extra, locale),
+    hour: formatLikeDurationShort((time?.hourSeconds ?? 0) + extra, locale),
+    day: formatLikeDurationShort((time?.daySeconds ?? 0) + extra, locale),
+    month: formatLikeDurationShort((time?.monthSeconds ?? 0) + extra, locale),
   };
 }
 
 export function MoodLikeRail({
   liked,
   likeTime,
+  loadedAt,
   commentsCount,
   onLike,
   onComments,
@@ -24,14 +32,18 @@ export function MoodLikeRail({
 }: {
   liked: boolean;
   likeTime?: LikeTimeSnap;
+  loadedAt: number;
   commentsCount: number;
   onLike: () => void;
   onComments: () => void;
   onShare: () => void;
   onMore: () => void;
 }) {
-  const { messages } = useI18n();
-  const meters = moodLikeMeters(likeTime);
+  const { messages, locale } = useI18n();
+  const loc: LikeDurationLocale = locale === "en" ? "en" : "fr";
+  const liveTotal = useLiveLikeSeconds(likeTime, loadedAt);
+  const extra = Math.max(0, liveTotal - (likeTime?.totalSeconds ?? 0));
+  const meters = moodLikeMeters(likeTime, extra, loc);
 
   return (
     <div className="flex flex-col items-center gap-3.5 text-white">
@@ -49,12 +61,15 @@ export function MoodLikeRail({
           <HeartIcon size={22} filled={liked} />
         </span>
       </button>
-      <div className="flex flex-col items-center leading-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]" aria-label={messages.likeTime.capital}>
-        <span className="text-[13px] font-semibold">{meters.hour}</span>
+      <div
+        className="flex flex-col items-center leading-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]"
+        aria-label={messages.likeTime.capital}
+      >
+        <span className="text-[13px] font-semibold tabular-nums">{meters.hour}</span>
         <span className="text-[11px] font-semibold opacity-90">{messages.likeTime.perHour}</span>
-        <span className="mt-1.5 text-[13px] font-semibold">{meters.day}</span>
+        <span className="mt-1.5 text-[13px] font-semibold tabular-nums">{meters.day}</span>
         <span className="text-[11px] font-semibold opacity-90">{messages.likeTime.perDay}</span>
-        <span className="mt-1.5 text-[13px] font-semibold">{meters.month}</span>
+        <span className="mt-1.5 text-[13px] font-semibold tabular-nums">{meters.month}</span>
         <span className="text-[11px] font-semibold opacity-90">{messages.likeTime.perMonth}</span>
       </div>
       <button type="button" onClick={onComments} className="tap-scale flex flex-col items-center gap-1" aria-label={messages.social.comments}>

@@ -16,6 +16,8 @@ export const LIKE_DAY_SECONDS = 86_400;
 export const LIKE_MONTH_SECONDS = 30 * LIKE_DAY_SECONDS;
 export const LIKE_YEAR_SECONDS = 365 * LIKE_DAY_SECONDS;
 
+export type LikeDurationLocale = "fr" | "en";
+
 export type LikeTargetType = "user" | "post" | "comment" | "mood" | "wish";
 
 export type LikePeriodSlice = {
@@ -90,22 +92,44 @@ export function formatCompactCount(value: number): string {
 }
 
 export function formatLikeTimeCompact(seconds: number): string {
-  return formatCompactCount(seconds);
+  return formatLikeDurationShort(seconds);
 }
 
-export function likeTimeMeterLabels(windows: {
-  hourSeconds: number;
-  daySeconds: number;
-  monthSeconds: number;
-}) {
+/** Rail Mood : temps court qui peut évoluer chaque seconde (12 s, 3 min, 1 h). */
+export function formatLikeDurationShort(seconds: number, locale: LikeDurationLocale = "fr"): string {
+  const s = Math.max(0, Math.floor(seconds));
+  const fr = locale === "fr";
+  if (s < 60) return `${s} s`;
+  if (s < LIKE_HOUR_SECONDS) return `${Math.floor(s / 60)} min`;
+  if (s < LIKE_DAY_SECONDS) {
+    const h = Math.floor(s / LIKE_HOUR_SECONDS);
+    const m = Math.floor((s % LIKE_HOUR_SECONDS) / 60);
+    return m ? `${h} h ${m}` : `${h} h`;
+  }
+  if (s < LIKE_MONTH_SECONDS) {
+    const d = Math.floor(s / LIKE_DAY_SECONDS);
+    const h = Math.floor((s % LIKE_DAY_SECONDS) / LIKE_HOUR_SECONDS);
+    const day = fr ? "j" : "d";
+    return h ? `${d} ${day} ${h} h` : `${d} ${day}`;
+  }
+  const mo = Math.floor(s / LIKE_MONTH_SECONDS);
+  return fr ? `${mo} mois` : `${mo} mo`;
+}
+
+export function likeTimeMeterLabels(
+  windows: {
+    hourSeconds: number;
+    daySeconds: number;
+    monthSeconds: number;
+  },
+  locale: LikeDurationLocale = "fr",
+) {
   return {
-    hourLabel: formatLikeTimeCompact(windows.hourSeconds),
-    dayLabel: formatLikeTimeCompact(windows.daySeconds),
-    monthLabel: formatLikeTimeCompact(windows.monthSeconds),
+    hourLabel: formatLikeDurationShort(windows.hourSeconds, locale),
+    dayLabel: formatLikeDurationShort(windows.daySeconds, locale),
+    monthLabel: formatLikeDurationShort(windows.monthSeconds, locale),
   };
 }
-
-export type LikeDurationLocale = "fr" | "en";
 
 function plural(n: number, one: string, many: string) {
   return n <= 1 ? one : many;

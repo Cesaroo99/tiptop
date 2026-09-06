@@ -3,24 +3,24 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AppShell } from "@/components/AppShell";
 import { Avatar, CertifiedMark } from "@/components/Avatar";
-import { CameraIcon, MusicIcon, SearchIcon, SmileIcon, SparklesIcon } from "@/components/Icons";
+import { CameraIcon, MusicIcon, PlayIcon, SearchIcon, SendIcon, SmileIcon, SparklesIcon } from "@/components/Icons";
 import { LikeDialogs, likeErrorKind } from "@/components/LikeDialogs";
 import { MoodLikeRail } from "@/components/MoodLikeRail";
 import { MoodPlaceSheet, MoodPlaceTag, moodPlaceFromItem } from "@/components/MoodPlace";
 import { ReportModal } from "@/components/ReportModal";
 import { SocialInviteModal } from "@/components/SocialInviteModal";
-import { EmptyState, Modal, Skeleton, TextInput } from "@/components/ui";
+import { EmptyState, Modal, Skeleton } from "@/components/ui";
 import { api, ApiError, type CommentItem, type MoodItem } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useLikePlacement } from "@/lib/like-placement";
 import { useSession } from "@/lib/session";
 
 /**
- * Flux Mood vertical, immersif : un mood par écran, défilement snap,
- * overlay façon Reels/TikTok. Le lieu n’apparaît que s’il a été renseigné.
- * Le like reste unique et transférable : sous le cœur, le temps /H /J /M.
+ * Flux Mood vertical immersif : un mood par écran, média lisible,
+ * lieu seulement s’il est renseigné, like = temps qui continue d’avancer.
  */
 export default function Page() {
   return (
@@ -50,7 +50,7 @@ function MoodFeed() {
             setItems([single, ...d.items]);
             return;
           } catch {
-            // Mood expiré ou inaccessible : on ignore silencieusement et on garde le flux général.
+            /* Mood expiré : on garde le flux. */
           }
         }
         setItems(d.items);
@@ -106,7 +106,7 @@ function MoodFeed() {
   }
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full min-h-0 w-full">
       <div className="phone-safe-top pointer-events-none absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4">
         <p className="text-[22px] font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">{messages.nav.mood}</p>
         <div className="pointer-events-auto flex items-center gap-2.5">
@@ -136,7 +136,7 @@ function MoodFeed() {
         ref={containerRef}
         tabIndex={0}
         onKeyDown={onKeyDown}
-        className="no-scrollbar h-full snap-y snap-mandatory overflow-y-scroll scroll-smooth outline-none"
+        className="no-scrollbar absolute inset-0 snap-y snap-mandatory overflow-y-scroll scroll-smooth outline-none"
       >
         {items.map((m) => (
           <MoodSlide
@@ -176,10 +176,15 @@ function MoodSlide({
   const [captionOpen, setCaptionOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [muted, setMuted] = useState(true);
+  const [loadedAt, setLoadedAt] = useState(() => Date.now());
   const place = moodPlaceFromItem(mood);
   const liked = mood.likeTime?.likedByMe ?? mood.likedByMe ?? false;
   const canJoin = Boolean(user && user.id !== mood.author.id);
   const captionLong = (mood.body ?? "").length > 90;
+
+  useEffect(() => {
+    setLoadedAt(Date.now());
+  }, [mood.likeTime?.activeCount, mood.likeTime?.totalSeconds]);
 
   async function like(confirmTransfer = false) {
     try {
@@ -237,7 +242,7 @@ function MoodSlide({
   return (
     <section ref={registerRef} className="relative h-full w-full snap-start snap-always">
       {mood.videoUrl ? (
-        <MoodVideo src={mood.videoUrl} muted={muted} onToggleMute={() => setMuted((v) => !v)} />
+        <MoodVideo src={mood.videoUrl} muted={muted} />
       ) : mood.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={mood.imageUrl} alt="" className="h-full w-full object-cover" />
@@ -252,6 +257,7 @@ function MoodSlide({
         <MoodLikeRail
           liked={liked}
           likeTime={mood.likeTime}
+          loadedAt={loadedAt}
           commentsCount={mood.commentsCount}
           onLike={() => void like(false)}
           onComments={() => setCommentsOpen(true)}
@@ -339,8 +345,13 @@ function MoodSlide({
       />
       <ReportModal open={reportOpen} kind="MOOD" moodId={mood.id} onClose={() => setReportOpen(false)} />
       <MoodPlaceSheet place={place} open={placeOpen} onClose={() => setPlaceOpen(false)} />
-      <MoodComments moodId={mood.id} open={commentsOpen} onClose={() => setCommentsOpen(false)} onSent={() => onChange({ commentsCount: mood.commentsCount + 1 })} />
-      <Modal open={moreOpen} title={messages.world.moodActions} onClose={() => setMoreOpen(false)}>
+      <MoodComments
+        moodId={mood.id}
+        open={commentsOpen}
+        onClose={() => setCommentsOpen(false)}
+        onSent={() => onChange({ commentsCount: mood.commentsCount + 1 })}
+      />
+      <Modal open={moreOpen} title={messages.world.moodActions} onClose={() => setMoreOpen(false)} hideActions>
         <div className="space-y-2">
           {canJoin ? (
             <button
@@ -381,47 +392,74 @@ function MoodSlide({
   );
 }
 
-/**
- * Vidéo courte en boucle, muette par défaut (autoplay navigateur), qui ne joue
- * que lorsque son écran est réellement visible dans le flux — comme Reels/TikTok.
- */
-function MoodVideo({
-  src,
-  muted,
-  onToggleMute,
-}: {
-  src: string;
-  muted: boolean;
-  onToggleMute: () => void;
-}) {
+/** Vidéo en boucle : joue dès qu’elle est visible, tap pour pause / lecture. */
+function MoodVideo({ src, muted }: { src: string; muted: boolean }) {
+  const { messages } = useI18n();
   const ref = useRef<HTMLVideoElement>(null);
+  const pausedRef = useRef(false);
+  const [paused, setPaused] = useState(false);
+  const [hint, setHint] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && entry.intersectionRatio > 0.6) void el.play().catch(() => undefined);
+        const on = entry.isIntersecting && entry.intersectionRatio > 0.55;
+        if (on && !pausedRef.current) void el.play().catch(() => undefined);
         else el.pause();
       },
-      { threshold: [0, 0.6, 1] },
+      { threshold: [0, 0.55, 1] },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [src]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || paused) return;
+    void el.play().catch(() => undefined);
+  }, [muted, paused]);
+
+  function toggle() {
+    const el = ref.current;
+    if (!el) return;
+    const next = !pausedRef.current;
+    pausedRef.current = next;
+    setPaused(next);
+    if (next) el.pause();
+    else void el.play().catch(() => undefined);
+    setHint(true);
+    window.setTimeout(() => setHint(false), 700);
+  }
 
   return (
-    <button type="button" aria-label={muted ? "Activer le son" : "Couper le son"} onClick={onToggleMute} className="relative block h-full w-full">
+    <div className="absolute inset-0">
       <video
         ref={ref}
         src={src}
         muted={muted}
         loop
         playsInline
-        preload="metadata"
+        autoPlay
+        preload="auto"
         className="h-full w-full object-cover"
+        onClick={toggle}
       />
-    </button>
+      {hint ? (
+        <div className="pointer-events-none absolute inset-0 grid place-items-center">
+          <span className="grid h-16 w-16 place-items-center rounded-full bg-black/45 text-white">
+            {paused ? <PlayIcon size={28} /> : (
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <rect x="6" y="5" width="4.5" height="14" rx="1" />
+                <rect x="13.5" y="5" width="4.5" height="14" rx="1" />
+              </svg>
+            )}
+          </span>
+        </div>
+      ) : null}
+      <span className="sr-only">{paused ? messages.world.moodPlay : messages.world.moodPause}</span>
+    </div>
   );
 }
 
@@ -439,43 +477,89 @@ function MoodComments({
   const { messages } = useI18n();
   const [comments, setComments] = useState<CommentItem[] | null>(null);
   const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
+    setComments(null);
     api<{ items: CommentItem[] }>(`/moods/${moodId}/comments`)
       .then((d) => setComments(d.items))
       .catch(() => setComments([]));
+    const t = window.setTimeout(() => inputRef.current?.focus(), 180);
+    return () => window.clearTimeout(t);
   }, [open, moodId]);
 
   async function send() {
-    if (!body.trim()) return;
-    const c = await api<CommentItem>(`/moods/${moodId}/comments`, { method: "POST", body: JSON.stringify({ body }) });
-    setComments((cur) => [...(cur ?? []), c]);
-    setBody("");
-    onSent();
+    if (!body.trim() || sending) return;
+    setSending(true);
+    try {
+      const c = await api<CommentItem>(`/moods/${moodId}/comments`, { method: "POST", body: JSON.stringify({ body }) });
+      setComments((cur) => [...(cur ?? []), c]);
+      setBody("");
+      onSent();
+    } finally {
+      setSending(false);
+    }
   }
 
-  return (
-    <Modal open={open} title={messages.social.comments} onClose={onClose}>
-      <div className="max-h-[50vh] space-y-2 overflow-y-auto">
-        {comments === null ? (
-          <p className="type-body-sm text-muted">{messages.common.loading}</p>
-        ) : comments.length === 0 ? (
-          <p className="type-body-sm text-muted">{messages.reviews.empty}</p>
-        ) : (
-          comments.map((c) => (
-            <p key={c.id} className="type-body-sm rounded-lg bg-surface-sunken px-3.5 py-2.5">
-              <span className="font-semibold text-accent">{c.author.firstName}</span> {c.body}
-            </p>
-          ))
-        )}
+  if (!open || typeof document === "undefined") return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex items-end justify-center" role="dialog" aria-modal aria-label={messages.social.comments}>
+      <button type="button" className="absolute inset-0 bg-black/45" aria-label={messages.common.close} onClick={onClose} />
+      <div className="relative flex h-[72%] w-full max-w-md flex-col rounded-t-2xl bg-surface-elevated pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-elevated">
+        <div className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-border" aria-hidden />
+        <div className="flex items-center justify-between px-4 py-3">
+          <h2 className="type-h4 text-ink">
+            {messages.social.comments}
+            {comments ? ` · ${comments.length}` : ""}
+          </h2>
+          <button type="button" onClick={onClose} className="type-caption font-semibold text-muted">
+            {messages.common.close}
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4">
+          {comments === null ? (
+            <p className="type-body-sm text-muted">{messages.common.loading}</p>
+          ) : comments.length === 0 ? (
+            <p className="type-body-sm py-8 text-center text-muted">{messages.world.moodCommentsEmpty}</p>
+          ) : (
+            comments.map((c) => (
+              <div key={c.id} className="flex gap-2.5 py-1.5">
+                <Avatar src={c.author.avatarUrl} firstName={c.author.firstName} lastName={c.author.lastName} size={32} />
+                <p className="type-body-sm min-w-0 flex-1 text-ink">
+                  <span className="font-semibold">{c.author.firstName}</span> {c.body}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+        <form
+          className="flex items-center gap-2 border-t border-divider px-4 py-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void send();
+          }}
+        >
+          <input
+            ref={inputRef}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder={messages.social.addComment}
+            className="type-body-sm h-11 flex-1 rounded-full bg-surface-sunken px-4 text-ink outline-none"
+          />
+          <button
+            type="submit"
+            disabled={!body.trim() || sending}
+            aria-label={messages.social.addComment}
+            className="tap-scale grid h-11 w-11 place-items-center rounded-full bg-accent text-on-primary disabled:opacity-40"
+          >
+            <SendIcon size={16} />
+          </button>
+        </form>
       </div>
-      <div className="mt-3 flex gap-2">
-        <TextInput value={body} onChange={(e) => setBody(e.target.value)} placeholder={messages.social.addComment} className="flex-1" />
-        <button type="button" onClick={() => void send()} className="tap-scale type-button rounded-pill bg-accent px-5 text-on-primary transition hover:bg-accent-hover">
-          OK
-        </button>
-      </div>
-    </Modal>
+    </div>,
+    document.body,
   );
 }
