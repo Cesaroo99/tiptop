@@ -70,7 +70,11 @@ export class ProfilesService {
           include: { host: { include: { profile: true } }, participants: true },
         }),
         this.prisma.mood.findMany({
-          where: { authorId: user.id, expiresAt: { gt: new Date() } },
+          where: {
+            authorId: user.id,
+            kind: "MOOD",
+            OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+          },
           orderBy: { createdAt: "desc" },
           take: 12,
         }),
@@ -110,7 +114,7 @@ export class ProfilesService {
         body: m.body,
         imageUrl: m.imageUrl,
         videoUrl: m.videoUrl,
-        expiresAt: m.expiresAt.toISOString(),
+        expiresAt: m.expiresAt?.toISOString() ?? null,
       })),
     };
   }

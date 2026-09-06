@@ -109,7 +109,7 @@ describe("Accueil — maquette pulse", () => {
       </TestI18nProvider>,
     );
     expect(screen.getByText("Yaoundé - Carrefour Damas")).toBeInTheDocument();
-    expect(screen.getByText("Votre mood !")).toBeInTheDocument();
+    expect(screen.getByText("Ton statut")).toBeInTheDocument();
     expect(await screen.findByText("Erica Sinclair")).toBeInTheDocument();
     expect(await screen.findByText("César Memoli")).toBeInTheDocument();
     expect(screen.queryByText("Tu cherches quoi ?")).not.toBeInTheDocument();

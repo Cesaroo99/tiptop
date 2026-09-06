@@ -1,11 +1,16 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import {
+  interestFromActivity,
   isMoodActive,
+  isMoodInterest,
+  isMoodKind,
   isMoodSoundKey,
-  moodExpiresAt,
   moodHasPlace,
+  moodInterestScore,
   moodPlaceLabel,
+  statusExpiresAt,
   validateMoodCoords,
+  type MoodKind,
 } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { NotificationsService } from "../notifications/notifications.service";
@@ -38,6 +43,8 @@ export class MoodsService {
       hours?: number;
       soundKey?: string;
       soundLabel?: string;
+      kind?: string;
+      interest?: string;
     },
   ) {
     const body = (input.body ?? "").trim();
@@ -51,6 +58,8 @@ export class MoodsService {
       throw new BadRequestException({ code: "VIDEO_NOT_ALLOWED" });
     }
     if (videoUrl) imageUrl = null;
+    const kind: MoodKind = isMoodKind(input.kind) ? input.kind : "MOOD";
+    if (kind === "MOOD" && !videoUrl) throw new BadRequestException({ code: "MOOD_VIDEO_REQUIRED" });
     if (!body && !imageUrl && !videoUrl && !activity) throw new BadRequestException({ code: "MOOD_EMPTY" });
     if (input.eventId) {
       const ev = await this.prisma.event.findUnique({ where: { id: input.eventId } });
@@ -63,14 +72,15 @@ export class MoodsService {
       if (!companion) throw new BadRequestException({ code: "COMPANION_NOT_FOUND" });
       companionId = companion.id;
     }
-    let expiresAt: Date;
-    try {
-      expiresAt = moodExpiresAt(new Date(), input.hours);
-    } catch {
-      throw new BadRequestException({ code: "MOOD_DURATION_INVALID" });
-    }
+    const expiresAt = kind === "STATUS" ? statusExpiresAt(new Date()) : null;
     const visibility =
-      input.visibility === "FOLLOWERS" || input.visibility === "EVENT" ? input.visibility : "ZONE";
+      kind === "STATUS"
+        ? "FOLLOWERS"
+        : input.visibility === "EVENT" && input.eventId
+          ? "EVENT"
+          : "PUBLIC";
+    const interest =
+      (isMoodInterest(input.interest) ? input.interest : null) ?? interestFromActivity(activity);
     let coords: { latitude: number; longitude: number } | null = null;
     try {
       coords = validateMoodCoords(input.latitude, input.longitude);
@@ -106,6 +116,8 @@ export class MoodsService {
         longitude: explicitPlace ? coords?.longitude ?? null : null,
         eventId: input.eventId || null,
         companionId,
+        kind,
+        interest,
         visibility,
         expiresAt,
       },
@@ -113,17 +125,24 @@ export class MoodsService {
     return this.get(authorId, mood.id);
   }
 
-  async list(viewerId: string) {
+  async list(viewerId: string, kind: MoodKind = "MOOD") {
     const now = new Date();
     const viewer = await this.prisma.user.findUnique({
       where: { id: viewerId },
-      include: { profile: true, following: true },
+      include: { profile: true, following: true, contactsOwned: { select: { personId: true } } },
     });
     const followeeIds = new Set((viewer?.following ?? []).map((f) => f.followeeId));
+    const friendIds = new Set([
+      ...followeeIds,
+      ...(viewer?.contactsOwned ?? []).map((c) => c.personId),
+    ]);
     const rows = await this.prisma.mood.findMany({
-      where: { expiresAt: { gt: now } },
+      where:
+        kind === "STATUS"
+          ? { kind: "STATUS", expiresAt: { gt: now } }
+          : { kind: "MOOD", OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
       orderBy: { createdAt: "desc" },
-      take: 30,
+      take: 40,
       include: {
         author: { include: { profile: true } },
         event: { select: { id: true, title: true } },
@@ -135,22 +154,33 @@ export class MoodsService {
     });
     const visible = rows.filter((m) => {
       if (m.authorId === viewerId) return true;
-      if (m.visibility === "FOLLOWERS") return followeeIds.has(m.authorId);
+      if (m.kind === "STATUS" || m.visibility === "FOLLOWERS") return friendIds.has(m.authorId);
+      if (m.visibility === "PUBLIC") return true;
       if (m.visibility === "EVENT") return Boolean(m.eventId);
       const city = viewer?.profile?.city;
       return !city || m.author.profile?.city === city;
     });
+    const viewerInterests = viewer?.profile?.interests ?? [];
+    const ranked =
+      kind === "MOOD"
+        ? [...visible].sort((a, b) => {
+            const score =
+              moodInterestScore(b.interest, viewerInterests) - moodInterestScore(a.interest, viewerInterests);
+            if (score !== 0) return score;
+            return b.createdAt.getTime() - a.createdAt.getTime();
+          })
+        : visible;
     const extras = await this.likeExtras(
       viewerId,
-      visible.map((m) => m.authorId),
+      ranked.map((m) => m.authorId),
     );
     const likeTimes = await this.likes.snapshots(
       viewerId,
       "mood",
-      visible.map((m) => m.id),
+      ranked.map((m) => m.id),
     );
     return {
-      items: visible.map((m) => this.map(m, extras, likeTimes.get(m.id), followeeIds.has(m.authorId))),
+      items: ranked.map((m) => this.map(m, extras, likeTimes.get(m.id), friendIds.has(m.authorId))),
     };
   }
 
@@ -168,6 +198,19 @@ export class MoodsService {
     });
     if (!mood) throw new NotFoundException({ code: "MOOD_NOT_FOUND" });
     if (!isMoodActive(mood.expiresAt)) throw new NotFoundException({ code: "MOOD_EXPIRED" });
+    if (mood.kind === "STATUS" && mood.authorId !== viewerId) {
+      const [follow, contact] = await Promise.all([
+        this.prisma.follow.findFirst({
+          where: { followerId: viewerId, followeeId: mood.authorId },
+          select: { id: true },
+        }),
+        this.prisma.contact.findFirst({
+          where: { ownerId: viewerId, personId: mood.authorId },
+          select: { id: true },
+        }),
+      ]);
+      if (!follow && !contact) throw new NotFoundException({ code: "MOOD_NOT_FOUND" });
+    }
     const extras = await this.likeExtras(viewerId, [mood.authorId]);
     const likeTimes = await this.likes.snapshots(viewerId, "mood", [mood.id]);
     const follow = await this.prisma.follow.findFirst({
@@ -308,8 +351,10 @@ export class MoodsService {
       address: string | null;
       latitude: number | null;
       longitude: number | null;
-      expiresAt: Date;
+      expiresAt: Date | null;
       createdAt: Date;
+      kind?: string;
+      interest?: string | null;
       visibility: string;
       soundKey?: string | null;
       soundLabel?: string | null;
@@ -367,10 +412,12 @@ export class MoodsService {
         latitude: m.latitude,
         longitude: m.longitude,
       }),
+      kind: m.kind === "STATUS" ? "STATUS" : "MOOD",
+      interest: m.interest ?? null,
       visibility: m.visibility,
       soundKey: m.soundKey ?? null,
       soundLabel: m.soundLabel ?? null,
-      expiresAt: m.expiresAt.toISOString(),
+      expiresAt: m.expiresAt?.toISOString() ?? null,
       createdAt: m.createdAt.toISOString(),
       commentsCount: m._count.comments,
       likedAuthor: extras.liked.has(m.author.id),

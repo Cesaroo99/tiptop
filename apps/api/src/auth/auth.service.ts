@@ -49,6 +49,7 @@ export type PublicUser = {
   locationPrecision: LocationPrecision;
   latitude: number | null;
   longitude: number | null;
+  interests: string[];
 };
 
 @Injectable()
@@ -82,6 +83,7 @@ export class AuthService {
       locationPrecision: LocationPrecision;
       latitude: number | null;
       longitude: number | null;
+      interests?: string[];
     } | null;
   }): PublicUser {
     return {
@@ -111,6 +113,7 @@ export class AuthService {
       locationPrecision: user.profile?.locationPrecision ?? LocationPrecision.ZONE,
       latitude: user.profile?.latitude ?? null,
       longitude: user.profile?.longitude ?? null,
+      interests: user.profile?.interests ?? [],
     };
   }
 

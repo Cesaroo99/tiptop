@@ -175,11 +175,16 @@ export class SearchService {
   private async moods(query: string, city: string | undefined) {
     const rows = await this.prisma.mood.findMany({
       where: {
-        expiresAt: { gt: new Date() },
-        OR: [
-          { body: { contains: query, mode: Prisma.QueryMode.insensitive } },
-          { activity: { contains: query, mode: Prisma.QueryMode.insensitive } },
-          { city: { contains: query, mode: Prisma.QueryMode.insensitive } },
+        kind: "MOOD",
+        AND: [
+          { OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
+          {
+            OR: [
+              { body: { contains: query, mode: Prisma.QueryMode.insensitive } },
+              { activity: { contains: query, mode: Prisma.QueryMode.insensitive } },
+              { city: { contains: query, mode: Prisma.QueryMode.insensitive } },
+            ],
+          },
         ],
       },
       take: 20,

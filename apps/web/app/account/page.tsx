@@ -10,6 +10,7 @@ import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { presenceFromDeclared } from "@tiptop/domain";
+import { InterestChips } from "@/components/InterestChips";
 
 const AVATARS = [
   "cesar",
@@ -63,6 +64,7 @@ export default function AccountPage() {
   const [country, setCountry] = useState(user?.country ?? "CM");
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl ?? "");
   const [coverUrl, setCoverUrl] = useState(user?.coverUrl ?? "");
+  const [interests, setInterests] = useState<string[]>(user?.interests ?? []);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
   const [statusBusy, setStatusBusy] = useState(false);
@@ -81,6 +83,7 @@ export default function AccountPage() {
     setCountry(user.country ?? "CM");
     setAvatarUrl(user.avatarUrl ?? "");
     setCoverUrl(user.coverUrl ?? "");
+    setInterests(user.interests ?? []);
     setHydratedId(user.id);
   }, [user, hydratedId]);
 
@@ -123,6 +126,7 @@ export default function AccountPage() {
           country,
           avatarUrl,
           coverUrl,
+          interests,
         }),
       });
       await refresh();
@@ -215,6 +219,9 @@ export default function AccountPage() {
         </Field>
         <Field label={messages.account.website} helper={messages.account.websiteHint}>
           <TextInput value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="tiptop.cm" />
+        </Field>
+        <Field label={messages.account.interests} helper={messages.account.interestsHint}>
+          <InterestChips value={interests} multiple onChange={(next) => setInterests(Array.isArray(next) ? next : [next])} />
         </Field>
         <Field label={messages.account.birthDate}>
           <TextInput type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />

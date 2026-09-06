@@ -114,7 +114,7 @@ export class DiscoveryService {
 
     const activeMoods = ids.length
       ? await this.prisma.mood.findMany({
-          where: { authorId: { in: ids }, expiresAt: { gt: now } },
+          where: { authorId: { in: ids }, kind: "STATUS", expiresAt: { gt: now } },
           orderBy: { createdAt: "desc" },
         })
       : [];
@@ -192,7 +192,7 @@ export class DiscoveryService {
                   id: mood.id,
                   activity: mood.activity,
                   body: mood.body,
-                  expiresAt: mood.expiresAt.toISOString(),
+                  expiresAt: mood.expiresAt?.toISOString() ?? null,
                 }
               : null,
           _wishMatch: wishCategory ? u.wishes.some((w) => w.category === wishCategory) : true,

@@ -12,15 +12,18 @@ vi.mock("@/lib/session", () => ({
 }));
 
 describe("splash", () => {
-  it("anime le logo et affiche le slogan", () => {
+  it("anime le globe puis un seul logo avec le nom", () => {
     render(
       <TestI18nProvider>
         <SplashPage />
       </TestI18nProvider>,
     );
     expect(screen.getByTestId("splash-screen")).toBeInTheDocument();
-    expect(screen.getAllByAltText("TipTop").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText("Sors. Rencontre. Vis.")).toBeInTheDocument();
-    expect(document.querySelector(".splash-logo-mark")).toBeTruthy();
+    expect(screen.getByText("TipTop")).toBeInTheDocument();
+    expect(screen.queryByText("Sors. Rencontre. Vis.")).not.toBeInTheDocument();
+    expect(document.querySelectorAll("img[alt='TipTop']").length).toBe(0);
+    expect(document.querySelector(".splash-globe")).toBeTruthy();
+    expect(document.querySelector(".splash-orbit-a")).toBeTruthy();
+    expect(document.querySelectorAll(".splash-ball-g").length).toBe(3);
   });
 });

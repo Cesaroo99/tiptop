@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Inject, Injectable } from "@nestjs/common";
 import { Availability, LocationPrecision, Prisma } from "@prisma/client";
-import { availabilityUntil, findZone } from "@tiptop/domain";
+import { availabilityUntil, findZone, parseMoodInterests } from "@tiptop/domain";
 import { PrismaService } from "../prisma.service";
 import { AuthService } from "../auth/auth.service";
 import type { UpdateMeDto } from "./dto";
@@ -99,6 +99,7 @@ export class UsersService {
         coverUrl,
         birthDate,
         country,
+        interests: dto.interests === undefined ? undefined : parseMoodInterests(dto.interests),
       };
 
       const user = await this.prisma.user.update({
@@ -128,6 +129,7 @@ export class UsersService {
                 coverUrl: coverUrl ?? undefined,
                 birthDate: birthDate ?? undefined,
                 country: country ?? undefined,
+                interests: dto.interests === undefined ? undefined : parseMoodInterests(dto.interests),
               },
               update: profilePatch,
             },

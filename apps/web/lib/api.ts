@@ -25,6 +25,7 @@ export type PublicUser = {
   longitude: number | null;
   currency?: string;
   country?: string | null;
+  interests?: string[];
 };
 
 export type EventCard = {
@@ -121,8 +122,10 @@ export type MoodItem = {
   body: string;
   imageUrl: string | null;
   videoUrl: string | null;
-  expiresAt: string;
+  expiresAt: string | null;
   createdAt: string;
+  kind?: "MOOD" | "STATUS";
+  interest?: string | null;
   commentsCount: number;
   likedAuthor: boolean;
   following?: boolean;

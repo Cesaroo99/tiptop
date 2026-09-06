@@ -29,6 +29,7 @@ export type Messages = {
   };
   home: {
     yourMood: string;
+    yourStatus: string;
     emptyTitle: string;
     emptyBody: string;
     retry: string;
@@ -114,6 +115,8 @@ export type Messages = {
     bioHint: string;
     website: string;
     websiteHint: string;
+    interests: string;
+    interestsHint: string;
     birthDate: string;
     country: string;
     avatar: string;
@@ -141,6 +144,8 @@ export type Messages = {
     slide3Body: string;
     slide4Title: string;
     slide4Body: string;
+    interestsTitle: string;
+    interestsHint: string;
   };
   common: {
     close: string;
@@ -474,6 +479,15 @@ export type Messages = {
     bookLater: string;
     moodCreate: string;
     moodCreateShort: string;
+    statusCreate: string;
+    statusCameraHint: string;
+    moodInterest: string;
+    moodPermanentHint: string;
+    statusFriendsHint: string;
+    moodVideoRequired: string;
+    videoTypeNotAllowed: string;
+    visPublic: string;
+    typeStatus: string;
     moodMore: string;
     moodActions: string;
     moodAudioOriginal: string;
@@ -938,7 +952,8 @@ export const fr: Messages = {
     events: "Events",
   },
   home: {
-    yourMood: "Votre mood !",
+    yourMood: "Ton statut",
+    yourStatus: "Ton statut",
     emptyTitle: "Rien dans ta zone pour l’instant",
     emptyBody: "Quand des personnes publient ou créent une sortie près de toi, ça apparaîtra ici.",
     retry: "Réessayer",
@@ -1024,6 +1039,8 @@ export const fr: Messages = {
     bioHint: "Quelques mots pour que les autres te reconnaissent IRL.",
     website: "Site ou réseau",
     websiteHint: "Sans https:// — exemple : tiptop.cm",
+    interests: "Centres d’intérêt",
+    interestsHint: "On t’en montrera les moods publics.",
     birthDate: "Date de naissance",
     country: "Pays",
     avatar: "Photo de profil",
@@ -1051,6 +1068,8 @@ export const fr: Messages = {
     slide3Body: "Avec Mood, montre en direct où tu es et ce que tu fais — et donne envie à d'autres de te rejoindre.",
     slide4Title: "Invite, réserve, vis l'expérience",
     slide4Body: "Un like, une invitation, une réservation : chaque interaction sur TipTop peut se terminer par une vraie rencontre.",
+    interestsTitle: "Tes centres d’intérêt",
+    interestsHint: "Les moods publics suivent ce que tu aimes.",
   },
   common: {
     close: "Fermer",
@@ -1384,6 +1403,15 @@ export const fr: Messages = {
     bookLater: "Réserver et payer arrive en Phase 4. Ici tu peux t’intéresser, mettre un coup de cœur, ou inviter sur une sortie gratuite.",
     moodCreate: "Créer un mood",
     moodCreateShort: "Créer",
+    statusCreate: "Créer un statut",
+    statusCameraHint: "Visible 24 h, uniquement tes ami·es.",
+    moodInterest: "Centre d’intérêt",
+    moodPermanentHint: "Vidéo pérenne, publique selon tes centres d’intérêt.",
+    statusFriendsHint: "Statut 24 h — seulement tes ami·es.",
+    moodVideoRequired: "Un mood est une vidéo. Filme, importe ou choisis un modèle.",
+    videoTypeNotAllowed: "Ce format vidéo n’est pas accepté. Essaie un MP4 ou WebM.",
+    visPublic: "Public",
+    typeStatus: "Statut",
     moodMore: "Plus",
     moodActions: "Autres actions",
     moodAudioOriginal: "Audio • Original",
@@ -1404,8 +1432,8 @@ export const fr: Messages = {
     moodCameraHint: "Filme, puis ajoute un son, un lieu ou du texte.",
     moodPlay: "Lire",
     moodPause: "Mettre en pause",
-    moodEmpty: "Aucun mood actif",
-    moodEmptyBody: "Un mood dure 24 h max. Il montre ce qui se passe maintenant, pas un reel sans fin.",
+    moodEmpty: "Aucun mood public",
+    moodEmptyBody: "Un mood est une vidéo pérenne. Tu vois celles de tout le monde selon tes centres d’intérêt.",
     moodHours: "Durée (heures)",
     moodVisibility: "Visibilité",
     visZone: "Ma zone",
@@ -1848,7 +1876,8 @@ export const en: Messages = {
     events: "Events",
   },
   home: {
-    yourMood: "Your mood!",
+    yourMood: "Your status",
+    yourStatus: "Your status",
     emptyTitle: "Nothing in your area yet",
     emptyBody: "When people post or create a meetup near you, it will show up here.",
     retry: "Retry",
@@ -1934,6 +1963,8 @@ export const en: Messages = {
     bioHint: "A few words so people can recognize you in real life.",
     website: "Website or social",
     websiteHint: "Without https:// — example: tiptop.cm",
+    interests: "Interests",
+    interestsHint: "We’ll show you public moods that match.",
     birthDate: "Date of birth",
     country: "Country",
     avatar: "Profile photo",
@@ -1961,6 +1992,8 @@ export const en: Messages = {
     slide3Body: "With Mood, show live where you are and what you're doing — and make others want to join you.",
     slide4Title: "Invite, book, live the experience",
     slide4Body: "A like, an invitation, a reservation: every interaction on TipTop can end in a real meetup.",
+    interestsTitle: "Your interests",
+    interestsHint: "Public moods follow what you like.",
   },
   common: {
     close: "Close",
@@ -2294,6 +2327,15 @@ export const en: Messages = {
     bookLater: "Booking and payment ship in Phase 4. You can mark interest, favorite, or invite to a free meetup.",
     moodCreate: "Create a mood",
     moodCreateShort: "Create",
+    statusCreate: "Create a status",
+    statusCameraHint: "Visible 24h, friends only.",
+    moodInterest: "Interest",
+    moodPermanentHint: "A lasting public video, ranked by interests.",
+    statusFriendsHint: "24h status — friends only.",
+    moodVideoRequired: "A mood is a video. Film, import or pick a template.",
+    videoTypeNotAllowed: "This video format is not supported. Try MP4 or WebM.",
+    visPublic: "Public",
+    typeStatus: "Status",
     moodMore: "More",
     moodActions: "More actions",
     moodAudioOriginal: "Audio • Original",
@@ -2314,8 +2356,8 @@ export const en: Messages = {
     moodCameraHint: "Film, then add a sound, a place or some text.",
     moodPlay: "Play",
     moodPause: "Pause",
-    moodEmpty: "No active mood",
-    moodEmptyBody: "A mood lasts 24h max. It shows what is happening now, not an endless reel.",
+    moodEmpty: "No public mood",
+    moodEmptyBody: "A mood is a lasting video. You see everyone’s public videos by interest.",
     moodHours: "Duration (hours)",
     moodVisibility: "Visibility",
     visZone: "My area",

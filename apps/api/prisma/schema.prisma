@@ -140,6 +140,7 @@ model Profile {
   latitude           Float?
   longitude          Float?
   website            String?
+  interests          String[]           @default([])
 }
 
 model Session {
@@ -315,10 +316,16 @@ enum ParticipantStatus {
   CANCELLED
 }
 
+enum MoodKind {
+  MOOD
+  STATUS
+}
+
 enum MoodVisibility {
   ZONE
   FOLLOWERS
   EVENT
+  PUBLIC
 }
 
 enum TicketStatus {
@@ -708,15 +715,18 @@ model Mood {
   event      Event?         @relation(fields: [eventId], references: [id], onDelete: SetNull)
   companionId String?
   companion   User?         @relation("MoodCompanion", fields: [companionId], references: [id], onDelete: SetNull)
-  visibility MoodVisibility @default(ZONE)
+  kind       MoodKind       @default(MOOD)
+  interest   String?
+  visibility MoodVisibility @default(PUBLIC)
   soundKey   String?
   soundLabel String?
-  expiresAt  DateTime
+  expiresAt  DateTime?
   createdAt  DateTime       @default(now())
   comments   MoodComment[]
   reports    Report[]
 
   @@index([expiresAt])
+  @@index([kind, expiresAt])
 }
 
 model MoodComment {
