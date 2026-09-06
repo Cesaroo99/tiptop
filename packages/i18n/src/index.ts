@@ -508,7 +508,15 @@ export type Messages = {
     seeAll: string;
     eventsInterested: string;
     eventsLinked: string;
+    eventsLinkedNamed: string;
     moreAbout: string;
+    profileOffer: string;
+    profileMyWishes: string;
+    showOnProfile: string;
+    hideOnProfile: string;
+    participantsCount: string;
+    countryCM: string;
+    moreActions: string;
     reservationsCount: string;
     seatsLeft: string;
     seatsLeftOne: string;
@@ -1323,7 +1331,15 @@ export const fr: Messages = {
     seeAll: "Tous voir",
     eventsInterested: "Événements qui m’intéressent",
     eventsLinked: "{n} événement(s) lié(s)",
+    eventsLinkedNamed: "{n} événement(s) lié(s) à {name}",
     moreAbout: "Plus d’infos à propos de {name}",
+    profileOffer: "À offrir à {name}",
+    profileMyWishes: "Tes envies",
+    showOnProfile: "Visible sur mon profil",
+    hideOnProfile: "Masqué du profil",
+    participantsCount: "{n} participants",
+    countryCM: "Cameroun",
+    moreActions: "Plus",
     reservationsCount: "Réservations",
     seatsLeft: "{count} places restantes",
     seatsLeftOne: "1 place restante",
@@ -2138,7 +2154,15 @@ export const en: Messages = {
     seeAll: "See all",
     eventsInterested: "Events I’m interested in",
     eventsLinked: "{n} linked event(s)",
+    eventsLinkedNamed: "{n} event(s) linked to {name}",
     moreAbout: "More about {name}",
+    profileOffer: "To offer {name}",
+    profileMyWishes: "Your wishes",
+    showOnProfile: "Visible on my profile",
+    hideOnProfile: "Hidden from profile",
+    participantsCount: "{n} participants",
+    countryCM: "Cameroon",
+    moreActions: "More",
     reservationsCount: "Bookings",
     seatsLeft: "{count} seats left",
     seatsLeftOne: "1 seat left",

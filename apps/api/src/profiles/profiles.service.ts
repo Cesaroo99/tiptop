@@ -19,34 +19,56 @@ export class ProfilesService {
       include: { profile: true },
     });
     if (!user || user.status !== "ACTIVE") throw new NotFoundException({ code: "USER_NOT_FOUND" });
-    const [followCounts, following, likePreview, likeStats, posts, hosted, interested, moods] = await Promise.all([
-      this.follows.counts(user.id),
-      this.follows.isFollowing(viewerId, user.id),
-      this.likes.preview(viewerId, user.id).catch(() => ({
-        alreadyLiked: false,
-        availableUnits: 0,
-        wouldTransferFrom: null,
-      })),
-      this.likes.statsFor(user.id),
-      this.posts.listByAuthor(viewerId, user.id),
-      this.prisma.event.findMany({
-        where: { hostId: user.id, status: { not: "CANCELLED" } },
-        orderBy: { startsAt: "desc" },
-        take: 8,
-        include: { host: { include: { profile: true } }, participants: true, _count: { select: { hearts: true } } },
-      }),
-      this.prisma.event.findMany({
-        where: { participants: { some: { userId: user.id, status: "INTERESTED" } }, status: { not: "CANCELLED" } },
-        orderBy: { startsAt: "asc" },
-        take: 8,
-        include: { host: { include: { profile: true } }, participants: true, _count: { select: { hearts: true } } },
-      }),
-      this.prisma.mood.findMany({
-        where: { authorId: user.id, expiresAt: { gt: new Date() } },
-        orderBy: { createdAt: "desc" },
-        take: 12,
-      }),
-    ]);
+    const isSelf = viewerId === user.id;
+    const [followCounts, following, friendship, likePreview, likeStats, posts, hosted, interested, attending, moods] =
+      await Promise.all([
+        this.follows.counts(user.id),
+        this.follows.isFollowing(viewerId, user.id),
+        this.prisma.contact.findUnique({
+          where: { ownerId_personId: { ownerId: viewerId, personId: user.id } },
+          select: { id: true },
+        }),
+        this.likes.preview(viewerId, user.id).catch(() => ({
+          alreadyLiked: false,
+          availableUnits: 0,
+          wouldTransferFrom: null,
+        })),
+        this.likes.statsFor(user.id),
+        this.posts.listByAuthor(viewerId, user.id),
+        this.prisma.event.findMany({
+          where: { hostId: user.id, status: { not: "CANCELLED" } },
+          orderBy: { startsAt: "desc" },
+          take: 8,
+          include: { host: { include: { profile: true } }, participants: true },
+        }),
+        this.prisma.event.findMany({
+          where: { participants: { some: { userId: user.id, status: "INTERESTED" } }, status: { not: "CANCELLED" } },
+          orderBy: { startsAt: "asc" },
+          take: 8,
+          include: { host: { include: { profile: true } }, participants: true },
+        }),
+        this.prisma.event.findMany({
+          where: {
+            hostId: { not: user.id },
+            status: { not: "CANCELLED" },
+            participants: {
+              some: {
+                userId: user.id,
+                status: { in: ["RESERVED", "CONFIRMED", "PRESENT"] },
+                ...(isSelf ? {} : { showOnProfile: true }),
+              },
+            },
+          },
+          orderBy: { startsAt: "desc" },
+          take: 8,
+          include: { host: { include: { profile: true } }, participants: true },
+        }),
+        this.prisma.mood.findMany({
+          where: { authorId: user.id, expiresAt: { gt: new Date() } },
+          orderBy: { createdAt: "desc" },
+          take: 12,
+        }),
+      ]);
     return {
       id: user.id,
       username: user.username,
@@ -59,11 +81,13 @@ export class ProfilesService {
       coverUrl: user.profile?.coverUrl ?? null,
       city: user.profile?.city ?? null,
       zone: user.profile?.zone ?? null,
+      country: user.profile?.country ?? "CM",
       website: user.profile?.website ?? null,
       availability: user.profile?.availability ?? "HIDDEN",
       availabilityUntil: user.profile?.availabilityUntil?.toISOString() ?? null,
       locationPrecision: user.profile?.locationPrecision ?? "ZONE",
-      isSelf: viewerId === user.id,
+      isSelf,
+      isFriend: Boolean(friendship) && !isSelf,
       following,
       followersCount: followCounts.followers,
       followingCount: followCounts.following,
@@ -71,36 +95,10 @@ export class ProfilesService {
       likePreview,
       likeStats,
       posts,
-      eventsInterested: interested.map((e) => ({
-        id: e.id,
-        title: e.title,
-        imageUrl: e.imageUrl,
-        city: e.city,
-        zone: e.zone,
-        startsAt: e.startsAt.toISOString(),
-        minAge: e.minAge,
-        taken: e.participants.filter((p) => ["RESERVED", "CONFIRMED", "PRESENT", "HOST"].includes(p.status)).length,
-        host: {
-          firstName: e.host.firstName,
-          lastName: e.host.lastName,
-          avatarUrl: e.host.profile?.avatarUrl ?? null,
-        },
-      })),
-      eventsLinked: hosted.map((e) => ({
-        id: e.id,
-        title: e.title,
-        imageUrl: e.imageUrl,
-        city: e.city,
-        zone: e.zone,
-        startsAt: e.startsAt.toISOString(),
-        minAge: e.minAge,
-        taken: e.participants.filter((p) => ["RESERVED", "CONFIRMED", "PRESENT", "HOST"].includes(p.status)).length,
-        host: {
-          firstName: e.host.firstName,
-          lastName: e.host.lastName,
-          avatarUrl: e.host.profile?.avatarUrl ?? null,
-        },
-      })),
+      eventsInterested: interested.map((e) => previewEvent(e, user.id)),
+      eventsLinked: [...hosted, ...attending]
+        .filter((e, i, all) => all.findIndex((x) => x.id === e.id) === i)
+        .map((e) => previewEvent(e, user.id)),
       moods: moods.map((m) => ({
         id: m.id,
         body: m.body,
@@ -110,4 +108,39 @@ export class ProfilesService {
       })),
     };
   }
+}
+
+function previewEvent(
+  e: {
+    id: string;
+    title: string;
+    imageUrl: string | null;
+    city: string;
+    zone: string | null;
+    startsAt: Date;
+    minAge: number | null;
+    hostId: string;
+    host: { firstName: string; lastName: string; profile: { avatarUrl: string | null } | null };
+    participants: Array<{ userId: string; status: string; showOnProfile: boolean }>;
+  },
+  ownerId: string,
+) {
+  const mine = e.participants.find((p) => p.userId === ownerId);
+  return {
+    id: e.id,
+    title: e.title,
+    imageUrl: e.imageUrl,
+    city: e.city,
+    zone: e.zone,
+    startsAt: e.startsAt.toISOString(),
+    minAge: e.minAge,
+    taken: e.participants.filter((p) => ["RESERVED", "CONFIRMED", "PRESENT", "HOST"].includes(p.status)).length,
+    hosted: e.hostId === ownerId,
+    showOnProfile: e.hostId === ownerId ? true : Boolean(mine?.showOnProfile),
+    host: {
+      firstName: e.host.firstName,
+      lastName: e.host.lastName,
+      avatarUrl: e.host.profile?.avatarUrl ?? null,
+    },
+  };
 }

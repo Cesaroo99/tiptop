@@ -126,6 +126,11 @@ class DuplicateEventDto {
   startsAt!: string;
 }
 
+class ProfileVisibilityDto {
+  @IsBoolean()
+  show!: boolean;
+}
+
 class ReviewDto {
   @IsString()
   @MaxLength(500)
@@ -190,6 +195,15 @@ export class EventsController {
   @Post("events/:id/interested")
   interested(@Req() req: Request & { user: PublicUser }, @Param("id") id: string) {
     return this.events.toggleInterested(req.user.id, id);
+  }
+
+  @Patch("events/:id/profile-visibility")
+  profileVisibility(
+    @Req() req: Request & { user: PublicUser },
+    @Param("id") id: string,
+    @Body() body: ProfileVisibilityDto,
+  ) {
+    return this.events.setShowOnProfile(req.user.id, id, body.show);
   }
 
   @Get("events/:id/heart/preview")

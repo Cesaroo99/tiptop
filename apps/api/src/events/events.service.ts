@@ -500,4 +500,17 @@ export class EventsService {
         })),
     };
   }
+
+  async setShowOnProfile(userId: string, eventId: string, show: boolean) {
+    const row = await this.prisma.eventParticipant.findUnique({
+      where: { eventId_userId: { eventId, userId } },
+    });
+    if (!row) throw new NotFoundException({ code: "NOT_IN_EVENT" });
+    if (row.status === "HOST") return { showOnProfile: true };
+    await this.prisma.eventParticipant.update({
+      where: { id: row.id },
+      data: { showOnProfile: show },
+    });
+    return { showOnProfile: show };
+  }
 }
