@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Build Render free : pnpm via npm (pas corepack), toutes les deps (prisma/tsx/typescript).
+# Build natif (si Docker n’est pas utilisé) : pnpm via npx, domain + API + Next standalone.
 set -euo pipefail
 export CI=true
-export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=1536}"
-npm install -g pnpm@10.34.5
-# NODE_ENV=production sur le service ferait un install --prod et casserait next/prisma.
-pnpm install --frozen-lockfile --prod=false
-pnpm --filter @tiptop/api exec prisma generate
-pnpm --filter @tiptop/web build
+export NEXT_TELEMETRY_DISABLED=1
+npx --yes pnpm@10.34.5 install --frozen-lockfile --prod=false
+npx --yes pnpm@10.34.5 --filter @tiptop/api exec prisma generate
+npx --yes pnpm@10.34.5 --filter @tiptop/web build
+node scripts/copy-next-standalone.mjs

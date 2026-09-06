@@ -1,8 +1,8 @@
-# Blueprint Render — le code est sur main.
+# Blueprint Render — code sur main. Runtime Docker (build fiable, health immédiat).
 # URL : https://tiptop-phone.onrender.com
 #
-# Si « create web service failed » : Dashboard → supprimer tiptop-phone,
-# tiptop-cesar99 et le Postgres free tiptop-db, puis New → Blueprint → main.
+# Si create/deploy échoue : supprimer tiptop-phone, tiptop-cesar99, tiptop-db
+# et l’ancien Blueprint, puis New → Blueprint → main.
 
 databases:
   - name: tiptop-db
@@ -13,15 +13,12 @@ databases:
 
 services:
   - type: web
-    runtime: node
+    runtime: docker
     name: tiptop-phone
     plan: free
-    buildCommand: bash scripts/render-build.sh
-    startCommand: node scripts/render-start.mjs
+    dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
     envVars:
-      - key: NODE_VERSION
-        value: "20"
       - key: NODE_ENV
         value: production
       - key: API_PORT

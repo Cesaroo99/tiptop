@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Un seul service Render free : migrate + seed démo rapide, puis
- * proxy public → Next (UI) + Nest (API / sockets).
- * Le seed complet (1600+ lignes) n’est pas lancé : trop lourd pour 512 Mo.
+ * Render free (512 Mo) : écoute $PORT tout de suite (health 200),
+ * puis migrate + API compilée + Next standalone. Pas de pnpm/tsx au runtime.
  */
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import http from "node:http";
 import net from "node:net";
 import { dirname, resolve } from "node:path";
@@ -14,16 +14,34 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const publicPort = Number(process.env.PORT ?? 10000);
 const webPort = Number(process.env.WEB_PORT ?? 3000);
 const apiPort = Number(process.env.API_PORT ?? 3001);
+const apiDir = resolve(root, "apps/api");
+
+let apiReady = false;
+let webReady = false;
 
 if (process.env.DATABASE_URL && !/[?&]sslmode=/.test(process.env.DATABASE_URL)) {
   const sep = process.env.DATABASE_URL.includes("?") ? "&" : "?";
   process.env.DATABASE_URL = `${process.env.DATABASE_URL}${sep}sslmode=require`;
 }
+if (process.env.DATABASE_URL && !/[?&]connection_limit=/.test(process.env.DATABASE_URL)) {
+  const sep = process.env.DATABASE_URL.includes("?") ? "&" : "?";
+  process.env.DATABASE_URL = `${process.env.DATABASE_URL}${sep}connection_limit=5`;
+}
 
-function run(command, args, extraEnv = {}) {
+function firstExisting(paths) {
+  const hit = paths.find((p) => existsSync(p));
+  if (!hit) throw new Error(`Introuvable : ${paths.join(" | ")}`);
+  return hit;
+}
+
+function run(command, args, extraEnv = {}, cwd = root) {
   const child = spawn(command, args, {
-    cwd: root,
-    env: { ...process.env, ...extraEnv },
+    cwd,
+    env: {
+      ...process.env,
+      NODE_OPTIONS: extraEnv.NODE_OPTIONS ?? "--max-old-space-size=192",
+      ...extraEnv,
+    },
     stdio: "inherit",
   });
   child.on("exit", (code) => {
@@ -35,13 +53,9 @@ function run(command, args, extraEnv = {}) {
   return child;
 }
 
-function runOnce(command, args) {
+function runOnce(command, args, cwd = root) {
   return new Promise((resolvePromise, reject) => {
-    const child = spawn(command, args, {
-      cwd: root,
-      env: process.env,
-      stdio: "inherit",
-    });
+    const child = spawn(command, args, { cwd, env: process.env, stdio: "inherit" });
     child.on("exit", (code) =>
       code === 0 ? resolvePromise() : reject(new Error(`${command} ${args.join(" ")} → ${code}`)),
     );
@@ -50,6 +64,10 @@ function runOnce(command, args) {
 
 function isApi(url = "") {
   return url.startsWith("/api") || url.startsWith("/socket.io") || url.startsWith("/realtime");
+}
+
+function isHealth(url = "") {
+  return url.split("?")[0] === "/api/health";
 }
 
 function proxyHttp(req, res, port) {
@@ -67,7 +85,7 @@ function proxyHttp(req, res, port) {
     },
   );
   up.on("error", () => {
-    if (!res.headersSent) res.writeHead(502).end("TipTop indisponible");
+    if (!res.headersSent) res.writeHead(503).end("TipTop démarre…");
   });
   req.pipe(up);
 }
@@ -86,7 +104,7 @@ function proxyUpgrade(req, socket, head, port) {
   up.on("error", () => socket.destroy());
 }
 
-async function waitFor(url, tries = 80) {
+async function waitFor(url, tries = 90) {
   for (let i = 0; i < tries; i += 1) {
     try {
       const res = await fetch(url);
@@ -99,32 +117,81 @@ async function waitFor(url, tries = 80) {
   throw new Error(`Timeout: ${url}`);
 }
 
-console.log("[render] prisma migrate deploy");
-await runOnce("pnpm", ["--filter", "@tiptop/api", "exec", "prisma", "migrate", "deploy"]);
-
-try {
-  console.log("[render] seed démo (César / Erica)");
-  await runOnce("pnpm", ["--filter", "@tiptop/api", "prisma:seed-demo"]);
-} catch (err) {
-  console.error("[render] seed démo ignoré :", err);
+async function migrateWithRetry(prismaBin) {
+  for (let i = 0; i < 8; i += 1) {
+    try {
+      console.log("[render] prisma migrate deploy");
+      await runOnce(prismaBin, ["migrate", "deploy"], apiDir);
+      return;
+    } catch (err) {
+      console.error("[render] migrate retry", i + 1, err);
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+  }
+  throw new Error("prisma migrate deploy a échoué");
 }
 
-run("pnpm", ["--filter", "@tiptop/api", "exec", "tsx", "src/main.ts"], {
-  API_PORT: String(apiPort),
-  PORT: String(apiPort),
-});
-run("pnpm", ["--filter", "@tiptop/web", "start", "--", "--port", String(webPort)], {
-  PORT: String(webPort),
-});
+async function boot() {
+  const prismaBin = firstExisting([
+    resolve(root, "node_modules/.bin/prisma"),
+    resolve(apiDir, "node_modules/.bin/prisma"),
+  ]);
+  const tsxBin = firstExisting([
+    resolve(root, "node_modules/.bin/tsx"),
+    resolve(apiDir, "node_modules/.bin/tsx"),
+  ]);
+  const webEntry = firstExisting([
+    resolve(root, "apps/web/.next/standalone/apps/web/server.js"),
+    resolve(root, "apps/web/.next/standalone/server.js"),
+  ]);
 
-await waitFor(`http://127.0.0.1:${apiPort}/api/health`);
+  await migrateWithRetry(prismaBin);
+  try {
+    console.log("[render] seed démo");
+    await runOnce(tsxBin, ["prisma/seed-demo.ts"], apiDir);
+  } catch (err) {
+    console.error("[render] seed démo ignoré :", err);
+  }
+
+  run(tsxBin, ["src/main.ts"], { API_PORT: String(apiPort), PORT: String(apiPort) }, apiDir);
+  await waitFor(`http://127.0.0.1:${apiPort}/api/health`);
+  apiReady = true;
+  console.log("[render] API prête");
+
+  run(
+    "node",
+    [webEntry],
+    {
+      PORT: String(webPort),
+      HOSTNAME: "127.0.0.1",
+      API_INTERNAL_URL: `http://127.0.0.1:${apiPort}`,
+    },
+    dirname(webEntry),
+  );
+  try {
+    await waitFor(`http://127.0.0.1:${webPort}/`);
+    webReady = true;
+    console.log("[render] Next prêt");
+  } catch {
+    console.error("[render] Next lent, le proxy reste ouvert");
+  }
+}
 
 const server = http.createServer((req, res) => {
+  if (isHealth(req.url ?? "")) {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ ok: true, service: "tiptop", api: apiReady, web: webReady }));
+    return;
+  }
   proxyHttp(req, res, isApi(req.url) ? apiPort : webPort);
 });
 server.on("upgrade", (req, socket, head) => {
   proxyUpgrade(req, socket, head, isApi(req.url) ? apiPort : webPort);
 });
 server.listen(publicPort, "0.0.0.0", () => {
-  console.log(`[render] TipTop public :${publicPort} → web :${webPort} / api :${apiPort}`);
+  console.log(`[render] écoute :${publicPort} (health immédiat)`);
+  void boot().catch((err) => {
+    console.error("[render] boot fatal", err);
+    process.exit(1);
+  });
 });

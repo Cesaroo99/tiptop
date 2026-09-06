@@ -17,8 +17,8 @@ Attends que la suppression soit **terminée** (plus de ligne grise).
 1. Compte [render.com](https://render.com) lié à GitHub.
 2. **New → Blueprint**.
 3. Repo `Cesaroo99/tiptop`, branche **`main`**.
-4. Apply. Render crée Postgres `tiptop-db` (30 jours) + le web `tiptop-phone`.
-5. Premier deploy : 5–10 min. Le free s’endort après 15 min.
+4. Apply. Render crée Postgres `tiptop-db` (30 jours) + le web Docker `tiptop-phone`.
+5. Premier deploy (build image) : 8–15 min. Le free s’endort après 15 min.
 
 **URL :** [https://tiptop-phone.onrender.com](https://tiptop-phone.onrender.com)
 
