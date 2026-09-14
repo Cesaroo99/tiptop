@@ -28,7 +28,7 @@ const event: SearchEvent = {
   id: "evt-piscine",
   title: "Piscine party - Odza, Yaoundé",
   imageUrl: "/seed/events/piscine.jpg",
-  startsAt: new Date("2026-09-09T11:30:00.000Z").toISOString(),
+  startsAt: new Date(Date.now() + 2 * 24 * 3600_000).toISOString(),
   city: "Yaoundé",
   zone: "Odza",
   priceXaf: 5000,
