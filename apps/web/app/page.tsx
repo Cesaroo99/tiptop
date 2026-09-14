@@ -31,6 +31,7 @@ import {
 } from "@/lib/like-feed";
 import { useI18n } from "@/lib/i18n";
 import { useLikePlacement } from "@/lib/like-placement";
+import { TodayRail } from "@/components/TodayRail";
 import Link from "next/link";
 
 type FeedResponse = {
@@ -338,6 +339,8 @@ function HomeFeed() {
           ))}
         </div>
       </section>
+
+      <TodayRail />
 
       {error ? <ErrorBanner message={error} onRetry={() => void loadFirst()} /> : null}
       {items === null && !error ? (

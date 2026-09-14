@@ -16,6 +16,8 @@ export type Env = {
   OTP_EXPIRY_SECONDS: number;
   OTP_MAX_ATTEMPTS: number;
   PAYMENT_WEBHOOK_SECRET: string;
+  OPENAI_API_KEY: string;
+  OPENAI_MODEL: string;
 };
 
 export function loadEnv(): Env {
@@ -37,5 +39,7 @@ export function loadEnv(): Env {
     OTP_EXPIRY_SECONDS: Number(process.env.OTP_EXPIRY_SECONDS ?? 90),
     OTP_MAX_ATTEMPTS: Number(process.env.OTP_MAX_ATTEMPTS ?? 5),
     PAYMENT_WEBHOOK_SECRET: process.env.PAYMENT_WEBHOOK_SECRET ?? "",
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? "",
+    OPENAI_MODEL: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
   };
 }

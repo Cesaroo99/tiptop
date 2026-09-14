@@ -128,6 +128,9 @@ export default function SettingsPage() {
           </div>
         ) : null}
 
+        <p className="type-label mb-1 mt-6 px-1 text-subtle">{messages.settings.aiTitle}</p>
+        <AiConsentCard />
+
         <p className="type-label mb-1 mt-6 px-1 text-subtle">{messages.chat.pushTitle}</p>
         <CardButton onClick={() => setSecurityOpen((v) => !v)}>
           <span>{messages.settings.password}</span>
@@ -182,6 +185,58 @@ export default function SettingsPage() {
         {""}
       </Modal>
     </main>
+  );
+}
+
+function AiConsentCard() {
+  const { messages } = useI18n();
+  const [consent, setConsent] = useState({
+    personalizedRecs: true,
+    useHistory: true,
+    socialMatch: false,
+    agentEnabled: false,
+  });
+  const [note, setNote] = useState<string | null>(null);
+
+  useEffect(() => {
+    api<typeof consent>("/intelligence/consent")
+      .then(setConsent)
+      .catch(() => undefined);
+  }, []);
+
+  async function patch(next: Partial<typeof consent>) {
+    const merged = { ...consent, ...next };
+    setConsent(merged);
+    await api("/intelligence/consent", { method: "PATCH", body: JSON.stringify(next) });
+  }
+
+  return (
+    <div className="space-y-1 rounded-card bg-surface p-4 shadow-card">
+      {(
+        [
+          ["personalizedRecs", messages.settings.aiRecs],
+          ["useHistory", messages.settings.aiHistory],
+          ["socialMatch", messages.settings.aiMatch],
+          ["agentEnabled", messages.settings.aiAgent],
+        ] as const
+      ).map(([key, label]) => (
+        <label key={key} className="flex items-center justify-between gap-3 py-2">
+          <span className="type-body-sm text-ink">{label}</span>
+          <Toggle on={consent[key]} onChange={(checked) => void patch({ [key]: checked })} />
+        </label>
+      ))}
+      <button
+        type="button"
+        className="type-caption mt-2 font-semibold text-accent"
+        onClick={async () => {
+          await api("/intelligence/learning", { method: "DELETE" });
+          setNote(messages.settings.aiForgotten);
+        }}
+      >
+        {messages.settings.aiForget}
+      </button>
+      {note ? <p className="type-caption text-muted">{note}</p> : null}
+    </div>
   );
 }
 

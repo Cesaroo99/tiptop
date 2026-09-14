@@ -131,6 +131,14 @@ function SearchScreen() {
         <ChevronDownIcon size={14} className="shrink-0 text-muted" />
       </Link>
 
+      <Link
+        href="/plan"
+        className="tap-scale mt-3 block rounded-card bg-surface px-4 py-3 shadow-card"
+      >
+        <p className="type-heading text-ink">{messages.intel.createTitle}</p>
+        <p className="type-caption text-muted">{messages.intel.createHint}</p>
+      </Link>
+
       <form onSubmit={apply} className="mt-3 space-y-3">
         <label className="flex h-12 items-center gap-2 rounded-full bg-surface-sunken px-4">
           <input

@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { CertifiedMark } from "@/components/Avatar";
 import { EventDetailCard, EventLinkedPeople } from "@/components/EventDetailCard";
+import { ActivityMatch } from "@/components/ActivityMatch";
+import { ExperienceFeedbackBar } from "@/components/ExperienceFeedbackBar";
 import { EventGroups } from "@/components/EventGroups";
 import { MessageIcon, PlayIcon } from "@/components/Icons";
 import { CardSkeleton, ErrorBanner, PrimaryButton, ScreenHeader, SecondaryButton } from "@/components/ui";
@@ -50,6 +52,14 @@ function EventDetail() {
         <EventDetailCard event={event} onChanged={setEvent} />
         <div className="h-px bg-divider" />
         <EventLinkedPeople event={event} onChanged={setEvent} />
+        <ActivityMatch
+          eventId={event.id}
+          title={event.title}
+          startsAt={event.startsAt}
+          city={event.city}
+          zone={event.zone}
+        />
+        <ExperienceFeedbackBar eventId={event.id} />
         <EventMoods eventId={event.id} />
         <EventGroups eventId={event.id} isHost={event.isHost} />
         <EventReviews eventId={event.id} />

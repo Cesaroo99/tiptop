@@ -91,6 +91,10 @@ export type Messages = {
     admin: string;
     newBadge: string;
     downloadApk: string;
+    today: string;
+    createOuting: string;
+    world: string;
+    agent: string;
   };
   settings: {
     title: string;
@@ -103,6 +107,66 @@ export type Messages = {
     logout: string;
     logoutConfirm: string;
     securityNote: string;
+    aiTitle: string;
+    aiRecs: string;
+    aiHistory: string;
+    aiMatch: string;
+    aiAgent: string;
+    aiForget: string;
+    aiForgotten: string;
+  };
+  intel: {
+    todayTitle: string;
+    todayIntro: string;
+    todayEmpty: string;
+    likeRec: string;
+    skipRec: string;
+    hideType: string;
+    seeWhy: string;
+    createTitle: string;
+    createHint: string;
+    surpriseMe: string;
+    cheaper: string;
+    closer: string;
+    calmer: string;
+    moreSocial: string;
+    moreSpontaneous: string;
+    replaceStep: string;
+    revealStep: string;
+    total: string;
+    travel: string;
+    hintStep: string;
+    legalNote: string;
+    matchTitle: string;
+    matchEmpty: string;
+    matchOff: string;
+    doThis: string;
+    matchAvailable: string;
+    agentTitle: string;
+    agentOff: string;
+    agentHint: string;
+    agentAsk: string;
+    fromAgent: string;
+    worldTitle: string;
+    worldEmpty: string;
+    discovered: string;
+    toDiscover: string;
+    missions: string;
+    firstTime: string;
+    localExplorer: string;
+    socialFirst: string;
+    howWasIt: string;
+    loved: string;
+    good: string;
+    ok: string;
+    disliked: string;
+    reasonHabit: string;
+    reasonBudget: string;
+    reasonSoon: string;
+    reasonHours: string;
+    reasonNearby: string;
+    reasonSocial: string;
+    rateLimit: string;
   };
   account: {
     title: string;
@@ -1054,6 +1118,10 @@ export const fr: Messages = {
     admin: "Back-office",
     newBadge: "NEW",
     downloadApk: "Télécharger l’APK",
+    today: "Ton TipTop du jour",
+    createOuting: "Crée ma sortie",
+    world: "Mon monde",
+    agent: "Mon agent TipTop",
   },
   settings: {
     title: "Paramètres",
@@ -1066,6 +1134,66 @@ export const fr: Messages = {
     logout: "Déconnexion",
     logoutConfirm: "Se déconnecter de TipTop ?",
     securityNote: "TipTop utilise un code OTP, pas de mot de passe. Tu peux gérer tes sessions ici plus tard.",
+    aiTitle: "Intelligence TipTop",
+    aiRecs: "Recommandations personnalisées",
+    aiHistory: "Utiliser mon historique",
+    aiMatch: "Proposer des personnes compatibles",
+    aiAgent: "Activer mon agent TipTop",
+    aiForget: "Effacer mes données d’apprentissage",
+    aiForgotten: "Données d’apprentissage effacées.",
+  },
+  intel: {
+    todayTitle: "Ton TipTop du jour",
+    todayIntro: "J’ai sélectionné des expériences qui correspondent à ce que tu sembles avoir envie de faire aujourd’hui.",
+    todayEmpty: "Rien de suffisamment proche de tes habitudes pour l’instant. Décris une envie ou crée une sortie.",
+    likeRec: "J’aime",
+    skipRec: "Pas intéressé",
+    hideType: "Plus ce type",
+    seeWhy: "Pourquoi ?",
+    createTitle: "Crée ma sortie",
+    createHint: "Ex. J’ai 10 000 XAF, libre ce soir, on est trois.",
+    surpriseMe: "Surprends-moi",
+    cheaper: "Moins cher",
+    closer: "Plus proche",
+    calmer: "Plus calme",
+    moreSocial: "Plus social",
+    moreSpontaneous: "Plus spontané",
+    replaceStep: "Remplacer cette étape",
+    revealStep: "Révéler l’étape",
+    total: "Total estimé",
+    travel: "{min} min de trajet",
+    hintStep: "Idée locale — pas une offre TipTop",
+    legalNote: "Prix, règles et sécurité restent visibles avant tout paiement. La surprise ne cache jamais ça.",
+    matchTitle: "Des personnes pour faire ça",
+    matchEmpty: "Personne de compatible avec tes réglages pour l’instant.",
+    matchOff: "Le matching social est désactivé dans tes paramètres.",
+    doThis: "On fait ça ?",
+    matchAvailable: "disponible",
+    agentTitle: "Mon agent TipTop",
+    agentOff: "Active l’agent dans Paramètres. Il ne contacte jamais quelqu’un à ta place.",
+    agentHint: "Organise-moi quelque chose ce week-end.",
+    agentAsk: "Demander",
+    fromAgent: "Suggestion de ton agent",
+    worldTitle: "Mon monde",
+    worldEmpty: "Vis une première expérience — ta carte se remplira ensuite.",
+    discovered: "Découvert",
+    toDiscover: "À découvrir",
+    missions: "Missions",
+    firstTime: "Première fois",
+    localExplorer: "Explorateur local",
+    socialFirst: "Première sortie avec d’autres",
+    howWasIt: "Comment était ton expérience ?",
+    loved: "J’ai adoré",
+    good: "C’était bien",
+    ok: "Moyen",
+    disliked: "Je n’ai pas aimé",
+    reasonHabit: "Tu revis souvent ce type d’activité.",
+    reasonBudget: "Ça rentre dans ton budget habituel.",
+    reasonSoon: "Ça commence bientôt.",
+    reasonHours: "Ça tombe dans tes horaires habituels.",
+    reasonNearby: "C’est près de ta zone.",
+    reasonSocial: "D’autres personnes s’y intéressent déjà.",
+    rateLimit: "Doucement — trop de demandes d’un coup.",
   },
   account: {
     title: "Mon compte",
@@ -2017,6 +2145,10 @@ export const en: Messages = {
     admin: "Back office",
     newBadge: "NEW",
     downloadApk: "Download the APK",
+    today: "Your TipTop today",
+    createOuting: "Create my outing",
+    world: "My world",
+    agent: "My TipTop agent",
   },
   settings: {
     title: "Settings",
@@ -2029,6 +2161,66 @@ export const en: Messages = {
     logout: "Log out",
     logoutConfirm: "Log out of TipTop?",
     securityNote: "TipTop uses OTP codes, not passwords. Session management will live here later.",
+    aiTitle: "TipTop Intelligence",
+    aiRecs: "Personalized recommendations",
+    aiHistory: "Use my history",
+    aiMatch: "Suggest compatible people",
+    aiAgent: "Enable my TipTop agent",
+    aiForget: "Delete my learning data",
+    aiForgotten: "Learning data deleted.",
+  },
+  intel: {
+    todayTitle: "Your TipTop today",
+    todayIntro: "I picked experiences that match what you seem to want to do today.",
+    todayEmpty: "Nothing close enough to your habits yet. Describe a wish or create an outing.",
+    likeRec: "I like this",
+    skipRec: "Not interested",
+    hideType: "Not this type",
+    seeWhy: "Why?",
+    createTitle: "Create my outing",
+    createHint: "E.g. I have $20, free tonight, we are three.",
+    surpriseMe: "Surprise me",
+    cheaper: "Cheaper",
+    closer: "Closer",
+    calmer: "Calmer",
+    moreSocial: "More social",
+    moreSpontaneous: "More spontaneous",
+    replaceStep: "Replace this step",
+    revealStep: "Reveal step",
+    total: "Estimated total",
+    travel: "{min} min travel",
+    hintStep: "Local idea — not a TipTop listing",
+    legalNote: "Price, rules and safety stay visible before any payment. Surprise never hides that.",
+    matchTitle: "People for this",
+    matchEmpty: "No compatible people with your settings right now.",
+    matchOff: "Social matching is off in your settings.",
+    doThis: "Shall we?",
+    matchAvailable: "available",
+    agentTitle: "My TipTop agent",
+    agentOff: "Enable the agent in Settings. It never contacts anyone for you.",
+    agentHint: "Organize something this weekend.",
+    agentAsk: "Ask",
+    fromAgent: "From your agent",
+    worldTitle: "My world",
+    worldEmpty: "Live a first experience — your map will fill in after.",
+    discovered: "Discovered",
+    toDiscover: "To discover",
+    missions: "Missions",
+    firstTime: "First time",
+    localExplorer: "Local explorer",
+    socialFirst: "First outing with others",
+    howWasIt: "How was your experience?",
+    loved: "Loved it",
+    good: "It was good",
+    ok: "Okay",
+    disliked: "Didn't like it",
+    reasonHabit: "You often do this kind of activity.",
+    reasonBudget: "It fits your usual budget.",
+    reasonSoon: "It starts soon.",
+    reasonHours: "It falls in your usual hours.",
+    reasonNearby: "It's near your area.",
+    reasonSocial: "Other people are already interested.",
+    rateLimit: "Slow down — too many requests at once.",
   },
   account: {
     title: "My account",
