@@ -170,6 +170,7 @@ export class EventsService {
             status: "PUBLISHED" as const,
             wanted: false,
             startsAt: { gt: now },
+            suspendedAt: null,
             ...(city ? { city } : {}),
           };
     try {
@@ -567,6 +568,7 @@ export class EventsService {
             status: "PUBLISHED",
             wanted: false,
             startsAt: { gt: new Date() },
+            suspendedAt: null,
             OR: [{ id: seriesRoot }, { seriesId: seriesRoot }],
           },
           orderBy: { startsAt: "asc" },

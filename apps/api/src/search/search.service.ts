@@ -109,6 +109,7 @@ export class SearchService {
         status: "PUBLISHED",
         wanted: false,
         startsAt: { gt: new Date() },
+        suspendedAt: null,
         ...(query
           ? {
               OR: [

@@ -39,6 +39,7 @@ import { LikesService } from "../likes/likes.service";
 import { hmac } from "../crypto";
 import { loadEnv } from "../env";
 import { AnalyticsService } from "../analytics/analytics.service";
+import { FeatureFlagsService } from "../config/feature-flags.service";
 
 const env = loadEnv();
 
@@ -49,6 +50,7 @@ export class BookingService {
     @Inject(NotificationsService) private readonly notifications: NotificationsService,
     @Inject(LikesService) private readonly likes: LikesService,
     @Optional() @Inject(AnalyticsService) private readonly analytics?: AnalyticsService,
+    @Optional() @Inject(FeatureFlagsService) private readonly flags?: FeatureFlagsService,
   ) {}
 
   async checkout(
@@ -122,7 +124,13 @@ export class BookingService {
     });
     if (!event) throw new NotFoundException({ code: "EVENT_NOT_FOUND" });
     if (event.status === "CANCELLED") throw new BadRequestException({ code: "EVENT_CANCELLED" });
+    if (event.suspendedAt) throw new BadRequestException({ code: "EVENT_SUSPENDED" });
     if (event.startsAt.getTime() <= Date.now()) throw new BadRequestException({ code: "EVENT_NOT_FUTURE" });
+    const host = await this.prisma.user.findUnique({ where: { id: event.hostId } });
+    if (host?.salesBlocked) throw new BadRequestException({ code: "ORGANIZER_SALES_BLOCKED" });
+    if (this.flags && !(await this.flags.enabled("reservations", { userId: bookerId }))) {
+      throw new BadRequestException({ code: "RESERVATIONS_DISABLED" });
+    }
     void event.requiresReservation;
 
     if (input.invitationId) {
@@ -364,10 +372,34 @@ export class BookingService {
     const payment = await this.prisma.payment.findUnique({ where: { idempotencyKey } });
     if (!payment) throw new NotFoundException({ code: "PAYMENT_NOT_FOUND" });
     const result = applyWebhook(payment.status, status);
-    if (!result.applied) return { ok: true, duplicate: true, status: payment.status };
+    if (!result.applied) {
+      await this.prisma.webhookReceipt.upsert({
+        where: { provider_externalId: { provider: "tiptop_mock", externalId: idempotencyKey } },
+        create: {
+          provider: "tiptop_mock",
+          externalId: idempotencyKey,
+          type: `payment.${status.toLowerCase()}`,
+          status: "duplicate",
+          attempts: 1,
+        },
+        update: { attempts: { increment: 1 }, status: "duplicate" },
+      });
+      return { ok: true, duplicate: true, status: payment.status };
+    }
     await this.prisma.payment.update({
       where: { id: payment.id },
       data: { status: result.status },
+    });
+    await this.prisma.webhookReceipt.upsert({
+      where: { provider_externalId: { provider: "tiptop_mock", externalId: idempotencyKey } },
+      create: {
+        provider: "tiptop_mock",
+        externalId: idempotencyKey,
+        type: `payment.${status.toLowerCase()}`,
+        status: "applied",
+        attempts: 1,
+      },
+      update: { status: "applied", attempts: { increment: 1 } },
     });
     if (result.status === "SUCCEEDED") {
       if (payment.kind === "LIKE_PACK") {

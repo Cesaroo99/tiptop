@@ -72,8 +72,13 @@ import {
   canChangePlatformFee,
   canRefundPayments,
   canSubmitReport,
+  defaultFeatureFlags,
+  hasPermission,
+  isFeatureEnabled,
+  isProtectedDemoAccount,
   isValidReportReason,
   likeAnomalyFlags,
+  maskSecret,
   refundAllowed,
   REPORT_DAILY_LIMIT,
 } from "../src/admin";
@@ -732,11 +737,23 @@ describe("admin", () => {
   it("ouvre le back-office aux staff seulement", () => {
     expect(canAccessAdmin("ADMIN")).toBe(true);
     expect(canAccessAdmin("MODERATOR")).toBe(true);
+    expect(canAccessAdmin("FINANCE_ADMIN")).toBe(true);
     expect(canAccessAdmin("USER")).toBe(false);
     expect(canRefundPayments("ADMIN")).toBe(true);
+    expect(canRefundPayments("FINANCE_ADMIN")).toBe(true);
     expect(canRefundPayments("MODERATOR")).toBe(false);
     expect(canChangePlatformFee("ADMIN")).toBe(true);
     expect(canChangePlatformFee("MODERATOR")).toBe(false);
+    expect(canChangePlatformFee("FINANCE_ADMIN")).toBe(false);
+    expect(hasPermission("SUPPORT_ADMIN", "finance.settings")).toBe(false);
+    expect(hasPermission("FINANCE_ADMIN", "finance.refund")).toBe(true);
+    expect(hasPermission("USER", "admin.access")).toBe(false);
+    expect(maskSecret("sk_live_abcdefghij", 4)).toBe("••••••••ghij");
+    expect(isProtectedDemoAccount({ username: "cesar_memoli" })).toBe(true);
+    const flags = defaultFeatureFlags();
+    flags.aiAgent.enabled = false;
+    expect(isFeatureEnabled(flags, "aiAgent")).toBe(false);
+    expect(isFeatureEnabled(flags, "moods")).toBe(true);
   });
 
   it("interdit de se bloquer soi-même et un remboursement non réussi", () => {

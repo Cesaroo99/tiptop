@@ -1,0 +1,98 @@
+-- Command Center : rôles staff, organisateurs, événements, audit, campagnes.
+
+ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'FINANCE_ADMIN';
+ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'SUPPORT_ADMIN';
+ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'CONTENT_ADMIN';
+ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'ANALYTICS_ADMIN';
+ALTER TYPE "UserRole" ADD VALUE IF NOT EXISTS 'TECH_ADMIN';
+
+DO $$ BEGIN
+  CREATE TYPE "OrganizerStatus" AS ENUM ('NONE', 'PENDING', 'VERIFIED', 'RESTRICTED', 'SUSPENDED', 'REJECTED');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "organizerStatus" "OrganizerStatus" NOT NULL DEFAULT 'NONE';
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "salesBlocked" BOOLEAN NOT NULL DEFAULT false;
+
+ALTER TABLE "Event" ADD COLUMN IF NOT EXISTS "featured" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Event" ADD COLUMN IF NOT EXISTS "suspendedAt" TIMESTAMP(3);
+
+ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'USER_ROLE';
+ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'USER_VERIFY';
+ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'SESSION_REVOKE';
+ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'EVENT_APPROVE';
+ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'EVENT_SUSPEND';
+ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'EVENT_RESTORE';
+ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'EVENT_FEATURE';
+ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'EVENT_UPDATE';
+ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'REFUND_DENY';
+ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'FEATURE_FLAG';
+ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'NOTIFICATION_SEND';
+ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'AI_SETTINGS';
+ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'ORGANIZER_RESTRICT';
+ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'WORLD_MISSION';
+
+DO $$ BEGIN
+  CREATE TYPE "AdminCampaignStatus" AS ENUM ('DRAFT', 'SCHEDULED', 'SENT', 'CANCELLED');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+CREATE TABLE IF NOT EXISTS "AdminCampaign" (
+  "id" TEXT NOT NULL,
+  "title" TEXT NOT NULL,
+  "body" TEXT NOT NULL,
+  "status" "AdminCampaignStatus" NOT NULL DEFAULT 'DRAFT',
+  "audience" JSONB NOT NULL,
+  "scheduledAt" TIMESTAMP(3),
+  "sentAt" TIMESTAMP(3),
+  "sentCount" INTEGER NOT NULL DEFAULT 0,
+  "createdById" TEXT NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "AdminCampaign_pkey" PRIMARY KEY ("id")
+);
+
+CREATE INDEX IF NOT EXISTS "AdminCampaign_status_createdAt_idx" ON "AdminCampaign"("status", "createdAt");
+
+DO $$ BEGIN
+  ALTER TABLE "AdminCampaign" ADD CONSTRAINT "AdminCampaign_createdById_fkey"
+    FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+CREATE TABLE IF NOT EXISTS "WorldMission" (
+  "id" TEXT NOT NULL,
+  "title" TEXT NOT NULL,
+  "description" TEXT NOT NULL DEFAULT '',
+  "category" TEXT NOT NULL,
+  "durationHours" INTEGER,
+  "conditions" TEXT NOT NULL DEFAULT '',
+  "reward" TEXT NOT NULL DEFAULT '',
+  "startsAt" TIMESTAMP(3),
+  "endsAt" TIMESTAMP(3),
+  "status" TEXT NOT NULL DEFAULT 'DRAFT',
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "WorldMission_pkey" PRIMARY KEY ("id")
+);
+
+CREATE INDEX IF NOT EXISTS "WorldMission_status_startsAt_idx" ON "WorldMission"("status", "startsAt");
+
+CREATE TABLE IF NOT EXISTS "WebhookReceipt" (
+  "id" TEXT NOT NULL,
+  "provider" TEXT NOT NULL,
+  "externalId" TEXT NOT NULL,
+  "type" TEXT NOT NULL,
+  "status" TEXT NOT NULL,
+  "attempts" INTEGER NOT NULL DEFAULT 1,
+  "lastError" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  CONSTRAINT "WebhookReceipt_pkey" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "WebhookReceipt_provider_externalId_key" ON "WebhookReceipt"("provider", "externalId");
+CREATE INDEX IF NOT EXISTS "WebhookReceipt_provider_createdAt_idx" ON "WebhookReceipt"("provider", "createdAt");

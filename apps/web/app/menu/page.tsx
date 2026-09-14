@@ -60,7 +60,7 @@ export default function MenuPage() {
       { href: "/tiptop.apk", label: messages.menu.downloadApk },
     ],
   ];
-  if (user.role === "ADMIN" || user.role === "MODERATOR") {
+  if (user.role === "ADMIN" || user.role === "MODERATOR" || user.role.endsWith("_ADMIN")) {
     groups.unshift([{ href: "/admin", label: messages.menu.admin }]);
   }
 
