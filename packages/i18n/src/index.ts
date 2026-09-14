@@ -1987,7 +1987,7 @@ export const fr: Messages = {
     packsNote: "Acheter un pack ajoute des unités d’attribution. Ça ne crée pas de temps de vie : le temps naît seulement quand une unité reste posée.",
   },
   admin: {
-    title: "Back-office",
+    title: "TipTop Command Center",
     home: "Vue d’ensemble",
     users: "Utilisateurs",
     posts: "Contenus",
@@ -3014,7 +3014,7 @@ export const en: Messages = {
     packsNote: "Buying a pack adds attribution units. It does not mint received life-time: time starts only when a unit stays placed.",
   },
   admin: {
-    title: "Back office",
+    title: "TipTop Command Center",
     home: "Overview",
     users: "Users",
     posts: "Content",

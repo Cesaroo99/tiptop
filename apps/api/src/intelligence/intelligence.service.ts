@@ -47,6 +47,7 @@ import { DiscoveryService } from "../discovery/discovery.service";
 import { EventsService } from "../events/events.service";
 import { SocialInvitesService } from "../social-invites/social-invites.service";
 import { createAiProvider, type AiProvider } from "./ai-provider";
+import { FeatureFlagsService } from "../config/feature-flags.service";
 
 const hits = new Map<string, number[]>();
 
@@ -68,6 +69,7 @@ export class IntelligenceService {
     @Inject(DiscoveryService) private readonly discovery: DiscoveryService,
     @Inject(EventsService) private readonly events: EventsService,
     @Inject(SocialInvitesService) private readonly invites: SocialInvitesService,
+    @Inject(FeatureFlagsService) private readonly flags: FeatureFlagsService,
   ) {
     this.ai = createAiProvider();
   }
@@ -102,6 +104,9 @@ export class IntelligenceService {
   }
 
   async today(userId: string, locale: string) {
+    if (!(await this.flags.enabled("aiRecommendations", { userId }))) {
+      return { enabled: false, items: [], intro: null };
+    }
     const consent = await this.consent(userId);
     if (!canUsePersonalizedRecs(consent)) {
       return { enabled: false, items: [], intro: null };
@@ -201,6 +206,9 @@ export class IntelligenceService {
   }
 
   async plan(userId: string, rawText: string, surprise = false, locale = "fr") {
+    if (!(await this.flags.enabled("experiencePlanner", { userId }))) {
+      throw new ForbiddenException({ code: "PLANNER_DISABLED" });
+    }
     if (!hit(`plan:${userId}`, INTEL_RATE_LIMITS.planPerHour)) {
       throw new BadRequestException({ code: "INTEL_RATE_LIMIT" });
     }
@@ -326,6 +334,9 @@ export class IntelligenceService {
   }
 
   async matches(userId: string, input: { category?: string; eventId?: string }) {
+    if (!(await this.flags.enabled("matching", { userId }))) {
+      return { enabled: false, items: [] };
+    }
     const consent = await this.consent(userId);
     if (!canSocialMatch(consent)) {
       return { enabled: false, items: [] };
@@ -430,6 +441,7 @@ export class IntelligenceService {
   }
 
   async agentInbox(userId: string, locale: string) {
+    if (!(await this.flags.enabled("aiAgent", { userId }))) return { enabled: false, items: [] };
     const consent = await this.consent(userId);
     if (!canRunAgent(consent)) return { enabled: false, items: [] };
     const existing = await this.prisma.agentSuggestion.findMany({
@@ -461,6 +473,7 @@ export class IntelligenceService {
   }
 
   async agentAsk(userId: string, text: string, locale: string) {
+    if (!(await this.flags.enabled("aiAgent", { userId }))) throw new ForbiddenException({ code: "AGENT_DISABLED" });
     const consent = await this.consent(userId);
     if (!canRunAgent(consent)) throw new ForbiddenException({ code: "AGENT_OFF" });
     if (!hit(`agent:${userId}`, INTEL_RATE_LIMITS.agentPerHour)) {
@@ -482,6 +495,9 @@ export class IntelligenceService {
   }
 
   async world(userId: string) {
+    if (!(await this.flags.enabled("monMonde", { userId }))) {
+      return { enabled: false, score: 0, cities: [], collections: [], missions: [], achievements: [] };
+    }
     const participations = await this.prisma.eventParticipant.findMany({
       where: { userId, status: { in: ["PRESENT", "CONFIRMED", "RESERVED"] } },
       include: { event: true },
@@ -720,6 +736,7 @@ export class IntelligenceService {
         status: "PUBLISHED",
         wanted: false,
         startsAt: { gt: new Date() },
+        suspendedAt: null,
         hostId: { notIn: [...hiddenIds] },
       },
       include: { _count: { select: { participants: true, hearts: true } } },

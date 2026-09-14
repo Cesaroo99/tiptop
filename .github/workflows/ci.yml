@@ -1,0 +1,27 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @tiptop/domain test
+      - run: pnpm --filter @tiptop/web test
+      - run: pnpm --filter @tiptop/api exec prisma generate
+      - run: pnpm --filter @tiptop/api exec vitest run src/admin/rbac.test.ts
+      - run: pnpm --filter @tiptop/web build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001

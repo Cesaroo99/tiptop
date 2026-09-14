@@ -11,6 +11,20 @@ enum UserRole {
   USER
   MODERATOR
   ADMIN
+  FINANCE_ADMIN
+  SUPPORT_ADMIN
+  CONTENT_ADMIN
+  ANALYTICS_ADMIN
+  TECH_ADMIN
+}
+
+enum OrganizerStatus {
+  NONE
+  PENDING
+  VERIFIED
+  RESTRICTED
+  SUSPENDED
+  REJECTED
 }
 
 enum UserStatus {
@@ -58,6 +72,8 @@ model User {
   lastName         String
   role             UserRole   @default(USER)
   status           UserStatus @default(ACTIVE)
+  organizerStatus  OrganizerStatus @default(NONE)
+  salesBlocked     Boolean    @default(false)
   certified        Boolean    @default(false)
   profileCompleted Boolean    @default(false)
   locale           String     @default("fr")
@@ -137,6 +153,7 @@ model User {
   userAchievements   UserAchievement[]
   userMissions       UserMission[]
   experienceFeedbacks ExperienceFeedback[]
+  adminCampaigns     AdminCampaign[]
 }
 
 model Profile {
@@ -609,6 +626,8 @@ model Event {
   seriesParent        Event?      @relation("EventSeries", fields: [seriesId], references: [id], onDelete: SetNull)
   seriesChildren      Event[]     @relation("EventSeries")
   status              EventStatus @default(PUBLISHED)
+  featured            Boolean     @default(false)
+  suspendedAt         DateTime?
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
   participants        EventParticipant[]
@@ -1026,12 +1045,26 @@ enum AdminAction {
   USER_UNBLOCK
   USER_CERTIFY
   USER_UNCERTIFY
+  USER_ROLE
+  USER_VERIFY
+  SESSION_REVOKE
   POST_HIDE
   POST_UNHIDE
   EVENT_CANCEL
+  EVENT_APPROVE
+  EVENT_SUSPEND
+  EVENT_RESTORE
+  EVENT_FEATURE
+  EVENT_UPDATE
   PAYMENT_REFUND
+  REFUND_DENY
   REPORT_REVIEW
   SETTINGS_UPDATE
+  FEATURE_FLAG
+  NOTIFICATION_SEND
+  AI_SETTINGS
+  ORGANIZER_RESTRICT
+  WORLD_MISSION
 }
 
 model Report {
@@ -1378,4 +1411,60 @@ model ExperienceFeedback {
   createdAt DateTime        @default(now())
 
   @@index([userId, createdAt])
+}
+
+enum AdminCampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  CANCELLED
+}
+
+model AdminCampaign {
+  id          String              @id @default(cuid())
+  title       String
+  body        String
+  status      AdminCampaignStatus @default(DRAFT)
+  audience    Json
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  sentCount   Int                 @default(0)
+  createdById String
+  createdBy   User                @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model WorldMission {
+  id            String    @id @default(cuid())
+  title         String
+  description   String    @default("")
+  category      String
+  durationHours Int?
+  conditions    String    @default("")
+  reward        String    @default("")
+  startsAt      DateTime?
+  endsAt        DateTime?
+  status        String    @default("DRAFT")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status, startsAt])
+}
+
+model WebhookReceipt {
+  id         String   @id @default(cuid())
+  provider   String
+  externalId String
+  type       String
+  status     String
+  attempts   Int      @default(1)
+  lastError  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([provider, externalId])
+  @@index([provider, createdAt])
 }

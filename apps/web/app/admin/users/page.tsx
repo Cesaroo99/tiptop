@@ -49,7 +49,9 @@ export default function Page() {
         {items.map((u) => (
           <article key={u.id} className="rounded-card bg-surface p-4 shadow-card">
             <p className="font-semibold">
-              {u.firstName} {u.lastName} {u.certified ? "✓" : ""}
+              <a href={`/admin/users/${u.id}`} className="underline-offset-2 hover:underline">
+                {u.firstName} {u.lastName} {u.certified ? "✓" : ""}
+              </a>
             </p>
             <p className="text-xs text-muted">
               @{u.username} · {u.role === "ADMIN" ? messages.admin.roleAdmin : u.role === "MODERATOR" ? messages.admin.roleMod : u.role} ·{" "}

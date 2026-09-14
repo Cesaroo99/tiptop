@@ -13,6 +13,7 @@ import {
   canRefundPayments,
   canSubmitReport,
   chargeBreakdown,
+  isProtectedDemoAccount,
   isValidReportReason,
   likeAnomalyFlags,
   normalizePlatformFeePercent,
@@ -162,6 +163,9 @@ export class AdminService {
     const target = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!target) throw new NotFoundException({ code: "USER_NOT_FOUND" });
 
+    if (isProtectedDemoAccount(target) && input.status === "BLOCKED") {
+      throw new ForbiddenException({ code: "PROTECTED_DEMO_ACCOUNT" });
+    }
     if (input.status === "BLOCKED") {
       assertNotSelfSafe(actor.id, userId);
       await this.prisma.user.update({ where: { id: userId }, data: { status: "BLOCKED" } });
