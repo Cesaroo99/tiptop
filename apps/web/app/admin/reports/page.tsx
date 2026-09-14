@@ -57,17 +57,17 @@ export default function Page() {
               <div className="mt-3 flex gap-2">
                 <button
                   type="button"
-                  className="rounded-pill bg-[var(--border)] px-3 py-2 text-sm"
+                  className="rounded-pill bg-surface-sunken px-3 py-2 text-sm text-ink"
                   onClick={() => void review(r.id, "DISMISSED")}
                 >
                   {messages.admin.dismiss}
                 </button>
                 <button
                   type="button"
-                  className="rounded-pill bg-accent px-3 py-2 text-sm text-white"
+                  className="rounded-pill bg-accent px-3 py-2 text-sm text-on-primary"
                   onClick={() => void review(r.id, "ACTIONED")}
                 >
-                  {messages.admin.actioned}
+                  {messages.admin.markActioned}
                 </button>
               </div>
             ) : null}

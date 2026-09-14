@@ -36,6 +36,8 @@ describe("recherche globale", () => {
     expect(piscine?.imageUrl).toBeTruthy();
     expect(piscine?.host.firstName).toBeTruthy();
     expect(typeof piscine?.taken).toBe("number");
+    expect(piscine?.capacity == null || typeof piscine.capacity === "number").toBe(true);
+    expect(piscine?.remaining == null || typeof piscine.remaining === "number").toBe(true);
     expect(typeof piscine?.viewerHearted).toBe("boolean");
     expect(piscine?.city.toLowerCase()).toBe("yaoundé");
   });

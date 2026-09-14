@@ -60,6 +60,7 @@ export default function Page() {
           <LikePlacedCard
             title={messages.wallet.placedTitle}
             person={wallet.placedOn ?? null}
+            placement={wallet.placement ?? null}
             idle={messages.social.likeIdle}
           />
           <LikeFaces title={messages.wallet.receivedTitle} people={wallet.receivedFrom ?? []} />

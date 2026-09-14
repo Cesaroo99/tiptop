@@ -73,17 +73,28 @@ describe("PostCard — publication vs événement", () => {
     expect(screen.getByText("Il y a 2 heures")).toBeInTheDocument();
     expect(screen.getByText("-18")).toBeInTheDocument();
     expect(screen.getByText("Un tour au Black&White :")).toBeInTheDocument();
-    expect(screen.getByText("3.4k Commentaires . 46 Partages . 35 Réservations . 5 places restantes . 3 Intéressés")).toBeInTheDocument();
-    expect(screen.getAllByText("5 places restantes").length).toBeGreaterThan(0);
+    expect(screen.getByText("3.4k Commentaires . 46 Partages . 35 Réservations . 3 Intéressés")).toBeInTheDocument();
+    expect(screen.getAllByText(/5 places restantes/).length).toBe(1);
+    expect(screen.getByText("Gratuit")).toBeInTheDocument();
     expect(screen.getByLabelText("Ma vie est ici")).toBeInTheDocument();
-    expect(screen.queryByText(/seconde/)).not.toBeInTheDocument();
+    expect(screen.getByText(/de vie/)).toBeInTheDocument();
     expect(screen.getByLabelText("Commentaires")).toHaveAttribute("href", "/posts/p1");
     expect(screen.getByLabelText("Réserver")).toBeInTheDocument();
+    expect(screen.queryByText("Réserver")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Intéressé")).toBeInTheDocument();
     expect(screen.getByText("Événement dans :")).toBeInTheDocument();
     expect(screen.getByText("13min")).toBeInTheDocument();
     expect(screen.queryByText("Suivre")).not.toBeInTheDocument();
     expect(document.querySelector("[data-kind=event]")).toBeTruthy();
+  });
+
+  it("événement payant : prix en haut à droite de l’image", () => {
+    render(
+      <TestI18nProvider>
+        <PostCard post={{ ...post, event: { ...post.event!, priceXaf: 5000 } }} />
+      </TestI18nProvider>,
+    );
+    expect(screen.getByText("5.000 FCFA")).toBeInTheDocument();
   });
 
   it("événement complet : badge Complet, Réserver reste visible mais désactivé", () => {
@@ -124,5 +135,30 @@ describe("PostCard — publication vs événement", () => {
     expect(screen.getByLabelText("Poser ma vie")).toBeInTheDocument();
     expect(screen.getByLabelText("Commentaires")).toHaveAttribute("href", "/posts/p-organic");
     expect(document.querySelector("[data-kind=post]")).toBeTruthy();
+  });
+
+  it("plusieurs images : carrousel sans ouvrir la publication", () => {
+    render(
+      <TestI18nProvider>
+        <PostCard
+          post={{
+            ...organic,
+            imageUrls: ["/seed/events/black-white.jpg", "/seed/events/afterwork.jpg", "/seed/events/live.jpg"],
+          }}
+        />
+      </TestI18nProvider>,
+    );
+    expect(screen.getByLabelText("1 / 3")).toBeInTheDocument();
+    expect(screen.getByLabelText("Suivant")).toBeInTheDocument();
+  });
+
+  it("texte long : voir plus / voir moins", () => {
+    const long = `${organic.body} ${"encore une ligne de sortie. ".repeat(12)}`;
+    render(
+      <TestI18nProvider>
+        <PostCard post={{ ...organic, body: long }} />
+      </TestI18nProvider>,
+    );
+    expect(screen.getByText("Voir plus")).toBeInTheDocument();
   });
 });

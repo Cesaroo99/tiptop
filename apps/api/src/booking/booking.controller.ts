@@ -46,6 +46,10 @@ class PayDto {
 class ScanDto {
   @IsString()
   token!: string;
+
+  @IsOptional()
+  @IsString()
+  eventId?: string;
 }
 
 class MethodDto {
@@ -96,7 +100,7 @@ export class BookingController {
 
   @Post("tickets/scan")
   scan(@Req() req: Request & { user: PublicUser }, @Body() body: ScanDto) {
-    return this.booking.scan(req.user.id, body.token);
+    return this.booking.scan(req.user.id, body.token, body.eventId);
   }
 
   @Get("tickets/:id")

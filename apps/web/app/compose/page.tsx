@@ -10,6 +10,7 @@ import { MoodPlacePicker, type PickedPlace } from "@/components/MoodPlacePicker"
 import { TextInput } from "@/components/ui";
 import { isMoodInterest, resolveUserCurrency, type MoodInterestId } from "@tiptop/domain";
 import { api, getStoredToken, type EventCard as EventCardType } from "@/lib/api";
+import { SEED_POST_IMAGES } from "@/lib/post-images";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 
@@ -95,6 +96,7 @@ function Composer() {
   const [city, setCity] = useState(user?.city ?? "Yaoundé");
   const [zone, setZone] = useState(user?.zone ?? "Carrefour Damas");
   const [imageUrl, setImageUrl] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [videoUrl, setVideoUrl] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreviewUrl, setVideoPreviewUrl] = useState("");
@@ -191,7 +193,8 @@ function Composer() {
             body,
             city: withLoc ? city : undefined,
             zone: withLoc ? zone : undefined,
-            imageUrl: imageUrl || undefined,
+            imageUrl: imageUrls[0] || imageUrl || undefined,
+            imageUrls: imageUrls.length ? imageUrls : undefined,
           }),
         });
         router.replace("/");
@@ -665,7 +668,49 @@ function Composer() {
         </div>
       ) : null}
       <div className="mt-4 space-y-2 border-t border-divider pt-3">
-        {kind !== "mood" || (!videoUrl && !videoFile) ? (
+        {kind === "post" ? (
+          <div className="rounded-xl bg-surface px-4 py-3 shadow-xs">
+            <div className="mb-2 flex items-center gap-3">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-accent-soft text-accent">
+                <ImageIcon size={16} />
+              </span>
+              <span className="type-body-sm font-semibold">{messages.social.addImage}</span>
+              <span className="ml-auto type-caption text-muted">
+                {imageUrls.length ? `${imageUrls.length}` : messages.social.noImageHint}
+              </span>
+            </div>
+            <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+              {SEED_POST_IMAGES.map((src) => {
+                const selected = imageUrls.includes(src);
+                return (
+                  <button
+                    key={src}
+                    type="button"
+                    onClick={() => {
+                      setImageUrls((cur) => {
+                        const next = cur.includes(src) ? cur.filter((u) => u !== src) : [...cur, src];
+                        setImageUrl(next[0] ?? "");
+                        return next;
+                      });
+                      setVideoUrl("");
+                    }}
+                    className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg ring-2 transition ${
+                      selected ? "ring-accent" : "ring-transparent"
+                    }`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt="" className="h-full w-full object-cover" />
+                    {selected ? (
+                      <span className="absolute right-0.5 top-0.5 grid h-4 w-4 place-items-center rounded-full bg-accent text-[10px] font-bold text-on-primary">
+                        {imageUrls.indexOf(src) + 1}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : kind !== "mood" || (!videoUrl && !videoFile) ? (
           <button
             type="button"
             className="tap-scale flex w-full items-center gap-3 rounded-xl bg-surface px-4 py-3 text-left text-ink shadow-xs"

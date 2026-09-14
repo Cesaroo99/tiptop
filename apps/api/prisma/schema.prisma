@@ -189,6 +189,7 @@ model Post {
   body      String
   kind      PostKind  @default(ORGANIC)
   imageUrl  String?
+  imageUrls Json?
   city      String?
   zone      String?
   eventId   String?

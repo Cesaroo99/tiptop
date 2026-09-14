@@ -47,7 +47,7 @@ describe("Navigation (#49-50)", () => {
             placement: {
               targetType: "post",
               targetId: "p1",
-              label: "Expo photo Hilton",
+              label: "César Memoli",
               href: "/events/evt-1",
               startedAt: new Date().toISOString(),
               seconds: 20,
@@ -60,7 +60,7 @@ describe("Navigation (#49-50)", () => {
         </LikePlacementScope>
       </TestI18nProvider>,
     );
-    const dock = screen.getByLabelText(/Expo photo Hilton/);
+    const dock = screen.getByLabelText(/César Memoli/);
     expect(dock.closest("nav")).toBeTruthy();
     expect(screen.getByRole("link", { name: /Amies/i })).toBeInTheDocument();
   });

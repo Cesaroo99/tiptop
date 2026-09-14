@@ -3,24 +3,27 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ageCategoryLabel, canInteractWithEvent, eventLifecycle, eventSocialProof, mapsDirectionsUrl } from "@tiptop/domain";
+import { canInteractWithEvent, eventLifecycle, eventSocialProof } from "@tiptop/domain";
+import { AgeBadge } from "./AgeBadge";
+import { ExpandableText } from "./ExpandableText";
 import { api, ApiError, type CommentItem, type EventCard as EventCardType } from "@/lib/api";
+import { useEventDestination } from "@/lib/event-destination";
 import { useI18n } from "@/lib/i18n";
 import { useSession } from "@/lib/session";
 import { recurrenceCaption } from "@/lib/event-series";
-import { formatCompactCount, formatCountdownLabel, formatEventWhen, formatFcfa, formatRelative, splitPostLead } from "@/lib/time";
+import { formatCompactCount, formatEventWhen, formatRelative, splitPostLead } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
+import { EventActionRow } from "./EventActionRow";
+import { EventPriceBadge } from "./EventPriceBadge";
 import { EventMap } from "./EventMap";
+import { EventPlaceLine } from "./EventPlaceLine";
 import { BookEventSheet } from "./BookEventSheet";
 import { CommentThread } from "./CommentThread";
 import {
   CalendarIcon,
   CameraIcon,
-  CommentIcon,
   FlagIcon,
   GlobeIcon,
-  HeartIcon,
-  InterestedIcon,
   LinkIcon,
   MoreIcon,
   PlusIcon,
@@ -29,7 +32,7 @@ import {
 import { MapThumb } from "./MapThumb";
 import { OptionsSheet } from "./OptionsSheet";
 import { ReportModal } from "./ReportModal";
-import { seatsRemainingOf } from "./SeatsLeftBadge";
+import { SeatsLeftBadge, seatsRemainingOf } from "./SeatsLeftBadge";
 import { IconButton, Modal, TextInput } from "./ui";
 
 export function EventDetailCard({
@@ -54,6 +57,7 @@ export function EventDetailCard({
   const [reportOpen, setReportOpen] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [interestBusy, setInterestBusy] = useState(false);
 
   async function heart(confirmTransfer = false) {
     try {
@@ -79,8 +83,31 @@ export function EventDetailCard({
   }
 
   async function interested() {
-    await api<{ interested: boolean }>(`/events/${event.id}/interested`, { method: "POST" });
-    onChanged?.(await api<EventCardType>(`/events/${event.id}`));
+    if (interestBusy || !canInterest) return;
+    const was = Boolean(event.viewerInterested);
+    const next = !was;
+    setInterestBusy(true);
+    onChanged?.({
+      ...event,
+      viewerInterested: next,
+      interestedCount: Math.max(0, (event.interestedCount ?? 0) + (next ? 1 : -1)),
+    });
+    try {
+      const res = await api<{ interested: boolean }>(`/events/${event.id}/interested`, { method: "POST" });
+      onChanged?.({
+        ...event,
+        viewerInterested: res.interested,
+        interestedCount: Math.max(0, (event.interestedCount ?? 0) + (res.interested === was ? 0 : res.interested ? 1 : -1)),
+      });
+    } catch {
+      onChanged?.({
+        ...event,
+        viewerInterested: was,
+        interestedCount: event.interestedCount,
+      });
+    } finally {
+      setInterestBusy(false);
+    }
   }
 
   async function share() {
@@ -115,24 +142,19 @@ export function EventDetailCard({
   const remaining = seatsRemainingOf(event.capacity, event.reservedCount ?? event.taken, event.remaining);
   const seriesLabel = recurrenceCaption(event.recurrence, messages.world);
   const eventFull = remaining != null && remaining <= 0;
-  const showGuestCtas = !event.isHost && interactive && !event.wanted;
-  const countdown = formatCountdownLabel(event.startsAt);
+  const canReserve = interactive && !event.isHost && !event.wanted && !eventFull;
+  const canInterest = interactive && !event.isHost;
   const body = event.description ? `${event.title} : ${event.description}` : event.title;
   const { lead, rest } = splitPostLead(body);
-  const priceLabel =
-    event.priceXaf > 0
-      ? event.currency === "XAF" || !event.currency
-        ? formatFcfa(event.priceXaf)
-        : messages.world.paid.replace("{amount}", formatFcfa(event.priceXaf))
-      : messages.world.free;
-  const mapsUrl = mapsDirectionsUrl({
+  const destination = useEventDestination({
     city: event.city,
     zone: event.zone,
-    placeName: event.venue,
+    venue: event.venue,
     address: event.address,
     latitude: event.latitude,
     longitude: event.longitude,
   });
+  const mapsUrl = destination.mapsUrl;
   const stats = hostView
     ? [
         `${formatCompactCount(event.commentsCount ?? 0)} ${messages.social.comments}`,
@@ -143,7 +165,6 @@ export function EventDetailCard({
         `${formatCompactCount(event.reservedCount ?? event.taken)} ${messages.world.reservationsCount}`,
         `${formatCompactCount(event.interestedCount ?? 0)} ${messages.world.interestedCount}`,
       ];
-  const age = ageCategoryLabel(event.minAge);
   const socialProof = eventSocialProof({
     friendsGoing: event.friendsGoing ?? 0,
     networkGoing: event.networkGoing ?? 0,
@@ -177,40 +198,22 @@ export function EventDetailCard({
               {event.host.firstName} {event.host.lastName}
             </Link>
             {event.host.certified ? <CertifiedMark /> : null}
-            {age ? (
-              <span className="type-caption shrink-0 rounded-full bg-danger px-2 py-0.5 font-bold leading-none text-white">
-                {age}
-              </span>
-            ) : null}
+            <AgeBadge minAge={event.minAge} />
           </div>
           <p className="type-caption mt-0.5 flex items-center gap-1 text-muted">
             <GlobeIcon size={12} />
             <span>{relative}</span>
           </p>
         </div>
-        <button
-          type="button"
-          aria-label={messages.social.share}
-          onClick={() => void share()}
-          className="tap-scale mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent-soft text-accent transition hover:brightness-95"
-        >
-          <ShareIcon size={15} />
-        </button>
+        <IconButton label={messages.social.share} onClick={() => void share()} size={36} className="mt-0.5">
+          <ShareIcon size={16} />
+        </IconButton>
         <IconButton label={messages.social.moreOptions} onClick={() => setOptionsOpen(true)} size={36} className="mt-0.5">
           <MoreIcon size={16} />
         </IconButton>
       </div>
 
-      <p className="type-body-sm mt-3 text-ink">
-        {lead ? (
-          <>
-            <span className="font-bold">{lead}</span>
-            {rest ? ` ${rest}` : null}
-          </>
-        ) : (
-          event.title
-        )}
-      </p>
+      <ExpandableText text={body} lead={lead} rest={rest || undefined} />
 
       <div className="relative mt-3">
         {event.imageUrl ? (
@@ -221,14 +224,15 @@ export function EventDetailCard({
             {event.title}
           </div>
         )}
-        {seriesLabel ? (
-          <span className="type-caption absolute left-2 top-2 rounded-pill bg-accent px-2.5 py-1 font-bold text-on-primary shadow-sm">
-            {seriesLabel}
-          </span>
-        ) : null}
-        <span className="type-caption absolute right-2 top-2 rounded-lg bg-accent px-2.5 py-1 font-bold text-white shadow-sm">
-          {priceLabel}
-        </span>
+        <div className="absolute left-2 top-2 flex flex-col items-start gap-1.5">
+          <SeatsLeftBadge remaining={seatsRemainingOf(event.capacity, event.reservedCount ?? event.taken, event.remaining)} />
+          {seriesLabel ? (
+            <span className="type-caption rounded-pill bg-accent px-2.5 py-1 font-bold text-on-primary shadow-sm">
+              {seriesLabel}
+            </span>
+          ) : null}
+        </div>
+        <EventPriceBadge amount={event.priceXaf} />
         {mapsUrl ? (
           <a
             href={mapsUrl}
@@ -245,15 +249,39 @@ export function EventDetailCard({
           </div>
         )}
       </div>
-      <EventMap
-        className="mt-3"
+      <EventPlaceLine
         city={event.city}
         zone={event.zone}
         venue={event.venue}
         address={event.address}
         latitude={event.latitude}
         longitude={event.longitude}
+        showDistance={false}
       />
+      {destination.point ? (
+        <EventMap
+          className="mt-3"
+          city={event.city}
+          zone={event.zone}
+          venue={event.venue}
+          address={event.address}
+          latitude={destination.point.lat}
+          longitude={destination.point.lng}
+          mapsUrl={mapsUrl}
+          showCta={false}
+          compact
+        />
+      ) : null}
+      {mapsUrl ? (
+        <a
+          href={mapsUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="tap-scale mt-3 flex h-12 items-center justify-center rounded-full bg-accent px-4 font-bold text-on-primary shadow-sm"
+        >
+          {messages.world.goThere}
+        </a>
+      ) : null}
 
       <p className="type-caption mt-3 text-muted">{stats.join(" · ")}</p>
       {socialProofLabel ? <p className="type-caption mt-1.5 font-medium text-accent">{socialProofLabel}</p> : null}
@@ -287,83 +315,44 @@ export function EventDetailCard({
         </p>
       ) : null}
 
-      <div className="mt-3 flex items-center gap-2">
-        {hostView ? (
-          <Link
-            href={`/events/${event.id}/scan`}
-            className="tap-scale type-caption inline-flex items-center gap-2 rounded-pill border-2 border-accent px-3.5 py-2 font-bold uppercase tracking-wide text-accent"
-          >
-            <CameraIcon size={16} />
-            {messages.booking.validateTicket}
-          </Link>
-        ) : (
-          <>
-        <button
-          type="button"
-          aria-label={messages.world.heartEvent}
-          disabled={!interactive}
-          onClick={() => interactive && void heart(false)}
-          className={`tap-scale grid h-11 w-11 shrink-0 place-items-center rounded-full bg-accent text-white shadow-sm transition hover:bg-accent-hover ${!interactive ? "opacity-40" : ""}`}
+      {hostView && event.isHost && !event.viewerTicketId ? (
+        <Link
+          href={`/events/${event.id}/scan`}
+          className="tap-scale type-caption mt-3 inline-flex items-center gap-2 rounded-pill border-2 border-accent px-3.5 py-2 font-bold uppercase tracking-wide text-accent"
         >
-          <HeartIcon size={18} filled={event.viewerHearted} />
-        </button>
-        <button
-          type="button"
-          aria-label={messages.social.comments}
-          disabled={!event.postId}
-          onClick={() => event.postId && setCommentsOpen(true)}
-          className="tap-scale grid h-10 w-10 shrink-0 place-items-center rounded-full bg-surface-sunken text-muted transition hover:brightness-95 disabled:opacity-40"
-        >
-          <CommentIcon size={17} />
-        </button>
-        {showGuestCtas ? (
-          <button
-            type="button"
-            aria-label={event.viewerInterested ? messages.world.notInterested : messages.world.interested}
-            aria-pressed={event.viewerInterested}
-            onClick={() => void interested()}
-            className={`tap-scale grid h-10 w-10 shrink-0 place-items-center rounded-full transition hover:brightness-95 ${
-              event.viewerInterested ? "bg-accent text-on-primary" : "bg-surface-sunken text-muted"
-            }`}
-          >
-            <InterestedIcon size={17} />
-          </button>
-        ) : null}
-        {showGuestCtas ? (
-          <button
-            type="button"
-            disabled={eventFull}
-            onClick={() => setBookOpen(true)}
-            className="tap-scale type-caption rounded-pill bg-accent px-3.5 py-2 font-semibold text-on-primary shadow-sm disabled:opacity-40"
-          >
-            {event.viewerReserved ? messages.booking.reserveOthers : messages.booking.reserve}
-          </button>
-        ) : null}
-        {event.viewerTicketId ? (
-          <Link
-            href={`/tickets/${event.viewerTicketId}`}
-            className="tap-scale type-caption rounded-pill border border-border px-3 py-2 font-semibold text-ink"
-          >
-            {messages.booking.viewTicket}
-          </Link>
-        ) : null}
-          </>
-        )}
-        {countdown && lifecycle.phase !== "ended" && lifecycle.phase !== "cancelled" ? (
-          <span className="ml-auto flex items-center gap-1.5">
-            <span className="type-caption whitespace-nowrap text-muted">{messages.world.eventInLabel}</span>
-            <span className="type-caption shrink-0 rounded-full bg-yellow px-2.5 py-1 font-bold text-ink">{countdown}</span>
-          </span>
-        ) : lifecycle.phase === "ongoing" ? (
-          <span className="type-caption ml-auto rounded-pill bg-success px-2.5 py-1 font-bold text-white">
-            {messages.world.ongoingBadge}
-          </span>
-        ) : lifecycle.phase === "ended" ? (
-          <span className="type-caption ml-auto rounded-pill bg-black/55 px-2.5 py-1 font-bold text-white">
-            {messages.world.endedBadge}
-          </span>
-        ) : null}
-      </div>
+          <CameraIcon size={16} />
+          {messages.booking.validateTicket}
+        </Link>
+      ) : null}
+      <EventActionRow
+        likeLabel={messages.world.heartEvent}
+        liked={event.viewerHearted}
+        likeDisabled={!interactive}
+        onLike={() => interactive && void heart(false)}
+        commentLabel={messages.social.comments}
+        commentDisabled={!event.postId}
+        onComment={() => event.postId && setCommentsOpen(true)}
+        reserveLabel={event.viewerReserved ? messages.booking.reserveOthers : messages.booking.reserve}
+        reserveDisabled={!canReserve}
+        onReserve={() => setBookOpen(true)}
+        interestedLabel={event.viewerInterested ? messages.world.notInterested : messages.world.interested}
+        interested={event.viewerInterested}
+        interestedDisabled={!canInterest || interestBusy}
+        onInterested={() => void interested()}
+        startsAt={event.startsAt}
+        endsAt={event.endsAt}
+        status={event.status}
+        extras={
+          event.viewerTicketId ? (
+            <Link
+              href={`/tickets/${event.viewerTicketId}`}
+              className="tap-scale type-caption rounded-pill border border-border px-3 py-2 font-semibold text-ink"
+            >
+              {messages.booking.viewTicket}
+            </Link>
+          ) : null
+        }
+      />
       {copied ? <p className="type-caption mt-2 text-accent">{messages.social.copied}</p> : null}
 
       <Modal

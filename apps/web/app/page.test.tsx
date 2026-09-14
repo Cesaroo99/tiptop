@@ -1,6 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { TestI18nProvider } from "@/lib/test-utils";
+import { api } from "@/lib/api";
+import { clearFeedCache } from "@/lib/feed-session";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/",
@@ -179,6 +181,10 @@ vi.mock("@/lib/api", async () => {
 import Page from "./page";
 
 describe("Accueil — maquette pulse", () => {
+  beforeEach(() => {
+    clearFeedCache();
+  });
+
   it("montre le lieu, les moods et le fil — sans besoin ni « dehors maintenant »", async () => {
     render(
       <TestI18nProvider>
@@ -195,8 +201,118 @@ describe("Accueil — maquette pulse", () => {
     expect(screen.getAllByLabelText("Intéressé").length).toBeGreaterThan(0);
     expect(await screen.findByText("Rooftop Damas")).toBeInTheDocument();
     expect(screen.getByText("Léa Moreau")).toBeInTheDocument();
+    expect(screen.getByText("1 km de toi")).toBeInTheDocument();
     expect(screen.getAllByText("Theo Patel").length).toBeGreaterThan(0);
     expect(document.querySelector("[data-kind=mood]")).toBeTruthy();
     expect(document.querySelector("[data-kind=person]")).toBeTruthy();
+  });
+
+  it("glisse une carte invite pour une seconde personne dispo", async () => {
+    vi.mocked(api).mockImplementation(async (path: string) => {
+      if (String(path) === "/feed") {
+        return {
+          items: [],
+          events: [],
+          people: [
+            {
+              id: "u-lea",
+              username: "lea",
+              firstName: "Léa",
+              lastName: "Moreau",
+              certified: false,
+              profession: "DJ",
+              age: 24,
+              avatarUrl: null,
+              locationLabel: "Bastos",
+              approximate: true,
+              distanceKm: 1,
+              presence: "AVAILABLE",
+              circle: "NEARBY",
+              why: [{ key: "nearby_available" }],
+            },
+            {
+              id: "u-mia",
+              username: "mia",
+              firstName: "Mia",
+              lastName: "K.",
+              certified: false,
+              profession: "Photographe",
+              age: 26,
+              avatarUrl: null,
+              locationLabel: "Damas",
+              approximate: true,
+              distanceKm: 4,
+              presence: "AVAILABLE",
+              circle: "NEARBY",
+            },
+          ],
+          reels: [],
+          moods: [],
+        };
+      }
+      if (String(path).includes("/notifications")) return { unreadCount: 0 };
+      if (String(path).includes("/conversations")) return { unreadTotal: 0 };
+      return {};
+    });
+    render(
+      <TestI18nProvider>
+        <Page />
+      </TestI18nProvider>,
+    );
+    expect(await screen.findByText("Léa est dispo")).toBeInTheDocument();
+    expect(screen.queryByText("Disponible près de toi")).toBeNull();
+    expect(document.querySelector("[data-kind=invite]")).toBeTruthy();
+    expect(document.querySelector("[data-kind=person]")).toBeTruthy();
+  });
+
+  it("garde la publication visible après un like", async () => {
+    vi.mocked(api).mockImplementation(async (path: string) => {
+      if (String(path) === "/feed") {
+        return {
+          items: [
+            {
+              id: "p1",
+              body: "Un tour au Black&White : on se retrouve ce soir.",
+              imageUrl: "/seed/events/black-white.jpg",
+              city: "Yaoundé",
+              zone: "Carrefour Damas",
+              createdAt: new Date(Date.now() - 2 * 3600_000).toISOString(),
+              commentsCount: 12,
+              sharesCount: 4,
+              likedAuthor: false,
+              likedByMe: false,
+              viewerFollows: false,
+              authorActiveLikes: 0,
+              author: {
+                id: "u1",
+                username: "cesar_memoli",
+                firstName: "César",
+                lastName: "Memoli",
+                certified: true,
+                avatarUrl: null,
+                available: true,
+              },
+            },
+          ],
+          events: [],
+          people: [],
+          reels: [],
+          moods: [],
+        };
+      }
+      if (String(path).startsWith("/likes")) return { placement: { targetType: "post", targetId: "p1", label: "César", href: "/posts/p1", seconds: 0 } };
+      if (String(path).includes("/notifications")) return { unreadCount: 0 };
+      if (String(path).includes("/conversations")) return { unreadTotal: 0 };
+      return {};
+    });
+    render(
+      <TestI18nProvider>
+        <Page />
+      </TestI18nProvider>,
+    );
+    expect(await screen.findByText("César Memoli")).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText("Poser ma vie"));
+    expect(await screen.findByText(/Black&White/)).toBeInTheDocument();
+    expect(document.querySelector("[data-feed-key='post:p1']")).toBeTruthy();
   });
 });

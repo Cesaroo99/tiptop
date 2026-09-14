@@ -35,13 +35,13 @@ export function likePlacementHref(
   return "/wishes";
 }
 
+export function personDisplayName(first?: string | null, last?: string | null): string {
+  return clipLabel([first, last].filter(Boolean).join(" ")) || "…";
+}
+
 export function likePlacementLabel(
-  kind: LikePlacementKind,
+  _kind: LikePlacementKind,
   src: { name?: string | null; title?: string | null; body?: string | null; activity?: string | null },
 ): string {
-  if (kind === "user") return clipLabel(src.name ?? "") || "…";
-  if (kind === "wish") return clipLabel(src.title ?? "") || "…";
-  if (kind === "mood") return clipLabel(src.activity || src.body || "") || "Mood";
-  if (kind === "post") return clipLabel(src.title || postLeadLabel(src.body ?? "")) || "…";
-  return clipLabel(src.body ?? "") || "…";
+  return clipLabel(src.name ?? "") || "…";
 }

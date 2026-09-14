@@ -108,6 +108,7 @@ async function main() {
         city: "Yaoundé",
         zone: "Carrefour Damas",
         imageUrl: "/seed/events/black-white.jpg",
+        imageUrls: ["/seed/events/black-white.jpg", "/seed/events/afterwork.jpg", "/seed/events/live.jpg"],
       },
     });
     cesarPostId = p1.id;
@@ -925,19 +926,24 @@ async function enrichLivingWorld(
   }
 
   const postsWanted = [
-    { authorId: onguene.id, body: "Mood Damas — qui est chaud pour un afterwork sans écran ?", imageUrl: "/seed/posts/lights.jpg", city: "Yaoundé", zone: "Nlongkak" },
-    { authorId: amina.id, body: "Plaidoirie le matin, rooftop Bastos le soir. Qui sort ?", imageUrl: "/seed/posts/rooftop.jpg", city: "Yaoundé", zone: "Bastos" },
-    { authorId: fouda.id, body: "J’ai mis le ndolé au feu. Table de 8, Odza, on se voit IRL.", imageUrl: "/seed/posts/food.jpg", city: "Yaoundé", zone: "Mvog-Mbi" },
-    { authorId: koffi.id, body: "Set live à Melen ce week-end. Pas de replay, faut venir.", imageUrl: "/seed/events/live.jpg", city: "Yaoundé", zone: "Melen" },
+    { authorId: onguene.id, body: "Mood Damas — qui est chaud pour un afterwork sans écran ?", imageUrl: "/seed/posts/lights.jpg", imageUrls: ["/seed/posts/lights.jpg", "/seed/events/afterwork.jpg", "/seed/covers/night.jpg"], city: "Yaoundé", zone: "Nlongkak" },
+    { authorId: amina.id, body: "Plaidoirie le matin, rooftop Bastos le soir. Qui sort ?", imageUrl: "/seed/posts/rooftop.jpg", imageUrls: ["/seed/posts/rooftop.jpg", "/seed/events/rooftop.jpg", "/seed/posts/drinks.jpg"], city: "Yaoundé", zone: "Bastos" },
+    { authorId: fouda.id, body: "J’ai mis le ndolé au feu. Table de 8, Odza, on se voit IRL.", imageUrl: "/seed/posts/food.jpg", imageUrls: ["/seed/posts/food.jpg", "/seed/events/brunch.jpg"], city: "Yaoundé", zone: "Mvog-Mbi" },
+    { authorId: koffi.id, body: "Set live à Melen ce week-end. Pas de replay, faut venir.", imageUrl: "/seed/events/live.jpg", imageUrls: ["/seed/events/live.jpg", "/seed/moods/concert.jpg"], city: "Yaoundé", zone: "Melen" },
     { authorId: nadege.id, body: "Fin des partiels. Qui prend un jus à Ngoa-Ekellé ?", imageUrl: "/seed/posts/drinks.jpg", city: "Yaoundé", zone: "Ngoa-Ekellé" },
-    { authorId: mireille.id, body: "Look Black & White prêt. On se retrouve à l’entrée.", imageUrl: "/seed/posts/friends.jpg", city: "Yaoundé", zone: "Bastos" },
+    { authorId: mireille.id, body: "Look Black & White prêt. On se retrouve à l’entrée.", imageUrl: "/seed/posts/friends.jpg", imageUrls: ["/seed/posts/friends.jpg", "/seed/events/black-white.jpg"], city: "Yaoundé", zone: "Bastos" },
     { authorId: rachel.id, body: "Yaoundé la nuit, c’est mieux dehors que dans le fil.", imageUrl: "/seed/covers/night.jpg", city: "Yaoundé", zone: "Essos" },
     { authorId: william.id, body: "Match à Omnisports puis bières. Places limitées, on se parle.", imageUrl: "/seed/posts/friends.jpg", city: "Yaoundé", zone: "Omnisports" },
   ];
   for (const p of postsWanted) {
     const exists = await db.post.findFirst({ where: { authorId: p.authorId, body: p.body } });
     if (!exists) await db.post.create({ data: p });
+    else if (p.imageUrls) await db.post.update({ where: { id: exists.id }, data: { imageUrls: p.imageUrls } });
   }
+  await db.post.updateMany({
+    where: { body: { contains: "Black&White" } },
+    data: { imageUrls: ["/seed/events/black-white.jpg", "/seed/events/afterwork.jpg", "/seed/events/live.jpg"] },
+  });
 
   async function ensureEvent(title: string, data: Parameters<typeof db.event.create>[0]["data"]) {
     let e = await db.event.findFirst({ where: { title } });

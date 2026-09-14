@@ -90,7 +90,7 @@ export default function Page() {
               className="w-28 rounded-pill border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm"
             />
             <span className="text-sm text-muted">%</span>
-            <button type="button" className="rounded-pill bg-accent px-3 py-2 text-sm text-white" onClick={() => void saveFee()}>
+            <button type="button" className="rounded-pill bg-accent px-3 py-2 text-sm text-on-primary" onClick={() => void saveFee()}>
               {messages.admin.saveFee}
             </button>
           </div>

@@ -31,7 +31,7 @@ describe("LikePlacementDock", () => {
             placement: {
               targetType: "post",
               targetId: "p1",
-              label: "Expo photo Hilton",
+              label: "César Memoli",
               href: "/events/evt-1",
               startedAt: new Date().toISOString(),
               seconds: 15,
@@ -44,10 +44,10 @@ describe("LikePlacementDock", () => {
         </LikePlacementScope>
       </TestI18nProvider>,
     );
-    const dock = screen.getByLabelText(/Expo photo Hilton/);
+    const dock = screen.getByLabelText(/César Memoli/);
     expect(dock).toHaveAttribute("href", "/events/evt-1");
     expect(dock).toHaveAttribute("data-like-dock", "active");
     expect(dock.textContent).toMatch(/15 s/);
-    expect(dock.textContent).toMatch(/Expo photo Hilton/);
+    expect(dock.textContent).toMatch(/César Memoli/);
   });
 });

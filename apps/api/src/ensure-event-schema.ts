@@ -43,6 +43,7 @@ export const EVENT_SCHEMA_STATEMENTS = [
   )`,
   `ALTER TYPE "AdminAction" ADD VALUE IF NOT EXISTS 'SETTINGS_UPDATE'`,
   `ALTER TABLE "Mood" ADD COLUMN IF NOT EXISTS "hiddenAt" TIMESTAMP(3)`,
+  `ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "imageUrls" JSONB`,
 ] as const;
 
 export async function applyEventSchemaFixes(

@@ -27,6 +27,13 @@ export default function Page() {
     void load().catch(() => setItems([]));
   }, []);
 
+  function statusLabel(status: string) {
+    if (status === "CANCELLED") return messages.world.cancelledBadge;
+    if (status === "ENDED") return messages.world.endedBadge;
+    if (status === "PUBLISHED") return messages.world.eventPublished;
+    return status;
+  }
+
   async function cancel(id: string) {
     await api(`/admin/events/${id}/cancel`, { method: "POST" });
     await load();
@@ -40,12 +47,12 @@ export default function Page() {
           <article key={e.id} className="rounded-card bg-surface p-4 shadow-card">
             <p className="font-semibold">{e.title}</p>
             <p className="text-xs text-muted">
-              {e.city} · {e.status} · @{e.host.username}
+              {e.city} · {statusLabel(e.status)} · @{e.host.username}
             </p>
             {e.status !== "CANCELLED" ? (
               <button
                 type="button"
-                className="mt-3 rounded-pill bg-[var(--border)] px-3 py-2 text-sm"
+                className="mt-3 rounded-pill bg-danger px-3 py-2 text-sm text-on-primary"
                 onClick={() => void cancel(e.id)}
               >
                 {messages.admin.cancelEvent}

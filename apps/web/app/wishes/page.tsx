@@ -9,7 +9,7 @@ import { useSession } from "@/lib/session";
 
 export default function Page() {
   return (
-    <AppShell>
+    <AppShell chrome="nav">
       <WishesScreen />
     </AppShell>
   );

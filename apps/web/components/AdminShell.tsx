@@ -52,7 +52,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             key={l.href}
             href={l.href}
             className={`whitespace-nowrap rounded-pill px-3 py-2 ${
-              path === l.href ? "bg-accent text-white" : "bg-surface text-ink shadow-card"
+              path === l.href ? "bg-accent text-on-primary" : "bg-surface text-ink shadow-card"
             }`}
           >
             {l.label}

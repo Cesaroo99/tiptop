@@ -216,6 +216,7 @@ export type SearchPost = {
   id: string;
   body: string;
   imageUrl: string | null;
+  imageUrls?: string[];
   createdAt: string;
   author: {
     username: string;
@@ -235,6 +236,11 @@ export type SearchEvent = {
   priceXaf: number;
   currency?: string;
   taken: number;
+  reservedCount?: number;
+  capacity?: number | null;
+  remaining?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
   viewerHearted: boolean;
   interestedCount?: number;
   viewerInterested?: boolean;
@@ -294,6 +300,10 @@ export type PersonCard = {
   avatarUrl: string | null;
   locationLabel: string | null;
   approximate: boolean;
+  city?: string | null;
+  zone?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   distanceKm: number | null;
   distanceLabel?: string | null;
   available?: boolean;
@@ -408,6 +418,7 @@ export type FeedItem = {
   id: string;
   body: string;
   imageUrl: string | null;
+  imageUrls?: string[];
   city: string | null;
   zone: string | null;
   createdAt: string;
@@ -435,6 +446,10 @@ export type FeedItem = {
     minAge: number | null;
     city?: string | null;
     zone?: string | null;
+    venue?: string | null;
+    address?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
     interestedCount: number;
     reservedCount: number;
     capacity?: number | null;
@@ -442,8 +457,12 @@ export type FeedItem = {
     viewerInterested?: boolean;
     canBook?: boolean;
     viewerReserved?: boolean;
+    isHost?: boolean;
+    status?: string;
+    endsAt?: string | null;
     recurrence?: string;
     seriesId?: string | null;
+    priceXaf?: number;
   } | null;
 };
 
@@ -534,6 +553,7 @@ export type LikeWallet = {
   total: number;
   packs: LikePack[];
   placedOn?: LikePerson | null;
+  placement?: LikePlacement | null;
   receivedFrom?: LikePerson[];
   production?: LikeProduction;
   likeTime?: {

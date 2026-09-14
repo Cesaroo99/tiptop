@@ -168,7 +168,7 @@ function ProfileView() {
     }
   }
 
-  async function like(confirmTransfer = true) {
+  async function like(confirmTransfer = false) {
     if (!profile || profile.isSelf) return;
     try {
       if (viewerLikeActive(placement, "user", profile.id, profile.likedByMe, ready)) {

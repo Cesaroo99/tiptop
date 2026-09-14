@@ -6,10 +6,15 @@ import { api, ApiError, type SearchEvent, type SearchPerson } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { formatEventWhen } from "@/lib/time";
 import { Avatar, CertifiedMark } from "./Avatar";
-import { HeartIcon, LinkIcon, MoreIcon } from "./Icons";
+import { BookEventSheet } from "./BookEventSheet";
+import { EventActionRow } from "./EventActionRow";
+import { EventPriceBadge } from "./EventPriceBadge";
+import { LinkIcon, MoreIcon } from "./Icons";
 import { OptionsSheet } from "./OptionsSheet";
 import { IconButton, Modal } from "./ui";
 import { recurrenceCaption } from "@/lib/event-series";
+import { MapThumb } from "./MapThumb";
+import { SeatsLeftBadge, seatsRemainingOf } from "./SeatsLeftBadge";
 
 export function SearchPersonCard({ person }: { person: SearchPerson }) {
   const { messages } = useI18n();
@@ -74,9 +79,12 @@ export function SearchEventCard({
 }) {
   const { locale, messages } = useI18n();
   const [transfer, setTransfer] = useState<string | null>(null);
+  const [bookOpen, setBookOpen] = useState(false);
   const place = [event.city, event.zone].filter(Boolean).join(", ");
   const overlayTitle = event.title.includes(event.city) ? event.title : `${event.title}${place ? ` — ${place}` : ""}`;
   const seriesLabel = recurrenceCaption(event.recurrence, messages.world);
+  const interested = event.viewerInterested ?? false;
+  const reserved = event.viewerReserved ?? false;
 
   async function heart(confirmTransfer = false) {
     try {
@@ -99,6 +107,15 @@ export function SearchEventCard({
     }
   }
 
+  async function toggleInterested() {
+    const res = await api<{ interested: boolean }>(`/events/${event.id}/interested`, { method: "POST" });
+    onChanged?.({
+      ...event,
+      viewerInterested: res.interested,
+      interestedCount: Math.max(0, (event.interestedCount ?? 0) + (res.interested ? 1 : -1)),
+    });
+  }
+
   return (
     <article className="overflow-hidden rounded-card bg-surface shadow-card">
       <div className="relative">
@@ -112,26 +129,18 @@ export function SearchEventCard({
             </div>
           )}
         </Link>
-        <div className="absolute left-3 top-3 flex flex-wrap items-center gap-1.5">
-          <span className="type-caption rounded-pill bg-white/90 px-3 py-1.5 font-bold text-ink shadow-sm backdrop-blur-sm">
-            {event.taken === 1
-              ? messages.world.participantsCountOne
-              : messages.world.participantsCount.replace("{n}", String(event.taken))}
-          </span>
+        <div className="absolute left-2 top-2 z-[1] flex flex-wrap items-center gap-1.5">
+          <SeatsLeftBadge remaining={seatsRemainingOf(event.capacity, event.reservedCount ?? event.taken, event.remaining)} />
           {seriesLabel ? (
             <span className="type-caption rounded-pill bg-accent px-2.5 py-1 font-bold text-on-primary shadow-sm">
               {seriesLabel}
             </span>
           ) : null}
         </div>
-        <button
-          type="button"
-          aria-label={messages.world.heartEvent}
-          onClick={() => void heart(false)}
-          className="tap-scale absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white text-accent shadow-sm"
-        >
-          <HeartIcon size={16} filled={event.viewerHearted} />
-        </button>
+        <EventPriceBadge amount={event.priceXaf} className="absolute right-2 top-2 z-[1] rounded-lg bg-accent px-2.5 py-1 font-bold text-white shadow-sm" />
+        <div className="absolute bottom-2 right-2 z-[1] h-16 w-24 overflow-hidden rounded-md ring-2 ring-white/70">
+          <MapThumb city={event.city} zone={event.zone} lat={event.latitude} lng={event.longitude} className="h-full w-full" />
+        </div>
         <Link
           href={`/events/${event.id}`}
           className="absolute inset-x-3 bottom-3 rounded-2xl bg-white/95 px-3 py-2.5 shadow-sm backdrop-blur-sm"
@@ -148,6 +157,49 @@ export function SearchEventCard({
           </div>
         </Link>
       </div>
+      <div className="px-3 pb-3">
+        <EventActionRow
+          likeLabel={messages.world.heartEvent}
+          liked={event.viewerHearted}
+          onLike={() => void heart(false)}
+          commentLabel={messages.social.comments}
+          commentHref={`/events/${event.id}`}
+          reserveLabel={reserved ? messages.booking.reserveOthers : messages.booking.reserve}
+          onReserve={() => setBookOpen(true)}
+          interestedLabel={interested ? messages.world.notInterested : messages.world.interested}
+          interested={interested}
+          onInterested={() => void toggleInterested()}
+          startsAt={event.startsAt}
+          seriesLabel={seriesLabel}
+        />
+      </div>
+      <BookEventSheet
+        open={bookOpen}
+        onClose={() => setBookOpen(false)}
+        onBooked={(seats) => {
+          if (seats <= 0) return;
+          const nextTaken = (event.reservedCount ?? event.taken) + seats;
+          const currentRemaining = seatsRemainingOf(event.capacity, event.reservedCount ?? event.taken, event.remaining);
+          onChanged?.({
+            ...event,
+            taken: nextTaken,
+            reservedCount: nextTaken,
+            remaining: currentRemaining != null ? Math.max(0, currentRemaining - seats) : seatsRemainingOf(event.capacity, nextTaken),
+            viewerReserved: true,
+          });
+        }}
+        preview={{
+          eventId: event.id,
+          title: event.title,
+          body: event.title,
+          startsAt: event.startsAt,
+          author: {
+            firstName: event.host.firstName,
+            lastName: event.host.lastName,
+            avatarUrl: event.host.avatarUrl,
+          },
+        }}
+      />
       <Modal
         open={Boolean(transfer)}
         title={messages.world.heartTransferTitle}

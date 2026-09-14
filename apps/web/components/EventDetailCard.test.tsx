@@ -13,6 +13,11 @@ vi.mock("@/lib/session", () => ({
   useSession: () => ({ user: { id: "viewer", profileCompleted: true }, loading: false }),
 }));
 
+vi.stubGlobal(
+  "fetch",
+  vi.fn(async () => ({ ok: true, json: async () => ({ items: [] }) })),
+);
+
 const baseEvent: EventCardType = {
   id: "evt_1",
   title: "Piscine party - Odza, Yaoundé",
@@ -105,10 +110,37 @@ describe("EventDetailCard", () => {
     expect(screen.queryByText(/Partages/)).not.toBeInTheDocument();
     expect(screen.getByLabelText("Coup de cœur")).toBeInTheDocument();
     expect(screen.getByLabelText("Commentaires")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Intéressé" })).toBeInTheDocument();
-    expect(screen.getByText("Réserver")).toBeInTheDocument();
-    expect(screen.getByText("Y aller")).toBeInTheDocument();
-    expect(screen.getByTitle(/Villa Odza/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Intéressé")).toBeInTheDocument();
+    expect(screen.getByLabelText("Réserver")).toBeInTheDocument();
+    expect(screen.queryByText("Réserver")).not.toBeInTheDocument();
+    expect(screen.getByText("S’y rendre")).toBeInTheDocument();
+    expect(screen.getByText(/Villa Odza/)).toBeInTheDocument();
+    expect(screen.queryByText("Valider ticket")).not.toBeInTheDocument();
+  });
+
+  it("acheteur : aucun bouton Valider ticket, même sur la fiche", () => {
+    render(
+      <TestI18nProvider>
+        <EventDetailCard
+          event={{ ...baseEvent, isHost: false, viewerReserved: true, viewerTicketId: "t1", canBook: true }}
+        />
+      </TestI18nProvider>,
+    );
+    expect(screen.queryByText("Valider ticket")).not.toBeInTheDocument();
+    expect(screen.getByText("Voir le ticket")).toBeInTheDocument();
+  });
+
+  it("organisateur sur la fiche publique : pas de scanner, actions présentes mais réservation désactivée", () => {
+    render(
+      <TestI18nProvider>
+        <EventDetailCard event={{ ...baseEvent, isHost: true, canBook: false }} />
+      </TestI18nProvider>,
+    );
+    expect(screen.queryByText("Valider ticket")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Réserver")).toBeDisabled();
+    expect(screen.getByLabelText("Intéressé")).toBeDisabled();
+    expect(screen.getByLabelText("Commentaires")).toBeInTheDocument();
+    expect(screen.getByText("Événement dans :")).toBeInTheDocument();
   });
 
   it("déjà réservé : Réserver pour un autre + prochaines dates de série", () => {
@@ -128,8 +160,9 @@ describe("EventDetailCard", () => {
         />
       </TestI18nProvider>,
     );
-    expect(screen.getByRole("button", { name: "Intéressé" })).toBeInTheDocument();
-    expect(screen.getByText("Réserver pour un autre")).toBeInTheDocument();
+    expect(screen.getByLabelText("Intéressé")).toBeInTheDocument();
+    expect(screen.getByLabelText("Réserver pour un autre")).toBeInTheDocument();
+    expect(screen.queryByText("Réserver pour un autre")).not.toBeInTheDocument();
     expect(screen.getByText("Prochaines dates")).toBeInTheDocument();
     expect(screen.getByText("Toutes les semaines")).toBeInTheDocument();
   });

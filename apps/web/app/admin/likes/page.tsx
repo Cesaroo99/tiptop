@@ -31,6 +31,7 @@ export default function Page() {
 
   return (
     <AdminShell>
+      <p className="mb-3 text-xs text-muted">{messages.admin.anomalyUnits}</p>
       {items.length === 0 ? <p className="text-sm text-muted">{messages.admin.noAnomalies}</p> : null}
       <div className="space-y-2">
         {items.map((a) => (
