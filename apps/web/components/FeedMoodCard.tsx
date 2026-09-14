@@ -35,7 +35,7 @@ export function FeedMoodCard({
   const vie = useLiveLikeLabel(shown.likeTime, loadedAt);
   const showVie = (shown.likeTime?.totalSeconds ?? 0) > 0 || (shown.likeTime?.activeCount ?? 0) > 0;
 
-  async function like(confirmTransfer = true) {
+  async function like(confirmTransfer = false) {
     if (busy) return;
     setBusy(true);
     try {
@@ -83,7 +83,7 @@ export function FeedMoodCard({
           setBuy(true);
           return;
         }
-        if (kind === "transfer") setTransfer(placement?.label || `${mood.author.firstName} ${mood.author.lastName}`);
+        if (kind === "transfer") setTransfer(placement?.label || messages.social.transferGeneric);
       }
     } finally {
       setBusy(false);

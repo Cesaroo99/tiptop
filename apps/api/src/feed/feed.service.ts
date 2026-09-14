@@ -111,7 +111,7 @@ export class FeedService {
       }
       try {
         const reelList = await this.moods.list(viewerId, "MOOD");
-        reels = reelList.items.filter((m) => m.videoUrl && !hidden.has(m.author.id)).slice(0, 4);
+        reels = reelList.items.filter((m) => m.videoUrl && !hidden.has(m.author.id)).slice(0, 2);
       } catch (err) {
         console.error("[feed] moods.reels", err);
       }

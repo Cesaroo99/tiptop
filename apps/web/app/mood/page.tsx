@@ -226,7 +226,7 @@ function MoodSlide({
     setLoadedAt(Date.now());
   }, [mood.likeTime?.activeCount, mood.likeTime?.totalSeconds]);
 
-  async function like(confirmTransfer = true) {
+  async function like(confirmTransfer = false) {
     try {
       if (liked) {
         await api("/likes", { method: "DELETE", body: JSON.stringify({ targetType: "mood", targetId: mood.id }) });

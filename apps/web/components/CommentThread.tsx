@@ -106,7 +106,7 @@ function CommentLike({ comment, onChange }: { comment: CommentItem; onChange: (n
   const extra = Math.max(0, live - (shown?.totalSeconds ?? 0));
   const label = formatLikeDurationShort((shown?.totalSeconds ?? 0) + extra, loc);
 
-  async function like(confirmTransfer = true) {
+  async function like(confirmTransfer = false) {
     try {
       if (liked) {
         await api("/likes", { method: "DELETE", body: JSON.stringify({ targetType: "comment", targetId: comment.id }) });

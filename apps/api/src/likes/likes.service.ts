@@ -126,7 +126,7 @@ export class LikesService {
     };
   }
 
-  async like(ownerId: string, toUserId: string, _confirmTransfer: boolean) {
+  async like(ownerId: string, toUserId: string, confirmTransfer: boolean) {
     if (ownerId === toUserId) throw new BadRequestException({ code: "LIKE_SELF" });
     const target = await this.prisma.user.findUnique({ where: { id: toUserId } });
     if (!target) throw new BadRequestException({ code: "USER_NOT_FOUND" });
@@ -147,6 +147,9 @@ export class LikesService {
         if (code === "LIKE_ALREADY_ON_TARGET") throw new ConflictException({ code });
         if (code === "LIKE_NO_UNITS") throw new BadRequestException({ code });
         throw new BadRequestException({ code });
+      }
+      if (plan.fromTargetKey && !confirmTransfer) {
+        throw new ConflictException({ code: "LIKE_TRANSFER_REQUIRED", fromTargetKey: plan.fromTargetKey });
       }
       const now = new Date();
       if (plan.fromTargetKey) {
@@ -805,10 +808,10 @@ export class LikesService {
   async placeOn(
     ownerId: string,
     target: { type: DomainTarget; id: string },
-    _confirmTransfer: boolean,
+    confirmTransfer: boolean,
   ) {
     if (target.type === "user") {
-      return this.like(ownerId, target.id, _confirmTransfer);
+      return this.like(ownerId, target.id, confirmTransfer);
     }
     const resolved = await this.resolveTarget(ownerId, target);
     const result = await this.prisma.$transaction(async (tx) => {
@@ -827,6 +830,9 @@ export class LikesService {
         if (code === "LIKE_ALREADY_ON_TARGET") throw new ConflictException({ code });
         if (code === "LIKE_NO_UNITS") throw new BadRequestException({ code });
         throw new BadRequestException({ code });
+      }
+      if (plan.fromTargetKey && !confirmTransfer) {
+        throw new ConflictException({ code: "LIKE_TRANSFER_REQUIRED", fromTargetKey: plan.fromTargetKey });
       }
       const now = new Date();
       if (plan.fromTargetKey) {

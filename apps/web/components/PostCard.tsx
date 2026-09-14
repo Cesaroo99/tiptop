@@ -90,7 +90,7 @@ export function PostCard({
   const mapCity = event?.city ?? post.city;
   const mapZone = event?.zone ?? post.zone;
 
-  async function like(confirmTransfer = true) {
+  async function like(confirmTransfer = false) {
     try {
       if (liked) {
         await api("/likes", {

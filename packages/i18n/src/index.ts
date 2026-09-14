@@ -942,6 +942,8 @@ export type Messages = {
     dismiss: string;
     dismissed: string;
     actioned: string;
+    markActioned: string;
+    anomalyUnits: string;
     open: string;
     hidden: string;
     empty: string;
@@ -1903,6 +1905,8 @@ export const fr: Messages = {
     dismiss: "Classer",
     dismissed: "Classé",
     actioned: "Traité",
+    markActioned: "Marquer traité",
+    anomalyUnits: "unités · achetées · actives",
     open: "Ouvert",
     hidden: "Masqué",
     empty: "Rien à afficher.",
@@ -2864,6 +2868,8 @@ export const en: Messages = {
     dismiss: "Dismiss",
     dismissed: "Dismissed",
     actioned: "Actioned",
+    markActioned: "Mark as actioned",
+    anomalyUnits: "units · purchased · active",
     open: "Open",
     hidden: "Hidden",
     empty: "Nothing to show.",

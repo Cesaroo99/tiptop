@@ -15,7 +15,7 @@ export type FeedCache = {
   at: number;
 };
 
-const KEY = "tiptop.home.feed.v3";
+const KEY = "tiptop.home.feed.v4";
 const TTL_MS = 30 * 60 * 1000;
 let memory: FeedCache | null = null;
 
@@ -105,6 +105,7 @@ export function leftoverFeedEntries(
   const seenPeople = new Set(
     stream.flatMap((row) => (row.kind === "person" || row.kind === "invite" ? [row.person.id] : [])),
   );
+  const hasPersonRow = stream.some((row) => row.kind === "person");
   const out: MixedFeedEntry[] = [];
   for (const event of extras.events) {
     const id = `event:${event.id}`;
@@ -117,9 +118,9 @@ export function leftoverFeedEntries(
       seenPeople.add(person.id);
     }
   }
-  for (const person of extras.people) {
-    const id = `person:${person.id}`;
-    if (!seen.has(id) && !seenPeople.has(person.id)) out.push({ kind: "person", id, person });
+  if (!hasPersonRow) {
+    const next = extras.people.find((person) => !seenPeople.has(person.id));
+    if (next) out.push({ kind: "person", id: `person:${next.id}`, person: next });
   }
   return out;
 }

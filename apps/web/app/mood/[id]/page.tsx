@@ -66,7 +66,7 @@ function MoodViewer() {
     setMood((cur) => (cur ? applyPlacementToMood(cur, placement) : cur));
   }, [ready, placement?.targetType, placement?.targetId, mood?.id]);
 
-  async function like(confirmTransfer = true) {
+  async function like(confirmTransfer = false) {
     if (!mood) return;
     const likedNow = viewerLikeActive(
       placement,

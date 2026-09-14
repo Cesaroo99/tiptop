@@ -50,7 +50,7 @@ export function NearbyPersonCard({
         ? messages.world.circleLater
         : messages.world.circleAround;
 
-  async function like(confirmTransfer = true) {
+  async function like(confirmTransfer = false) {
     if (busy) return;
     setBusy(true);
     try {
@@ -75,7 +75,7 @@ export function NearbyPersonCard({
           setBuy(true);
           return;
         }
-        if (kind === "transfer") setTransfer(`${person.firstName} ${person.lastName}`);
+        if (kind === "transfer") setTransfer(placement?.label || messages.social.transferGeneric);
       }
     } finally {
       setBusy(false);

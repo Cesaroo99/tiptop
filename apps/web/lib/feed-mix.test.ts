@@ -153,6 +153,25 @@ describe("mixHomeFeed", () => {
     expect(mixed.filter((row) => row.kind === "mood")).toHaveLength(MAX_HOME_FEED_MOODS);
   });
 
+  it("n’ancre qu’un deck personnes dans le fil", () => {
+    const mixed = mixHomeFeed(
+      {
+        posts: [post("p1", { imageUrl: "/x.jpg" })],
+        events: [],
+        people: [
+          { ...person("u1"), presence: "UNAVAILABLE" },
+          { ...person("u2"), presence: "UNAVAILABLE" },
+          { ...person("u3"), presence: "UNAVAILABLE" },
+          person("u4"),
+        ],
+        moods: [],
+      },
+      () => 0,
+    );
+    expect(mixed.filter((row) => row.kind === "person")).toHaveLength(1);
+    expect(mixed.filter((row) => row.kind === "invite")).toHaveLength(1);
+  });
+
   it("n’ajoute pas un event déjà lié à un post", () => {
     const mixed = mixHomeFeed({
       posts: [post("p1", { imageUrl: "/x.jpg", event: { id: "e1", title: "Soirée", startsAt: new Date().toISOString() } })],

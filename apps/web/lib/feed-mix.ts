@@ -99,7 +99,9 @@ export function mixHomeFeed(
       input.events.filter((e) => !linkedEvents.has(e.id)),
       rng,
     ).map((event) => ({ kind: "event", id: `event:${event.id}`, event })),
-    person: shuffle(split.deck, rng).map((person) => ({ kind: "person", id: `person:${person.id}`, person })),
+    person: shuffle(split.deck, rng)
+      .slice(0, 1)
+      .map((person) => ({ kind: "person", id: `person:${person.id}`, person })),
     invite: shuffle(split.invitees, rng).map((person) => ({ kind: "invite", id: `invite:${person.id}`, person })),
     mood: shuffle(input.moods, rng)
       .slice(0, MAX_HOME_FEED_MOODS)

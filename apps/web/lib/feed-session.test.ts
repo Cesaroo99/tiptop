@@ -66,6 +66,18 @@ describe("leftoverFeedEntries", () => {
     ]);
   });
 
+  it("n’ajoute pas d’autres rows personnes si le deck est déjà là", () => {
+    const leftover = leftoverFeedEntries(
+      [{ kind: "person", id: "person:u1", person: { id: "u1" } as never }],
+      {
+        events: [],
+        people: [{ id: "u1" } as never, { id: "u2" } as never, { id: "u3" } as never],
+        moods: [],
+      },
+    );
+    expect(leftover.filter((row) => row.kind === "person")).toHaveLength(0);
+  });
+
   it("ne rajoute pas les vidéos mood restantes", () => {
     const leftover = leftoverFeedEntries([{ kind: "post", id: "post:p1", post: post("p1") }], {
       events: [],
