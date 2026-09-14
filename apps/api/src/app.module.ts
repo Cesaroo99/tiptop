@@ -23,6 +23,7 @@ import { SocialInvitesModule } from "./social-invites/social-invites.module";
 import { OffersModule } from "./offers/offers.module";
 import { InvitePoolModule } from "./invite-pool/invite-pool.module";
 import { AnalyticsModule } from "./analytics/analytics.module";
+import { IntelligenceModule } from "./intelligence/intelligence.module";
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { AnalyticsModule } from "./analytics/analytics.module";
     SocialInvitesModule,
     OffersModule,
     InvitePoolModule,
+    IntelligenceModule,
   ],
   controllers: [HealthController],
 })

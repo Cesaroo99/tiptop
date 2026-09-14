@@ -22,3 +22,4 @@ export * from "./world-cities";
 export * from "./analytics";
 export * from "./feed-rank";
 export * from "./notifications";
+export * from "./intelligence";

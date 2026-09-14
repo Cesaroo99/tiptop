@@ -120,6 +120,23 @@ model User {
   eventGroupsCreated EventGroup[]         @relation("EventGroupCreator")
   eventGroupMembers  EventGroupMember[]
   eventGroupInvites  EventGroupMember[]   @relation("EventGroupInviter")
+  aiConsent          AiConsent?
+  preferenceProfile  UserPreferenceProfile?
+  preferenceSignals  PreferenceSignal[]
+  experienceRequests ExperienceRequest[]
+  experiencePlans    ExperiencePlan[]
+  experienceRecs     ExperienceRecommendation[]
+  recFeedbacks       RecommendationFeedback[]
+  socialMatches      SocialActivityMatch[] @relation("MatchViewer")
+  socialMatchesOf    SocialActivityMatch[] @relation("MatchPeer")
+  activityGroups     ActivityGroup[]
+  agentSuggestions   AgentSuggestion[]
+  worldProgress      UserWorldProgress?
+  cityDiscoveries    CityDiscoveryProgress[]
+  categoryDiscoveries CategoryDiscoveryProgress[]
+  userAchievements   UserAchievement[]
+  userMissions       UserMission[]
+  experienceFeedbacks ExperienceFeedback[]
 }
 
 model Profile {
@@ -1054,4 +1071,311 @@ model AdminAudit {
   createdAt  DateTime    @default(now())
 
   @@index([createdAt])
+}
+
+enum PreferenceSignalKind {
+  VIEW_LONG
+  SAVED
+  SHARED
+  FAVORITED
+  CLICK_BOOK
+  BOOKED
+  ATTENDED
+  INVITED
+  POSITIVE_FEEDBACK
+  REPEAT_CATEGORY
+  IGNORED
+  LEFT_QUICK
+  NOT_INTERESTED
+  CANCELLED
+  NO_SHOW
+  REC_IGNORED
+}
+
+enum ExperiencePlanStatus {
+  DRAFT
+  ACTIVE
+  CONFIRMED
+  CANCELLED
+}
+
+enum RecFeedbackKind {
+  LIKE
+  NOT_INTERESTED
+  HIDE_TYPE
+  WHY
+}
+
+enum AgentSuggestionKind {
+  DAILY
+  WEEKEND
+  TONIGHT
+  SOCIAL
+  NEW
+}
+
+enum MissionKind {
+  WEEKEND
+  SOCIAL
+  DISCOVERY
+  FIRST_TIME
+}
+
+enum ExperienceMood {
+  LOVED
+  GOOD
+  OK
+  DISLIKED
+}
+
+model AiConsent {
+  userId            String  @id
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  personalizedRecs  Boolean @default(true)
+  useHistory        Boolean @default(true)
+  socialMatch       Boolean @default(false)
+  agentEnabled      Boolean @default(false)
+  updatedAt         DateTime @updatedAt
+}
+
+model UserPreferenceProfile {
+  userId            String   @id
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryScores    Json
+  dislikedCategories String[] @default([])
+  typicalBudgetXaf  Int?
+  maxBudgetXaf      Int?
+  preferredHours    Json?
+  preferredDays     Int[]    @default([])
+  idealDurationMin  Int?
+  maxDistanceKm     Float?
+  spontaneity       Float?
+  groupPreference   String?
+  preferredGroupSize Int?
+  meetNewPeople     Boolean?
+  vibeTags          String[] @default([])
+  computedAt        DateTime @default(now())
+}
+
+model PreferenceSignal {
+  id         String               @id @default(cuid())
+  userId     String
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind       PreferenceSignalKind
+  weight     Float
+  category   String?
+  eventId    String?
+  entityType String?
+  entityId   String?
+  createdAt  DateTime             @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, category])
+}
+
+model ExperienceRequest {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rawText   String
+  parsed    Json
+  createdAt DateTime         @default(now())
+  plans     ExperiencePlan[]
+
+  @@index([userId, createdAt])
+}
+
+model ExperiencePlan {
+  id           String               @id @default(cuid())
+  userId       String
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requestId    String?
+  request      ExperienceRequest?   @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  title        String
+  status       ExperiencePlanStatus @default(DRAFT)
+  surprise     Boolean              @default(false)
+  totalCostXaf Int                  @default(0)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  steps        ExperiencePlanStep[]
+  recs         ExperienceRecommendation[]
+
+  @@index([userId, createdAt])
+}
+
+model ExperiencePlanStep {
+  id        String         @id @default(cuid())
+  planId    String
+  plan      ExperiencePlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  order     Int
+  startsAt  DateTime
+  title     String
+  category  String
+  venue     String?
+  city      String?
+  zone      String?
+  eventId   String?
+  costXaf   Int            @default(0)
+  travelMin Int            @default(0)
+  revealed  Boolean        @default(true)
+  bookable  Boolean        @default(false)
+  hint      Boolean        @default(false)
+  notes     String?
+
+  @@index([planId, order])
+}
+
+model ExperienceRecommendation {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId   String?
+  planId    String?
+  plan      ExperiencePlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
+  reasonKey String
+  reasonParams Json?
+  score     Float
+  category  String?
+  dayKey    String
+  createdAt DateTime @default(now())
+  feedbacks RecommendationFeedback[]
+
+  @@index([userId, dayKey])
+}
+
+model RecommendationFeedback {
+  id               String                    @id @default(cuid())
+  userId           String
+  user             User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recommendationId String?
+  recommendation   ExperienceRecommendation? @relation(fields: [recommendationId], references: [id], onDelete: SetNull)
+  eventId          String?
+  kind             RecFeedbackKind
+  category         String?
+  createdAt        DateTime                  @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model SocialActivityMatch {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation("MatchViewer", fields: [userId], references: [id], onDelete: Cascade)
+  peerId    String
+  peer      User     @relation("MatchPeer", fields: [peerId], references: [id], onDelete: Cascade)
+  category  String
+  eventId   String?
+  score     Float
+  createdAt DateTime @default(now())
+
+  @@index([userId, category, createdAt])
+}
+
+model ActivityGroup {
+  id              String   @id @default(cuid())
+  creatorId       String
+  creator         User     @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  category        String
+  title           String
+  city            String
+  zone            String?
+  startsAt        DateTime
+  eventId         String?
+  conversationId  String?
+  status          String   @default("OPEN")
+  createdAt       DateTime @default(now())
+
+  @@index([creatorId, createdAt])
+  @@index([eventId])
+}
+
+model AgentSuggestion {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      AgentSuggestionKind
+  title     String
+  body      String
+  eventIds  String[]            @default([])
+  planId    String?
+  fromAgent Boolean             @default(true)
+  readAt    DateTime?
+  createdAt DateTime            @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model UserWorldProgress {
+  userId         String   @id
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score          Float    @default(0)
+  lastComputedAt DateTime @default(now())
+}
+
+model CityDiscoveryProgress {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city            String
+  percent         Int      @default(0)
+  categoriesTried String[] @default([])
+  venuesCount     Int      @default(0)
+  attendedCount   Int      @default(0)
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, city])
+}
+
+model CategoryDiscoveryProgress {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   String
+  discovered Boolean   @default(false)
+  firstAt    DateTime?
+
+  @@unique([userId, category])
+}
+
+model Achievement {
+  id          String            @id
+  titleKey    String
+  userUnlocks UserAchievement[]
+}
+
+model UserAchievement {
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  unlockedAt    DateTime    @default(now())
+
+  @@id([userId, achievementId])
+}
+
+model UserMission {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind        MissionKind
+  weekKey     String
+  progress    Int         @default(0)
+  completedAt DateTime?
+
+  @@unique([userId, kind, weekKey])
+  @@index([userId, weekKey])
+}
+
+model ExperienceFeedback {
+  id        String          @id @default(cuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId   String?
+  planId    String?
+  mood      ExperienceMood
+  comment   String?
+  isPublic  Boolean         @default(false)
+  createdAt DateTime        @default(now())
+
+  @@index([userId, createdAt])
 }

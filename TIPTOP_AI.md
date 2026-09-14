@@ -1,19 +1,34 @@
-# TipTop — architecture IA (préparée, non développée)
+# TipTop Intelligence Engine
 
-Le prompt de lancement demande de **préparer** une architecture, pas de livrer une fonctionnalité IA.
+TipTop n’est pas une IA de scroll. Le moteur aide à **vivre des expériences réelles**.
 
-## Points d’extension existants
+## Architecture
 
-| Besoin futur | Où se brancher | Aujourd’hui |
-| --- | --- | --- |
-| Recommandations feed | `apps/web/lib/feed-mix.ts` + `GET /feed` | Mix déterministe (posts, events, people, moods) |
-| Découverte | `discovery.service.ts`, `search.service.ts` | Règles + proximité opt-in |
-| Personnalisation Moods | `moodInterestScore` | Score d’intérêts simple |
-| Modération | `Report` + admin hide posts/moods | Humain |
-| Anti-spam | `canSubmitReport`, limites invitations / OTP | Quotas domaine |
+| Couche | Rôle |
+| --- | --- |
+| `@tiptop/domain` `intelligence.ts` | Signaux, scoring, plan, matching, monde, consentement — déterministe |
+| `apps/api/src/intelligence` | Orchestration Prisma + endpoints |
+| `AiProvider` | Abstraction LLM (`OPENAI_API_KEY`) + fallback règles |
+| UI | Accueil (jour), recherche / `/plan`, événement (personnes), menu (`/world`, `/agent`), paramètres |
 
-## Règle
+Les recommandations combinent **données structurées + règles métier + IA optionnelle**. Un event jamais inventé : seules les sorties `PUBLISHED` existantes sont proposées à la réservation. Les étapes « idée locale » sont marquées `hint` et non bookables.
 
-Aucun modèle, aucun appel LLM, aucun classifieur n’est activé au lancement.
+## Consentement (opt-in social / agent)
 
-Quand une IA sera décidée, elle consommera les mêmes événements que `TIPTOP_ANALYTICS.md` et les mêmes services — elle ne remplacera pas le feed, le Mood ou le profil.
+- Recos personnalisées : on par défaut
+- Historique : on par défaut
+- Matching social : **off**
+- Agent : **off**
+- L’agent ne contacte jamais un humain (`agentMayContactPeer() === false`)
+- GPS exact jamais renvoyé (libellé `<1 km` / `N km`)
+
+## Variables
+
+| Var | Usage |
+| --- | --- |
+| `OPENAI_API_KEY` | Optionnel. Sans clé : parseur de contraintes domaine |
+| `OPENAI_MODEL` | Défaut `gpt-4o-mini` |
+
+## Quotas
+
+8 plans / h, 12 questions agent / h, 40 signaux / h (process local).
